@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>
+    Docker 发布 node-hexo镜像 | 李斌的技术博客
+  </title>
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <meta name="theme-color" content="#4184f3">
+  
+  
+  <link href="https://img.github.mailjob.net/logo/favicon.ico" rel="icon" />
+  
+
+  
+<link rel="stylesheet" href="/css/highlight.light.css">
+
+  
+<link rel="stylesheet" href="/css/prism-customize.css">
+
+  
+<link rel="stylesheet" href="/css/nav-icon.css">
+
+  
+<link rel="stylesheet" href="/css/waves.min.css">
+
+  
+<link rel="stylesheet" href="/css/jquery.tocify.css">
+
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+<link rel="stylesheet" href="/css/nav-indicator.css">
+
+  
+<link rel="stylesheet" href="/css/twikoo.css">
+
+  
+<link rel="stylesheet" href="/css/search.css">
+
+  
+  
+
+  
+
+  </meta>
+  </meta>
+  <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.js"></script>
+  
+<script src="/js/comment.js"></script>
+
+  
+<script src="/js/copy.js"></script>
+
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 5.3.0"></head>
+
+<body>
+    <header>
+        <!-- cover image or sth. -->
+    </header>
+
+    <!-- tips_head start -->
+    <div class="tips_head">
+        <center><span id='tips_head_span'></span></center>
+<script>
+    var host = window.location.host;
+    if(host != 'blog.mailjob.net' && host != 'localhost:4000') {
+        document.getElementById("tips_head_span").innerHTML = "此访问域名为大陆节点，网站内容更新有一定的延迟且不支持评论。若要获取最新信息，请访问国际节点：<a href='https://blog.mailjob.net'>https://blog.mailjob.net</a>"
+        document.getElementById("tips_head_span").style.lineHeight = 3;
+    }
+</script>
+    </div>
+    <!-- tips_head end -->
+
+    <div id="main" class="m-scene">
+        
+<div class="nav-wrapper" id="header">
+
+    <div class="container">
+        <nav>
+            
+            
+            <div class="logo wave">
+                <a href="/" id="logo">
+                    李斌的技术博客
+                </a>
+            </div>
+
+            <div class="nav-toggle-icon" >
+                <div class="material-hamburger">
+                    <span>
+                    </span>
+                    <span>
+                    </span>
+                    <span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="menu-wrapper">
+                <div class="nav-indicator">
+                </div>
+                <ul class="menus">
+                    
+                     
+                        <li>
+                            <a class="wave " href="/">
+                                首页
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/archives">
+                                归档
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/about">
+                                关于
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/message">
+                                留言
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/search">
+                                搜索
+                            </a>
+                        </li>
+                     
+                    
+                   
+                </ul>
+            </div>
+
+        </nav>
+    </div>
+</div>
+
+
+            <div class="container content">
+                <div class="scene_element scene_element--fadein">
+                    <div class="row">
+  <div class="main main-article">
+    <article>
+
+      
+            <header class="post-header">
+              
+            </header>
+
+            <h1 class="post-title">
+              Docker 发布 node-hexo镜像
+            </h1>
+
+            <section class="post-info post-info-bottom">
+
+              <span class="post-date">发布于
+                <span class="post-date-text">
+                   2021-03-13
+                </span>
+              </span>
+
+
+
+
+              
+                <span class="post-category">分类:
+                  <a class="article-category-link" href="/categories/docker/">docker</a>
+                </span>
+                
+                  
+                    <span class="post-tags">
+                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/docker/" rel="tag">docker</a></li></ul>
+                    </span>
+                    
+
+                      <!-- 阅读量统计 -->
+                      
+                        <span class="post-visitors">阅读量:<span id="twikoo_visitors">0</span></span>
+                        
+
+
+            </section>
+
+            <section class="post-content">
+
+              <h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote>
+<p>DockerHub：<a target="_blank" rel="noopener" href="https://hub.docker.com/r/jefferyjob/node-hexo">https://hub.docker.com/r/jefferyjob/node-hexo</a></p>
+<p>GithubDockerfile：<a target="_blank" rel="noopener" href="https://github.com/jefferyjob/node-hexo">https://github.com/jefferyjob/node-hexo</a></p>
+<p>Docker-composer管理hexo：<a target="_blank" rel="noopener" href="https://github.com/jefferyjob/docker-compose-hexo">https://github.com/jefferyjob/docker-compose-hexo</a></p>
+<p>使用 Dockerfile 基于 alpine 系统，构建 nodejs 环境和 hexo 基础依赖以及 git 环境。</p>
+</blockquote>
+<h3 id="Dockerfile构建"><a href="#Dockerfile构建" class="headerlink" title="Dockerfile构建"></a>Dockerfile构建</h3><h4 id="编写镜像包"><a href="#编写镜像包" class="headerlink" title="编写镜像包"></a>编写镜像包</h4><p><strong>第1种方法：</strong></p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># base image</span></span><br><span class="line"><span class="keyword">FROM</span> node:alpine</span><br><span class="line"><span class="comment"># MAINTAINER</span></span><br><span class="line"><span class="keyword">MAINTAINER</span> lbinjob@<span class="number">163</span>.com</span><br><span class="line"><span class="comment"># work dir</span></span><br><span class="line"><span class="keyword">WORKDIR</span><span class="bash"> /app</span></span><br><span class="line"><span class="comment"># run install</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> npm config <span class="built_in">set</span> registry https://registry.npm.taobao.org \</span></span><br><span class="line"><span class="bash">    &amp;&amp; npm install -g hexo</span></span><br><span class="line"><span class="comment"># port</span></span><br><span class="line"><span class="keyword">EXPOSE</span> <span class="number">4000</span></span><br></pre></td></tr></table></figure>
+<p><strong>第2种方法：</strong>未来更好的扩展性，此处采用 alpine 从0到1开始构建。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># base image</span></span><br><span class="line"><span class="keyword">FROM</span> alpine:<span class="number">3.10</span></span><br><span class="line"><span class="comment"># MAINTAINER</span></span><br><span class="line"><span class="keyword">MAINTAINER</span> lbinjob@<span class="number">163</span>.com</span><br><span class="line"><span class="comment"># work dir</span></span><br><span class="line"><span class="keyword">WORKDIR</span><span class="bash"> /app</span></span><br><span class="line"><span class="comment"># run install</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> apk add --no-cache nodejs \</span></span><br><span class="line"><span class="bash">    &amp;&amp; apk add --no-cache git \</span></span><br><span class="line"><span class="bash">    &amp;&amp; apk add --no-cache npm \</span></span><br><span class="line"><span class="bash">    &amp;&amp; npm config <span class="built_in">set</span> registry https://registry.npm.taobao.org \</span></span><br><span class="line"><span class="bash">    &amp;&amp; npm install -g hexo</span></span><br><span class="line"><span class="comment"># port</span></span><br><span class="line"><span class="keyword">EXPOSE</span> <span class="number">4000</span></span><br></pre></td></tr></table></figure>
+<h4 id="镜像发布"><a href="#镜像发布" class="headerlink" title="镜像发布"></a>镜像发布</h4><h5 id="镜像生成："><a href="#镜像生成：" class="headerlink" title="镜像生成："></a>镜像生成：</h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker build -t node-hexo:1.0 .</span><br></pre></td></tr></table></figure>
+<p> <strong>-t,–tag:</strong> 镜像的名字及标签，通常 name:tag 或者 name 格式；可以在一次构建中为一个镜像设置多个标签。</p>
+<p>**-f :**指定要使用的Dockerfile路径；</p>
+<h5 id="镜像测试："><a href="#镜像测试：" class="headerlink" title="镜像测试："></a>镜像测试：</h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 查看镜像构建历史</span></span><br><span class="line">docker history node-hexo:1.0</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> run 一个测试容器</span></span><br><span class="line">docker run -itd --name node-hexo-test node-hexo:1.0</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 进入容器</span></span><br><span class="line">docker exec -it node-hexo-test /bin/sh</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 进行软件测试</span></span><br><span class="line">/ # node -v</span><br><span class="line">v10.24.0</span><br><span class="line">/ # npm -v</span><br><span class="line">6.14.11</span><br><span class="line">/ # git --version</span><br><span class="line">git version 2.22.5</span><br><span class="line">/ # hexo -version</span><br><span class="line">hexo-cli: 4.2.0</span><br></pre></td></tr></table></figure>
+<h5 id="发布到DockerHub："><a href="#发布到DockerHub：" class="headerlink" title="发布到DockerHub："></a>发布到DockerHub：</h5><p><strong>1、注册 Dockerhub 的仓库</strong></p>
+<p>注册地址：<a target="_blank" rel="noopener" href="https://hub.docker.com/repository/create">https://hub.docker.com/repository/create</a> </p>
+<blockquote>
+<p>名称要和你要发布的镜像名称保持一致哦</p>
+<p>此处我创建的为 public 权限的 node-hexo 仓库</p>
+</blockquote>
+<p><strong>2、重命名</strong></p>
+<p>命名规范为：<code>docker_username/repository_name</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker tag node-hexo:1.0 jefferyjob/node-hexo:1.0</span><br></pre></td></tr></table></figure>
+<p><strong>3、登录docker</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker login -u jefferyjob</span><br></pre></td></tr></table></figure>
+<p><strong>4、发布</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker push jefferyjob/node-hexo:1.0</span><br></pre></td></tr></table></figure>
+<p><strong>注意，此版本发布后，把版本号改为 <code>latest</code> 然后再发布一次，让dockerhub中的latest保持最新。</strong></p>
+<p><strong>5、高级技巧</strong></p>
+<p>你也可以将此仓库绑定到你的 github 仓库，每次修改 github 仓库的 dockerfile 的时候，实施 webhook 通知你的docker repository 实现自动更新 docker 镜像。</p>
+<p>也可以在 dockerfile 中使用 ENTRYPOINT [“docker-entrypoint.sh”] 管理入口，提供更加便捷化的操作。</p>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>开始我使用<code>Nodejs</code>官方的源码包安装<code>Nodejs</code>。也就是将官网下载的<code>tar</code>格式的包解压后，再链接二进制文件的方式。</p>
+<p>但是发生了一个问题：我将源码包里边的<code>node</code>可执行文件链接到<code>/usr/sbin/node</code>后，执行<code>node -v</code>，提示<code>command not found</code>。</p>
+<p><strong>原因：</strong></p>
+<p>几经查找，发现原来是因为<code>Nodejs</code>官网提供的源码包是使用<code>glibc</code>库打包的，而<code>Alpine</code>使用的是<code>musl</code>库</p>
+<p><strong>解决方案：</strong></p>
+<ol>
+<li>使用<code>Alpine</code>自带的<code>apk</code>进行安装: <code>apk add nodejs npm</code>。</li>
+<li>使用非官方构建源里边的包，里边有<code>musl</code>版本的：<a target="_blank" rel="noopener" href="https://unofficial-builds.nodejs.org/download/release/">https://unofficial-builds.nodejs.org/download/release/</a> 。虽说是非官方构建源，也是官网上提供的链接。</li>
+</ol>
+<p><strong>反思：</strong></p>
+<p>之前也看到过<code>Alpine</code>关于编译库的坑，但是没想到这么快就让我遇上了，而且的确容易被<code>command not found</code>这个提示误导，这使我一度怀疑<code>dash</code>，<code>$PATH</code>和<code>ln</code>。</p>
+
+            </section>
+    </article>
+    
+
+
+        <!-- 版权声明 -->
+        
+<div class="post-copyright">
+    <!-- <div>
+        <strong>本文作者：</strong>
+        <span>李斌</span>
+    </div> -->
+    <div>
+        <strong>本文链接：</strong>
+        <a href="https://blog.mailjob.net/posts/2968099460.html">
+            <!-- https://blog.mailjob.net/docker/docker发布node-hexo镜像 -->
+            https://blog.mailjob.net/posts/2968099460.html
+        </a>
+    </div>
+    <div>
+        <!-- <span>欢迎任何形式的转载，请务必注明出处。</span> -->
+    </div>
+    <div>
+        <span>
+            该网站发布的内容，遵循
+            <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>
+            版权协议，转载请附上原文出处链接和本声明。
+        </span>
+    </div>
+</div>
+
+
+
+<style>
+    .post-copyright {
+        background-color: #fff;
+  box-shadow: 0px 0px 1px 1px rgba(0, 0, 0, 0.05);
+        display: block;
+        margin: 20px auto;
+        margin-bottom: 15px;
+        padding: 10px;
+        font-size: 15px;
+        color: #2e2d2d;
+        word-break: break-all;
+        line-height: 1.8;
+    }
+
+
+    .post-copyright a {
+        color: #2e2d2d;
+        border-bottom: 1px solid #999; 
+    }
+
+    .post-copyright a:hover {
+        color: #2e2d2d;
+        border-bottom: 1px solid #000; 
+    }
+</style>
+
+          <!-- comments -->
+          <div class="comments">
+    <h3 id="commenttitle" style="margin-top: 20px;margin-left: 10px;">评论区</h3>
+    <div id="tcomment"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/twikoo@0.6.0/dist/twikoo.all.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/twikoo@1.0.0/dist/twikoo.all.min.js"></script> -->
+
+<script>twikoo.init({ envId: 'jefferyjob-github-io-3b53ee3a93b', el: '#tcomment' })</script>
+
+            <div class="right-icon">
+              <div id="to-valine" class="right-icon-item">
+                <a href="#commenttitle">评论</a>
+              </div>
+            </div>
+
+  </div>
+
+
+  <aside>
+    <div class="aside-wrap">
+    
+        <section class="widget-wrap">
+    <h3 class="widget-title">简介</h3>
+    <div class="widget">
+        <div class="notice">
+            <img class="notice-img" src="https://img.github.mailjob.net/logo/libin.jpg">
+            <p>李斌的个人独立博客<br>此平台用作学习交流<br>日常分享</p>
+            
+            <p class="notice-item">
+                <!-- github -->
+                <span><a target="_blank" href="https://github.com/jefferyjob"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108165043.jpg" alt="Github"></a></span>
+                <!-- csdn -->
+                <span><a target="_blank" href="https://blog.csdn.net/libinemail"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108172932.ico" alt="CSDN"></a></span>
+                <!-- juejin -->
+                <span><a target="_blank" href="https://juejin.cn/user/782508009723783"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108165800.png" alt="掘金社区"></a></span>
+                <!-- zhihu -->
+                <span><a target="_blank" href="https://www.zhihu.com/people/JefferyJob"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108172745.ico" alt="知乎"></a></span>
+                
+            </p>
+            
+        </div>
+    </div>
+</section>
+
+
+    
+        
+  <section class="widget-wrap">
+    <h3 class="widget-title">文章分类</h3>
+    <div class="widget">
+      <div class="categories-list">
+        
+           
+            
+              <a class="category-list-item" href="/categories/算法">
+                <span class="category-list-link">算法</span>
+                <span class="category-list-number">(13)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/mysql">
+                <span class="category-list-link">mysql</span>
+                <span class="category-list-number">(36)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/docker">
+                <span class="category-list-link">docker</span>
+                <span class="category-list-number">(2)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/design">
+                <span class="category-list-link">design</span>
+                <span class="category-list-number">(3)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/linux">
+                <span class="category-list-link">linux</span>
+                <span class="category-list-number">(5)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/rabbitmq">
+                <span class="category-list-link">rabbitmq</span>
+                <span class="category-list-number">(2)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/php">
+                <span class="category-list-link">php</span>
+                <span class="category-list-number">(6)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/redis">
+                <span class="category-list-link">redis</span>
+                <span class="category-list-number">(25)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/blog">
+                <span class="category-list-link">blog</span>
+                <span class="category-list-number">(15)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/swoole">
+                <span class="category-list-link">swoole</span>
+                <span class="category-list-number">(3)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/notes">
+                <span class="category-list-link">notes</span>
+                <span class="category-list-number">(10)</span>
+              </a>
+            
+          
+        
+      </div>
+    </div>
+  </section>
+
+
+    
+        
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget widget_tag">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/blog/" rel="tag">blog</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/es/" rel="tag">es</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/haproxy/" rel="tag">haproxy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/keepalived/" rel="tag">keepalived</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mycat/" rel="tag">mycat</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nginx/" rel="tag">nginx</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/notes/" rel="tag">notes</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/openresty/" rel="tag">openresty</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/php/" rel="tag">php</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/rabbitmq/" rel="tag">rabbitmq</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/swoole/" rel="tag">swoole</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a></li></ul>
+    </div>
+  </div>
+
+
+<style>
+  .widget_tag ul li {
+    display: inline-block;
+    padding: 0px 5px;
+    border: 1px solid #eee;
+    margin-bottom: 7px;
+    margin-right: 5px;
+    border-radius: 5px;
+    font-size: 12px;
+    color: #999;
+  }
+</style>
+    
+        
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul class="recent-posts">
+        
+          <li>
+            <a href="/posts/1482114423.html">notes：解决github访问慢的问题</a>
+          </li>
+        
+          <li>
+            <a href="/posts/1634640555.html">雪花算法 snowflake</a>
+          </li>
+        
+          <li>
+            <a href="/posts/163644071.html">mysql视图基本操作</a>
+          </li>
+        
+          <li>
+            <a href="/posts/1198915737.html">mysql视图是什么</a>
+          </li>
+        
+          <li>
+            <a href="/posts/3520988043.html">PHP实现IO阻塞模型(blocking)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+    
+        
+  <section class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/04/">四月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/03/">三月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/02/">二月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a></li></ul>
+    </div>
+  </section>
+
+
+    
+        
+  <section class="widget-wrap">
+    <h3 class="widget-title">友情链接</h3>
+    <div>
+      <ul class="widget-links">
+          
+          <li>
+              <a target="_blank" rel="noopener" href="https://libinblog.gitee.io" title="">
+                  本站大陆节点
+              </a>
+          </li>
+          
+          <li>
+              <a target="_blank" rel="noopener" href="https://blog.senll.com" title="">
+                  Ethan 的博客
+              </a>
+          </li>
+          
+          <li>
+              <a target="_blank" rel="noopener" href="https://www.laruence.com" title="">
+                  鸟哥的博客
+              </a>
+          </li>
+          
+          <li>
+              <a target="_blank" rel="noopener" href="http://rango.swoole.com" title="">
+                  韩天峰的博客
+              </a>
+          </li>
+          
+      </ul>
+    </div>
+  </section>
+
+
+<style>
+  .widget-links {
+    list-style: none;
+    padding-left: 10px;
+  }
+  .widget-links >li > a:hover {
+    color: #f40;
+    text-decoration: underline;
+  }
+</style>
+    
+        <section class="widget-wrap">
+    <div class="widget">
+        <div class="notice attention">
+
+            <p>
+                该网站发布的内容，遵循
+                <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>
+                版权协议，转载请附上原文出处链接和本声明。
+                <br><br>
+                如果有其他问题，可以给我发邮件咨询。
+                <a target="_blank" href="https://www.mailjob.net">libin@mailjob.net</a>
+                。我看到后会在第一时间回复！
+            </p>
+            
+        </div>
+    </div>
+</section>
+
+    
+    
+</div>
+
+
+      <!-- 目录 -->
+      
+        <div id="toc"></div>
+        <script>
+          $(function () {
+            var elm = $('#toc');
+            var startPos = $(elm).offset().top;
+            $.event.add(window, "scroll", function () {
+              var p = $(window).scrollTop();
+              $(elm).css('margin-left', '0px');
+              $(elm).css('position', ((p) > startPos) ? 'fixed' : 'static');
+              $(elm).css('top', ((p) > startPos) ? '20px' : '')
+            })
+          })
+
+        </script>
+
+  </aside>
+  
+</div>
+
+
+<script>
+  $('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
+
+</script>
+                </div>
+            </div>
+            <div class="right-icon">
+                <div id="to-top" class="right-icon-item">
+                  <a>
+                    <span class="top-left"></span>
+                    <span class="top-right"></span>
+                  </a>
+                </div>
+              </div>
+    </div>
+    <footer class="footer">
+  <div class="links-wrap-wrap">
+    <div class="links-wrap">
+    
+      
+        <section class="link-wrap">
+          <h3 class="link-title">导航</h3>
+          <div>
+            <ul class="link-item-wrap">
+                
+                <li class="link-item">
+                    <a href="https://blog.mailjob.net" title="">
+                        李斌的技术博客
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://www.mailjob.net" title="">
+                        我的邮箱
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://github.com/mailjobblog/demo_code" title="">
+                        Demo Code
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://new.cnzz.com/v1/login.php?siteid=1279692087" title="">
+                        友盟
+                    </a>
+                </li>
+                
+            </ul>
+          </div>
+        </section>
+      
+
+
+      
+        <section class="link-wrap">
+          <h3 class="link-title">社区论坛</h3>
+          <div>
+            <ul class="link-item-wrap">
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail" title="">
+                        李斌的CSDN
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://www.cnblogs.com/jefferyjob" title="">
+                        李斌的博客园
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://github.com/jefferyjob" title="">
+                        GitHub
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://hub.docker.com/u/jefferyjob" title="">
+                        DockerHub
+                    </a>
+                </li>
+                
+            </ul>
+          </div>
+        </section>
+      
+
+    </div>
+  </div>
+  
+    <div class="copyright-wrap">
+      <span>Copyright &copy; 2020-2021 京ICP备17056825号</span>
+      <span id="timeDate">载入天数...</span>
+
+      <br><br>
+      <span>
+        本站由 <a style="color:#e4e7ee" target="_blank" rel="noopener" href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral"><img style="width: 10px;height: 10px;" src="//img.github.mailjob.net/oss.github/20210226141134.png">又拍云</a> 提供CDN加速/云储存服务
+      </span>
+    </div>
+    
+    <!-- <span id="busuanzi_container_site_pv">
+      本站总访问量<span id="busuanzi_value_site_pv"></span>次
+    </span>
+    <span id="busuanzi_container_site_uv">
+      ，本站访客数<span id="busuanzi_value_site_uv"></span>人次
+    </span> -->
+
+   
+    
+</footer>
+
+<script>
+    var now = new Date();
+    function createtime() {
+      var grt = new Date("06/14/2020 12:00:00");//此处修改你的建站时间或者网站上线时间 
+      now.setTime(now.getTime() + 250);
+      days = (now - grt) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+      document.getElementById("timeDate").innerHTML = "本站已运行 " + dnum + " 天 ";
+    }
+    setInterval("createtime()", 1000);
+</script>
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<script src="/lib/jquery.js"></script>
+
+
+<script src="/lib/waves.js"></script>
+
+
+<script src="/lib/jquery-ui.js"></script>
+
+
+<script src="/lib/jquery.tocify.js"></script>
+
+
+<script src="/js/main.js"></script>
+
+
+        
+<style>
+  .copy-btn {
+    display: inline-block;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 20px;
+    color: rgb(206, 206, 206);
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    border-radius: 3px;
+    user-select: none;
+    outline: 0;
+  }
+
+  .copy-btn:hover {
+    color: #888
+  }
+
+  .highlight-wrap .copy-btn {
+    padding: 2px 6px;
+    position: absolute;
+    right: 10px;
+    top: 1px;
+    z-index: 1;
+  }
+
+
+
+  .highlight-wrap {
+    position: relative;
+  }
+
+  #copysuccess {
+    width: 200px;
+    height: 75px;
+    position: fixed;
+    right: 50%;
+    margin-right: -100px;
+    top: 40%;
+    margin-top: -40px;
+    color: #fff;
+    font-weight: 600;
+    background: #444444d8;
+    display: none;
+    z-index: 99999;
+    border-radius: 10px;
+    text-align: center;
+    line-height: 30px;
+    padding-top: 10px;
+    user-select: none;
+  }
+</style>
+
+<script>
+  addLoadEvent(() => {
+    $('.highlight').each(function (i, e) {
+      var $wrap = $('<div>').addClass('highlight-wrap')
+      $(e).after($wrap)
+      $wrap.append($('<div>').addClass('copy-btn').append('复制代码').on('click', function (e) {
+        var copysuccess = document.getElementById('copysuccess');
+        copysuccess.style.display = 'block'
+        setTimeout(function () {
+          copysuccess.style.display = 'none'
+        }, 2000)
+        var code = $(this).parent().find(".code")[0].innerText
+          
+                var ta = document.createElement('textarea')
+        document.body.appendChild(ta)
+        ta.style.position = 'absolute'
+        ta.style.top = '0px'
+        ta.style.left = '0px'
+        ta.value = code
+        ta.select()
+        ta.focus()
+        var result = document.execCommand('copy')
+        document.body.removeChild(ta)
+          
+                  if (result) $(this).text('复制成功')
+            else $(this).text('复制失败')
+              
+                $(this).blur()
+      })).on('mouseleave', function (e) {
+        var $b = $(this).find('.copy-btn')
+        setTimeout(function () {
+          $b.text('复制代码')
+        }, 1000)
+      }).append(e)
+    })
+  })
+</script>
+
+            <div id="copysuccess">复制成功<br>Copy succeeded</div>
+</body>
+
+</html>
+
+<script>
+    $('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
+</script>
+
+<!-- 网站管理 start -->
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>
+
+<!-- 网站管理 end -->

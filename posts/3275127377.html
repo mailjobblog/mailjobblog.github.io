@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>
+    Mysql 锁机制 | 李斌的技术博客
+  </title>
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <meta name="theme-color" content="#4184f3">
+  
+  
+  <link href="https://img.github.mailjob.net/logo/favicon.ico" rel="icon" />
+  
+
+  
+<link rel="stylesheet" href="/css/highlight.light.css">
+
+  
+<link rel="stylesheet" href="/css/prism-customize.css">
+
+  
+<link rel="stylesheet" href="/css/nav-icon.css">
+
+  
+<link rel="stylesheet" href="/css/waves.min.css">
+
+  
+<link rel="stylesheet" href="/css/jquery.tocify.css">
+
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+<link rel="stylesheet" href="/css/nav-indicator.css">
+
+  
+<link rel="stylesheet" href="/css/twikoo.css">
+
+  
+<link rel="stylesheet" href="/css/search.css">
+
+  
+  
+
+  
+
+  </meta>
+  </meta>
+  <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.js"></script>
+  
+<script src="/js/comment.js"></script>
+
+  
+<script src="/js/copy.js"></script>
+
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 5.3.0"></head>
+
+<body>
+    <header>
+        <!-- cover image or sth. -->
+    </header>
+
+    <!-- tips_head start -->
+    <div class="tips_head">
+        <center><span id='tips_head_span'></span></center>
+<script>
+    var host = window.location.host;
+    if(host != 'blog.mailjob.net' && host != 'localhost:4000') {
+        document.getElementById("tips_head_span").innerHTML = "此访问域名为大陆节点，网站内容更新有一定的延迟且不支持评论。若要获取最新信息，请访问国际节点：<a href='https://blog.mailjob.net'>https://blog.mailjob.net</a>"
+        document.getElementById("tips_head_span").style.lineHeight = 3;
+    }
+</script>
+    </div>
+    <!-- tips_head end -->
+
+    <div id="main" class="m-scene">
+        
+<div class="nav-wrapper" id="header">
+
+    <div class="container">
+        <nav>
+            
+            
+            <div class="logo wave">
+                <a href="/" id="logo">
+                    李斌的技术博客
+                </a>
+            </div>
+
+            <div class="nav-toggle-icon" >
+                <div class="material-hamburger">
+                    <span>
+                    </span>
+                    <span>
+                    </span>
+                    <span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="menu-wrapper">
+                <div class="nav-indicator">
+                </div>
+                <ul class="menus">
+                    
+                     
+                        <li>
+                            <a class="wave " href="/">
+                                首页
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/archives">
+                                归档
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/about">
+                                关于
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/message">
+                                留言
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/search">
+                                搜索
+                            </a>
+                        </li>
+                     
+                    
+                   
+                </ul>
+            </div>
+
+        </nav>
+    </div>
+</div>
+
+
+            <div class="container content">
+                <div class="scene_element scene_element--fadein">
+                    <div class="row">
+  <div class="main main-article">
+    <article>
+
+      
+            <header class="post-header">
+              
+            </header>
+
+            <h1 class="post-title">
+              Mysql 锁机制
+            </h1>
+
+            <section class="post-info post-info-bottom">
+
+              <span class="post-date">发布于
+                <span class="post-date-text">
+                   2021-02-16
+                </span>
+              </span>
+
+
+
+
+              
+                <span class="post-category">分类:
+                  <a class="article-category-link" href="/categories/mysql/">mysql</a>
+                </span>
+                
+                  
+                    <span class="post-tags">
+                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li></ul>
+                    </span>
+                    
+
+                      <!-- 阅读量统计 -->
+                      
+                        <span class="post-visitors">阅读量:<span id="twikoo_visitors">0</span></span>
+                        
+
+
+            </section>
+
+            <section class="post-content">
+
+              <h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote>
+<p>乐观锁MVCC伪代码演示：<a target="_blank" rel="noopener" href="http://dwz.date/exaG">http://dwz.date/exaG</a></p>
+</blockquote>
+<h2 id="锁区分"><a href="#锁区分" class="headerlink" title="锁区分"></a>锁区分</h2><blockquote>
+<ol>
+<li>按照锁的粒度划分：行锁、表锁、页锁</li>
+<li>按照锁的使用方式划分：共享锁、排它锁（悲观锁的一种实现）</li>
+<li>还有两种思想上的锁：悲观锁、乐观锁。</li>
+<li>InnoDB中有几种行级锁类型：Record Lock、Gap Lock、Next-key Lock</li>
+<li>Record Lock：在索引记录上加锁</li>
+<li>Gap Lock：间隙锁</li>
+<li>Next-key Lock：Record Lock+Gap Lock</li>
+</ol>
+</blockquote>
+<h2 id="行锁"><a href="#行锁" class="headerlink" title="行锁"></a>行锁</h2><h4 id="1、共享锁（-lock-in-share-mode）"><a href="#1、共享锁（-lock-in-share-mode）" class="headerlink" title="1、共享锁（ lock in share mode）"></a>1、共享锁（ lock in share mode）</h4><p>共享锁也叫 <code>读锁</code>，允许持有锁的事务读取一行。即不能进行写操作来提供一致性读取。如果资源上没有写锁，事务可以立即获得读锁，多个事务可以在同时获得读锁，如果读锁没有释放，写锁不能被获取，写事务只能放入等待队列。</p>
+<p>若事务 T 对数据对象 A 加上 S 锁，则事务 T 可以读 A 但不能修改 A</p>
+<p><strong>共享锁就是允许多个线程同时获取一个锁，一个锁可以同时被多个线程拥有</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> ... lock <span class="keyword">in</span> share mode;</span><br></pre></td></tr></table></figure>
+<h4 id="2、排它锁（-for-update）"><a href="#2、排它锁（-for-update）" class="headerlink" title="2、排它锁（ for update）"></a>2、排它锁（ for update）</h4><p>排它锁也叫 <code>写锁</code> ，允许持有锁的事务更新或者删除行。在一定的时间范围内，只能存在一个写锁。</p>
+<p>若事务T对数据对象A加上X锁，事务T可以读A也可以修改A，其他事务不能再对A加任何锁，直到T释放A上的锁。这保证了其他事务在T释放A上的锁之前不能再读取和修改A。</p>
+<p><strong>写锁的优先级高于读锁。当一个资源上没有锁时，或者所有的锁请求都在等待队列中，下面是锁的授予方式：</strong></p>
+<ul>
+<li>首先将锁授予写锁队列中等待的请求；</li>
+<li>如果写锁队列中没有对资源的锁请求，那么将锁授予读锁队列中的第一个请求。</li>
+</ul>
+<p> <strong>排它锁，也称作独占锁，一个锁在某一时刻只能被一个线程占有，其它线程必须等待锁被释放之后才可能获取到锁。</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> ... <span class="keyword">for</span> <span class="keyword">update</span></span><br></pre></td></tr></table></figure>
+<h2 id="页锁-不常用"><a href="#页锁-不常用" class="headerlink" title="页锁(不常用)"></a>页锁(不常用)</h2><p>页级锁是MySQL中锁定粒度介于行级锁和表级锁中间的一种锁。</p>
+<p>表级锁速度快，但冲突多，行级冲突少，但速度慢。</p>
+<p>所以取了折衷的页级，一次锁定相邻的一组记录。</p>
+<p><strong>BDB存储引擎支持页级锁</strong></p>
+<h2 id="乐观锁和悲观锁"><a href="#乐观锁和悲观锁" class="headerlink" title="乐观锁和悲观锁"></a>乐观锁和悲观锁</h2><blockquote>
+<p>悲观锁和乐观锁，都是人们定义出来的概念，可以认为是一种思想。</p>
+<p>其实不仅仅是关系型数据库系统中有乐观锁和悲观锁的概念，像 memcache、hibernate、tair 等都有类似的概念</p>
+</blockquote>
+<h3 id="1、悲观锁"><a href="#1、悲观锁" class="headerlink" title="1、悲观锁"></a>1、悲观锁</h3><blockquote>
+<p><strong>解释：</strong> （又名“悲观锁”，Pessimistic Concurrency Control，缩写“PCC”）如果一个事务执行的操作对某行数据应用了锁，那只有当这个事务把锁释放，其他事务才能够执行与该锁冲突的操作。悲观并发控制主要用于数据争用激烈的环境，以及发生并发冲突时使用锁保护数据的成本要低于回滚事务的成本的环境中。</p>
+</blockquote>
+<h4 id="测试悲观锁"><a href="#测试悲观锁" class="headerlink" title="测试悲观锁"></a>测试悲观锁</h4><blockquote>
+<p><strong>自己测试注意事项：</strong> 需要关闭 mysql 中的 autocommit 属性，因为 mysql 默认使用自动提交模式，也就是说当我们进行一个sql操作的时候，mysql会将这个操作当做一个事务并且自动提交这个操作。</p>
+</blockquote>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1.</span>开始事务</span><br><span class="line"><span class="keyword">begin</span>;<span class="operator">/</span><span class="keyword">begin</span> work;<span class="operator">/</span><span class="keyword">start</span> transaction; (三者选一就可以)</span><br><span class="line"><span class="number">2.</span>查询出商品信息</span><br><span class="line"><span class="keyword">select</span> ... <span class="keyword">for</span> <span class="keyword">update</span>;</span><br><span class="line"><span class="number">4.</span>提交事务</span><br><span class="line"><span class="keyword">commit</span>;<span class="operator">/</span><span class="keyword">commit</span> work;</span><br></pre></td></tr></table></figure>
+<h5 id="悲观锁的优点："><a href="#悲观锁的优点：" class="headerlink" title="悲观锁的优点："></a>悲观锁的优点：</h5><p> 悲观锁实际上是采取了 <strong>“先取锁在访问”</strong> 的策略，为数据的处理安全提供了保证</p>
+<h5 id="悲观锁的不足："><a href="#悲观锁的不足：" class="headerlink" title="悲观锁的不足："></a>悲观锁的不足：</h5><p>在效率方面，由于额外的加锁机制产生了额外的开销，并且增加了死锁的机会。并且降低了并发性；当一个事物所以一行数据的时候，其他事物必须等待该事务提交之后，才能操作这行数据。</p>
+<h3 id="2、乐观锁"><a href="#2、乐观锁" class="headerlink" title="2、乐观锁"></a>2、乐观锁</h3><blockquote>
+<p><strong>解释：</strong> （又名“乐观锁”，Optimistic Concurrency Control，缩写“OCC”）它假设多用户并发的事务在处理时不会彼此互相影响，各事务能够在不产生锁的情况下处理各自影响的那部分数据。在提交数据更新之前，每个事务会先检查在该事务读取数据后，有没有其他事务又修改了该数据。如果其他事务有更新的话，正在提交的事务会进行回滚。</p>
+</blockquote>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> ... lock <span class="keyword">in</span> share mode; <span class="operator">/</span><span class="operator">/</span> 共享锁</span><br></pre></td></tr></table></figure>
+<h5 id="乐观锁的优点："><a href="#乐观锁的优点：" class="headerlink" title="乐观锁的优点："></a>乐观锁的优点：</h5><p> 乐观并发控制相信事务之间的数据竞争 (data race) 的概率是比较小的，因此尽可能直接做下去，直到提交的时候才去锁定，所以不会产生任何锁和死锁</p>
+<h5 id="乐观锁的不足："><a href="#乐观锁的不足：" class="headerlink" title="乐观锁的不足："></a>乐观锁的不足：</h5><p>但如果直接简单这么做，还是有可能会遇到不可预期的结果，例如两个事务都读取了数据库的某一行，经过修改以后写回数据库，这时就遇到了问题。</p>
+<h4 id="MVCC-多版本并发控制实现乐观锁"><a href="#MVCC-多版本并发控制实现乐观锁" class="headerlink" title="MVCC-多版本并发控制实现乐观锁"></a>MVCC-多版本并发控制实现乐观锁</h4><p>MVCC 的实现，是通过保存数据在某个时间点的快照来实现的。每个事务读到的数据项都是一个历史快照，被称为快照读，不同于当前读的是快照读读到的数据可能不是最新的，但是快照隔离能使得在整个事务看到的数据都是它启动时的数据状态。而写操作不覆盖已有数据项，而是创建一个新的版本，直至所在事务提交时才变为可见。</p>
+<p>例如下表中的 version：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>id</td>
+<td>主键id</td>
+</tr>
+<tr>
+<td>product_name</td>
+<td>商品名称</td>
+</tr>
+<tr>
+<td>product_price</td>
+<td>商品价格</td>
+</tr>
+<tr>
+<td>product_stock</td>
+<td>商品库存</td>
+</tr>
+<tr>
+<td>version</td>
+<td>数据版本（新增默认为1）</td>
+</tr>
+</tbody></table>
+<h2 id="锁升级现象"><a href="#锁升级现象" class="headerlink" title="锁升级现象"></a>锁升级现象</h2><blockquote>
+<p>MySQL 的 InnoDB 存储引擎支持事务，支持行级锁（innodb的行锁是通过给索引项加锁实现的）。得益于这些特性，数据库支持高并发。</p>
+<p>如果 InnoDB 更新数据使用的不是行锁，而是表锁呢？<br>是的，InnoDB 其实很容易就升级为表锁，届时并发性将大打折扣了</p>
+</blockquote>
+<p>1、在不通过索引条件查询的时候，InnoDB使用的确实是表锁！<br>2、由于 MySQL 的行锁是针对索引加的锁，不是针对记录加的锁。所以虽然是访问不同行 的记录，但是如果是使用相同的索引键，是会出现锁冲突的。<br>3、当表有多个索引的时候，不同的事务可以使用不同的索引锁定不同的行。另外，不论是使用主键索引、唯一索引、普通索引。InnoDB 都会使用行锁来对数据加锁。<br>4、即便在条件中使用了索引字段，但是否使用索引来检索数据是由 MySQL 通过判断不同执行计划的代价来决定的。</p>
+<p> <strong>如果 MySQL 认为全表扫 效率更高。比如对一些很小的表，它就不会使用索引。这种情况下 InnoDB 将使用表锁，而不是行锁。因此，在分析锁冲突时,，别忘了检查 SQL 的执行计划（explain查看），以确认是否真正使用了索引。</strong></p>
+<h2 id="Record-Lock、Gap-Lock、Next-key-Lock锁"><a href="#Record-Lock、Gap-Lock、Next-key-Lock锁" class="headerlink" title="Record Lock、Gap Lock、Next-key Lock锁"></a>Record Lock、Gap Lock、Next-key Lock锁</h2><h3 id="1-Record-Lock"><a href="#1-Record-Lock" class="headerlink" title="1.Record Lock"></a>1.Record Lock</h3><p> 单条索引上加锁，record lock 永远锁的是索引，而非数据本身，如果innodb表中没有索引，那么会自动创建一个隐藏的聚集索引，锁住的就是这个聚集索引。所以说当一条sql没有走任何索引时，那么将会在每一条聚集索引后面加X锁，这个类似于表锁，但原理上和表锁应该是完全不同的。</p>
+<h3 id="2-Gap-Lock-间隙锁"><a href="#2-Gap-Lock-间隙锁" class="headerlink" title="2.Gap Lock(间隙锁)"></a>2.Gap Lock(间隙锁)</h3><p> 间隙锁，是在索引的间隙之间加上锁，这是为什么 <strong>RR隔离级别</strong> 下能防止幻读的主要原因。</p>
+<p>有关幻读的详细解释：<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_38238296/article/details/88363017">https://blog.csdn.net/qq_38238296/article/details/88363017</a></p>
+<p>当我们用范围条件而不是相等条件检索数据，并请求共享或排他锁时，InnoDB会给符合条件的已有数据记录的索引项加锁；对于键值在条件范围内但不存在的记录，叫做“间隙(GAP)”，InnoDB也会对这个“间隙”加锁，这种锁机制就是所谓的间隙锁(NEXT-KEY)锁。</p>
+<p><strong>危害：</strong></p>
+<p>因为Query执行过程中通过范围查找的话，他会锁定整个范围内所有的索引键值，即使这个键值并不存在。</p>
+<p>间隙锁有一个比较致命的弱点，就是当锁定一个范围键值之后，即使某些不存在的键值也会被无辜的锁定，而造成在锁定的时候无法插入锁定值范围内的任何数据，在某些场景下这可能会针对性造成很大的危害。</p>
+<p><strong>数据表此时的数据如下：</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> <span class="keyword">user</span>;</span><br><span class="line"><span class="operator">+</span><span class="comment">----+------------+------+</span></span><br><span class="line"><span class="operator">|</span> id <span class="operator">|</span> username   <span class="operator">|</span> age  <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">----+------------+------+</span></span><br><span class="line"><span class="operator">|</span>  <span class="number">1</span> <span class="operator">|</span> shine York <span class="operator">|</span>   <span class="number">20</span> <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>  <span class="number">2</span> <span class="operator">|</span> starsky    <span class="operator">|</span>   <span class="number">20</span> <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>  <span class="number">4</span> <span class="operator">|</span> will       <span class="operator">|</span>   <span class="number">10</span> <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>  <span class="number">5</span> <span class="operator">|</span> harry      <span class="operator">|</span>   <span class="number">10</span> <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>  <span class="number">7</span> <span class="operator">|</span> cara       <span class="operator">|</span>   <span class="number">30</span> <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>  <span class="number">8</span> <span class="operator">|</span> jace       <span class="operator">|</span>   <span class="number">40</span> <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">----+------------+------+</span></span><br><span class="line"><span class="number">6</span> <span class="keyword">rows</span> <span class="keyword">in</span> <span class="keyword">set</span> (<span class="number">0.00</span> sec)</span><br></pre></td></tr></table></figure>
+<p>注意表中的数据，ID包含 【1，2，4，5，7，8】 缺少【3，6】。此处 id 不连续</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">事务<span class="number">1</span></span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> <span class="keyword">user</span> id <span class="keyword">between</span> <span class="number">1</span> <span class="keyword">and</span> <span class="number">5</span> <span class="keyword">for</span> <span class="keyword">update</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">事务<span class="number">2</span></span><br><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> <span class="keyword">user</span> (id,username,age)<span class="keyword">values</span>(<span class="number">3</span>,<span class="string">&#x27;php&#x27;</span>,<span class="number">30</span>)</span><br></pre></td></tr></table></figure>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210215183852.png" alt="img"></p>
+<p>可以看到，事务2在执行新增 id 为 2的数据时出现了所等待现象。</p>
+<p>说明id为2的数据被事务1进行的范围查询加锁锁住，其他事务需要等到事务1进行提交或者回滚之后 才能继续操作事务1锁住的数据。</p>
+<h2 id="死锁"><a href="#死锁" class="headerlink" title="死锁"></a>死锁</h2><h3 id="注意"><a href="#注意" class="headerlink" title="注意"></a>注意</h3><p>MyISAM中是不会产生死锁的，因为MyISAM总是一次性获得所需的全部锁，要么全部满足，要么全部等待。</p>
+<p>而在InnoDB中，锁是逐步获得的，就造成了死锁的可能。</p>
+<h3 id="形成原因"><a href="#形成原因" class="headerlink" title="形成原因"></a>形成原因</h3><p>在InnoDB中，行级锁并不是直接锁记录，而是锁索引。索引分为主键索引和非主键索引两种，如果一条sql语句操作了主键索引，MySQL就会锁定这条主键索引；如果一条语句操作了非主键索引，MySQL会先锁定该非主键索引，再锁定相关的主键索引。</p>
+<p>当两个事务同时执行，一个锁住了主键索引，在等待其他相关索引。另一个锁定了非主键索引，在等待主键索引。这样就会发生死锁。</p>
+<p><strong>1.1、两个 session （窗口）的两条语句</strong></p>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210215184331.jpeg" alt="在这里插入图片描述"></p>
+<p>首先session1获得 id=1的锁 session2获得id=5的锁，然后session想要获取id=5的锁 等待，session2想要获取id=1的锁 ，也等待！（互相等待，则发生了死锁）</p>
+<p><strong>1.2、 两个session的一条语句</strong></p>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210215184656.jpeg" alt="在这里插入图片描述"></p>
+<p>这种情况需要我们了解数据的<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_38238296/article/details/88362682">索引的检索顺序原理</a>简单说下：普通索引上面保存了主键索引，当我们使用普通索引检索数据时，如果所需的信息不够，那么会继续遍历主键索引。</p>
+<p><strong>假设默认情况是<code>RR</code>隔离级别</strong></p>
+<p>针对session 1 从name索引出发，检索到的是（hdc,1）（hdc,6）不仅会加name索引上的记录X锁，而且会加聚簇索引上的记录X锁，加锁顺序为先[1,hdc,100]，后[6,hdc,10] 这个顺序是因为B+树结构的有序性。</p>
+<p>而Session 2，从pubtime索引出发，[10,6],[100,1]均满足过滤条件，同样也会加聚簇索引上的记录X锁，加锁顺序为[6,hdc,10]，后[1,hdc,100]。</p>
+<p>发现没有，跟Session 1的加锁顺序正好相反，如果两个Session恰好都持有了第一把锁，请求加第二把锁，死锁就发生了。</p>
+<h3 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h3><ol>
+<li>如果不同程序会并发存取多个表，尽量约定以相同的顺序访问表，可以大大降低死锁机会。</li>
+<li>在同一个事务中，尽可能做到一次锁定所需要的所有资源，减少死锁产生概率；</li>
+<li>对于非常容易产生死锁的业务部分，可以尝试使用升级锁定颗粒度，通过表级锁定来减少死锁产生的概率</li>
+</ol>
+
+            </section>
+    </article>
+    
+
+
+        <!-- 版权声明 -->
+        
+<div class="post-copyright">
+    <!-- <div>
+        <strong>本文作者：</strong>
+        <span>李斌</span>
+    </div> -->
+    <div>
+        <strong>本文链接：</strong>
+        <a href="https://blog.mailjob.net/posts/3275127377.html">
+            <!-- https://blog.mailjob.net/mysql/mysql锁机制 -->
+            https://blog.mailjob.net/posts/3275127377.html
+        </a>
+    </div>
+    <div>
+        <!-- <span>欢迎任何形式的转载，请务必注明出处。</span> -->
+    </div>
+    <div>
+        <span>
+            该网站发布的内容，遵循
+            <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>
+            版权协议，转载请附上原文出处链接和本声明。
+        </span>
+    </div>
+</div>
+
+
+
+<style>
+    .post-copyright {
+        background-color: #fff;
+  box-shadow: 0px 0px 1px 1px rgba(0, 0, 0, 0.05);
+        display: block;
+        margin: 20px auto;
+        margin-bottom: 15px;
+        padding: 10px;
+        font-size: 15px;
+        color: #2e2d2d;
+        word-break: break-all;
+        line-height: 1.8;
+    }
+
+
+    .post-copyright a {
+        color: #2e2d2d;
+        border-bottom: 1px solid #999; 
+    }
+
+    .post-copyright a:hover {
+        color: #2e2d2d;
+        border-bottom: 1px solid #000; 
+    }
+</style>
+
+          <!-- comments -->
+          <div class="comments">
+    <h3 id="commenttitle" style="margin-top: 20px;margin-left: 10px;">评论区</h3>
+    <div id="tcomment"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/twikoo@0.6.0/dist/twikoo.all.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/twikoo@1.0.0/dist/twikoo.all.min.js"></script> -->
+
+<script>twikoo.init({ envId: 'jefferyjob-github-io-3b53ee3a93b', el: '#tcomment' })</script>
+
+            <div class="right-icon">
+              <div id="to-valine" class="right-icon-item">
+                <a href="#commenttitle">评论</a>
+              </div>
+            </div>
+
+  </div>
+
+
+  <aside>
+    <div class="aside-wrap">
+    
+        <section class="widget-wrap">
+    <h3 class="widget-title">简介</h3>
+    <div class="widget">
+        <div class="notice">
+            <img class="notice-img" src="https://img.github.mailjob.net/logo/libin.jpg">
+            <p>李斌的个人独立博客<br>此平台用作学习交流<br>日常分享</p>
+            
+            <p class="notice-item">
+                <!-- github -->
+                <span><a target="_blank" href="https://github.com/jefferyjob"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108165043.jpg" alt="Github"></a></span>
+                <!-- csdn -->
+                <span><a target="_blank" href="https://blog.csdn.net/libinemail"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108172932.ico" alt="CSDN"></a></span>
+                <!-- juejin -->
+                <span><a target="_blank" href="https://juejin.cn/user/782508009723783"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108165800.png" alt="掘金社区"></a></span>
+                <!-- zhihu -->
+                <span><a target="_blank" href="https://www.zhihu.com/people/JefferyJob"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108172745.ico" alt="知乎"></a></span>
+                
+            </p>
+            
+        </div>
+    </div>
+</section>
+
+
+    
+        
+  <section class="widget-wrap">
+    <h3 class="widget-title">文章分类</h3>
+    <div class="widget">
+      <div class="categories-list">
+        
+           
+            
+              <a class="category-list-item" href="/categories/算法">
+                <span class="category-list-link">算法</span>
+                <span class="category-list-number">(13)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/mysql">
+                <span class="category-list-link">mysql</span>
+                <span class="category-list-number">(36)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/docker">
+                <span class="category-list-link">docker</span>
+                <span class="category-list-number">(2)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/design">
+                <span class="category-list-link">design</span>
+                <span class="category-list-number">(3)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/linux">
+                <span class="category-list-link">linux</span>
+                <span class="category-list-number">(5)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/rabbitmq">
+                <span class="category-list-link">rabbitmq</span>
+                <span class="category-list-number">(2)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/php">
+                <span class="category-list-link">php</span>
+                <span class="category-list-number">(6)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/redis">
+                <span class="category-list-link">redis</span>
+                <span class="category-list-number">(25)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/blog">
+                <span class="category-list-link">blog</span>
+                <span class="category-list-number">(15)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/swoole">
+                <span class="category-list-link">swoole</span>
+                <span class="category-list-number">(3)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/notes">
+                <span class="category-list-link">notes</span>
+                <span class="category-list-number">(10)</span>
+              </a>
+            
+          
+        
+      </div>
+    </div>
+  </section>
+
+
+    
+        
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget widget_tag">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/blog/" rel="tag">blog</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/es/" rel="tag">es</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/haproxy/" rel="tag">haproxy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/keepalived/" rel="tag">keepalived</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mycat/" rel="tag">mycat</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nginx/" rel="tag">nginx</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/notes/" rel="tag">notes</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/openresty/" rel="tag">openresty</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/php/" rel="tag">php</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/rabbitmq/" rel="tag">rabbitmq</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/swoole/" rel="tag">swoole</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a></li></ul>
+    </div>
+  </div>
+
+
+<style>
+  .widget_tag ul li {
+    display: inline-block;
+    padding: 0px 5px;
+    border: 1px solid #eee;
+    margin-bottom: 7px;
+    margin-right: 5px;
+    border-radius: 5px;
+    font-size: 12px;
+    color: #999;
+  }
+</style>
+    
+        
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul class="recent-posts">
+        
+          <li>
+            <a href="/posts/1482114423.html">notes：解决github访问慢的问题</a>
+          </li>
+        
+          <li>
+            <a href="/posts/1634640555.html">雪花算法 snowflake</a>
+          </li>
+        
+          <li>
+            <a href="/posts/163644071.html">mysql视图基本操作</a>
+          </li>
+        
+          <li>
+            <a href="/posts/1198915737.html">mysql视图是什么</a>
+          </li>
+        
+          <li>
+            <a href="/posts/3520988043.html">PHP实现IO阻塞模型(blocking)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+    
+        
+  <section class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/04/">四月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/03/">三月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/02/">二月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a></li></ul>
+    </div>
+  </section>
+
+
+    
+        
+  <section class="widget-wrap">
+    <h3 class="widget-title">友情链接</h3>
+    <div>
+      <ul class="widget-links">
+          
+          <li>
+              <a target="_blank" rel="noopener" href="https://libinblog.gitee.io" title="">
+                  本站大陆节点
+              </a>
+          </li>
+          
+          <li>
+              <a target="_blank" rel="noopener" href="https://blog.senll.com" title="">
+                  Ethan 的博客
+              </a>
+          </li>
+          
+          <li>
+              <a target="_blank" rel="noopener" href="https://www.laruence.com" title="">
+                  鸟哥的博客
+              </a>
+          </li>
+          
+          <li>
+              <a target="_blank" rel="noopener" href="http://rango.swoole.com" title="">
+                  韩天峰的博客
+              </a>
+          </li>
+          
+      </ul>
+    </div>
+  </section>
+
+
+<style>
+  .widget-links {
+    list-style: none;
+    padding-left: 10px;
+  }
+  .widget-links >li > a:hover {
+    color: #f40;
+    text-decoration: underline;
+  }
+</style>
+    
+        <section class="widget-wrap">
+    <div class="widget">
+        <div class="notice attention">
+
+            <p>
+                该网站发布的内容，遵循
+                <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>
+                版权协议，转载请附上原文出处链接和本声明。
+                <br><br>
+                如果有其他问题，可以给我发邮件咨询。
+                <a target="_blank" href="https://www.mailjob.net">libin@mailjob.net</a>
+                。我看到后会在第一时间回复！
+            </p>
+            
+        </div>
+    </div>
+</section>
+
+    
+    
+</div>
+
+
+      <!-- 目录 -->
+      
+        <div id="toc"></div>
+        <script>
+          $(function () {
+            var elm = $('#toc');
+            var startPos = $(elm).offset().top;
+            $.event.add(window, "scroll", function () {
+              var p = $(window).scrollTop();
+              $(elm).css('margin-left', '0px');
+              $(elm).css('position', ((p) > startPos) ? 'fixed' : 'static');
+              $(elm).css('top', ((p) > startPos) ? '20px' : '')
+            })
+          })
+
+        </script>
+
+  </aside>
+  
+</div>
+
+
+<script>
+  $('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
+
+</script>
+                </div>
+            </div>
+            <div class="right-icon">
+                <div id="to-top" class="right-icon-item">
+                  <a>
+                    <span class="top-left"></span>
+                    <span class="top-right"></span>
+                  </a>
+                </div>
+              </div>
+    </div>
+    <footer class="footer">
+  <div class="links-wrap-wrap">
+    <div class="links-wrap">
+    
+      
+        <section class="link-wrap">
+          <h3 class="link-title">导航</h3>
+          <div>
+            <ul class="link-item-wrap">
+                
+                <li class="link-item">
+                    <a href="https://blog.mailjob.net" title="">
+                        李斌的技术博客
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://www.mailjob.net" title="">
+                        我的邮箱
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://github.com/mailjobblog/demo_code" title="">
+                        Demo Code
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://new.cnzz.com/v1/login.php?siteid=1279692087" title="">
+                        友盟
+                    </a>
+                </li>
+                
+            </ul>
+          </div>
+        </section>
+      
+
+
+      
+        <section class="link-wrap">
+          <h3 class="link-title">社区论坛</h3>
+          <div>
+            <ul class="link-item-wrap">
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail" title="">
+                        李斌的CSDN
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://www.cnblogs.com/jefferyjob" title="">
+                        李斌的博客园
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://github.com/jefferyjob" title="">
+                        GitHub
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://hub.docker.com/u/jefferyjob" title="">
+                        DockerHub
+                    </a>
+                </li>
+                
+            </ul>
+          </div>
+        </section>
+      
+
+    </div>
+  </div>
+  
+    <div class="copyright-wrap">
+      <span>Copyright &copy; 2020-2021 京ICP备17056825号</span>
+      <span id="timeDate">载入天数...</span>
+
+      <br><br>
+      <span>
+        本站由 <a style="color:#e4e7ee" target="_blank" rel="noopener" href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral"><img style="width: 10px;height: 10px;" src="//img.github.mailjob.net/oss.github/20210226141134.png">又拍云</a> 提供CDN加速/云储存服务
+      </span>
+    </div>
+    
+    <!-- <span id="busuanzi_container_site_pv">
+      本站总访问量<span id="busuanzi_value_site_pv"></span>次
+    </span>
+    <span id="busuanzi_container_site_uv">
+      ，本站访客数<span id="busuanzi_value_site_uv"></span>人次
+    </span> -->
+
+   
+    
+</footer>
+
+<script>
+    var now = new Date();
+    function createtime() {
+      var grt = new Date("06/14/2020 12:00:00");//此处修改你的建站时间或者网站上线时间 
+      now.setTime(now.getTime() + 250);
+      days = (now - grt) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+      document.getElementById("timeDate").innerHTML = "本站已运行 " + dnum + " 天 ";
+    }
+    setInterval("createtime()", 1000);
+</script>
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<script src="/lib/jquery.js"></script>
+
+
+<script src="/lib/waves.js"></script>
+
+
+<script src="/lib/jquery-ui.js"></script>
+
+
+<script src="/lib/jquery.tocify.js"></script>
+
+
+<script src="/js/main.js"></script>
+
+
+        
+<style>
+  .copy-btn {
+    display: inline-block;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 20px;
+    color: rgb(206, 206, 206);
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    border-radius: 3px;
+    user-select: none;
+    outline: 0;
+  }
+
+  .copy-btn:hover {
+    color: #888
+  }
+
+  .highlight-wrap .copy-btn {
+    padding: 2px 6px;
+    position: absolute;
+    right: 10px;
+    top: 1px;
+    z-index: 1;
+  }
+
+
+
+  .highlight-wrap {
+    position: relative;
+  }
+
+  #copysuccess {
+    width: 200px;
+    height: 75px;
+    position: fixed;
+    right: 50%;
+    margin-right: -100px;
+    top: 40%;
+    margin-top: -40px;
+    color: #fff;
+    font-weight: 600;
+    background: #444444d8;
+    display: none;
+    z-index: 99999;
+    border-radius: 10px;
+    text-align: center;
+    line-height: 30px;
+    padding-top: 10px;
+    user-select: none;
+  }
+</style>
+
+<script>
+  addLoadEvent(() => {
+    $('.highlight').each(function (i, e) {
+      var $wrap = $('<div>').addClass('highlight-wrap')
+      $(e).after($wrap)
+      $wrap.append($('<div>').addClass('copy-btn').append('复制代码').on('click', function (e) {
+        var copysuccess = document.getElementById('copysuccess');
+        copysuccess.style.display = 'block'
+        setTimeout(function () {
+          copysuccess.style.display = 'none'
+        }, 2000)
+        var code = $(this).parent().find(".code")[0].innerText
+          
+                var ta = document.createElement('textarea')
+        document.body.appendChild(ta)
+        ta.style.position = 'absolute'
+        ta.style.top = '0px'
+        ta.style.left = '0px'
+        ta.value = code
+        ta.select()
+        ta.focus()
+        var result = document.execCommand('copy')
+        document.body.removeChild(ta)
+          
+                  if (result) $(this).text('复制成功')
+            else $(this).text('复制失败')
+              
+                $(this).blur()
+      })).on('mouseleave', function (e) {
+        var $b = $(this).find('.copy-btn')
+        setTimeout(function () {
+          $b.text('复制代码')
+        }, 1000)
+      }).append(e)
+    })
+  })
+</script>
+
+            <div id="copysuccess">复制成功<br>Copy succeeded</div>
+</body>
+
+</html>
+
+<script>
+    $('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
+</script>
+
+<!-- 网站管理 start -->
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>
+
+<!-- 网站管理 end -->

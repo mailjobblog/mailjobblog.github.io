@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>
+    Redis集群实战搭建 | 李斌的技术博客
+  </title>
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <meta name="theme-color" content="#4184f3">
+  
+  
+  <link href="https://img.github.mailjob.net/logo/favicon.ico" rel="icon" />
+  
+
+  
+<link rel="stylesheet" href="/css/highlight.light.css">
+
+  
+<link rel="stylesheet" href="/css/prism-customize.css">
+
+  
+<link rel="stylesheet" href="/css/nav-icon.css">
+
+  
+<link rel="stylesheet" href="/css/waves.min.css">
+
+  
+<link rel="stylesheet" href="/css/jquery.tocify.css">
+
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+<link rel="stylesheet" href="/css/nav-indicator.css">
+
+  
+<link rel="stylesheet" href="/css/twikoo.css">
+
+  
+<link rel="stylesheet" href="/css/search.css">
+
+  
+  
+
+  
+
+  </meta>
+  </meta>
+  <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.js"></script>
+  
+<script src="/js/comment.js"></script>
+
+  
+<script src="/js/copy.js"></script>
+
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 5.3.0"></head>
+
+<body>
+    <header>
+        <!-- cover image or sth. -->
+    </header>
+
+    <!-- tips_head start -->
+    <div class="tips_head">
+        <center><span id='tips_head_span'></span></center>
+<script>
+    var host = window.location.host;
+    if(host != 'blog.mailjob.net' && host != 'localhost:4000') {
+        document.getElementById("tips_head_span").innerHTML = "此访问域名为大陆节点，网站内容更新有一定的延迟且不支持评论。若要获取最新信息，请访问国际节点：<a href='https://blog.mailjob.net'>https://blog.mailjob.net</a>"
+        document.getElementById("tips_head_span").style.lineHeight = 3;
+    }
+</script>
+    </div>
+    <!-- tips_head end -->
+
+    <div id="main" class="m-scene">
+        
+<div class="nav-wrapper" id="header">
+
+    <div class="container">
+        <nav>
+            
+            
+            <div class="logo wave">
+                <a href="/" id="logo">
+                    李斌的技术博客
+                </a>
+            </div>
+
+            <div class="nav-toggle-icon" >
+                <div class="material-hamburger">
+                    <span>
+                    </span>
+                    <span>
+                    </span>
+                    <span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="menu-wrapper">
+                <div class="nav-indicator">
+                </div>
+                <ul class="menus">
+                    
+                     
+                        <li>
+                            <a class="wave " href="/">
+                                首页
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/archives">
+                                归档
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/about">
+                                关于
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/message">
+                                留言
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/search">
+                                搜索
+                            </a>
+                        </li>
+                     
+                    
+                   
+                </ul>
+            </div>
+
+        </nav>
+    </div>
+</div>
+
+
+            <div class="container content">
+                <div class="scene_element scene_element--fadein">
+                    <div class="row">
+  <div class="main main-article">
+    <article>
+
+      
+            <header class="post-header">
+              
+            </header>
+
+            <h1 class="post-title">
+              Redis集群实战搭建
+            </h1>
+
+            <section class="post-info post-info-bottom">
+
+              <span class="post-date">发布于
+                <span class="post-date-text">
+                   2021-02-09
+                </span>
+              </span>
+
+
+
+
+              
+                <span class="post-category">分类:
+                  <a class="article-category-link" href="/categories/redis/">redis</a>
+                </span>
+                
+                  
+                    <span class="post-tags">
+                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/redis/" rel="tag">redis</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a></li></ul>
+                    </span>
+                    
+
+                      <!-- 阅读量统计 -->
+                      
+                        <span class="post-visitors">阅读量:<span id="twikoo_visitors">0</span></span>
+                        
+
+
+            </section>
+
+            <section class="post-content">
+
+              <meta name="referrer" content="no-referrer"/>
+
+<h1 id="相关链接"><a href="#相关链接" class="headerlink" title="相关链接"></a>相关链接</h1><blockquote>
+<p>redis集群演示服务分布图：<a target="_blank" rel="noopener" href="https://www.kdocs.cn/view/l/sfN4qFXA2SyN">https://www.kdocs.cn/view/l/sfN4qFXA2SyN</a></p>
+<p>作者的docker-compose的redis集群：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/demo_code/tree/main/redis/%E9%9B%86%E7%BE%A4">https://github.com/mailjobblog/demo_code/tree/main/redis/%E9%9B%86%E7%BE%A4</a></p>
+</blockquote>
+<h2 id="docker-compose-文件说明"><a href="#docker-compose-文件说明" class="headerlink" title="docker-compose 文件说明"></a>docker-compose 文件说明</h2><blockquote>
+<p>该演示示例，使用 <code>redis6.0.10</code> 版本进行演示</p>
+</blockquote>
+<h3 id="文件中容器对应关系"><a href="#文件中容器对应关系" class="headerlink" title="文件中容器对应关系"></a>文件中容器对应关系</h3><table>
+<thead>
+<tr>
+<th>容器名称</th>
+<th>IP</th>
+<th>客户端连接端口映射</th>
+<th>集群端口映射</th>
+<th>预想角色</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>redis-c1</td>
+<td>172.31.0.11</td>
+<td>6301-&gt;6379</td>
+<td>16301-&gt;16379</td>
+<td>master</td>
+</tr>
+<tr>
+<td>redis-c2</td>
+<td>172.31.0.12</td>
+<td>6302-&gt;6379</td>
+<td>16302-&gt;16379</td>
+<td>master</td>
+</tr>
+<tr>
+<td>redis-c3</td>
+<td>172.31.0.13</td>
+<td>6303-&gt;6379</td>
+<td>16303-&gt;16379</td>
+<td>master</td>
+</tr>
+<tr>
+<td>redis-c4</td>
+<td>172.31.0.14</td>
+<td>6304-&gt;6379</td>
+<td>16304-&gt;16379</td>
+<td>slave</td>
+</tr>
+<tr>
+<td>redis-c5</td>
+<td>172.31.0.15</td>
+<td>6305-&gt;6379</td>
+<td>16305-&gt;16379</td>
+<td>slave</td>
+</tr>
+<tr>
+<td>redis-c6</td>
+<td>172.31.0.16</td>
+<td>6306-&gt;6379</td>
+<td>16306-&gt;16379</td>
+<td>slave</td>
+</tr>
+<tr>
+<td>redis-c7</td>
+<td>172.31.0.17</td>
+<td>6307-&gt;6379</td>
+<td>16307-&gt;16379</td>
+<td>master （演示集群伸缩中使用）</td>
+</tr>
+<tr>
+<td>redis-c8</td>
+<td>172.31.0.18</td>
+<td>6308-&gt;6379</td>
+<td>16308-&gt;16379</td>
+<td>slave （演示集群伸缩中使用）</td>
+</tr>
+</tbody></table>
+<h3 id="初始服务分布如下"><a href="#初始服务分布如下" class="headerlink" title="初始服务分布如下"></a>初始服务分布如下</h3><p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210208230110.png"></p>
+<h3 id="集群主要配置文件说明"><a href="#集群主要配置文件说明" class="headerlink" title="集群主要配置文件说明"></a>集群主要配置文件说明</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"># 端口</span><br><span class="line">port 6379</span><br><span class="line"># 是否开启集群</span><br><span class="line">cluster-enabled yes</span><br><span class="line"># 集群超时时间</span><br><span class="line">cluster-node-timeout 5000</span><br><span class="line"># 更新操作后进行日志记录</span><br><span class="line">appendonly yes</span><br><span class="line"># 集群配置文件</span><br><span class="line">cluster-config-file &quot;&#x2F;redis&#x2F;log&#x2F;nodes.conf&quot;</span><br><span class="line"># 是否开启外部连接</span><br><span class="line">protected-mode no</span><br><span class="line"># redis守护进程</span><br><span class="line">daemonize no</span><br><span class="line"># 本地数据库存放目录</span><br><span class="line">dir &quot;&#x2F;redis&#x2F;data&quot;</span><br><span class="line"># redis日志文件</span><br><span class="line">logfile &quot;&#x2F;redis&#x2F;log&#x2F;redis.log&quot;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">daemonize 设置yes或者no区别（默认：no）</span><br><span class="line"></span><br><span class="line">daemonize:yes:redis采用的是单进程多线程的模式。当redis.conf中选项daemonize设置成yes时，代表开启守护进程模式。在该模式下，redis会在后台运行，并将进程pid号写入至redis.conf选项pidfile设置的文件中，此时redis将一直运行，除非手动kill该进程。</span><br><span class="line">daemonize:no: 当daemonize选项设置成no时，当前界面将进入redis的命令行界面，exit强制退出或者关闭连接工具(putty,xshell等)都会导致redis进程退出。</span><br></pre></td></tr></table></figure>
+<h1 id="开始搭建集群"><a href="#开始搭建集群" class="headerlink" title="开始搭建集群"></a>开始搭建集群</h1><h3 id="在宿主机-data-上传-j-cluster"><a href="#在宿主机-data-上传-j-cluster" class="headerlink" title="在宿主机 /data 上传 j_cluster"></a>在宿主机 /data 上传 j_cluster</h3><blockquote>
+<p>如果上传到了其他目录需要更改 yml 里面的数据卷映射条件</p>
+</blockquote>
+<h3 id="启动项目"><a href="#启动项目" class="headerlink" title="启动项目"></a>启动项目</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 进入到项目目录</span><br><span class="line">cd &#x2F;data&#x2F;j_cluster</span><br><span class="line"></span><br><span class="line"># 启动项目</span><br><span class="line">docker-compose up -d</span><br></pre></td></tr></table></figure>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210208132002.png"></p>
+<h3 id="查看一下各个节点的ip"><a href="#查看一下各个节点的ip" class="headerlink" title="查看一下各个节点的ip"></a>查看一下各个节点的ip</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker container inspect redis-c1 redis-c2 redis-c3 redis-c4 redis-c5 redis-c6 | grep IPv4Address</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>可以看到和我在 yam 中定义的ip一致</p>
+</blockquote>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210208134455.png"></p>
+<h1 id="开始搭建集群-1"><a href="#开始搭建集群-1" class="headerlink" title="开始搭建集群"></a>开始搭建集群</h1><h3 id="这里以进入-redis-c1-为例"><a href="#这里以进入-redis-c1-为例" class="headerlink" title="这里以进入 redis-c1 为例"></a>这里以进入 redis-c1 为例</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker exec -it redis-c1 &#x2F;bin&#x2F;bash</span><br></pre></td></tr></table></figure>
+<h3 id="浏览一下redis的集群命令"><a href="#浏览一下redis的集群命令" class="headerlink" title="浏览一下redis的集群命令"></a>浏览一下redis的集群命令</h3><blockquote>
+<p>以下命令只有 redis5 以后才有,redis5 以后redis发布了集群搭建命令<br>redis5 以前如果你要搭建的话，可以采用 Ruby 脚本  </p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"># 查看集群帮助文档</span><br><span class="line">root@e4d19717bbed:&#x2F;redis# redis-cli --cluster help</span><br><span class="line"></span><br><span class="line"># 集群相关命令如下</span><br><span class="line">Cluster Manager Commands:</span><br><span class="line">  create         host1:port1 ... hostN:portN   #创建集群</span><br><span class="line">                 --cluster-replicas &lt;arg&gt;      #从节点个数</span><br><span class="line">  check          host:port                     #检查集群</span><br><span class="line">                 --cluster-search-multiple-owners #检查是否有槽同时被分配给了多个节点</span><br><span class="line">  info           host:port                     #查看集群状态</span><br><span class="line">  fix            host:port                     #修复集群</span><br><span class="line">                 --cluster-search-multiple-owners #修复槽的重复分配问题</span><br><span class="line">  reshard        host:port                     #指定集群的任意一节点进行迁移slot，重新分slots</span><br><span class="line">                 --cluster-from &lt;arg&gt;          #需要从哪些源节点上迁移slot，可从多个源节点完成迁移，以逗号隔开，传递的是节点的node id，还可以直接传递--from all，这样源节点就是集群的所有节点，不传递该参数的话，则会在迁移过程中提示用户输入</span><br><span class="line">                 --cluster-to &lt;arg&gt;            #slot需要迁移的目的节点的node id，目的节点只能填写一个，不传递该参数的话，则会在迁移过程中提示用户输入</span><br><span class="line">                 --cluster-slots &lt;arg&gt;         #需要迁移的slot数量，不传递该参数的话，则会在迁移过程中提示用户输入。</span><br><span class="line">                 --cluster-yes                 #指定迁移时的确认输入</span><br><span class="line">                 --cluster-timeout &lt;arg&gt;       #设置migrate命令的超时时间</span><br><span class="line">                 --cluster-pipeline &lt;arg&gt;      #定义cluster getkeysinslot命令一次取出的key数量，不传的话使用默认值为10</span><br><span class="line">                 --cluster-replace             #是否直接replace到目标节点</span><br><span class="line">  rebalance      host:port                                      #指定集群的任意一节点进行平衡集群节点slot数量 </span><br><span class="line">                 --cluster-weight &lt;node1&#x3D;w1...nodeN&#x3D;wN&gt;         #指定集群节点的权重</span><br><span class="line">                 --cluster-use-empty-masters                    #设置可以让没有分配slot的主节点参与，默认不允许</span><br><span class="line">                 --cluster-timeout &lt;arg&gt;                        #设置migrate命令的超时时间</span><br><span class="line">                 --cluster-simulate                             #模拟rebalance操作，不会真正执行迁移操作</span><br><span class="line">                 --cluster-pipeline &lt;arg&gt;                       #定义cluster getkeysinslot命令一次取出的key数量，默认值为10</span><br><span class="line">                 --cluster-threshold &lt;arg&gt;                      #迁移的slot阈值超过threshold，执行rebalance操作</span><br><span class="line">                 --cluster-replace                              #是否直接replace到目标节点</span><br><span class="line">  add-node       new_host:new_port existing_host:existing_port  #添加节点，把新节点加入到指定的集群，默认添加主节点</span><br><span class="line">                 --cluster-slave                                #新节点作为从节点，默认随机一个主节点</span><br><span class="line">                 --cluster-master-id &lt;arg&gt;                      #给新节点指定主节点</span><br><span class="line">  del-node       host:port node_id                              #删除给定的一个节点，成功后关闭该节点服务</span><br><span class="line">  call           host:port command arg arg .. arg               #在集群的所有节点执行相关命令</span><br><span class="line">  set-timeout    host:port milliseconds                         #设置cluster-node-timeout</span><br><span class="line">  import         host:port                                      #将外部redis数据导入集群</span><br><span class="line">                 --cluster-from &lt;arg&gt;                           #将指定实例的数据导入到集群</span><br><span class="line">                 --cluster-copy                                 #migrate时指定copy</span><br><span class="line">                 --cluster-replace                              #migrate时指定replace</span><br><span class="line">  help           </span><br><span class="line"></span><br><span class="line">For check, fix, reshard, del-node, set-timeout you can specify the host and port of any working node in the cluster.</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注意：Redis Cluster最低要求是3个主节点</p>
+</blockquote>
+<h3 id="创建集群主从节点"><a href="#创建集群主从节点" class="headerlink" title="创建集群主从节点"></a>创建集群主从节点</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-cli --cluster create 172.31.0.11:6379  172.31.0.12:6379  172.31.0.13:6379 172.31.0.14:6379 172.31.0.15:6379 172.31.0.16:6379 --cluster-replicas 1</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt; Performing hash slots allocation on 6 nodes...</span><br><span class="line">Master[0] -&gt; Slots 0 - 5460</span><br><span class="line">Master[1] -&gt; Slots 5461 - 10922</span><br><span class="line">Master[2] -&gt; Slots 10923 - 16383</span><br><span class="line">Adding replica 172.31.0.15:6379 to 172.31.0.11:6379</span><br><span class="line">Adding replica 172.31.0.16:6379 to 172.31.0.12:6379</span><br><span class="line">Adding replica 172.31.0.14:6379 to 172.31.0.13:6379</span><br><span class="line">M: 50fa88c4a01f968df6ab7e8bd02e1bb51c85f13f 172.31.0.11:6379</span><br><span class="line">   slots:[0-5460] (5461 slots) master</span><br><span class="line">M: 04a2118b3f7b7521a55cf77171f1c50fe1a80f4d 172.31.0.12:6379</span><br><span class="line">   slots:[5461-10922] (5462 slots) master</span><br><span class="line">M: b83a282329830e2ea686889cb8aa9eafa3441b8f 172.31.0.13:6379</span><br><span class="line">   slots:[10923-16383] (5461 slots) master</span><br><span class="line">S: 9b0a2284c341efa7055dd2046aec2e1c43ee6f9b 172.31.0.14:6379</span><br><span class="line">   replicates b83a282329830e2ea686889cb8aa9eafa3441b8f</span><br><span class="line">S: 09aca472595a229e7ceda2792aed98f88d757d45 172.31.0.15:6379</span><br><span class="line">   replicates 50fa88c4a01f968df6ab7e8bd02e1bb51c85f13f</span><br><span class="line">S: 2ce485e6a5bc5a3f300347c123ce911e605bf164 172.31.0.16:6379</span><br><span class="line">   replicates 04a2118b3f7b7521a55cf77171f1c50fe1a80f4d</span><br><span class="line">Can I set the above configuration? (type &#39;yes&#39; to accept): </span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>–cluster create : 表示创建集群<br>–cluster-replicas 0 : 表示只创建n个主节点，不创建从节点<br>–cluster-replicas 1 : 表示为集群中的每个主节点创建一个从节点（例：master[172.31.0.11:6379] -&gt; slave[172.31.0.14:6379]）  </p>
+</blockquote>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210208174303.png"></p>
+<h3 id="查看集群"><a href="#查看集群" class="headerlink" title="查看集群"></a>查看集群</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"># 查看节点主从关系</span><br><span class="line">127.0.0.1:6379&gt; cluster nodes</span><br><span class="line">b83a282329830e2ea686889cb8aa9eafa3441b8f 172.31.0.13:6379@16379 master - 0 1612778025467 3 connected 10923-16383</span><br><span class="line">04a2118b3f7b7521a55cf77171f1c50fe1a80f4d 172.31.0.12:6379@16379 master - 0 1612778025000 2 connected 5461-10922</span><br><span class="line">50fa88c4a01f968df6ab7e8bd02e1bb51c85f13f 172.31.0.11:6379@16379 myself,master - 0 1612778024000 1 connected 0-5460</span><br><span class="line">9b0a2284c341efa7055dd2046aec2e1c43ee6f9b 172.31.0.14:6379@16379 slave b83a282329830e2ea686889cb8aa9eafa3441b8f 0 1612778024565 3 connected</span><br><span class="line">2ce485e6a5bc5a3f300347c123ce911e605bf164 172.31.0.16:6379@16379 slave 04a2118b3f7b7521a55cf77171f1c50fe1a80f4d 0 1612778024465 2 connected</span><br><span class="line">09aca472595a229e7ceda2792aed98f88d757d45 172.31.0.15:6379@16379 slave 50fa88c4a01f968df6ab7e8bd02e1bb51c85f13f 0 1612778024000 1 connected</span><br><span class="line"></span><br><span class="line"># 列出槽和节点信息</span><br><span class="line">127.0.0.1:6379&gt; cluster slots</span><br><span class="line">1) 1) (integer) 10923</span><br><span class="line">   2) (integer) 16383</span><br><span class="line">   3) 1) &quot;172.31.0.13&quot;</span><br><span class="line">      2) (integer) 6379</span><br><span class="line">      3) &quot;b83a282329830e2ea686889cb8aa9eafa3441b8f&quot;</span><br><span class="line">   4) 1) &quot;172.31.0.14&quot;</span><br><span class="line">      2) (integer) 6379</span><br><span class="line">      3) &quot;9b0a2284c341efa7055dd2046aec2e1c43ee6f9b&quot;</span><br><span class="line">2) 1) (integer) 5461</span><br><span class="line">   2) (integer) 10922</span><br><span class="line">   3) 1) &quot;172.31.0.12&quot;</span><br><span class="line">      2) (integer) 6379</span><br><span class="line">      3) &quot;04a2118b3f7b7521a55cf77171f1c50fe1a80f4d&quot;</span><br><span class="line">   4) 1) &quot;172.31.0.16&quot;</span><br><span class="line">      2) (integer) 6379</span><br><span class="line">      3) &quot;2ce485e6a5bc5a3f300347c123ce911e605bf164&quot;</span><br><span class="line">3) 1) (integer) 0</span><br><span class="line">   2) (integer) 5460</span><br><span class="line">   3) 1) &quot;172.31.0.11&quot;</span><br><span class="line">      2) (integer) 6379</span><br><span class="line">      3) &quot;50fa88c4a01f968df6ab7e8bd02e1bb51c85f13f&quot;</span><br><span class="line">   4) 1) &quot;172.31.0.15&quot;</span><br><span class="line">      2) (integer) 6379</span><br><span class="line">      3) &quot;09aca472595a229e7ceda2792aed98f88d757d45&quot;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="数据存储"><a href="#数据存储" class="headerlink" title="数据存储"></a>数据存储</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"># 直接存储提示槽信息不对</span><br><span class="line">127.0.0.1:6379&gt; set name libin</span><br><span class="line">(error) MOVED 5798 172.31.0.12:6379</span><br><span class="line"></span><br><span class="line"># 客户端连接加入 -c 数据可以直接被重定向到槽服务器</span><br><span class="line">root@00bfb4f9402a:&#x2F;redis# redis-cli -c</span><br><span class="line">127.0.0.1:6379&gt; set name libin</span><br><span class="line">-&gt; Redirected to slot [5798] located at 172.31.0.12:6379</span><br><span class="line">OK</span><br><span class="line"></span><br><span class="line"># 存储多个key的时候，由于不同的槽服务器，报错问题</span><br><span class="line">172.31.0.12:6379&gt; mset k1 v1 k2 v2</span><br><span class="line">(error) CROSSSLOT Keys in request don&#39;t hash to the same slot</span><br><span class="line"></span><br><span class="line"># 加入一个 tag 即可解决</span><br><span class="line">172.31.0.12:6379&gt; mset &#123;r&#125;k1 v1 &#123;r&#125;k2 v2</span><br><span class="line">OK</span><br></pre></td></tr></table></figure>
+<h1 id="集群伸缩"><a href="#集群伸缩" class="headerlink" title="集群伸缩"></a>集群伸缩</h1><blockquote>
+<p>1、准备新的redis节点服务器<br>2、加入到集群中<br>3、分配数据槽和迁移数据  </p>
+</blockquote>
+<h3 id="加入一个新的-master-节点"><a href="#加入一个新的-master-节点" class="headerlink" title="加入一个新的 master 节点"></a>加入一个新的 master 节点</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-cli -h 172.31.0.17 --cluster add-node 172.31.0.17:6379 172.31.0.11:6379</span><br></pre></td></tr></table></figure>
+<ul>
+<li>这里的新加入的master节点是 172.31.0.17</li>
+<li>172.31.0.11 代表的事现在存在的集群中的任意一个 master 节点</li>
+</ul>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210208230200.png"></p>
+<h3 id="为新加入的-master-节点添加一个-slave-节点"><a href="#为新加入的-master-节点添加一个-slave-节点" class="headerlink" title="为新加入的 master 节点添加一个 slave 节点"></a>为新加入的 master 节点添加一个 slave 节点</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-cli -h 172.31.0.17 --cluster add-node 172.31.0.18:6379 172.31.0.17:6379 --cluster-slave</span><br></pre></td></tr></table></figure>
+<ul>
+<li>172.31.0.17 代表上面行加入的 master 节点</li>
+<li>172.31.0.18 代表为 master（172.31.0.17）加入的从节点</li>
+<li>–cluster-slave 代表是 slave（从节点）的身份</li>
+</ul>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210208230233.png"></p>
+<h3 id="删除-slave-节点"><a href="#删除-slave-节点" class="headerlink" title="删除 slave 节点"></a>删除 slave 节点</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-cli -h 172.31.0.18 --cluster del-node 172.31.0.18:6379 3a12f6b4ed5f26b83525681e73ee23750bcbcfbf</span><br></pre></td></tr></table></figure>
+<ul>
+<li>3a12f6b4ed5f26b83525681e73ee23750bcbcfbf 是通过 <code>cluster nodes</code> 命令得到的节点ID</li>
+<li>如果上面有数据的话，无法删除，需要先迁移数据</li>
+</ul>
+<h3 id="为节点分配槽"><a href="#为节点分配槽" class="headerlink" title="为节点分配槽"></a>为节点分配槽</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 指定分配</span><br><span class="line">redis-cli -h 172.31.0.11 --cluster reshard 172.31.0.11:6379</span><br><span class="line"></span><br><span class="line"># 平均分配</span><br><span class="line">redis-cli -h 172.31.0.11 --cluster rebalance 172.31.0.11:6379</span><br></pre></td></tr></table></figure>
+<ul>
+<li>172.31.0.11 这个只要是随便一个 master 节点都可以操作集群</li>
+</ul>
+<h3 id="分配槽演示"><a href="#分配槽演示" class="headerlink" title="分配槽演示"></a>分配槽演示</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"># 可以先看到节点信息</span><br><span class="line"></span><br><span class="line">&gt;&gt;&gt; Performing Cluster Check (using node 172.31.0.11:6379)</span><br><span class="line">M: 9af405be84c1d448988117f88f78fa588d49a196 172.31.0.11:6379</span><br><span class="line">   slots:[0-5460] (5461 slots) master</span><br><span class="line">   1 additional replica(s)</span><br><span class="line">S: 3a12f6b4ed5f26b83525681e73ee23750bcbcfbf 172.31.0.18:6379</span><br><span class="line">   slots: (0 slots) slave</span><br><span class="line">   replicates 34a33c9df9d909e69e5cad8965d905b72959c677</span><br><span class="line">S: 7c35cf01519c5747ca262769ed47dbbe44eeb830 172.31.0.14:6379</span><br><span class="line">   slots: (0 slots) slave</span><br><span class="line">   replicates 780d17c7c9ca86f68b6119762f0958f00093702a</span><br><span class="line">M: 780d17c7c9ca86f68b6119762f0958f00093702a 172.31.0.13:6379</span><br><span class="line">   slots:[10923-16383] (5461 slots) master</span><br><span class="line">   1 additional replica(s)</span><br><span class="line">M: 34a33c9df9d909e69e5cad8965d905b72959c677 172.31.0.17:6379</span><br><span class="line">   slots: (0 slots) master</span><br><span class="line">   1 additional replica(s)</span><br><span class="line">S: a4956784b0221598c23d18fbcad844e18eefab63 172.31.0.15:6379</span><br><span class="line">   slots: (0 slots) slave</span><br><span class="line">   replicates 9af405be84c1d448988117f88f78fa588d49a196</span><br><span class="line">M: ddf46bbdf6794d12debe824ce4e30ea96cd70212 172.31.0.12:6379</span><br><span class="line">   slots:[5461-10922] (5462 slots) master</span><br><span class="line">   1 additional replica(s)</span><br><span class="line">S: a2820f32aa18e7ec2d880aedc8d91c9db840dcd9 172.31.0.16:6379</span><br><span class="line">   slots: (0 slots) slave</span><br><span class="line">   replicates ddf46bbdf6794d12debe824ce4e30ea96cd70212</span><br><span class="line">[OK] All nodes agree about slots configuration.</span><br><span class="line">&gt;&gt;&gt; Check for open slots...</span><br><span class="line">&gt;&gt;&gt; Check slots coverage...</span><br><span class="line">[OK] All 16384 slots covered.</span><br></pre></td></tr></table></figure>
+<ul>
+<li>可以看到这里新加入的master <code>172.31.0.17</code> 没有数据槽</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"># 询问要迁移的槽的数量（我在这里迁移了500个）</span><br><span class="line">How many slots do you want to move (from 1 to 16384)? 500</span><br><span class="line"># 询问被迁移的槽的ID（我这里迁移的是：172.31.0.11）</span><br><span class="line">What is the receiving node ID? 34a33c9df9d909e69e5cad8965d905b72959c677</span><br><span class="line"># 请输入所有源节点ID</span><br><span class="line">Please enter all the source node IDs.</span><br><span class="line">   # 键入“all”将所有节点用作哈希槽的源节点</span><br><span class="line">  Type &#39;all&#39; to use all the nodes as source nodes for the hash slots.</span><br><span class="line">   # 输入所有源节点ID后键入“done”。</span><br><span class="line">  Type &#39;done&#39; once you entered all the source nodes IDs.</span><br><span class="line"># 输入源的ID后，进行迁移</span><br><span class="line">Source node #1: 9af405be84c1d448988117f88f78fa588d49a196</span><br><span class="line">Source node #2: done</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<ul>
+<li>用这个方法，也可以把某一个源的槽都迁移后。那么该槽就可以进行删除了</li>
+</ul>
+<h1 id="搭建问题"><a href="#搭建问题" class="headerlink" title="搭建问题"></a>搭建问题</h1><h4 id="创建集群主从节点报错"><a href="#创建集群主从节点报错" class="headerlink" title="创建集群主从节点报错"></a>创建集群主从节点报错</h4><blockquote>
+<p>[ERR] Node 172.31.0.11:6379 is not configured as a cluster node<br>查看配置文件的配置问题</p>
+</blockquote>
+
+            </section>
+    </article>
+    
+
+
+        <!-- 版权声明 -->
+        
+<div class="post-copyright">
+    <!-- <div>
+        <strong>本文作者：</strong>
+        <span>李斌</span>
+    </div> -->
+    <div>
+        <strong>本文链接：</strong>
+        <a href="https://blog.mailjob.net/posts/2057957110.html">
+            <!-- https://blog.mailjob.net/redis/redis集群实战搭建 -->
+            https://blog.mailjob.net/posts/2057957110.html
+        </a>
+    </div>
+    <div>
+        <!-- <span>欢迎任何形式的转载，请务必注明出处。</span> -->
+    </div>
+    <div>
+        <span>
+            该网站发布的内容，遵循
+            <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>
+            版权协议，转载请附上原文出处链接和本声明。
+        </span>
+    </div>
+</div>
+
+
+
+<style>
+    .post-copyright {
+        background-color: #fff;
+  box-shadow: 0px 0px 1px 1px rgba(0, 0, 0, 0.05);
+        display: block;
+        margin: 20px auto;
+        margin-bottom: 15px;
+        padding: 10px;
+        font-size: 15px;
+        color: #2e2d2d;
+        word-break: break-all;
+        line-height: 1.8;
+    }
+
+
+    .post-copyright a {
+        color: #2e2d2d;
+        border-bottom: 1px solid #999; 
+    }
+
+    .post-copyright a:hover {
+        color: #2e2d2d;
+        border-bottom: 1px solid #000; 
+    }
+</style>
+
+          <!-- comments -->
+          <div class="comments">
+    <h3 id="commenttitle" style="margin-top: 20px;margin-left: 10px;">评论区</h3>
+    <div id="tcomment"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/twikoo@0.6.0/dist/twikoo.all.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/twikoo@1.0.0/dist/twikoo.all.min.js"></script> -->
+
+<script>twikoo.init({ envId: 'jefferyjob-github-io-3b53ee3a93b', el: '#tcomment' })</script>
+
+            <div class="right-icon">
+              <div id="to-valine" class="right-icon-item">
+                <a href="#commenttitle">评论</a>
+              </div>
+            </div>
+
+  </div>
+
+
+  <aside>
+    <div class="aside-wrap">
+    
+        <section class="widget-wrap">
+    <h3 class="widget-title">简介</h3>
+    <div class="widget">
+        <div class="notice">
+            <img class="notice-img" src="https://img.github.mailjob.net/logo/libin.jpg">
+            <p>李斌的个人独立博客<br>此平台用作学习交流<br>日常分享</p>
+            
+            <p class="notice-item">
+                <!-- github -->
+                <span><a target="_blank" href="https://github.com/jefferyjob"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108165043.jpg" alt="Github"></a></span>
+                <!-- csdn -->
+                <span><a target="_blank" href="https://blog.csdn.net/libinemail"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108172932.ico" alt="CSDN"></a></span>
+                <!-- juejin -->
+                <span><a target="_blank" href="https://juejin.cn/user/782508009723783"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108165800.png" alt="掘金社区"></a></span>
+                <!-- zhihu -->
+                <span><a target="_blank" href="https://www.zhihu.com/people/JefferyJob"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108172745.ico" alt="知乎"></a></span>
+                
+            </p>
+            
+        </div>
+    </div>
+</section>
+
+
+    
+        
+  <section class="widget-wrap">
+    <h3 class="widget-title">文章分类</h3>
+    <div class="widget">
+      <div class="categories-list">
+        
+           
+            
+              <a class="category-list-item" href="/categories/算法">
+                <span class="category-list-link">算法</span>
+                <span class="category-list-number">(13)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/mysql">
+                <span class="category-list-link">mysql</span>
+                <span class="category-list-number">(36)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/docker">
+                <span class="category-list-link">docker</span>
+                <span class="category-list-number">(2)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/design">
+                <span class="category-list-link">design</span>
+                <span class="category-list-number">(3)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/linux">
+                <span class="category-list-link">linux</span>
+                <span class="category-list-number">(5)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/rabbitmq">
+                <span class="category-list-link">rabbitmq</span>
+                <span class="category-list-number">(2)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/php">
+                <span class="category-list-link">php</span>
+                <span class="category-list-number">(6)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/redis">
+                <span class="category-list-link">redis</span>
+                <span class="category-list-number">(25)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/blog">
+                <span class="category-list-link">blog</span>
+                <span class="category-list-number">(15)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/swoole">
+                <span class="category-list-link">swoole</span>
+                <span class="category-list-number">(3)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/notes">
+                <span class="category-list-link">notes</span>
+                <span class="category-list-number">(10)</span>
+              </a>
+            
+          
+        
+      </div>
+    </div>
+  </section>
+
+
+    
+        
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget widget_tag">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/blog/" rel="tag">blog</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/es/" rel="tag">es</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/haproxy/" rel="tag">haproxy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/keepalived/" rel="tag">keepalived</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mycat/" rel="tag">mycat</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nginx/" rel="tag">nginx</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/notes/" rel="tag">notes</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/openresty/" rel="tag">openresty</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/php/" rel="tag">php</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/rabbitmq/" rel="tag">rabbitmq</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/swoole/" rel="tag">swoole</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a></li></ul>
+    </div>
+  </div>
+
+
+<style>
+  .widget_tag ul li {
+    display: inline-block;
+    padding: 0px 5px;
+    border: 1px solid #eee;
+    margin-bottom: 7px;
+    margin-right: 5px;
+    border-radius: 5px;
+    font-size: 12px;
+    color: #999;
+  }
+</style>
+    
+        
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul class="recent-posts">
+        
+          <li>
+            <a href="/posts/1482114423.html">notes：解决github访问慢的问题</a>
+          </li>
+        
+          <li>
+            <a href="/posts/1634640555.html">雪花算法 snowflake</a>
+          </li>
+        
+          <li>
+            <a href="/posts/163644071.html">mysql视图基本操作</a>
+          </li>
+        
+          <li>
+            <a href="/posts/1198915737.html">mysql视图是什么</a>
+          </li>
+        
+          <li>
+            <a href="/posts/3520988043.html">PHP实现IO阻塞模型(blocking)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+    
+        
+  <section class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/04/">四月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/03/">三月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/02/">二月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a></li></ul>
+    </div>
+  </section>
+
+
+    
+        
+  <section class="widget-wrap">
+    <h3 class="widget-title">友情链接</h3>
+    <div>
+      <ul class="widget-links">
+          
+          <li>
+              <a target="_blank" rel="noopener" href="https://libinblog.gitee.io" title="">
+                  本站大陆节点
+              </a>
+          </li>
+          
+          <li>
+              <a target="_blank" rel="noopener" href="https://blog.senll.com" title="">
+                  Ethan 的博客
+              </a>
+          </li>
+          
+          <li>
+              <a target="_blank" rel="noopener" href="https://www.laruence.com" title="">
+                  鸟哥的博客
+              </a>
+          </li>
+          
+          <li>
+              <a target="_blank" rel="noopener" href="http://rango.swoole.com" title="">
+                  韩天峰的博客
+              </a>
+          </li>
+          
+      </ul>
+    </div>
+  </section>
+
+
+<style>
+  .widget-links {
+    list-style: none;
+    padding-left: 10px;
+  }
+  .widget-links >li > a:hover {
+    color: #f40;
+    text-decoration: underline;
+  }
+</style>
+    
+        <section class="widget-wrap">
+    <div class="widget">
+        <div class="notice attention">
+
+            <p>
+                该网站发布的内容，遵循
+                <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>
+                版权协议，转载请附上原文出处链接和本声明。
+                <br><br>
+                如果有其他问题，可以给我发邮件咨询。
+                <a target="_blank" href="https://www.mailjob.net">libin@mailjob.net</a>
+                。我看到后会在第一时间回复！
+            </p>
+            
+        </div>
+    </div>
+</section>
+
+    
+    
+</div>
+
+
+      <!-- 目录 -->
+      
+        <div id="toc"></div>
+        <script>
+          $(function () {
+            var elm = $('#toc');
+            var startPos = $(elm).offset().top;
+            $.event.add(window, "scroll", function () {
+              var p = $(window).scrollTop();
+              $(elm).css('margin-left', '0px');
+              $(elm).css('position', ((p) > startPos) ? 'fixed' : 'static');
+              $(elm).css('top', ((p) > startPos) ? '20px' : '')
+            })
+          })
+
+        </script>
+
+  </aside>
+  
+</div>
+
+
+<script>
+  $('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
+
+</script>
+                </div>
+            </div>
+            <div class="right-icon">
+                <div id="to-top" class="right-icon-item">
+                  <a>
+                    <span class="top-left"></span>
+                    <span class="top-right"></span>
+                  </a>
+                </div>
+              </div>
+    </div>
+    <footer class="footer">
+  <div class="links-wrap-wrap">
+    <div class="links-wrap">
+    
+      
+        <section class="link-wrap">
+          <h3 class="link-title">导航</h3>
+          <div>
+            <ul class="link-item-wrap">
+                
+                <li class="link-item">
+                    <a href="https://blog.mailjob.net" title="">
+                        李斌的技术博客
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://www.mailjob.net" title="">
+                        我的邮箱
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://github.com/mailjobblog/demo_code" title="">
+                        Demo Code
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://new.cnzz.com/v1/login.php?siteid=1279692087" title="">
+                        友盟
+                    </a>
+                </li>
+                
+            </ul>
+          </div>
+        </section>
+      
+
+
+      
+        <section class="link-wrap">
+          <h3 class="link-title">社区论坛</h3>
+          <div>
+            <ul class="link-item-wrap">
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail" title="">
+                        李斌的CSDN
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://www.cnblogs.com/jefferyjob" title="">
+                        李斌的博客园
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://github.com/jefferyjob" title="">
+                        GitHub
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://hub.docker.com/u/jefferyjob" title="">
+                        DockerHub
+                    </a>
+                </li>
+                
+            </ul>
+          </div>
+        </section>
+      
+
+    </div>
+  </div>
+  
+    <div class="copyright-wrap">
+      <span>Copyright &copy; 2020-2021 京ICP备17056825号</span>
+      <span id="timeDate">载入天数...</span>
+
+      <br><br>
+      <span>
+        本站由 <a style="color:#e4e7ee" target="_blank" rel="noopener" href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral"><img style="width: 10px;height: 10px;" src="//img.github.mailjob.net/oss.github/20210226141134.png">又拍云</a> 提供CDN加速/云储存服务
+      </span>
+    </div>
+    
+    <!-- <span id="busuanzi_container_site_pv">
+      本站总访问量<span id="busuanzi_value_site_pv"></span>次
+    </span>
+    <span id="busuanzi_container_site_uv">
+      ，本站访客数<span id="busuanzi_value_site_uv"></span>人次
+    </span> -->
+
+   
+    
+</footer>
+
+<script>
+    var now = new Date();
+    function createtime() {
+      var grt = new Date("06/14/2020 12:00:00");//此处修改你的建站时间或者网站上线时间 
+      now.setTime(now.getTime() + 250);
+      days = (now - grt) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+      document.getElementById("timeDate").innerHTML = "本站已运行 " + dnum + " 天 ";
+    }
+    setInterval("createtime()", 1000);
+</script>
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<script src="/lib/jquery.js"></script>
+
+
+<script src="/lib/waves.js"></script>
+
+
+<script src="/lib/jquery-ui.js"></script>
+
+
+<script src="/lib/jquery.tocify.js"></script>
+
+
+<script src="/js/main.js"></script>
+
+
+        
+<style>
+  .copy-btn {
+    display: inline-block;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 20px;
+    color: rgb(206, 206, 206);
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    border-radius: 3px;
+    user-select: none;
+    outline: 0;
+  }
+
+  .copy-btn:hover {
+    color: #888
+  }
+
+  .highlight-wrap .copy-btn {
+    padding: 2px 6px;
+    position: absolute;
+    right: 10px;
+    top: 1px;
+    z-index: 1;
+  }
+
+
+
+  .highlight-wrap {
+    position: relative;
+  }
+
+  #copysuccess {
+    width: 200px;
+    height: 75px;
+    position: fixed;
+    right: 50%;
+    margin-right: -100px;
+    top: 40%;
+    margin-top: -40px;
+    color: #fff;
+    font-weight: 600;
+    background: #444444d8;
+    display: none;
+    z-index: 99999;
+    border-radius: 10px;
+    text-align: center;
+    line-height: 30px;
+    padding-top: 10px;
+    user-select: none;
+  }
+</style>
+
+<script>
+  addLoadEvent(() => {
+    $('.highlight').each(function (i, e) {
+      var $wrap = $('<div>').addClass('highlight-wrap')
+      $(e).after($wrap)
+      $wrap.append($('<div>').addClass('copy-btn').append('复制代码').on('click', function (e) {
+        var copysuccess = document.getElementById('copysuccess');
+        copysuccess.style.display = 'block'
+        setTimeout(function () {
+          copysuccess.style.display = 'none'
+        }, 2000)
+        var code = $(this).parent().find(".code")[0].innerText
+          
+                var ta = document.createElement('textarea')
+        document.body.appendChild(ta)
+        ta.style.position = 'absolute'
+        ta.style.top = '0px'
+        ta.style.left = '0px'
+        ta.value = code
+        ta.select()
+        ta.focus()
+        var result = document.execCommand('copy')
+        document.body.removeChild(ta)
+          
+                  if (result) $(this).text('复制成功')
+            else $(this).text('复制失败')
+              
+                $(this).blur()
+      })).on('mouseleave', function (e) {
+        var $b = $(this).find('.copy-btn')
+        setTimeout(function () {
+          $b.text('复制代码')
+        }, 1000)
+      }).append(e)
+    })
+  })
+</script>
+
+            <div id="copysuccess">复制成功<br>Copy succeeded</div>
+</body>
+
+</html>
+
+<script>
+    $('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
+</script>
+
+<!-- 网站管理 start -->
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>
+
+<!-- 网站管理 end -->

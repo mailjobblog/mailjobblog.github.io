@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>
+    Mysql 的 Checkpoint 机制 | 李斌的技术博客
+  </title>
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <meta name="theme-color" content="#4184f3">
+  
+  
+  <link href="https://img.github.mailjob.net/logo/favicon.ico" rel="icon" />
+  
+
+  
+<link rel="stylesheet" href="/css/highlight.light.css">
+
+  
+<link rel="stylesheet" href="/css/prism-customize.css">
+
+  
+<link rel="stylesheet" href="/css/nav-icon.css">
+
+  
+<link rel="stylesheet" href="/css/waves.min.css">
+
+  
+<link rel="stylesheet" href="/css/jquery.tocify.css">
+
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+<link rel="stylesheet" href="/css/nav-indicator.css">
+
+  
+<link rel="stylesheet" href="/css/twikoo.css">
+
+  
+<link rel="stylesheet" href="/css/search.css">
+
+  
+  
+
+  
+
+  </meta>
+  </meta>
+  <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.js"></script>
+  
+<script src="/js/comment.js"></script>
+
+  
+<script src="/js/copy.js"></script>
+
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 5.3.0"></head>
+
+<body>
+    <header>
+        <!-- cover image or sth. -->
+    </header>
+
+    <!-- tips_head start -->
+    <div class="tips_head">
+        <center><span id='tips_head_span'></span></center>
+<script>
+    var host = window.location.host;
+    if(host != 'blog.mailjob.net' && host != 'localhost:4000') {
+        document.getElementById("tips_head_span").innerHTML = "此访问域名为大陆节点，网站内容更新有一定的延迟且不支持评论。若要获取最新信息，请访问国际节点：<a href='https://blog.mailjob.net'>https://blog.mailjob.net</a>"
+        document.getElementById("tips_head_span").style.lineHeight = 3;
+    }
+</script>
+    </div>
+    <!-- tips_head end -->
+
+    <div id="main" class="m-scene">
+        
+<div class="nav-wrapper" id="header">
+
+    <div class="container">
+        <nav>
+            
+            
+            <div class="logo wave">
+                <a href="/" id="logo">
+                    李斌的技术博客
+                </a>
+            </div>
+
+            <div class="nav-toggle-icon" >
+                <div class="material-hamburger">
+                    <span>
+                    </span>
+                    <span>
+                    </span>
+                    <span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="menu-wrapper">
+                <div class="nav-indicator">
+                </div>
+                <ul class="menus">
+                    
+                     
+                        <li>
+                            <a class="wave " href="/">
+                                首页
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/archives">
+                                归档
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/about">
+                                关于
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/message">
+                                留言
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/search">
+                                搜索
+                            </a>
+                        </li>
+                     
+                    
+                   
+                </ul>
+            </div>
+
+        </nav>
+    </div>
+</div>
+
+
+            <div class="container content">
+                <div class="scene_element scene_element--fadein">
+                    <div class="row">
+  <div class="main main-article">
+    <article>
+
+      
+            <header class="post-header">
+              
+            </header>
+
+            <h1 class="post-title">
+              Mysql 的 Checkpoint 机制
+            </h1>
+
+            <section class="post-info post-info-bottom">
+
+              <span class="post-date">发布于
+                <span class="post-date-text">
+                   2021-03-04
+                </span>
+              </span>
+
+
+
+
+              
+                <span class="post-category">分类:
+                  <a class="article-category-link" href="/categories/mysql/">mysql</a>
+                </span>
+                
+                  
+                    <span class="post-tags">
+                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li></ul>
+                    </span>
+                    
+
+                      <!-- 阅读量统计 -->
+                      
+                        <span class="post-visitors">阅读量:<span id="twikoo_visitors">0</span></span>
+                        
+
+
+            </section>
+
+            <section class="post-content">
+
+              <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><blockquote>
+<p>该文章是基于<strong>重做日志（redo log）</strong>的内容补充。</p>
+<p>mysql服务器宕机后，对于数据库的恢复，这个过程中也离不开<strong>重做日志（redo log）</strong>和 <strong>Checkpoint</strong> 的支持。</p>
+</blockquote>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote>
+<p>Checkpoint思维导图：<a target="_blank" rel="noopener" href="https://kdocs.cn/l/sc2IGPK1MWgD">https://kdocs.cn/l/sc2IGPK1MWgD</a></p>
+</blockquote>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
+<p><strong>思考一下这个场景</strong>：如果重做日志可以无限地增大，同时缓冲池也足够大，那么是不需要将缓冲池中页的新版本刷新回磁盘。因为当发生宕机时，完全可以通过重做日志来恢复整个数据库系统中的数据到宕机发生的时刻。</p>
+<p>但是这需要两个前提条件：</p>
+<p>1、缓冲池可以缓存数据库中所有的数据；</p>
+<p>2、重做日志可以无限增大</p>
+</blockquote>
+<p><strong>因此Checkpoint（检查点）技术就诞生了，目的是解决以下几个问题：</strong></p>
+<p>1、缩短数据库的恢复时间；</p>
+<p>2、缓冲池不够用时，将脏页刷新到磁盘；</p>
+<p>3、重做日志不可用时，刷新脏页。</p>
+<blockquote>
+<ul>
+<li>当数据库发生宕机时，数据库不需要重做所有的日志，因为Checkpoint之前的页都已经刷新回磁盘。数据库只需对Checkpoint后的重做日志进行恢复，这样就大大缩短了恢复的时间。</li>
+<li>当缓冲池不够用时，根据<code>LRU算法</code>会溢出最近最少使用的页，若此页为脏页，那么需要强制执行Checkpoint，将脏页也就是页的新版本刷回磁盘。</li>
+<li>当重做日志出现不可用时，因为当前事务数据库系统对重做日志的设计都是循环使用的，并不是让其无限增大的，重做日志可以被重用的部分是指这些重做日志已经不再需要，当数据库发生宕机时，数据库恢复操作不需要这部分的重做日志，因此这部分就可以被覆盖重用。如果重做日志还需要使用，那么必须强制Checkpoint，将缓冲池中的页至少刷新到当前重做日志的位置。</li>
+</ul>
+</blockquote>
+<h2 id="innoDB-LNS"><a href="#innoDB-LNS" class="headerlink" title="innoDB - LNS"></a>innoDB - LNS</h2><p>对于InnoDB存储引擎而言，是通过LSN（Log Sequence Number）来标记版本的。</p>
+<p>LSN是8字节的数字，每个页有LSN，重做日志中也有LSN，Checkpoint也有LSN。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"># 可以通过命令(show engine innodb status)来观察</span><br><span class="line">mysql&gt; show engine innodb status \G;</span><br><span class="line">---</span><br><span class="line">LOG</span><br><span class="line">---</span><br><span class="line">Log sequence number 34778380870</span><br><span class="line">Log flushed up to   34778380870</span><br><span class="line">Last checkpoint at  34778380870</span><br><span class="line">0 pending log writes, 0 pending chkp writes</span><br><span class="line">54020151 log i&#x2F;o&#39;s done, 0.92 log i&#x2F;o&#39;s&#x2F;second</span><br></pre></td></tr></table></figure>
+<p><strong>根据LSN，可以获取到几个有用的信息：</strong></p>
+<p>1.数据页的版本信息。</p>
+<p>2.写入的日志总量，通过LSN开始号码和结束号码可以计算出写入的日志量。</p>
+<p>3.可知道检查点的位置。</p>
+<blockquote>
+<p>实际上还可以获得很多隐式的信息。</p>
+<p>LSN不仅存在于redo log中，还存在于数据页中，在每个数据页的头部，有一个<em>fil_page_lsn</em>记录了当前页最终的LSN值是多少。通过数据页中的LSN值和redo log中的LSN值比较，如果页中的LSN值小于redo log中LSN值，则表示数据丢失了一部分，这时候可以通过redo log的记录来恢复到redo log中记录的LSN值时的状态。</p>
+<p><strong>其中：</strong></p>
+<ul>
+<li><strong>log sequence number就是当前的redo log(in buffer)中的lsn；</strong></li>
+<li><strong>log flushed up to是刷到redo log file on disk中的lsn；</strong></li>
+<li><strong>pages flushed up to是已经刷到磁盘数据页上的LSN；</strong></li>
+<li><strong>last checkpoint at是上一次检查点所在位置的LSN。</strong></li>
+</ul>
+</blockquote>
+<h3 id="innodb执行修改语句演示LNS"><a href="#innodb执行修改语句演示LNS" class="headerlink" title="innodb执行修改语句演示LNS"></a>innodb执行修改语句演示LNS</h3><p>1、首先修改内存中的数据页，并在数据页中记录<code>LSN</code>，暂且称之为<code>data_in_buffer_lsn</code>；</p>
+<p>2、并且在修改数据页的同时(几乎是同时)向<code>redo log in buffer</code>中写入<code>redo log</code>，并记录下对应的<code>LSN</code>，暂且称之为<code>redo_log_in_buffer_lsn</code>；</p>
+<p>3、写完<code>buffer</code>中的日志后，当触发了日志刷盘的几种规则时，会向<code>redo log file on disk</code>刷入<code>redo重做日志</code>，并在该文件中记下对应的<code>LSN</code>，暂且称之为<code>redo_log_on_disk_lsn</code>；</p>
+<p>4、数据页不可能永远只停留在内存中，在某些情况下，会触发<code>checkpoint</code>来将内存中的脏页(数据脏页和日志脏页)刷到磁盘，所以会在本次<code>checkpoint</code>脏页刷盘结束时，在<code>redo log</code>中记录<code>checkpoint</code>的<code>LSN</code>位置，暂且称之为<code>checkpoint_lsn</code>。</p>
+<p>5、要记录<code>checkpoint</code>所在位置很快，只需简单的设置一个标志即可，但是刷数据页并不一定很快，例如这一次<code>checkpoint</code>要刷入的数据页非常多。也就是说要刷入所有的数据页需要一定的时间来完成，中途刷入的每个数据页都会记下当前页所在的<code>LSN</code>，暂且称之为<code>data_page_on_disk_lsn</code>。</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210304151237.png" alt="img"></p>
+<p>上图中，从上到下的横线分别代表：时间轴、buffer中数据页中记录的LSN(data_in_buffer_lsn)、磁盘中数据页中记录的LSN(data_page_on_disk_lsn)、buffer中重做日志记录的LSN(redo_log_in_buffer_lsn)、磁盘中重做日志文件中记录的LSN(redo_log_on_disk_lsn)以及检查点记录的LSN(checkpoint_lsn)。</p>
+<p>假设在最初时(12:00:00)所有的日志页和数据页都完成了刷盘，也记录好了检查点的LSN，这时它们的LSN都是完全一致的。</p>
+<p>假设此时开启了一个事务，并立刻执行了一个update操作，执行完成后，buffer中的数据页和redo log都记录好了更新后的LSN值，假设为110。</p>
+<p>这时候如果执行 <code>show engine innodb status</code> 查看各<code>LSN</code>的值，即图中①处的位置状态，结果会是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">log sequence number(110) &gt; log flushed up to(100) &#x3D; pages flushed up to &#x3D; last checkpoint at</span><br></pre></td></tr></table></figure>
+<p>之后又执行了一个<code>delete</code>语句，LSN增长到<code>150</code>。等到<code>12:00:01</code>时，触发<code>redo log</code>刷盘的规则(其中有一个规则是 innodb_flush_log_at_timeout 控制的默认日志刷盘频率为1秒)，这时<code>redo log file on disk</code>中的<code>LSN</code>会更新到和<code>redo log in buffer</code>的<code>LSN</code>一样，所以都等于<code>150</code>，这时 <code>show engine innodb status</code> ，即图中②的位置，结果将会是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">log sequence number(150) &#x3D; log flushed up to &gt; pages flushed up to(100) &#x3D; last checkpoint at</span><br></pre></td></tr></table></figure>
+<p>再之后，执行了一个<code>update</code>语句，缓存中的<code>LSN</code>将增长到<code>300</code>，即图中③的位置。</p>
+<p>假设随后检查点出现，即图中④的位置，正如前面所说，检查点会触发数据页和日志页刷盘，但需要一定的时间来完成，所以在数据页刷盘还未完成时，检查点的LSN还是上一次检查点的LSN，但此时磁盘上数据页和日志页的LSN已经增长了，即：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">log sequence number &gt; log flushed up to 和 pages flushed up to &gt; last checkpoint at</span><br></pre></td></tr></table></figure>
+<p>但是<code>log flushed up to</code>和<code>pages flushed up to</code>的大小无法确定，因为日志刷盘可能快于数据刷盘，也可能等于，还可能是慢于。但是<code>checkpoint</code>机制有保护数据刷盘速度是慢于日志刷盘的：当数据刷盘速度超过日志刷盘时，将会暂时停止数据刷盘，等待日志刷盘进度超过数据刷盘。</p>
+<p>等到数据页和日志页刷盘完毕，即到了位置⑤的时候，所有的LSN都等于300。</p>
+<p>随着时间的推移到了<code>12:00:02</code>，即图中位置⑥，又触发了日志刷盘的规则，但此时buffer中的日志LSN和磁盘中的日志LSN是一致的，所以不执行日志刷盘，即此时 <code>show engine innodb status</code> 时各种lsn都相等。</p>
+<p>随后执行了一个<code>insert</code>语句，假设<code>buffer</code>中的<code>LSN</code>增长到了800，即图中位置⑦。此时各种LSN的大小和位置①时一样。</p>
+<p>随后执行了提交动作，即位置⑧。默认情况下，提交动作会触发日志刷盘，但不会触发数据刷盘，所以<code> show engine innodb status</code> 的结果是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">log sequence number &#x3D; log flushed up to &gt; pages flushed up to &#x3D; last checkpoint at</span><br></pre></td></tr></table></figure>
+<p>最后随着时间的推移，检查点再次出现，即图中位置⑨。但是这次检查点不会触发日志刷盘，因为日志的<code>LSN</code>在检查点出现之前已经同步了。假设这次数据刷盘速度极快，快到一瞬间内完成而无法捕捉到状态的变化，这时 <code>show engine innodb status</code> 的结果将是各种LSN相等。</p>
+<h2 id="innodb的恢复行为"><a href="#innodb的恢复行为" class="headerlink" title="innodb的恢复行为"></a>innodb的恢复行为</h2><p>在启动innodb的时候，不管上次是正常关闭还是异常关闭，总是会进行恢复操作。</p>
+<p>因为redo log记录的是数据页的物理变化，因此恢复的时候速度比逻辑日志(如二进制日志)要快很多。而且，innodb自身也做了一定程度的优化，让恢复速度变得更快。</p>
+<p><strong>重启innodb时，checkpoint表示已经完整刷到磁盘上data page上的LSN，因此恢复时仅需要恢复从checkpoint开始的日志部分。例如，当数据库在上一次checkpoint的LSN为10000时宕机，且事务是已经提交过的状态。启动数据库时会检查磁盘中数据页的LSN，如果数据页的LSN小于日志中的LSN，则会从检查点开始恢复。</strong></p>
+<p>还有一种情况，在宕机前正处于<code>checkpoint</code>的刷盘过程，且数据页的刷盘进度超过了日志页的刷盘进度。这时候一宕机，数据页中记录的LSN就会大于日志页中的LSN，在重启的恢复过程中会检查到这一情况，这时超出日志进度的部分将不会重做，因为这本身就表示已经做过的事情，无需再重做。</p>
+<p>另外，<strong>事务日志具有幂等性</strong>，所以多次操作得到同一结果的行为在日志中只记录一次。而二进制日志不具有幂等性，多次操作会全部记录下来，在恢复的时候会多次执行二进制日志中的记录，速度就慢得多。例如，某记录中id初始值为2，通过update将值设置为了3，后来又设置成了2，在事务日志中记录的将是无变化的页，根本无需恢复；而二进制会记录下两次update操作，恢复时也将执行这两次update操作，速度比事务日志恢复更慢。</p>
+<h2 id="checkpoint图例讲解"><a href="#checkpoint图例讲解" class="headerlink" title="checkpoint图例讲解"></a>checkpoint图例讲解</h2><blockquote>
+<p>如果通过以上 <code>LNS</code> 的理论讲解，若你还是没有看懂，没有关系，接下来，通过一个图例进行继续理解</p>
+</blockquote>
+<h3 id="静态检查点"><a href="#静态检查点" class="headerlink" title="静态检查点"></a>静态检查点</h3><p>现在有<code>T1</code> 、<code>T2</code>两个事务，则<code>undolog</code>中写入</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210304154951.png" alt="image-20210304154947735"></p>
+<p>这时到了检查点的周期，要往里写入检查点了，就得等到<code>T1</code>,<code>T2</code>全部提交完毕，然后写入检查点<code>chkpoint</code>。</p>
+<p>也就是如果现在有一个<code>T3</code>要开启，是无法开启的。系统处于夯住状态。写入完后，开启<code>T3</code>，日志记录如下</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210304155008.png" alt="image-20210304155007473"></p>
+<p>这时候，如果系统挂掉了，故障恢复管理器会从undolog的尾部向前进行扫描，扫描到checkpoint后，就不会往前扫描了，因为前面的事务都已经提交过了，不存在数据一致性问题。所以只需要从checkpoint开始重做即可。</p>
+<p>这样固然是好，省掉了需要undolog从头开始扫描的麻烦，但是这样做的缺点也很明显，那就是在写入checkpoint的过程中，系统是出于夯住状态的，所有的写入都要暂停。那能否有一种更好的方法既可以写入checkpoint又不需要系统暂停呢，必须的，当然有，这就是下面要讲的非静态检查点。</p>
+<h3 id="非静态检查点（重点）"><a href="#非静态检查点（重点）" class="headerlink" title="非静态检查点（重点）"></a>非静态检查点（重点）</h3><p>非静态检查点是相对于静态检查点而来的，上文中所提到的就属于静态检查点，因为在检查点写入的同时，系统是不能写入的。而非静态检查点的引入，就是要解决这个问题。</p>
+<p>非静态检查点的策略是在写入<code>chkpoint</code>的同时，会记录下当前活跃的事务。比如，当前状态下，<code>T1</code>和<code>T2</code>都是活跃状态，那么<code>undolog</code>中会被写入<code>start checkpoint(T1,T2)</code>,这时整体系统仍然是正常写入的，也就是说在这条<code>log</code>写入后，仍然可以继续开启其他事务。当<code>T1</code>,<code>T2</code>完成后，会写入<code>end checkpoint</code>的记录。例如如下记录：</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210304160001.png" alt="image-20210304160000187"></p>
+<h3 id="数据库宕机后Checkpoint定位恢复"><a href="#数据库宕机后Checkpoint定位恢复" class="headerlink" title="数据库宕机后Checkpoint定位恢复"></a>数据库宕机后Checkpoint定位恢复</h3><p><strong>第一种情况</strong></p>
+<p>数据库宕机后，恢复管理器仍然会从尾往前进行扫描<code>undolog</code>，如果遇到了“<code>end chkpoint</code>”，这时并不代表<code>checkpoint</code>前所有的事务都已经提交了，但我们可以知道，所有未提交的事务都是在上一个<code>start checkpoint</code>之后，所以会继续往前找，一直找到<code>start checkpoint</code>,找到<code>start checkpoint</code>后。</p>
+<p>比如是<code>start checkpoint(T1,T2)</code>,因为先前已经找到了<code>end chkpoint</code>，所以<code>T1</code>,<code>T2</code>这两个事务已经可以保证数据一致性了，需要重做的就是在<code>start checpoint(T1,T2)</code>到<code>end chkpoint</code>间的这一些非<code>T1</code>，<code>T2</code>事务，这些是需要重做的，所以要把这些进行重做。</p>
+<p><strong>另外一种情况</strong></p>
+<p>还有，就是恢复管理器在扫描时，先遇到了<code>start checkpoint(T1,T2)</code>的日志，在这种情况下，我们首先知道了<code>T1</code>,<code>T2</code>或许是未完成的事务，那这时需要在<code>start checkpoint</code>之后找到是否有某个事务的<code>end</code>语句，如果有，说明这个事务是完成了，如果没有，就说明没有完成，那就要从<code>check point</code>再往后寻找，找到这个事务的<code>start</code>，然后从<code>start</code>之后往后重做。说得比较罗嗦，我们上个例子来说明下这种情况。</p>
+<p>例如，数据库宕机后，开始扫描<code>undolog</code>，得到以下片段：</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210304161222.png" alt="image-20210304161220935"></p>
+<p>这时，恢复管理器拿到这个片段后进行扫描，在遇到<code>end chkpoint</code>前遇到了<code>start checkpoint(T1,T2)</code>，这说明了，<code>T1</code>,<code>T2</code>是可能未完成事务的，而且在这之前还遇到了<code>T3</code>的<code>start</code>，没有<code>end T3</code>，也没有任何<code>T3</code>的检查点的开始，这说明了<code>T3</code>一定是未完成事务的，所以<code>T3</code>一定是要重做的。</p>
+<p><strong>先前为什么说<code>T1</code>,<code>T2</code>是可能未完成事务的呢？</strong></p>
+<p>因为遇到了<code>start checkpoint(T1,T2)</code>,没有遇到<code>end chkpoint</code>，并不代表<code>T1</code>和<code>T2</code>就一定是未完成的，可能有一个已经<code>commit</code>过了，因为两个都没有<code>commit</code>，所以才导致了没有<code>end chkpoint</code>，所以这时找<code>start</code>下面的日志，发现了“<code>end T1</code>”，说明了<code>T1</code>的事务是已经完成了的。</p>
+<p>那只需要找<code>T2</code>的开启然后开始重做就可以了，然后就通过<code>start checkpoint(T1,T2)</code>再往上找，找到了<code>start T2</code>，然后开始重做<code>T2</code>，也就是这个日志里，<code>T2</code>和<code>T3</code>是需要重做的，然后重做掉。 </p>
+<p><strong>Tips:</strong></p>
+<p>刚才先说了做<code>T3</code>，然后有说了重做<code>T2</code>,并不代表真正的顺序就是这样，实际上恢复管理器是先分析出需要重做的事务，然后通过<code>buf</code>一块做掉的。</p>
+
+            </section>
+    </article>
+    
+
+
+        <!-- 版权声明 -->
+        
+<div class="post-copyright">
+    <!-- <div>
+        <strong>本文作者：</strong>
+        <span>李斌</span>
+    </div> -->
+    <div>
+        <strong>本文链接：</strong>
+        <a href="https://blog.mailjob.net/posts/1845596403.html">
+            <!-- https://blog.mailjob.net/mysql/mysql的Checkpoint -->
+            https://blog.mailjob.net/posts/1845596403.html
+        </a>
+    </div>
+    <div>
+        <!-- <span>欢迎任何形式的转载，请务必注明出处。</span> -->
+    </div>
+    <div>
+        <span>
+            该网站发布的内容，遵循
+            <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>
+            版权协议，转载请附上原文出处链接和本声明。
+        </span>
+    </div>
+</div>
+
+
+
+<style>
+    .post-copyright {
+        background-color: #fff;
+  box-shadow: 0px 0px 1px 1px rgba(0, 0, 0, 0.05);
+        display: block;
+        margin: 20px auto;
+        margin-bottom: 15px;
+        padding: 10px;
+        font-size: 15px;
+        color: #2e2d2d;
+        word-break: break-all;
+        line-height: 1.8;
+    }
+
+
+    .post-copyright a {
+        color: #2e2d2d;
+        border-bottom: 1px solid #999; 
+    }
+
+    .post-copyright a:hover {
+        color: #2e2d2d;
+        border-bottom: 1px solid #000; 
+    }
+</style>
+
+          <!-- comments -->
+          <div class="comments">
+    <h3 id="commenttitle" style="margin-top: 20px;margin-left: 10px;">评论区</h3>
+    <div id="tcomment"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/twikoo@0.6.0/dist/twikoo.all.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/twikoo@1.0.0/dist/twikoo.all.min.js"></script> -->
+
+<script>twikoo.init({ envId: 'jefferyjob-github-io-3b53ee3a93b', el: '#tcomment' })</script>
+
+            <div class="right-icon">
+              <div id="to-valine" class="right-icon-item">
+                <a href="#commenttitle">评论</a>
+              </div>
+            </div>
+
+  </div>
+
+
+  <aside>
+    <div class="aside-wrap">
+    
+        <section class="widget-wrap">
+    <h3 class="widget-title">简介</h3>
+    <div class="widget">
+        <div class="notice">
+            <img class="notice-img" src="https://img.github.mailjob.net/logo/libin.jpg">
+            <p>李斌的个人独立博客<br>此平台用作学习交流<br>日常分享</p>
+            
+            <p class="notice-item">
+                <!-- github -->
+                <span><a target="_blank" href="https://github.com/jefferyjob"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108165043.jpg" alt="Github"></a></span>
+                <!-- csdn -->
+                <span><a target="_blank" href="https://blog.csdn.net/libinemail"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108172932.ico" alt="CSDN"></a></span>
+                <!-- juejin -->
+                <span><a target="_blank" href="https://juejin.cn/user/782508009723783"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108165800.png" alt="掘金社区"></a></span>
+                <!-- zhihu -->
+                <span><a target="_blank" href="https://www.zhihu.com/people/JefferyJob"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108172745.ico" alt="知乎"></a></span>
+                
+            </p>
+            
+        </div>
+    </div>
+</section>
+
+
+    
+        
+  <section class="widget-wrap">
+    <h3 class="widget-title">文章分类</h3>
+    <div class="widget">
+      <div class="categories-list">
+        
+           
+            
+              <a class="category-list-item" href="/categories/算法">
+                <span class="category-list-link">算法</span>
+                <span class="category-list-number">(13)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/mysql">
+                <span class="category-list-link">mysql</span>
+                <span class="category-list-number">(36)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/docker">
+                <span class="category-list-link">docker</span>
+                <span class="category-list-number">(2)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/design">
+                <span class="category-list-link">design</span>
+                <span class="category-list-number">(3)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/linux">
+                <span class="category-list-link">linux</span>
+                <span class="category-list-number">(5)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/rabbitmq">
+                <span class="category-list-link">rabbitmq</span>
+                <span class="category-list-number">(2)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/php">
+                <span class="category-list-link">php</span>
+                <span class="category-list-number">(6)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/redis">
+                <span class="category-list-link">redis</span>
+                <span class="category-list-number">(25)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/blog">
+                <span class="category-list-link">blog</span>
+                <span class="category-list-number">(15)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/swoole">
+                <span class="category-list-link">swoole</span>
+                <span class="category-list-number">(3)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/notes">
+                <span class="category-list-link">notes</span>
+                <span class="category-list-number">(10)</span>
+              </a>
+            
+          
+        
+      </div>
+    </div>
+  </section>
+
+
+    
+        
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget widget_tag">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/blog/" rel="tag">blog</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/es/" rel="tag">es</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/haproxy/" rel="tag">haproxy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/keepalived/" rel="tag">keepalived</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mycat/" rel="tag">mycat</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nginx/" rel="tag">nginx</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/notes/" rel="tag">notes</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/openresty/" rel="tag">openresty</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/php/" rel="tag">php</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/rabbitmq/" rel="tag">rabbitmq</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/swoole/" rel="tag">swoole</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a></li></ul>
+    </div>
+  </div>
+
+
+<style>
+  .widget_tag ul li {
+    display: inline-block;
+    padding: 0px 5px;
+    border: 1px solid #eee;
+    margin-bottom: 7px;
+    margin-right: 5px;
+    border-radius: 5px;
+    font-size: 12px;
+    color: #999;
+  }
+</style>
+    
+        
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul class="recent-posts">
+        
+          <li>
+            <a href="/posts/1482114423.html">notes：解决github访问慢的问题</a>
+          </li>
+        
+          <li>
+            <a href="/posts/1634640555.html">雪花算法 snowflake</a>
+          </li>
+        
+          <li>
+            <a href="/posts/163644071.html">mysql视图基本操作</a>
+          </li>
+        
+          <li>
+            <a href="/posts/1198915737.html">mysql视图是什么</a>
+          </li>
+        
+          <li>
+            <a href="/posts/3520988043.html">PHP实现IO阻塞模型(blocking)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+    
+        
+  <section class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/04/">四月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/03/">三月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/02/">二月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a></li></ul>
+    </div>
+  </section>
+
+
+    
+        
+  <section class="widget-wrap">
+    <h3 class="widget-title">友情链接</h3>
+    <div>
+      <ul class="widget-links">
+          
+          <li>
+              <a target="_blank" rel="noopener" href="https://libinblog.gitee.io" title="">
+                  本站大陆节点
+              </a>
+          </li>
+          
+          <li>
+              <a target="_blank" rel="noopener" href="https://blog.senll.com" title="">
+                  Ethan 的博客
+              </a>
+          </li>
+          
+          <li>
+              <a target="_blank" rel="noopener" href="https://www.laruence.com" title="">
+                  鸟哥的博客
+              </a>
+          </li>
+          
+          <li>
+              <a target="_blank" rel="noopener" href="http://rango.swoole.com" title="">
+                  韩天峰的博客
+              </a>
+          </li>
+          
+      </ul>
+    </div>
+  </section>
+
+
+<style>
+  .widget-links {
+    list-style: none;
+    padding-left: 10px;
+  }
+  .widget-links >li > a:hover {
+    color: #f40;
+    text-decoration: underline;
+  }
+</style>
+    
+        <section class="widget-wrap">
+    <div class="widget">
+        <div class="notice attention">
+
+            <p>
+                该网站发布的内容，遵循
+                <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>
+                版权协议，转载请附上原文出处链接和本声明。
+                <br><br>
+                如果有其他问题，可以给我发邮件咨询。
+                <a target="_blank" href="https://www.mailjob.net">libin@mailjob.net</a>
+                。我看到后会在第一时间回复！
+            </p>
+            
+        </div>
+    </div>
+</section>
+
+    
+    
+</div>
+
+
+      <!-- 目录 -->
+      
+        <div id="toc"></div>
+        <script>
+          $(function () {
+            var elm = $('#toc');
+            var startPos = $(elm).offset().top;
+            $.event.add(window, "scroll", function () {
+              var p = $(window).scrollTop();
+              $(elm).css('margin-left', '0px');
+              $(elm).css('position', ((p) > startPos) ? 'fixed' : 'static');
+              $(elm).css('top', ((p) > startPos) ? '20px' : '')
+            })
+          })
+
+        </script>
+
+  </aside>
+  
+</div>
+
+
+<script>
+  $('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
+
+</script>
+                </div>
+            </div>
+            <div class="right-icon">
+                <div id="to-top" class="right-icon-item">
+                  <a>
+                    <span class="top-left"></span>
+                    <span class="top-right"></span>
+                  </a>
+                </div>
+              </div>
+    </div>
+    <footer class="footer">
+  <div class="links-wrap-wrap">
+    <div class="links-wrap">
+    
+      
+        <section class="link-wrap">
+          <h3 class="link-title">导航</h3>
+          <div>
+            <ul class="link-item-wrap">
+                
+                <li class="link-item">
+                    <a href="https://blog.mailjob.net" title="">
+                        李斌的技术博客
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://www.mailjob.net" title="">
+                        我的邮箱
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://github.com/mailjobblog/demo_code" title="">
+                        Demo Code
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://new.cnzz.com/v1/login.php?siteid=1279692087" title="">
+                        友盟
+                    </a>
+                </li>
+                
+            </ul>
+          </div>
+        </section>
+      
+
+
+      
+        <section class="link-wrap">
+          <h3 class="link-title">社区论坛</h3>
+          <div>
+            <ul class="link-item-wrap">
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail" title="">
+                        李斌的CSDN
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://www.cnblogs.com/jefferyjob" title="">
+                        李斌的博客园
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://github.com/jefferyjob" title="">
+                        GitHub
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://hub.docker.com/u/jefferyjob" title="">
+                        DockerHub
+                    </a>
+                </li>
+                
+            </ul>
+          </div>
+        </section>
+      
+
+    </div>
+  </div>
+  
+    <div class="copyright-wrap">
+      <span>Copyright &copy; 2020-2021 京ICP备17056825号</span>
+      <span id="timeDate">载入天数...</span>
+
+      <br><br>
+      <span>
+        本站由 <a style="color:#e4e7ee" target="_blank" rel="noopener" href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral"><img style="width: 10px;height: 10px;" src="//img.github.mailjob.net/oss.github/20210226141134.png">又拍云</a> 提供CDN加速/云储存服务
+      </span>
+    </div>
+    
+    <!-- <span id="busuanzi_container_site_pv">
+      本站总访问量<span id="busuanzi_value_site_pv"></span>次
+    </span>
+    <span id="busuanzi_container_site_uv">
+      ，本站访客数<span id="busuanzi_value_site_uv"></span>人次
+    </span> -->
+
+   
+    
+</footer>
+
+<script>
+    var now = new Date();
+    function createtime() {
+      var grt = new Date("06/14/2020 12:00:00");//此处修改你的建站时间或者网站上线时间 
+      now.setTime(now.getTime() + 250);
+      days = (now - grt) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+      document.getElementById("timeDate").innerHTML = "本站已运行 " + dnum + " 天 ";
+    }
+    setInterval("createtime()", 1000);
+</script>
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<script src="/lib/jquery.js"></script>
+
+
+<script src="/lib/waves.js"></script>
+
+
+<script src="/lib/jquery-ui.js"></script>
+
+
+<script src="/lib/jquery.tocify.js"></script>
+
+
+<script src="/js/main.js"></script>
+
+
+        
+<style>
+  .copy-btn {
+    display: inline-block;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 20px;
+    color: rgb(206, 206, 206);
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    border-radius: 3px;
+    user-select: none;
+    outline: 0;
+  }
+
+  .copy-btn:hover {
+    color: #888
+  }
+
+  .highlight-wrap .copy-btn {
+    padding: 2px 6px;
+    position: absolute;
+    right: 10px;
+    top: 1px;
+    z-index: 1;
+  }
+
+
+
+  .highlight-wrap {
+    position: relative;
+  }
+
+  #copysuccess {
+    width: 200px;
+    height: 75px;
+    position: fixed;
+    right: 50%;
+    margin-right: -100px;
+    top: 40%;
+    margin-top: -40px;
+    color: #fff;
+    font-weight: 600;
+    background: #444444d8;
+    display: none;
+    z-index: 99999;
+    border-radius: 10px;
+    text-align: center;
+    line-height: 30px;
+    padding-top: 10px;
+    user-select: none;
+  }
+</style>
+
+<script>
+  addLoadEvent(() => {
+    $('.highlight').each(function (i, e) {
+      var $wrap = $('<div>').addClass('highlight-wrap')
+      $(e).after($wrap)
+      $wrap.append($('<div>').addClass('copy-btn').append('复制代码').on('click', function (e) {
+        var copysuccess = document.getElementById('copysuccess');
+        copysuccess.style.display = 'block'
+        setTimeout(function () {
+          copysuccess.style.display = 'none'
+        }, 2000)
+        var code = $(this).parent().find(".code")[0].innerText
+          
+                var ta = document.createElement('textarea')
+        document.body.appendChild(ta)
+        ta.style.position = 'absolute'
+        ta.style.top = '0px'
+        ta.style.left = '0px'
+        ta.value = code
+        ta.select()
+        ta.focus()
+        var result = document.execCommand('copy')
+        document.body.removeChild(ta)
+          
+                  if (result) $(this).text('复制成功')
+            else $(this).text('复制失败')
+              
+                $(this).blur()
+      })).on('mouseleave', function (e) {
+        var $b = $(this).find('.copy-btn')
+        setTimeout(function () {
+          $b.text('复制代码')
+        }, 1000)
+      }).append(e)
+    })
+  })
+</script>
+
+            <div id="copysuccess">复制成功<br>Copy succeeded</div>
+</body>
+
+</html>
+
+<script>
+    $('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
+</script>
+
+<!-- 网站管理 start -->
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>
+
+<!-- 网站管理 end -->

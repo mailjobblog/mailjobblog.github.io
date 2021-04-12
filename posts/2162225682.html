@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>
+    Mysql优化器追踪分析sql语句 | 李斌的技术博客
+  </title>
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <meta name="theme-color" content="#4184f3">
+  
+  
+  <link href="https://img.github.mailjob.net/logo/favicon.ico" rel="icon" />
+  
+
+  
+<link rel="stylesheet" href="/css/highlight.light.css">
+
+  
+<link rel="stylesheet" href="/css/prism-customize.css">
+
+  
+<link rel="stylesheet" href="/css/nav-icon.css">
+
+  
+<link rel="stylesheet" href="/css/waves.min.css">
+
+  
+<link rel="stylesheet" href="/css/jquery.tocify.css">
+
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+<link rel="stylesheet" href="/css/nav-indicator.css">
+
+  
+<link rel="stylesheet" href="/css/twikoo.css">
+
+  
+<link rel="stylesheet" href="/css/search.css">
+
+  
+  
+
+  
+
+  </meta>
+  </meta>
+  <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.js"></script>
+  
+<script src="/js/comment.js"></script>
+
+  
+<script src="/js/copy.js"></script>
+
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 5.3.0"></head>
+
+<body>
+    <header>
+        <!-- cover image or sth. -->
+    </header>
+
+    <!-- tips_head start -->
+    <div class="tips_head">
+        <center><span id='tips_head_span'></span></center>
+<script>
+    var host = window.location.host;
+    if(host != 'blog.mailjob.net' && host != 'localhost:4000') {
+        document.getElementById("tips_head_span").innerHTML = "此访问域名为大陆节点，网站内容更新有一定的延迟且不支持评论。若要获取最新信息，请访问国际节点：<a href='https://blog.mailjob.net'>https://blog.mailjob.net</a>"
+        document.getElementById("tips_head_span").style.lineHeight = 3;
+    }
+</script>
+    </div>
+    <!-- tips_head end -->
+
+    <div id="main" class="m-scene">
+        
+<div class="nav-wrapper" id="header">
+
+    <div class="container">
+        <nav>
+            
+            
+            <div class="logo wave">
+                <a href="/" id="logo">
+                    李斌的技术博客
+                </a>
+            </div>
+
+            <div class="nav-toggle-icon" >
+                <div class="material-hamburger">
+                    <span>
+                    </span>
+                    <span>
+                    </span>
+                    <span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="menu-wrapper">
+                <div class="nav-indicator">
+                </div>
+                <ul class="menus">
+                    
+                     
+                        <li>
+                            <a class="wave " href="/">
+                                首页
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/archives">
+                                归档
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/about">
+                                关于
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/message">
+                                留言
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/search">
+                                搜索
+                            </a>
+                        </li>
+                     
+                    
+                   
+                </ul>
+            </div>
+
+        </nav>
+    </div>
+</div>
+
+
+            <div class="container content">
+                <div class="scene_element scene_element--fadein">
+                    <div class="row">
+  <div class="main main-article">
+    <article>
+
+      
+            <header class="post-header">
+              
+            </header>
+
+            <h1 class="post-title">
+              Mysql优化器追踪分析sql语句
+            </h1>
+
+            <section class="post-info post-info-bottom">
+
+              <span class="post-date">发布于
+                <span class="post-date-text">
+                   2021-02-17
+                </span>
+              </span>
+
+
+
+
+              
+                <span class="post-category">分类:
+                  <a class="article-category-link" href="/categories/mysql/">mysql</a>
+                </span>
+                
+                  
+                    <span class="post-tags">
+                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li></ul>
+                    </span>
+                    
+
+                      <!-- 阅读量统计 -->
+                      
+                        <span class="post-visitors">阅读量:<span id="twikoo_visitors">0</span></span>
+                        
+
+
+            </section>
+
+            <section class="post-content">
+
+              <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
+<p>平常用 explain 就可以sql语句的性能了。但是，如果你觉得分析的不够详尽，你想查看内部的拆解过程，那么你可以试试用mysql优化器进行追踪分析</p>
+</blockquote>
+<h2 id="相关链接"><a href="#相关链接" class="headerlink" title="相关链接"></a>相关链接</h2><blockquote>
+<p>explain 详解：<a href="https://blog.mailjob.net/posts/183747545.html">https://blog.mailjob.net/posts/183747545.html</a></p>
+<p>skip_scan_range（MySQL 8.0的新特性）：<a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_43970890/article/details/89494915">https://blog.csdn.net/weixin_43970890/article/details/89494915</a></p>
+</blockquote>
+<h2 id="操作方法"><a href="#操作方法" class="headerlink" title="操作方法"></a>操作方法</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> optimizer_trace<span class="operator">=</span>&quot;enabled=on&quot;; <span class="comment">-- 开启trace查看优化器的结果</span></span><br><span class="line"><span class="keyword">set</span> end_markers_in_json<span class="operator">=</span><span class="keyword">on</span>; <span class="comment">-- 增加注释</span></span><br><span class="line">#<span class="keyword">sql</span> query#; <span class="comment">-- sql 执行语句</span></span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> information_schema.optimizer_trace \G; <span class="comment">-- 查看分析结果</span></span><br></pre></td></tr></table></figure>
+<h2 id="执行结果包含内容"><a href="#执行结果包含内容" class="headerlink" title="执行结果包含内容"></a>执行结果包含内容</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">1.join_preparation ：准备阶段，包查询语句转换，转换成嵌套循环语句等</span><br><span class="line"></span><br><span class="line">   expanded_query</span><br><span class="line">   transformations_to_nested_joins</span><br><span class="line"></span><br><span class="line">2.join_optimization ：优化阶段，包括以下主要阶段</span><br><span class="line"></span><br><span class="line">  condition_processing ：处理where条件部分，主要包括等式处理、常量处理、多余条件处理</span><br><span class="line">  table_dependencies ：表依赖检查</span><br><span class="line">  ref_optimizer_key_uses ：评估可用的索引</span><br><span class="line">  rows_estimation        ：评估访问单表的方式，及扫描的行数与代价</span><br><span class="line">  considered_execution_plans ：评估最终可使用的执行计划</span><br><span class="line">  condition_on_constant_tables :检查带常量表的条件</span><br><span class="line">  attaching_conditions_to_tables ：将常量条件作用到表</span><br><span class="line">  refine_plan 改进计划，不理解</span><br><span class="line"></span><br><span class="line">3.join_execution  ：执行阶段</span><br></pre></td></tr></table></figure>
+<h2 id="优化器内容结果分析"><a href="#优化器内容结果分析" class="headerlink" title="优化器内容结果分析"></a>优化器内容结果分析</h2><h4 id="explain-分析"><a href="#explain-分析" class="headerlink" title="explain 分析"></a>explain 分析</h4><blockquote>
+<p>以下 <code>left` `join</code>语句，d表与s表关联，当<code>where</code>条件在d.deptid上时，s表无法走索引。因此通过开启trace方式做一些追踪。</p>
+</blockquote>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">root@(<span class="keyword">none</span>) <span class="number">09</span>:<span class="number">20</span>:<span class="number">20</span><span class="operator">&gt;</span>explain <span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> SSS.DEPARTMENT d <span class="keyword">LEFT</span> <span class="keyword">JOIN</span> ppp.shop s <span class="keyword">ON</span> d.DEPTID <span class="operator">=</span> s.DEPTID <span class="keyword">WHERE</span> d.DEPTID <span class="operator">=</span> <span class="string">&#x27;00001111&#x27;</span>;</span><br><span class="line"><span class="operator">+</span><span class="comment">----+-------------+-------+------------+-------+----------------------------+---------+---------+-------+--------+----------+-------------+</span></span><br><span class="line"><span class="operator">|</span> id <span class="operator">|</span> select_type <span class="operator">|</span> <span class="keyword">table</span> <span class="operator">|</span> partitions <span class="operator">|</span> type  <span class="operator">|</span> possible_keys              <span class="operator">|</span> key     <span class="operator">|</span> key_len <span class="operator">|</span> <span class="keyword">ref</span>   <span class="operator">|</span> <span class="keyword">rows</span>   <span class="operator">|</span> filtered <span class="operator">|</span> Extra       <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">----+-------------+-------+------------+-------+----------------------------+---------+---------+-------+--------+----------+-------------+</span></span><br><span class="line"><span class="operator">|</span>  <span class="number">1</span> <span class="operator">|</span> SIMPLE      <span class="operator">|</span> d     <span class="operator">|</span> <span class="keyword">NULL</span>       <span class="operator">|</span> const <span class="operator">|</span> <span class="keyword">PRIMARY</span>,INDEX_DEPARTMENT_5 <span class="operator">|</span> <span class="keyword">PRIMARY</span> <span class="operator">|</span> <span class="number">130</span>     <span class="operator">|</span> const <span class="operator">|</span>      <span class="number">1</span> <span class="operator">|</span>   <span class="number">100.00</span> <span class="operator">|</span> <span class="keyword">NULL</span>        <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>  <span class="number">1</span> <span class="operator">|</span> SIMPLE      <span class="operator">|</span> s     <span class="operator">|</span> <span class="keyword">NULL</span>       <span class="operator">|</span> <span class="keyword">ALL</span>   <span class="operator">|</span> <span class="keyword">NULL</span>                       <span class="operator">|</span> <span class="keyword">NULL</span>    <span class="operator">|</span> <span class="keyword">NULL</span>    <span class="operator">|</span> <span class="keyword">NULL</span>  <span class="operator">|</span> <span class="number">978629</span> <span class="operator">|</span>   <span class="number">100.00</span> <span class="operator">|</span> <span class="keyword">Using</span> <span class="keyword">where</span> <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">----+-------------+-------+------------+-------+----------------------------+---------+---------+-------+--------+----------+-------------+</span></span><br></pre></td></tr></table></figure>
+<h4 id="优化器分析"><a href="#优化器分析" class="headerlink" title="优化器分析"></a>优化器分析</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br></pre></td><td class="code"><pre><span class="line">root@(<span class="keyword">none</span>) <span class="number">09</span>:<span class="number">39</span>:<span class="number">58</span><span class="operator">&gt;</span> <span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> information_schema.optimizer_trace\G;</span><br><span class="line"><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span> <span class="number">1.</span> <span class="type">row</span> <span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span></span><br><span class="line">                            QUERY: <span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> SSS.DEPARTMENT d <span class="keyword">LEFT</span> <span class="keyword">JOIN</span> ppp.shop s <span class="keyword">ON</span> d.DEPTID <span class="operator">=</span> s.DEPTID <span class="keyword">WHERE</span> d.DEPTID <span class="operator">=</span> <span class="string">&#x27;00001111&#x27;</span></span><br><span class="line">                            TRACE: &#123;</span><br><span class="line">  &quot;steps&quot;: [</span><br><span class="line">   </span><br><span class="line">  #准备阶段</span><br><span class="line">    &#123;</span><br><span class="line">      &quot;join_preparation&quot;: &#123;</span><br><span class="line">        &quot;select#&quot;: <span class="number">1</span>,</span><br><span class="line">        &quot;steps&quot;: [</span><br><span class="line">          &#123;  </span><br><span class="line">          #expanded_query，解析查询语句，&quot;*&quot; 转换成字段，<span class="keyword">left</span> <span class="keyword">join</span> <span class="keyword">on</span> 处转化成<span class="keyword">on</span>((`SSS`.`d`.`Deptid` <span class="operator">=</span> <span class="keyword">convert</span>(`ppp`.`s`.`Deptid` <span class="keyword">using</span> utf8mb4))))</span><br><span class="line">            &quot;expanded_query&quot;: &quot;/* select#1 */ select `SSS`.`d`.`Organid` AS `Organid`,。。。`s`.`Status` AS `Status`,`ppp`.`s`.`Stylecategoryid` AS `Stylecategoryid`,`ppp`.`s`.`Turnontime` AS `Turnontime` from (`SSS`.`department` `d` left join `ppp`.`shop` `s` on((`SSS`.`d`.`Deptid` = convert(`ppp`.`s`.`Deptid` using utf8mb4)))) where (`SSS`.`d`.`Deptid` = &#x27;00001111&#x27;)&quot;</span><br><span class="line">          &#125;,</span><br><span class="line">          &#123;</span><br><span class="line">          #转化成的nested <span class="keyword">join</span>语句：</span><br><span class="line">            &quot;transformations_to_nested_joins&quot;: &#123;</span><br><span class="line">              &quot;transformations&quot;: [</span><br><span class="line">                &quot;parenthesis_removal&quot;</span><br><span class="line">              ] <span class="comment">/* transformations */</span>,</span><br><span class="line">              &quot;expanded_query&quot;: &quot;/* select#1 */ select `SSS`.`d`.`Organid`。。。 `SSS`.`d`.`Guidecode` AS `Guidecode`,`SSS`.`d`.`Createdate` AS `Createdate`,`SSS`.`d`.`Plateformuser` AS `Plateformuser`,`SSS`.`d`.`Plateformdept` AS `Plateformdept`,`SSS`.`d`.`Agentuser` AS `Agentuser`,`SSS`.`d`.`Agentdept` AS `Agentdept`,`SSS`.`d`.`Shopstatus` AS `Shopstatus`,`SSS`.`d`.`Deptshortname` AS `Deptshortname`,`SSS`.`d`.`Storetype` AS `Storetype`,`SSS`.`d`.`Depttype` AS `Depttype`,`ppp`.`s`.`Shopid` AS `Shopid`,`ppp`.`s`.`Objectid` AS `Objectid`,`ppp`.`s`.`Shopname` AS `Shopname`,`ppp`Tel`,`ppp`.`s`.`Introduce` AS `Introduce`,`ppp`.`s`.`Industry` AS `Industry`,`ppp`.`s`.`Address` AS `Address`,`ppp`.`s`.`Shop360image` AS `Shop360image`,`ppp`.`s`.`Domain` AS `Domain`,`ppp`.`s`.`Organid` AS `Organid`,`ppp`.`s`.`Deptid` AS `Deptid`,`ppp`.`s`.`Brandids` AS `Brandids`,`ppp`.`s`.`Extdata` AS `Extdata`,`ppp`.`s`.`Ranking` AS `Ranking`,`ppp`.`s`.`Isdelete` AS `Isdelete`,`ppp`.`s`.`District` AS `District`,`ppp`.`s`.`City` AS `City`,`ppp`.`s`.`Province` AS `Province`,`ppp`.`s`.`Phone` AS `Phone`,`ppp`.`s`.`Watermarkimage` AS `Watermarkimage`,`ppp`.`s`.`Drawingimage` AS `Drawingimage`,`ppp`.`s`.`Contactuser` AS `Contactuser`,`ppp`.`s`.`Panoloadingimage` AS `Panoloadingimage`,`ppp`.`s`.`Lngandlat` AS `Lngandlat`,`ppp`.`s`.`Createtime` AS `Createtime`,`ppp`.`s`.`Shoptype` AS `Shoptype`,`ppp`.`s`.`Status` AS `Status`,`ppp`.`s`.`Stylecategoryid` AS `Stylecategoryid`,`ppp`.`s`.`Turnontime` AS `Turnontime` from `SSS`.`department` `d` left join `ppp`.`shop` `s` on((`SSS`.`d`.`Deptid` = convert(`ppp`.`s`.`Deptid` using utf8mb4))) where (`SSS`.`d`.`Deptid` = &#x27;00001111&#x27;)&quot;</span><br><span class="line">            &#125; /* transformations_to_nested_joins */</span><br><span class="line">          &#125;</span><br><span class="line">        ] <span class="comment">/* steps */</span></span><br><span class="line">      &#125; /* join_preparation */</span><br><span class="line">    &#125;,#准备阶段结束</span><br><span class="line">     </span><br><span class="line">     </span><br><span class="line">    &#123;</span><br><span class="line">    #优化阶段：</span><br><span class="line">      &quot;join_optimization&quot;: &#123;</span><br><span class="line">        &quot;select#&quot;: <span class="number">1</span>,</span><br><span class="line">        &quot;steps&quot;: [</span><br><span class="line">          &#123; </span><br><span class="line">          #处理<span class="keyword">where</span>条件部分，化简条件：</span><br><span class="line">            &quot;condition_processing&quot;: &#123;</span><br><span class="line">              &quot;condition&quot;: &quot;WHERE&quot;,</span><br><span class="line">              &quot;original_condition&quot;: &quot;(`SSS`.`d`.`Deptid` = &#x27;00001111&#x27;)&quot;,<span class="comment">---原始条件</span></span><br><span class="line">              &quot;steps&quot;: [</span><br><span class="line">                &#123;</span><br><span class="line">                  &quot;transformation&quot;: &quot;equality_propagation&quot;, <span class="comment">----等式处理</span></span><br><span class="line">                  &quot;resulting_condition&quot;: &quot;(`SSS`.`d`.`Deptid` = &#x27;00001111&#x27;)&quot;</span><br><span class="line">                &#125;,</span><br><span class="line">                &#123;</span><br><span class="line">                  &quot;transformation&quot;: &quot;constant_propagation&quot;,<span class="comment">-----常量处理</span></span><br><span class="line">                  &quot;resulting_condition&quot;: &quot;(`SSS`.`d`.`Deptid` = &#x27;00001111&#x27;)&quot;</span><br><span class="line">                &#125;,</span><br><span class="line">                &#123;</span><br><span class="line">                  &quot;transformation&quot;: &quot;trivial_condition_removal&quot;,<span class="comment">----去除多余无关的条件处理</span></span><br><span class="line">                  &quot;resulting_condition&quot;: &quot;(`SSS`.`d`.`Deptid` = &#x27;00001111&#x27;)&quot;</span><br><span class="line">                &#125;</span><br><span class="line">              ] <span class="comment">/* steps */</span></span><br><span class="line">            &#125; /* condition_processing */</span><br><span class="line">          &#125;,#结束，因为这里已经够简化了，所以三次处理后都是同样的。</span><br><span class="line">           </span><br><span class="line">          &#123;</span><br><span class="line">          #替代产生的字段</span><br><span class="line">            &quot;substitute_generated_columns&quot;: &#123;</span><br><span class="line">            &#125; /* substitute_generated_columns */</span><br><span class="line">          &#125;,</span><br><span class="line">           </span><br><span class="line">          &#123;</span><br><span class="line">          #表依赖关系检查</span><br><span class="line">            <span class="comment">/*</span></span><br><span class="line"><span class="comment">            table：涉及的表名，如果有别名，也会展示出来</span></span><br><span class="line"><span class="comment">            row_may_be_null：行是否可能为NULL，这里是指JOIN操作之后，这张表里的数据是不是可能为</span></span><br><span class="line"><span class="comment">            NULL。如果语句中使用了LEFT JOIN，则后一张表的row_may_be_null会显示为true</span></span><br><span class="line"><span class="comment">            map_bit：表的映射编号，从0开始递增</span></span><br><span class="line"><span class="comment">            depends_on_map_bits：依赖的映射表。主要是当使用STRAIGHT_JOIN强行控制连接顺序或者LEFT</span></span><br><span class="line"><span class="comment">            JOIN/RIGHT JOIN有顺序差别时，会在depends_on_map_bits中展示前置表的map_bit值。</span></span><br><span class="line"><span class="comment">            */</span></span><br><span class="line">            &quot;table_dependencies&quot;: [</span><br><span class="line">              &#123;</span><br><span class="line">                &quot;table&quot;: &quot;`SSS`.`department` `d`&quot;, <span class="comment">------表d</span></span><br><span class="line">                &quot;row_may_be_null&quot;: <span class="literal">false</span>,</span><br><span class="line">                &quot;map_bit&quot;: <span class="number">0</span>,</span><br><span class="line">                &quot;depends_on_map_bits&quot;: [</span><br><span class="line">                ] <span class="comment">/* depends_on_map_bits */</span></span><br><span class="line">              &#125;,</span><br><span class="line">              &#123;</span><br><span class="line">                &quot;table&quot;: &quot;`ppp`.`shop` `s`&quot;, <span class="comment">--------表s</span></span><br><span class="line">                &quot;row_may_be_null&quot;: <span class="literal">true</span>,</span><br><span class="line">                &quot;map_bit&quot;: <span class="number">1</span>,</span><br><span class="line">                &quot;depends_on_map_bits&quot;: [</span><br><span class="line">                  <span class="number">0</span></span><br><span class="line">                ] <span class="comment">/* depends_on_map_bits */</span></span><br><span class="line">              &#125;</span><br><span class="line">            ] <span class="comment">/* table_dependencies */</span></span><br><span class="line">          &#125;, #表依赖关系检查结束</span><br><span class="line">           </span><br><span class="line">           </span><br><span class="line">          &#123;#找出可使用索引的字段：</span><br><span class="line">            &quot;ref_optimizer_key_uses&quot;: [</span><br><span class="line">              &#123;</span><br><span class="line">                &quot;table&quot;: &quot;`SSS`.`department` `d`&quot;,</span><br><span class="line">                &quot;field&quot;: &quot;Deptid&quot;, <span class="comment">----------可用的是Deptid</span></span><br><span class="line">                &quot;equals&quot;: &quot;&#x27;00001111&#x27;&quot;,</span><br><span class="line">                &quot;null_rejecting&quot;: <span class="literal">false</span> <span class="comment">---</span></span><br><span class="line">              &#125;,</span><br><span class="line">              &#123;</span><br><span class="line">                &quot;table&quot;: &quot;`SSS`.`department` `d`&quot;,</span><br><span class="line">                &quot;field&quot;: &quot;Deptid&quot;,</span><br><span class="line">                &quot;equals&quot;: &quot;&#x27;00001111&#x27;&quot;,</span><br><span class="line">                &quot;null_rejecting&quot;: <span class="literal">false</span></span><br><span class="line">              &#125;</span><br><span class="line">            ] <span class="comment">/* ref_optimizer_key_uses */</span></span><br><span class="line">          &#125;,</span><br><span class="line">           </span><br><span class="line">          &#123;#评估每个表单表访问行数及相应代价。</span><br><span class="line">            &quot;rows_estimation&quot;: [</span><br><span class="line">              &#123;</span><br><span class="line">                &quot;table&quot;: &quot;`SSS`.`department` `d`&quot;,</span><br><span class="line">                &quot;rows&quot;: <span class="number">1</span>,   <span class="comment">---返回1行</span></span><br><span class="line">                &quot;cost&quot;: <span class="number">1</span>,   <span class="comment">---代价为1</span></span><br><span class="line">                &quot;table_type&quot;: &quot;const&quot;,  <span class="comment">---d表使用的方式是const，即根据主键索引获取</span></span><br><span class="line">                &quot;empty&quot;: <span class="literal">false</span></span><br><span class="line">              &#125;,</span><br><span class="line">              &#123;</span><br><span class="line">                &quot;table&quot;: &quot;`ppp`.`shop` `s`&quot;,</span><br><span class="line">                &quot;table_scan&quot;: &#123; -------s表直接使用全表扫描</span><br><span class="line">                  &quot;rows&quot;: <span class="number">978662</span>, <span class="comment">------扫描978662行</span></span><br><span class="line">                  &quot;cost&quot;: <span class="number">8109</span>    <span class="comment">------代价为8109</span></span><br><span class="line">                &#125; /* table_scan */</span><br><span class="line">              &#125;</span><br><span class="line">            ] <span class="comment">/* rows_estimation */</span></span><br><span class="line">          &#125;,</span><br><span class="line">           </span><br><span class="line">           </span><br><span class="line">          &#123;#评估执行计划，这里考虑两表连接(负责对比各可行计划的开销，并选择相对最优的执行计划)</span><br><span class="line">            &quot;considered_execution_plans&quot;: [</span><br><span class="line">              &#123;</span><br><span class="line">                &quot;plan_prefix&quot;: [<span class="comment">------------------执行计划的前缀，这里是d表，因为是left join 我认为指的应该是驱动表的意思</span></span><br><span class="line">                  &quot;`SSS`.`department` `d`&quot;</span><br><span class="line">                ] <span class="comment">/* plan_prefix */</span>,</span><br><span class="line">                &quot;table&quot;: &quot;`ppp`.`shop` `s`&quot;,</span><br><span class="line">                &quot;best_access_path&quot;: &#123;-------最优访问路径</span><br><span class="line">                  &quot;considered_access_paths&quot;: [考虑的访问路径</span><br><span class="line">                    &#123;</span><br><span class="line">                      &quot;rows_to_scan&quot;: <span class="number">978662</span>,<span class="comment">---扫描978662行</span></span><br><span class="line">                      &quot;access_type&quot;: &quot;scan&quot;,<span class="comment">--------全表扫描的方式</span></span><br><span class="line">                      &quot;resulting_rows&quot;: <span class="number">978662</span>,</span><br><span class="line">                      &quot;cost&quot;: <span class="number">203841</span>,<span class="comment">----------使用代价</span></span><br><span class="line">                      &quot;chosen&quot;: <span class="literal">true</span><span class="comment">-------选中</span></span><br><span class="line">                    &#125;</span><br><span class="line">                  ] <span class="comment">/* considered_access_paths */</span></span><br><span class="line">                &#125; /* best_access_path */,</span><br><span class="line">                &quot;condition_filtering_pct&quot;: <span class="number">100</span>,条件过滤率<span class="number">100</span><span class="operator">%</span>，指的是这里与上一个表进行行过滤的行数</span><br><span class="line">                &quot;rows_for_plan&quot;: <span class="number">978662</span>,<span class="comment">------执行计划的扫描行数978662</span></span><br><span class="line">                &quot;cost_for_plan&quot;: <span class="number">203841</span>,<span class="comment">-------执行计划的cost203841</span></span><br><span class="line">                &quot;chosen&quot;: <span class="literal">true</span><span class="comment">---------选中</span></span><br><span class="line">              &#125;</span><br><span class="line">            ] <span class="comment">/* considered_execution_plans */</span></span><br><span class="line">          &#125;,</span><br><span class="line">           </span><br><span class="line">           </span><br><span class="line">          &#123;#检查带常量表的条件</span><br><span class="line">            &quot;condition_on_constant_tables&quot;: &quot;(&#x27;00001111&#x27; = &#x27;00001111&#x27;)&quot;,</span><br><span class="line">            &quot;condition_value&quot;: <span class="literal">true</span></span><br><span class="line">          &#125;,</span><br><span class="line">           </span><br><span class="line">           </span><br><span class="line">          &#123;   #将常量条件作用到表，这里主要是将d表的中的deptid条件作用到s表的deptid</span><br><span class="line">            &quot;attaching_conditions_to_tables&quot;: &#123;</span><br><span class="line">              &quot;original_condition&quot;: &quot;(&#x27;00001111&#x27; = &#x27;00001111&#x27;)&quot;,</span><br><span class="line">              &quot;attached_conditions_computation&quot;: [</span><br><span class="line">              ] <span class="comment">/* attached_conditions_computation */</span>,</span><br><span class="line">              &quot;attached_conditions_summary&quot;: [</span><br><span class="line">                &#123;</span><br><span class="line">                  &quot;table&quot;: &quot;`ppp`.`shop` `s`&quot;,</span><br><span class="line">                  &quot;attached&quot;: &quot;&lt;if&gt;(is_not_null_compl(s), (&#x27;00001111&#x27; = convert(`ppp`.`s`.`Deptid` using utf8mb4)), true)&quot;</span><br><span class="line">                &#125;</span><br><span class="line">              ] <span class="comment">/* attached_conditions_summary */</span></span><br><span class="line">            &#125; /* attaching_conditions_to_tables */</span><br><span class="line">          &#125;,</span><br><span class="line">           </span><br><span class="line">           </span><br><span class="line">          &#123; # 改善执行计划</span><br><span class="line">            &quot;refine_plan&quot;: [</span><br><span class="line">              &#123;</span><br><span class="line">                &quot;table&quot;: &quot;`ppp`.`shop` `s`&quot;</span><br><span class="line">              &#125;</span><br><span class="line">            ] <span class="comment">/* refine_plan */</span></span><br><span class="line">          &#125;</span><br><span class="line">        ] <span class="comment">/* steps */</span></span><br><span class="line">      &#125; /* join_optimization */</span><br><span class="line">    &#125;,</span><br><span class="line">     </span><br><span class="line">    &#123;</span><br><span class="line">      &quot;join_execution&quot;: &#123;</span><br><span class="line">        &quot;select#&quot;: <span class="number">1</span>,</span><br><span class="line">        &quot;steps&quot;: [</span><br><span class="line">        ] <span class="comment">/* steps */</span></span><br><span class="line">      &#125; /* join_execution */</span><br><span class="line">    &#125;</span><br><span class="line">     </span><br><span class="line">  ] <span class="comment">/* steps */</span></span><br><span class="line">&#125;</span><br><span class="line">MISSING_BYTES_BEYOND_MAX_MEM_SIZE: <span class="number">0</span></span><br><span class="line">          INSUFFICIENT_PRIVILEGES: <span class="number">0</span></span><br><span class="line"><span class="number">1</span> <span class="type">row</span> <span class="keyword">in</span> <span class="keyword">set</span> (<span class="number">0.00</span> sec)</span><br></pre></td></tr></table></figure>
+<h5 id="rows-estimation-说明"><a href="#rows-estimation-说明" class="headerlink" title="rows_estimation 说明"></a>rows_estimation 说明</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">table：表名</span><br><span class="line">range_analysis：</span><br><span class="line">table_scan：如果全表扫描的话，需要扫描多少行（row，2838216），以及需要的代价（cost，</span><br><span class="line">286799）</span><br><span class="line">potential_range_indexes：列出表中所有的索引并分析其是否可用。如果不可用的话，会列出不</span><br><span class="line">可用的原因是什么；如果可用会列出索引中可用的字段；</span><br><span class="line">setup_range_conditions：如果有可下推的条件，则带条件考虑范围查询</span><br><span class="line">group_index_range：当使用了GROUP BY或DISTINCT时，是否有合适的索引可用。当未使用GROUP</span><br><span class="line">BY或DISTINCT时，会显示chosen&#x3D;false, cause&#x3D;not_group_by_or_distinct；如使用了GROUP BY或</span><br><span class="line">DISTINCT，但是多表查询时，会显示chosen&#x3D;false，cause &#x3D;not_single_table。其他情况下会尝试</span><br><span class="line">分析可用的索引（potential_group_range_indexes）并计算对应的扫描行数及其所需代价</span><br><span class="line">skip_scan_range：是否使用了skip scan</span><br><span class="line">TIPS skip_scan_range是MySQL 8.0的新特性，感兴趣的可详见</span><br><span class="line">https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_43970890&#x2F;article&#x2F;details&#x2F;89494915</span><br><span class="line">analyzing_range_alternatives：分析各个索引的使用成本</span><br><span class="line">range_scan_alternatives：range扫描分析</span><br><span class="line">index：索引名</span><br><span class="line">ranges：range扫描的条件范围</span><br><span class="line">index_dives_for_eq_ranges：是否使用了index dive，该值会被参数</span><br><span class="line">eq_range_index_dive_limit变量值影响。</span><br><span class="line">rowid_ordered：该range扫描的结果集是否根据PK值进行排序</span><br><span class="line">using_mrr：是否使用了mrr</span><br><span class="line">index_only：表示是否使用了覆盖索引</span><br><span class="line">rows：扫描的行数</span><br><span class="line">cost：索引的使用成本</span><br><span class="line">chosen：表示是否使用了该索引</span><br><span class="line">analyzing_roworder_intersect：分析是否使用了索引合并（index merge），如果未使用，</span><br><span class="line">会在cause中展示原因；如果使用了索引合并，会在该部分展示索引合并的代价。</span><br><span class="line">chosen_range_access_summary：在前一个步骤中分析了各类索引使用的方法及代价，得出了</span><br><span class="line">一定的中间结果之后，在summary阶段汇总前一阶段的中间结果确认最后的方案</span><br><span class="line">range_access_plan：range扫描最终选择的执行计划。</span><br><span class="line">type：展示执行计划的type，如果使用了索引合并，则会显示index_roworder_intersect</span><br><span class="line">index：索引名</span><br><span class="line">rows：扫描的行数</span><br><span class="line">ranges：range扫描的条件范围</span><br><span class="line">rows_for_plan：该执行计划的扫描行数</span><br><span class="line">cost_for_plan：该执行计划的执行代价</span><br><span class="line">chosen：是否选择该执行计划</span><br></pre></td></tr></table></figure>
+<h5 id="considered-execution-plans-说明"><a href="#considered-execution-plans-说明" class="headerlink" title="considered_execution_plans 说明"></a>considered_execution_plans 说明</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">plan_prefix：当前计划的前置执行计划。</span><br><span class="line">table：涉及的表名，如果有别名，也会展示出来</span><br><span class="line">best_access_path：通过对比considered_access_paths，选择一个最优的访问路径</span><br><span class="line">considered_access_paths：当前考虑的访问路径</span><br><span class="line">access_type：使用索引的方式，可参考explain中的type字段</span><br><span class="line">index：索引</span><br><span class="line">rows：行数</span><br><span class="line">cost：开销</span><br><span class="line">chosen：是否选用这种执行路径</span><br><span class="line">condition_filtering_pct：类似于explain的filtered列，是一个估算值</span><br><span class="line">rows_for_plan：执行计划最终的扫描行数，由considered_access_paths.rows X</span><br><span class="line">condition_filtering_pct计算获得。</span><br><span class="line">cost_for_plan：执行计划的代价，由considered_access_paths.cost相加获得</span><br><span class="line">chosen：是否选择了该执行计划</span><br><span class="line">attaching_conditions_to_tables</span><br><span class="line">基于considered_execution_plans中选择的执行计划，改造原有where条件，并针对表增加适当的附</span><br><span class="line">加条件，以便于单表数据的筛选。</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>**TIPS **</p>
+<p>这部分条件的增加主要是为了便于ICP（索引条件下推），但ICP是否开启并不影响这部<br>分内容的构造。 ICP参考文档：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/Terry-Wu/p/9273177.html">https://www.cnblogs.com/Terry-Wu/p/9273177.html</a></p>
+</blockquote>
+<h5 id="attaching-conditions-to-tables-说明"><a href="#attaching-conditions-to-tables-说明" class="headerlink" title="attaching_conditions_to_tables 说明"></a>attaching_conditions_to_tables 说明</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">original_condition：原始的条件语句</span><br><span class="line">attached_conditions_computation：使用启发式算法计算已使用的索引，如果已使用的索引的访问</span><br><span class="line">类型是ref，则计算用range能否使用组合索引中更多的列，如果可以，则用range的方式替换ref。</span><br><span class="line">attached_conditions_summary：附加之后的情况汇总</span><br><span class="line">table：表名</span><br><span class="line">attached：附加的条件或原语句中能直接下推给单表筛选的条件。</span><br></pre></td></tr></table></figure>
+<h5 id="finalizing-table-conditions-说明"><a href="#finalizing-table-conditions-说明" class="headerlink" title="finalizing_table_conditions 说明"></a>finalizing_table_conditions 说明</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">最终的、经过优化后的表条件</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    &quot;finalizing_table_conditions&quot;: [</span><br><span class="line">    &#123;</span><br><span class="line">    &quot;table&quot;: &quot;&#96;salaries&#96;&quot;,</span><br><span class="line">    &quot;original_table_condition&quot;: &quot;((&#96;salaries&#96;.&#96;to_date&#96; &#x3D; DATE&#39;1987-06-26&#39;) and</span><br><span class="line">    (&#96;salaries&#96;.&#96;from_date&#96; &#x3D; DATE&#39;1986-06-26&#39;))&quot;,</span><br><span class="line">    &quot;final_table_condition &quot;: null</span><br><span class="line">    &#125;</span><br><span class="line">    ] &#x2F;* finalizing_table_conditions *&#x2F;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+            </section>
+    </article>
+    
+
+
+        <!-- 版权声明 -->
+        
+<div class="post-copyright">
+    <!-- <div>
+        <strong>本文作者：</strong>
+        <span>李斌</span>
+    </div> -->
+    <div>
+        <strong>本文链接：</strong>
+        <a href="https://blog.mailjob.net/posts/2162225682.html">
+            <!-- https://blog.mailjob.net/mysql/优化器分析sql语句 -->
+            https://blog.mailjob.net/posts/2162225682.html
+        </a>
+    </div>
+    <div>
+        <!-- <span>欢迎任何形式的转载，请务必注明出处。</span> -->
+    </div>
+    <div>
+        <span>
+            该网站发布的内容，遵循
+            <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>
+            版权协议，转载请附上原文出处链接和本声明。
+        </span>
+    </div>
+</div>
+
+
+
+<style>
+    .post-copyright {
+        background-color: #fff;
+  box-shadow: 0px 0px 1px 1px rgba(0, 0, 0, 0.05);
+        display: block;
+        margin: 20px auto;
+        margin-bottom: 15px;
+        padding: 10px;
+        font-size: 15px;
+        color: #2e2d2d;
+        word-break: break-all;
+        line-height: 1.8;
+    }
+
+
+    .post-copyright a {
+        color: #2e2d2d;
+        border-bottom: 1px solid #999; 
+    }
+
+    .post-copyright a:hover {
+        color: #2e2d2d;
+        border-bottom: 1px solid #000; 
+    }
+</style>
+
+          <!-- comments -->
+          <div class="comments">
+    <h3 id="commenttitle" style="margin-top: 20px;margin-left: 10px;">评论区</h3>
+    <div id="tcomment"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/twikoo@0.6.0/dist/twikoo.all.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/twikoo@1.0.0/dist/twikoo.all.min.js"></script> -->
+
+<script>twikoo.init({ envId: 'jefferyjob-github-io-3b53ee3a93b', el: '#tcomment' })</script>
+
+            <div class="right-icon">
+              <div id="to-valine" class="right-icon-item">
+                <a href="#commenttitle">评论</a>
+              </div>
+            </div>
+
+  </div>
+
+
+  <aside>
+    <div class="aside-wrap">
+    
+        <section class="widget-wrap">
+    <h3 class="widget-title">简介</h3>
+    <div class="widget">
+        <div class="notice">
+            <img class="notice-img" src="https://img.github.mailjob.net/logo/libin.jpg">
+            <p>李斌的个人独立博客<br>此平台用作学习交流<br>日常分享</p>
+            
+            <p class="notice-item">
+                <!-- github -->
+                <span><a target="_blank" href="https://github.com/jefferyjob"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108165043.jpg" alt="Github"></a></span>
+                <!-- csdn -->
+                <span><a target="_blank" href="https://blog.csdn.net/libinemail"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108172932.ico" alt="CSDN"></a></span>
+                <!-- juejin -->
+                <span><a target="_blank" href="https://juejin.cn/user/782508009723783"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108165800.png" alt="掘金社区"></a></span>
+                <!-- zhihu -->
+                <span><a target="_blank" href="https://www.zhihu.com/people/JefferyJob"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108172745.ico" alt="知乎"></a></span>
+                
+            </p>
+            
+        </div>
+    </div>
+</section>
+
+
+    
+        
+  <section class="widget-wrap">
+    <h3 class="widget-title">文章分类</h3>
+    <div class="widget">
+      <div class="categories-list">
+        
+           
+            
+              <a class="category-list-item" href="/categories/算法">
+                <span class="category-list-link">算法</span>
+                <span class="category-list-number">(13)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/mysql">
+                <span class="category-list-link">mysql</span>
+                <span class="category-list-number">(36)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/docker">
+                <span class="category-list-link">docker</span>
+                <span class="category-list-number">(2)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/design">
+                <span class="category-list-link">design</span>
+                <span class="category-list-number">(3)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/linux">
+                <span class="category-list-link">linux</span>
+                <span class="category-list-number">(5)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/rabbitmq">
+                <span class="category-list-link">rabbitmq</span>
+                <span class="category-list-number">(2)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/php">
+                <span class="category-list-link">php</span>
+                <span class="category-list-number">(6)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/redis">
+                <span class="category-list-link">redis</span>
+                <span class="category-list-number">(25)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/blog">
+                <span class="category-list-link">blog</span>
+                <span class="category-list-number">(15)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/swoole">
+                <span class="category-list-link">swoole</span>
+                <span class="category-list-number">(3)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/notes">
+                <span class="category-list-link">notes</span>
+                <span class="category-list-number">(10)</span>
+              </a>
+            
+          
+        
+      </div>
+    </div>
+  </section>
+
+
+    
+        
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget widget_tag">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/blog/" rel="tag">blog</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/es/" rel="tag">es</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/haproxy/" rel="tag">haproxy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/keepalived/" rel="tag">keepalived</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mycat/" rel="tag">mycat</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nginx/" rel="tag">nginx</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/notes/" rel="tag">notes</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/openresty/" rel="tag">openresty</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/php/" rel="tag">php</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/rabbitmq/" rel="tag">rabbitmq</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/swoole/" rel="tag">swoole</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a></li></ul>
+    </div>
+  </div>
+
+
+<style>
+  .widget_tag ul li {
+    display: inline-block;
+    padding: 0px 5px;
+    border: 1px solid #eee;
+    margin-bottom: 7px;
+    margin-right: 5px;
+    border-radius: 5px;
+    font-size: 12px;
+    color: #999;
+  }
+</style>
+    
+        
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul class="recent-posts">
+        
+          <li>
+            <a href="/posts/1482114423.html">notes：解决github访问慢的问题</a>
+          </li>
+        
+          <li>
+            <a href="/posts/1634640555.html">雪花算法 snowflake</a>
+          </li>
+        
+          <li>
+            <a href="/posts/163644071.html">mysql视图基本操作</a>
+          </li>
+        
+          <li>
+            <a href="/posts/1198915737.html">mysql视图是什么</a>
+          </li>
+        
+          <li>
+            <a href="/posts/3520988043.html">PHP实现IO阻塞模型(blocking)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+    
+        
+  <section class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/04/">四月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/03/">三月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/02/">二月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a></li></ul>
+    </div>
+  </section>
+
+
+    
+        
+  <section class="widget-wrap">
+    <h3 class="widget-title">友情链接</h3>
+    <div>
+      <ul class="widget-links">
+          
+          <li>
+              <a target="_blank" rel="noopener" href="https://libinblog.gitee.io" title="">
+                  本站大陆节点
+              </a>
+          </li>
+          
+          <li>
+              <a target="_blank" rel="noopener" href="https://blog.senll.com" title="">
+                  Ethan 的博客
+              </a>
+          </li>
+          
+          <li>
+              <a target="_blank" rel="noopener" href="https://www.laruence.com" title="">
+                  鸟哥的博客
+              </a>
+          </li>
+          
+          <li>
+              <a target="_blank" rel="noopener" href="http://rango.swoole.com" title="">
+                  韩天峰的博客
+              </a>
+          </li>
+          
+      </ul>
+    </div>
+  </section>
+
+
+<style>
+  .widget-links {
+    list-style: none;
+    padding-left: 10px;
+  }
+  .widget-links >li > a:hover {
+    color: #f40;
+    text-decoration: underline;
+  }
+</style>
+    
+        <section class="widget-wrap">
+    <div class="widget">
+        <div class="notice attention">
+
+            <p>
+                该网站发布的内容，遵循
+                <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>
+                版权协议，转载请附上原文出处链接和本声明。
+                <br><br>
+                如果有其他问题，可以给我发邮件咨询。
+                <a target="_blank" href="https://www.mailjob.net">libin@mailjob.net</a>
+                。我看到后会在第一时间回复！
+            </p>
+            
+        </div>
+    </div>
+</section>
+
+    
+    
+</div>
+
+
+      <!-- 目录 -->
+      
+        <div id="toc"></div>
+        <script>
+          $(function () {
+            var elm = $('#toc');
+            var startPos = $(elm).offset().top;
+            $.event.add(window, "scroll", function () {
+              var p = $(window).scrollTop();
+              $(elm).css('margin-left', '0px');
+              $(elm).css('position', ((p) > startPos) ? 'fixed' : 'static');
+              $(elm).css('top', ((p) > startPos) ? '20px' : '')
+            })
+          })
+
+        </script>
+
+  </aside>
+  
+</div>
+
+
+<script>
+  $('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
+
+</script>
+                </div>
+            </div>
+            <div class="right-icon">
+                <div id="to-top" class="right-icon-item">
+                  <a>
+                    <span class="top-left"></span>
+                    <span class="top-right"></span>
+                  </a>
+                </div>
+              </div>
+    </div>
+    <footer class="footer">
+  <div class="links-wrap-wrap">
+    <div class="links-wrap">
+    
+      
+        <section class="link-wrap">
+          <h3 class="link-title">导航</h3>
+          <div>
+            <ul class="link-item-wrap">
+                
+                <li class="link-item">
+                    <a href="https://blog.mailjob.net" title="">
+                        李斌的技术博客
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://www.mailjob.net" title="">
+                        我的邮箱
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://github.com/mailjobblog/demo_code" title="">
+                        Demo Code
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://new.cnzz.com/v1/login.php?siteid=1279692087" title="">
+                        友盟
+                    </a>
+                </li>
+                
+            </ul>
+          </div>
+        </section>
+      
+
+
+      
+        <section class="link-wrap">
+          <h3 class="link-title">社区论坛</h3>
+          <div>
+            <ul class="link-item-wrap">
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail" title="">
+                        李斌的CSDN
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://www.cnblogs.com/jefferyjob" title="">
+                        李斌的博客园
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://github.com/jefferyjob" title="">
+                        GitHub
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://hub.docker.com/u/jefferyjob" title="">
+                        DockerHub
+                    </a>
+                </li>
+                
+            </ul>
+          </div>
+        </section>
+      
+
+    </div>
+  </div>
+  
+    <div class="copyright-wrap">
+      <span>Copyright &copy; 2020-2021 京ICP备17056825号</span>
+      <span id="timeDate">载入天数...</span>
+
+      <br><br>
+      <span>
+        本站由 <a style="color:#e4e7ee" target="_blank" rel="noopener" href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral"><img style="width: 10px;height: 10px;" src="//img.github.mailjob.net/oss.github/20210226141134.png">又拍云</a> 提供CDN加速/云储存服务
+      </span>
+    </div>
+    
+    <!-- <span id="busuanzi_container_site_pv">
+      本站总访问量<span id="busuanzi_value_site_pv"></span>次
+    </span>
+    <span id="busuanzi_container_site_uv">
+      ，本站访客数<span id="busuanzi_value_site_uv"></span>人次
+    </span> -->
+
+   
+    
+</footer>
+
+<script>
+    var now = new Date();
+    function createtime() {
+      var grt = new Date("06/14/2020 12:00:00");//此处修改你的建站时间或者网站上线时间 
+      now.setTime(now.getTime() + 250);
+      days = (now - grt) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+      document.getElementById("timeDate").innerHTML = "本站已运行 " + dnum + " 天 ";
+    }
+    setInterval("createtime()", 1000);
+</script>
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<script src="/lib/jquery.js"></script>
+
+
+<script src="/lib/waves.js"></script>
+
+
+<script src="/lib/jquery-ui.js"></script>
+
+
+<script src="/lib/jquery.tocify.js"></script>
+
+
+<script src="/js/main.js"></script>
+
+
+        
+<style>
+  .copy-btn {
+    display: inline-block;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 20px;
+    color: rgb(206, 206, 206);
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    border-radius: 3px;
+    user-select: none;
+    outline: 0;
+  }
+
+  .copy-btn:hover {
+    color: #888
+  }
+
+  .highlight-wrap .copy-btn {
+    padding: 2px 6px;
+    position: absolute;
+    right: 10px;
+    top: 1px;
+    z-index: 1;
+  }
+
+
+
+  .highlight-wrap {
+    position: relative;
+  }
+
+  #copysuccess {
+    width: 200px;
+    height: 75px;
+    position: fixed;
+    right: 50%;
+    margin-right: -100px;
+    top: 40%;
+    margin-top: -40px;
+    color: #fff;
+    font-weight: 600;
+    background: #444444d8;
+    display: none;
+    z-index: 99999;
+    border-radius: 10px;
+    text-align: center;
+    line-height: 30px;
+    padding-top: 10px;
+    user-select: none;
+  }
+</style>
+
+<script>
+  addLoadEvent(() => {
+    $('.highlight').each(function (i, e) {
+      var $wrap = $('<div>').addClass('highlight-wrap')
+      $(e).after($wrap)
+      $wrap.append($('<div>').addClass('copy-btn').append('复制代码').on('click', function (e) {
+        var copysuccess = document.getElementById('copysuccess');
+        copysuccess.style.display = 'block'
+        setTimeout(function () {
+          copysuccess.style.display = 'none'
+        }, 2000)
+        var code = $(this).parent().find(".code")[0].innerText
+          
+                var ta = document.createElement('textarea')
+        document.body.appendChild(ta)
+        ta.style.position = 'absolute'
+        ta.style.top = '0px'
+        ta.style.left = '0px'
+        ta.value = code
+        ta.select()
+        ta.focus()
+        var result = document.execCommand('copy')
+        document.body.removeChild(ta)
+          
+                  if (result) $(this).text('复制成功')
+            else $(this).text('复制失败')
+              
+                $(this).blur()
+      })).on('mouseleave', function (e) {
+        var $b = $(this).find('.copy-btn')
+        setTimeout(function () {
+          $b.text('复制代码')
+        }, 1000)
+      }).append(e)
+    })
+  })
+</script>
+
+            <div id="copysuccess">复制成功<br>Copy succeeded</div>
+</body>
+
+</html>
+
+<script>
+    $('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
+</script>
+
+<!-- 网站管理 start -->
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>
+
+<!-- 网站管理 end -->

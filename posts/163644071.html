@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>
+    mysql视图基本操作 | 李斌的技术博客
+  </title>
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <meta name="theme-color" content="#4184f3">
+  
+  
+  <link href="https://img.github.mailjob.net/logo/favicon.ico" rel="icon" />
+  
+
+  
+<link rel="stylesheet" href="/css/highlight.light.css">
+
+  
+<link rel="stylesheet" href="/css/prism-customize.css">
+
+  
+<link rel="stylesheet" href="/css/nav-icon.css">
+
+  
+<link rel="stylesheet" href="/css/waves.min.css">
+
+  
+<link rel="stylesheet" href="/css/jquery.tocify.css">
+
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+<link rel="stylesheet" href="/css/nav-indicator.css">
+
+  
+<link rel="stylesheet" href="/css/twikoo.css">
+
+  
+<link rel="stylesheet" href="/css/search.css">
+
+  
+  
+
+  
+
+  </meta>
+  </meta>
+  <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.js"></script>
+  
+<script src="/js/comment.js"></script>
+
+  
+<script src="/js/copy.js"></script>
+
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 5.3.0"></head>
+
+<body>
+    <header>
+        <!-- cover image or sth. -->
+    </header>
+
+    <!-- tips_head start -->
+    <div class="tips_head">
+        <center><span id='tips_head_span'></span></center>
+<script>
+    var host = window.location.host;
+    if(host != 'blog.mailjob.net' && host != 'localhost:4000') {
+        document.getElementById("tips_head_span").innerHTML = "此访问域名为大陆节点，网站内容更新有一定的延迟且不支持评论。若要获取最新信息，请访问国际节点：<a href='https://blog.mailjob.net'>https://blog.mailjob.net</a>"
+        document.getElementById("tips_head_span").style.lineHeight = 3;
+    }
+</script>
+    </div>
+    <!-- tips_head end -->
+
+    <div id="main" class="m-scene">
+        
+<div class="nav-wrapper" id="header">
+
+    <div class="container">
+        <nav>
+            
+            
+            <div class="logo wave">
+                <a href="/" id="logo">
+                    李斌的技术博客
+                </a>
+            </div>
+
+            <div class="nav-toggle-icon" >
+                <div class="material-hamburger">
+                    <span>
+                    </span>
+                    <span>
+                    </span>
+                    <span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="menu-wrapper">
+                <div class="nav-indicator">
+                </div>
+                <ul class="menus">
+                    
+                     
+                        <li>
+                            <a class="wave " href="/">
+                                首页
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/archives">
+                                归档
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/about">
+                                关于
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/message">
+                                留言
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/search">
+                                搜索
+                            </a>
+                        </li>
+                     
+                    
+                   
+                </ul>
+            </div>
+
+        </nav>
+    </div>
+</div>
+
+
+            <div class="container content">
+                <div class="scene_element scene_element--fadein">
+                    <div class="row">
+  <div class="main main-article">
+    <article>
+
+      
+            <header class="post-header">
+              
+            </header>
+
+            <h1 class="post-title">
+              mysql视图基本操作
+            </h1>
+
+            <section class="post-info post-info-bottom">
+
+              <span class="post-date">发布于
+                <span class="post-date-text">
+                   2021-04-03
+                </span>
+              </span>
+
+
+
+
+              
+                <span class="post-category">分类:
+                  <a class="article-category-link" href="/categories/mysql/">mysql</a>
+                </span>
+                
+                  
+                    <span class="post-tags">
+                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li></ul>
+                    </span>
+                    
+
+                      <!-- 阅读量统计 -->
+                      
+                        <span class="post-visitors">阅读量:<span id="twikoo_visitors">0</span></span>
+                        
+
+
+            </section>
+
+            <section class="post-content">
+
+              <h2 id="创建数据表"><a href="#创建数据表" class="headerlink" title="创建数据表"></a>创建数据表</h2><p><strong>department</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> `department` (</span><br><span class="line">  `d_id` <span class="type">int</span>(<span class="number">11</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span> AUTO_INCREMENT COMMENT <span class="string">&#x27;部门号&#x27;</span>,</span><br><span class="line">  `d_name` <span class="type">varchar</span>(<span class="number">20</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span> COMMENT <span class="string">&#x27;部门名称&#x27;</span>,</span><br><span class="line">  `<span class="keyword">function</span>` <span class="type">varchar</span>(<span class="number">50</span>) <span class="keyword">DEFAULT</span> <span class="keyword">NULL</span> COMMENT <span class="string">&#x27;功能&#x27;</span>,</span><br><span class="line">  `address` <span class="type">varchar</span>(<span class="number">50</span>) <span class="keyword">DEFAULT</span> <span class="keyword">NULL</span> COMMENT <span class="string">&#x27;办公地址&#x27;</span>,</span><br><span class="line">  <span class="keyword">PRIMARY</span> <span class="keyword">KEY</span> (`d_id`,`d_name`)</span><br><span class="line">) ENGINE<span class="operator">=</span>InnoDB AUTO_INCREMENT<span class="operator">=</span><span class="number">5</span> <span class="keyword">DEFAULT</span> CHARSET<span class="operator">=</span>utf8mb4 COMMENT<span class="operator">=</span><span class="string">&#x27;部门表&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- ----------------------------</span></span><br><span class="line"><span class="comment">-- Records of department</span></span><br><span class="line"><span class="comment">-- ----------------------------</span></span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> `department` <span class="keyword">VALUES</span> (<span class="string">&#x27;1&#x27;</span>, <span class="string">&#x27;总裁办&#x27;</span>, <span class="string">&#x27;批改奏折&#x27;</span>, <span class="string">&#x27;华北&#x27;</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> `department` <span class="keyword">VALUES</span> (<span class="string">&#x27;2&#x27;</span>, <span class="string">&#x27;财务部&#x27;</span>, <span class="string">&#x27;出账&#x27;</span>, <span class="string">&#x27;华南&#x27;</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> `department` <span class="keyword">VALUES</span> (<span class="string">&#x27;3&#x27;</span>, <span class="string">&#x27;技术部&#x27;</span>, <span class="string">&#x27;干技术&#x27;</span>, <span class="string">&#x27;华中&#x27;</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> `department` <span class="keyword">VALUES</span> (<span class="string">&#x27;4&#x27;</span>, <span class="string">&#x27;设计部&#x27;</span>, <span class="string">&#x27;干设计的&#x27;</span>, <span class="string">&#x27;华东&#x27;</span>);</span><br></pre></td></tr></table></figure>
+<p><strong>worker</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> `worker` (</span><br><span class="line">  `num` <span class="type">int</span>(<span class="number">11</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">  `d_id` <span class="type">int</span>(<span class="number">11</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">  `name` <span class="type">varchar</span>(<span class="number">20</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">  `sex` <span class="type">varchar</span>(<span class="number">4</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">  `birthday` datetime <span class="keyword">DEFAULT</span> <span class="keyword">NULL</span>,</span><br><span class="line">  `homeaddress` <span class="type">varchar</span>(<span class="number">50</span>) <span class="keyword">DEFAULT</span> <span class="keyword">NULL</span>,</span><br><span class="line">  <span class="keyword">PRIMARY</span> <span class="keyword">KEY</span> (`num`)</span><br><span class="line">) ENGINE<span class="operator">=</span>InnoDB <span class="keyword">DEFAULT</span> CHARSET<span class="operator">=</span>utf8mb4 COMMENT<span class="operator">=</span><span class="string">&#x27;员工表&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- ----------------------------</span></span><br><span class="line"><span class="comment">-- Records of worker</span></span><br><span class="line"><span class="comment">-- ----------------------------</span></span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> `worker` <span class="keyword">VALUES</span> (<span class="string">&#x27;222&#x27;</span>, <span class="string">&#x27;4&#x27;</span>, <span class="string">&#x27;张三&#x27;</span>, <span class="string">&#x27;男&#x27;</span>, <span class="string">&#x27;1993-06-03 09:23:24&#x27;</span>, <span class="string">&#x27;北京朝阳群众&#x27;</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> `worker` <span class="keyword">VALUES</span> (<span class="string">&#x27;333&#x27;</span>, <span class="string">&#x27;3&#x27;</span>, <span class="string">&#x27;李四&#x27;</span>, <span class="string">&#x27;男&#x27;</span>, <span class="string">&#x27;1990-07-03 09:23:24&#x27;</span>, <span class="string">&#x27;湖南长沙实名&#x27;</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> `worker` <span class="keyword">VALUES</span> (<span class="string">&#x27;444&#x27;</span>, <span class="string">&#x27;2&#x27;</span>, <span class="string">&#x27;王五&#x27;</span>, <span class="string">&#x27;女&#x27;</span>, <span class="string">&#x27;1998-01-13 09:23:24&#x27;</span>, <span class="string">&#x27;上海开发大道&#x27;</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> `worker` <span class="keyword">VALUES</span> (<span class="string">&#x27;555&#x27;</span>, <span class="string">&#x27;1&#x27;</span>, <span class="string">&#x27;赵六&#x27;</span>, <span class="string">&#x27;男&#x27;</span>, <span class="string">&#x27;1995-01-03 09:23:24&#x27;</span>, <span class="string">&#x27;深圳长江一号&#x27;</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> `worker` <span class="keyword">VALUES</span> (<span class="string">&#x27;666&#x27;</span>, <span class="string">&#x27;2&#x27;</span>, <span class="string">&#x27;小明&#x27;</span>, <span class="string">&#x27;男&#x27;</span>, <span class="string">&#x27;1999-07-07 09:23:24&#x27;</span>, <span class="string">&#x27;天津市武清区&#x27;</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> `worker` <span class="keyword">VALUES</span> (<span class="string">&#x27;777&#x27;</span>, <span class="string">&#x27;3&#x27;</span>, <span class="string">&#x27;小红&#x27;</span>, <span class="string">&#x27;女&#x27;</span>, <span class="string">&#x27;1992-04-23 09:23:24&#x27;</span>, <span class="string">&#x27;河北承德市&#x27;</span>);</span><br></pre></td></tr></table></figure>
+<h2 id="创建视图"><a href="#创建视图" class="headerlink" title="创建视图"></a>创建视图</h2><h3 id="基本语法"><a href="#基本语法" class="headerlink" title="基本语法"></a>基本语法</h3><p>可以使用 CREATE VIEW 语句来创建视图。语法格式如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">VIEW</span> <span class="operator">&lt;</span>视图名<span class="operator">&gt;</span> <span class="keyword">AS</span> <span class="operator">&lt;</span><span class="keyword">SELECT</span>语句<span class="operator">&gt;</span></span><br></pre></td></tr></table></figure>
+<p>语法说明如下。</p>
+<ul>
+<li><code>&lt;视图名&gt;</code>：指定视图的名称。该名称在数据库中必须是唯一的，不能与其他表或视图同名。</li>
+<li><code>&lt;SELECT语句&gt;</code>：指定创建视图的 SELECT 语句，可用于查询多个基础表或源视图。</li>
+</ul>
+<blockquote>
+<p>对于创建视图中的 SELECT 语句的指定存在以下限制：</p>
+<ul>
+<li>用户除了拥有 CREATE VIEW 权限外，还具有操作中涉及的基础表和其他视图的相关权限。</li>
+<li>SELECT 语句不能引用系统或用户变量。</li>
+<li>SELECT 语句不能包含 FROM 子句中的子查询。</li>
+<li>SELECT 语句不能引用预处理语句参数。</li>
+</ul>
+</blockquote>
+<blockquote>
+<p>视图定义中引用的表或视图必须存在。但是，创建完视图后，可以删除定义引用的表或视图。可使用 CHECK TABLE 语句检查视图定义是否存在这类问题。</p>
+<p>视图定义中允许使用 ORDER BY 语句，但是若从特定视图进行选择，而该视图使用了自己的 ORDER BY 语句，则视图定义中的 ORDER BY 将被忽略。</p>
+<p>视图定义中不能引用 TEMPORARY 表（临时表），不能创建 TEMPORARY 视图。</p>
+<p>WITH CHECK OPTION 的意思是，修改视图时，检查插入的数据是否符合 WHERE 设置的条件。</p>
+</blockquote>
+<h3 id="创建单表视图"><a href="#创建单表视图" class="headerlink" title="创建单表视图"></a>创建单表视图</h3><p>【实例 1】在 <code>worker</code> 表中，创建 <code>view_worker_info</code> 视图</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">VIEW</span> view_worker_info <span class="keyword">AS</span> <span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> worker;</span><br></pre></td></tr></table></figure>
+<p>查看视图</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> view_worker_info;</span><br><span class="line"><span class="operator">+</span><span class="comment">-----+------+------+-----+---------------------+--------------+</span></span><br><span class="line"><span class="operator">|</span> num <span class="operator">|</span> d_id <span class="operator">|</span> name <span class="operator">|</span> sex <span class="operator">|</span> birthday            <span class="operator">|</span> homeaddress  <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">-----+------+------+-----+---------------------+--------------+</span></span><br><span class="line"><span class="operator">|</span> <span class="number">222</span> <span class="operator">|</span>    <span class="number">4</span> <span class="operator">|</span> 张三 <span class="operator">|</span> 男  <span class="operator">|</span> <span class="number">1993</span><span class="number">-06</span><span class="number">-03</span> <span class="number">09</span>:<span class="number">23</span>:<span class="number">24</span> <span class="operator">|</span> 北京朝阳群众 <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">333</span> <span class="operator">|</span>    <span class="number">3</span> <span class="operator">|</span> 李四 <span class="operator">|</span> 男  <span class="operator">|</span> <span class="number">1990</span><span class="number">-07</span><span class="number">-03</span> <span class="number">09</span>:<span class="number">23</span>:<span class="number">24</span> <span class="operator">|</span> 湖南长沙实名 <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">444</span> <span class="operator">|</span>    <span class="number">2</span> <span class="operator">|</span> 王五 <span class="operator">|</span> 女  <span class="operator">|</span> <span class="number">1998</span><span class="number">-01</span><span class="number">-13</span> <span class="number">09</span>:<span class="number">23</span>:<span class="number">24</span> <span class="operator">|</span> 上海开发大道 <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">555</span> <span class="operator">|</span>    <span class="number">1</span> <span class="operator">|</span> 赵六 <span class="operator">|</span> 男  <span class="operator">|</span> <span class="number">1995</span><span class="number">-01</span><span class="number">-03</span> <span class="number">09</span>:<span class="number">23</span>:<span class="number">24</span> <span class="operator">|</span> 深圳长江一号 <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">666</span> <span class="operator">|</span>    <span class="number">2</span> <span class="operator">|</span> 小明 <span class="operator">|</span> 男  <span class="operator">|</span> <span class="number">1999</span><span class="number">-07</span><span class="number">-07</span> <span class="number">09</span>:<span class="number">23</span>:<span class="number">24</span> <span class="operator">|</span> 天津市武清区 <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">777</span> <span class="operator">|</span>    <span class="number">3</span> <span class="operator">|</span> 小红 <span class="operator">|</span> 女  <span class="operator">|</span> <span class="number">1992</span><span class="number">-04</span><span class="number">-23</span> <span class="number">09</span>:<span class="number">23</span>:<span class="number">24</span> <span class="operator">|</span> 河北承德市   <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">-----+------+------+-----+---------------------+--------------+</span></span><br><span class="line"><span class="number">6</span> <span class="keyword">rows</span> <span class="keyword">in</span> <span class="keyword">set</span></span><br></pre></td></tr></table></figure>
+<p>【实例 2】在 <code>worker</code> 表中，根据某些字段，创建 <code>view_worker_attr</code> 视图</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">VIEW</span> view_worker_attr (s_num,s_name,s_homeaddress) <span class="keyword">AS</span> <span class="keyword">SELECT</span> num,name,homeaddress <span class="keyword">FROM</span> worker;</span><br></pre></td></tr></table></figure>
+<p>查看视图</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> view_worker_attr;</span><br><span class="line"><span class="operator">+</span><span class="comment">-------+--------+---------------+</span></span><br><span class="line"><span class="operator">|</span> s_num <span class="operator">|</span> s_name <span class="operator">|</span> s_homeaddress <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">-------+--------+---------------+</span></span><br><span class="line"><span class="operator">|</span>   <span class="number">222</span> <span class="operator">|</span> 张三   <span class="operator">|</span> 北京朝阳群众  <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>   <span class="number">333</span> <span class="operator">|</span> 李四   <span class="operator">|</span> 湖南长沙实名  <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>   <span class="number">444</span> <span class="operator">|</span> 王五   <span class="operator">|</span> 上海开发大道  <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>   <span class="number">555</span> <span class="operator">|</span> 赵六   <span class="operator">|</span> 深圳长江一号  <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>   <span class="number">666</span> <span class="operator">|</span> 小明   <span class="operator">|</span> 天津市武清区  <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>   <span class="number">777</span> <span class="operator">|</span> 小红   <span class="operator">|</span> 河北承德市    <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">-------+--------+---------------+</span></span><br><span class="line"><span class="number">6</span> <span class="keyword">rows</span> <span class="keyword">in</span> <span class="keyword">set</span></span><br></pre></td></tr></table></figure>
+<h3 id="创建多表视图"><a href="#创建多表视图" class="headerlink" title="创建多表视图"></a>创建多表视图</h3><p>创建基于 <code>department</code> 和  <code>worker</code> 的联合视图</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">VIEW</span> view_info (</span><br><span class="line">	s_num,</span><br><span class="line">	s_name,</span><br><span class="line">	d_id,</span><br><span class="line">	s_dname,</span><br><span class="line">	s_homeaddress,</span><br><span class="line">	s_address</span><br><span class="line">) <span class="keyword">AS</span> <span class="keyword">SELECT</span></span><br><span class="line">	num,</span><br><span class="line">	`name`,</span><br><span class="line">	worker.d_id,</span><br><span class="line">	d_name,</span><br><span class="line">	homeaddress,</span><br><span class="line">	address</span><br><span class="line"><span class="keyword">FROM</span></span><br><span class="line">	worker,</span><br><span class="line">	department</span><br><span class="line"><span class="keyword">WHERE</span></span><br><span class="line">	worker.d_id <span class="operator">=</span> department.d_id;</span><br></pre></td></tr></table></figure>
+<p>查看视图</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> view_info;</span><br><span class="line"><span class="operator">+</span><span class="comment">-------+--------+------+---------+---------------+-----------+</span></span><br><span class="line"><span class="operator">|</span> s_num <span class="operator">|</span> s_name <span class="operator">|</span> d_id <span class="operator">|</span> s_dname <span class="operator">|</span> s_homeaddress <span class="operator">|</span> s_address <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">-------+--------+------+---------+---------------+-----------+</span></span><br><span class="line"><span class="operator">|</span>   <span class="number">222</span> <span class="operator">|</span> 张三   <span class="operator">|</span>    <span class="number">4</span> <span class="operator">|</span> 设计部  <span class="operator">|</span> 北京朝阳群众  <span class="operator">|</span> 华东      <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>   <span class="number">333</span> <span class="operator">|</span> 李四   <span class="operator">|</span>    <span class="number">3</span> <span class="operator">|</span> 技术部  <span class="operator">|</span> 湖南长沙实名  <span class="operator">|</span> 华中      <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>   <span class="number">444</span> <span class="operator">|</span> 王五   <span class="operator">|</span>    <span class="number">2</span> <span class="operator">|</span> 财务部  <span class="operator">|</span> 上海开发大道  <span class="operator">|</span> 华南      <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>   <span class="number">555</span> <span class="operator">|</span> 赵六   <span class="operator">|</span>    <span class="number">1</span> <span class="operator">|</span> 总裁办  <span class="operator">|</span> 深圳长江一号  <span class="operator">|</span> 华北      <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>   <span class="number">666</span> <span class="operator">|</span> 小明   <span class="operator">|</span>    <span class="number">2</span> <span class="operator">|</span> 财务部  <span class="operator">|</span> 天津市武清区  <span class="operator">|</span> 华南      <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>   <span class="number">777</span> <span class="operator">|</span> 小红   <span class="operator">|</span>    <span class="number">3</span> <span class="operator">|</span> 技术部  <span class="operator">|</span> 河北承德市    <span class="operator">|</span> 华中      <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">-------+--------+------+---------+---------------+-----------+</span></span><br><span class="line"><span class="number">6</span> <span class="keyword">rows</span> <span class="keyword">in</span> <span class="keyword">set</span></span><br></pre></td></tr></table></figure>
+<h2 id="查看视图"><a href="#查看视图" class="headerlink" title="查看视图"></a>查看视图</h2><h3 id="查看视图结构"><a href="#查看视图结构" class="headerlink" title="查看视图结构"></a>查看视图结构</h3><p>查看视图的字段信息与查看数据表的字段信息一样，都是使用 DESCRIBE 关键字来查看的。具体语法如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">DESCRIBE</span> 视图名;</span><br></pre></td></tr></table></figure>
+<p>或简写成：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">DESC</span> 视图名;</span><br></pre></td></tr></table></figure>
+<h4 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h4><p>查看联合视图 <code>view_info</code>  的视图结构</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">DESCRIBE</span> view_info;</span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+-------------+------+-----+---------+-------+</span></span><br><span class="line"><span class="operator">|</span> Field         <span class="operator">|</span> Type        <span class="operator">|</span> <span class="keyword">Null</span> <span class="operator">|</span> Key <span class="operator">|</span> <span class="keyword">Default</span> <span class="operator">|</span> Extra <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+-------------+------+-----+---------+-------+</span></span><br><span class="line"><span class="operator">|</span> s_num         <span class="operator">|</span> <span class="type">int</span>(<span class="number">11</span>)     <span class="operator">|</span> <span class="keyword">NO</span>   <span class="operator">|</span>     <span class="operator">|</span> <span class="keyword">NULL</span>    <span class="operator">|</span>       <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> s_name        <span class="operator">|</span> <span class="type">varchar</span>(<span class="number">20</span>) <span class="operator">|</span> <span class="keyword">NO</span>   <span class="operator">|</span>     <span class="operator">|</span> <span class="keyword">NULL</span>    <span class="operator">|</span>       <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> d_id          <span class="operator">|</span> <span class="type">int</span>(<span class="number">11</span>)     <span class="operator">|</span> <span class="keyword">NO</span>   <span class="operator">|</span>     <span class="operator">|</span> <span class="keyword">NULL</span>    <span class="operator">|</span>       <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> s_dname       <span class="operator">|</span> <span class="type">varchar</span>(<span class="number">20</span>) <span class="operator">|</span> <span class="keyword">NO</span>   <span class="operator">|</span>     <span class="operator">|</span> <span class="keyword">NULL</span>    <span class="operator">|</span>       <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> s_homeaddress <span class="operator">|</span> <span class="type">varchar</span>(<span class="number">50</span>) <span class="operator">|</span> YES  <span class="operator">|</span>     <span class="operator">|</span> <span class="keyword">NULL</span>    <span class="operator">|</span>       <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> s_address     <span class="operator">|</span> <span class="type">varchar</span>(<span class="number">50</span>) <span class="operator">|</span> YES  <span class="operator">|</span>     <span class="operator">|</span> <span class="keyword">NULL</span>    <span class="operator">|</span>       <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+-------------+------+-----+---------+-------+</span></span><br><span class="line"><span class="number">6</span> <span class="keyword">rows</span> <span class="keyword">in</span> <span class="keyword">set</span></span><br></pre></td></tr></table></figure>
+<h3 id="查看视图表的详细信息"><a href="#查看视图表的详细信息" class="headerlink" title="查看视图表的详细信息"></a>查看视图表的详细信息</h3><p>在 MySQL 中，SHOW CREATE VIEW 语句可以查看视图的详细定义。其语法如下所示：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SHOW</span> <span class="keyword">CREATE</span> <span class="keyword">VIEW</span> 视图名;</span><br></pre></td></tr></table></figure>
+<p>通过上面的语句，还可以查看创建视图的语句。创建视图的语句可以作为修改或者重新创建视图的参考，方便用户操作。</p>
+<h4 id="测试-1"><a href="#测试-1" class="headerlink" title="测试"></a>测试</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">SHOW</span> <span class="keyword">CREATE</span> <span class="keyword">VIEW</span> view_info \G;</span><br><span class="line"><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span> <span class="number">1.</span> <span class="type">row</span> <span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span></span><br><span class="line">                <span class="keyword">View</span>: view_info</span><br><span class="line">         <span class="keyword">Create</span> <span class="keyword">View</span>: <span class="keyword">CREATE</span> ALGORITHM<span class="operator">=</span>UNDEFINED DEFINER<span class="operator">=</span>`offline`@`<span class="operator">%</span>` <span class="keyword">SQL</span> SECURITY DEFINER <span class="keyword">VIEW</span> `view_info` <span class="keyword">AS</span> <span class="keyword">select</span> `worker`.`num` <span class="keyword">AS</span> `s_num`,`worker`.`name` <span class="keyword">AS</span> `s_name`,`worker`.`d_id` <span class="keyword">AS</span> `d_id`,`department`.`d_name` <span class="keyword">AS</span> `s_dname`,`worker`.`homeaddress` <span class="keyword">AS</span> `s_homeaddress`,`department`.`address` <span class="keyword">AS</span> `s_address` <span class="keyword">from</span> (`worker` <span class="keyword">join</span> `department`) <span class="keyword">where</span> (`worker`.`d_id` <span class="operator">=</span> `department`.`d_id`)</span><br><span class="line">character_set_client: utf8</span><br><span class="line">collation_connection: utf8_general_ci</span><br><span class="line"><span class="number">1</span> <span class="type">row</span> <span class="keyword">in</span> <span class="keyword">set</span> (<span class="number">0.04</span> sec)</span><br><span class="line"></span><br><span class="line">ERROR: </span><br><span class="line"><span class="keyword">No</span> query specified</span><br></pre></td></tr></table></figure>
+<p>上述 SQL 语句以<code>\G</code>结尾，这样能使显示结果格式化。如果不使用<code>\G</code>，显示的结果会比较混乱</p>
+<h3 id="拓展阅读"><a href="#拓展阅读" class="headerlink" title="拓展阅读"></a>拓展阅读</h3><p>所有视图的定义都是存储在 information_schema 数据库下的 views 表中，也可以在这个表中查看所有视图的详细信息，SQL 语句如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> information_schema.views;</span><br></pre></td></tr></table></figure>
+<p>不过，通常情况下都是使用 SHOW CREATE VIEW 语句。</p>
+<h2 id="修改视图"><a href="#修改视图" class="headerlink" title="修改视图"></a>修改视图</h2><h3 id="基本语法-1"><a href="#基本语法-1" class="headerlink" title="基本语法"></a>基本语法</h3><p>可以使用 ALTER VIEW 语句来对已有的视图进行修改。语法格式如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">VIEW</span> <span class="operator">&lt;</span>视图名<span class="operator">&gt;</span> <span class="keyword">AS</span> <span class="operator">&lt;</span><span class="keyword">SELECT</span>语句<span class="operator">&gt;</span></span><br></pre></td></tr></table></figure>
+<p>语法说明如下：</p>
+<ul>
+<li><code>&lt;视图名&gt;</code>：指定视图的名称。该名称在数据库中必须是唯一的，不能与其他表或视图同名。</li>
+<li><code>&lt;SELECT 语句&gt;</code>：指定创建视图的 SELECT 语句，可用于查询多个基础表或源视图。</li>
+</ul>
+<blockquote>
+<p>需要注意的是，对于 ALTER VIEW 语句的使用，需要用户具有针对视图的 CREATE VIEW 和 DROP 权限，以及由 SELECT 语句选择的每一列上的某些权限。</p>
+<p>修改视图的定义，除了可以通过 ALTER VIEW 外，也可以使用 DROP VIEW 语句先删除视图，再使用 CREATE VIEW 语句来实现。</p>
+</blockquote>
+<h3 id="修改视图内容"><a href="#修改视图内容" class="headerlink" title="修改视图内容"></a>修改视图内容</h3><p>视图是一个虚拟表，实际的数据来自于基本表，所以通过插入、修改和删除操作更新视图中的数据，实质上是在更新视图所引用的基本表的数据。</p>
+<blockquote>
+<p>注意：对视图的修改就是对基本表的修改，因此在修改时，要满足基本表的数据定义。</p>
+</blockquote>
+<p>某些视图是可更新的。也就是说，可以使用 UPDATE、DELETE 或 INSERT 等语句更新基本表的内容。对于可更新的视图，视图中的行和基本表的行之间必须具有一对一的关系。</p>
+<p>还有一些特定的其他结构，这些结构会使得视图不可更新。更具体地讲，如果视图包含以下结构中的任何一种，它就是不可更新的：</p>
+<ul>
+<li>聚合函数 SUM()、MIN()、MAX()、COUNT() 等。</li>
+<li>DISTINCT 关键字。</li>
+<li>GROUP BY 子句。</li>
+<li>HAVING 子句。</li>
+<li>UNION 或 UNION ALL 运算符。</li>
+<li>位于选择列表中的子查询。</li>
+<li>FROM 子句中的不可更新视图或包含多个表。</li>
+<li>WHERE 子句中的子查询，引用 FROM 子句中的表。</li>
+<li>ALGORITHM 选项为 TEMPTABLE（使用临时表总会使视图成为不可更新的）的时候。</li>
+</ul>
+<h3 id="测试-2"><a href="#测试-2" class="headerlink" title="测试"></a>测试</h3><h4 id="【案例1】"><a href="#【案例1】" class="headerlink" title="【案例1】"></a>【案例1】</h4><p>修改视图表的表结构</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">VIEW</span> view_worker_attr <span class="keyword">AS</span> <span class="keyword">SELECT</span> num,name <span class="keyword">FROM</span> worker;</span><br></pre></td></tr></table></figure>
+<p><strong>查看</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> view_worker_attr;</span><br><span class="line"><span class="operator">+</span><span class="comment">-----+--------+</span></span><br><span class="line"><span class="operator">|</span> num <span class="operator">|</span> name   <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">-----+--------+</span></span><br><span class="line"><span class="operator">|</span> <span class="number">222</span> <span class="operator">|</span> 张三   <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">333</span> <span class="operator">|</span> 李四   <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">444</span> <span class="operator">|</span> 王五   <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">555</span> <span class="operator">|</span> 赵六   <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">666</span> <span class="operator">|</span> 小明   <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">777</span> <span class="operator">|</span> 小红   <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">-----+--------+</span></span><br><span class="line"><span class="number">6</span> <span class="keyword">rows</span> <span class="keyword">in</span> <span class="keyword">set</span> (<span class="number">0.02</span> sec)</span><br></pre></td></tr></table></figure>
+<h4 id="【案例2】"><a href="#【案例2】" class="headerlink" title="【案例2】"></a>【案例2】</h4><p>使用 <code>UPDATE</code> 语句更新视图 <code>view_worker_attr</code></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">UPDATE</span> view_worker_attr <span class="keyword">SET</span> name<span class="operator">=</span>&quot;666张三666&quot; <span class="keyword">WHERE</span> num<span class="operator">=</span><span class="number">222</span>;</span><br></pre></td></tr></table></figure>
+<p><strong>查看</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> view_worker_attr;</span><br><span class="line"><span class="operator">+</span><span class="comment">-----+--------------+</span></span><br><span class="line"><span class="operator">|</span> num <span class="operator">|</span> name         <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">-----+--------------+</span></span><br><span class="line"><span class="operator">|</span> <span class="number">222</span> <span class="operator">|</span> <span class="number">666</span>张三<span class="number">666</span>   <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">333</span> <span class="operator">|</span> 李四         <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">444</span> <span class="operator">|</span> 王五         <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">555</span> <span class="operator">|</span> 赵六         <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">666</span> <span class="operator">|</span> 小明         <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">777</span> <span class="operator">|</span> 小红         <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">-----+--------------+</span></span><br><span class="line"><span class="number">6</span> <span class="keyword">rows</span> <span class="keyword">in</span> <span class="keyword">set</span> (<span class="number">0.04</span> sec)</span><br><span class="line"></span><br><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> worker;</span><br><span class="line"><span class="operator">+</span><span class="comment">-----+------+--------------+-----+---------------------+--------------------+</span></span><br><span class="line"><span class="operator">|</span> num <span class="operator">|</span> d_id <span class="operator">|</span> name         <span class="operator">|</span> sex <span class="operator">|</span> birthday            <span class="operator">|</span> homeaddress        <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">-----+------+--------------+-----+---------------------+--------------------+</span></span><br><span class="line"><span class="operator">|</span> <span class="number">222</span> <span class="operator">|</span>    <span class="number">4</span> <span class="operator">|</span> <span class="number">666</span>张三<span class="number">666</span>   <span class="operator">|</span> 男  <span class="operator">|</span> <span class="number">1993</span><span class="number">-06</span><span class="number">-03</span> <span class="number">09</span>:<span class="number">23</span>:<span class="number">24</span> <span class="operator">|</span> 北京朝阳群众       <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">333</span> <span class="operator">|</span>    <span class="number">3</span> <span class="operator">|</span> 李四         <span class="operator">|</span> 男  <span class="operator">|</span> <span class="number">1990</span><span class="number">-07</span><span class="number">-03</span> <span class="number">09</span>:<span class="number">23</span>:<span class="number">24</span> <span class="operator">|</span> 湖南长沙实名       <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">444</span> <span class="operator">|</span>    <span class="number">2</span> <span class="operator">|</span> 王五         <span class="operator">|</span> 女  <span class="operator">|</span> <span class="number">1998</span><span class="number">-01</span><span class="number">-13</span> <span class="number">09</span>:<span class="number">23</span>:<span class="number">24</span> <span class="operator">|</span> 上海开发大道       <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">555</span> <span class="operator">|</span>    <span class="number">1</span> <span class="operator">|</span> 赵六         <span class="operator">|</span> 男  <span class="operator">|</span> <span class="number">1995</span><span class="number">-01</span><span class="number">-03</span> <span class="number">09</span>:<span class="number">23</span>:<span class="number">24</span> <span class="operator">|</span> 深圳长江一号       <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">666</span> <span class="operator">|</span>    <span class="number">2</span> <span class="operator">|</span> 小明         <span class="operator">|</span> 男  <span class="operator">|</span> <span class="number">1999</span><span class="number">-07</span><span class="number">-07</span> <span class="number">09</span>:<span class="number">23</span>:<span class="number">24</span> <span class="operator">|</span> 天津市武清区       <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> <span class="number">777</span> <span class="operator">|</span>    <span class="number">3</span> <span class="operator">|</span> 小红         <span class="operator">|</span> 女  <span class="operator">|</span> <span class="number">1992</span><span class="number">-04</span><span class="number">-23</span> <span class="number">09</span>:<span class="number">23</span>:<span class="number">24</span> <span class="operator">|</span> 河北承德市         <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">-----+------+--------------+-----+---------------------+--------------------+</span></span><br><span class="line"><span class="number">6</span> <span class="keyword">rows</span> <span class="keyword">in</span> <span class="keyword">set</span> (<span class="number">0.02</span> sec)</span><br></pre></td></tr></table></figure>
+<h2 id="删除视图"><a href="#删除视图" class="headerlink" title="删除视图"></a>删除视图</h2><h3 id="基本语法-2"><a href="#基本语法-2" class="headerlink" title="基本语法"></a>基本语法</h3><p>可以使用 DROP VIEW 语句来删除视图。语法格式如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">DROP</span> <span class="keyword">VIEW</span> <span class="operator">&lt;</span>视图名<span class="number">1</span><span class="operator">&gt;</span> [ , <span class="operator">&lt;</span>视图名<span class="number">2</span><span class="operator">&gt;</span> …]</span><br></pre></td></tr></table></figure>
+<p>其中：<code>&lt;视图名&gt;</code>指定要删除的视图名。DROP VIEW 语句可以一次删除多个视图，但是必须在每个视图上拥有 DROP 权限。</p>
+<h3 id="测试-3"><a href="#测试-3" class="headerlink" title="测试"></a>测试</h3><p>删除 <code>view_worker_attr</code> 视图</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">DROP</span> <span class="keyword">VIEW</span> view_worker_attr;</span><br><span class="line">Query OK, <span class="number">0</span> <span class="keyword">rows</span> affected (<span class="number">0.03</span> sec)</span><br><span class="line"></span><br><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> view_worker_attr;</span><br><span class="line">ERROR <span class="number">1146</span> (<span class="number">42</span>S02): <span class="keyword">Table</span> <span class="string">&#x27;view_db.view_worker_attr&#x27;</span> doesn<span class="string">&#x27;t exist</span></span><br></pre></td></tr></table></figure>
+
+            </section>
+    </article>
+    
+
+
+        <!-- 版权声明 -->
+        
+<div class="post-copyright">
+    <!-- <div>
+        <strong>本文作者：</strong>
+        <span>李斌</span>
+    </div> -->
+    <div>
+        <strong>本文链接：</strong>
+        <a href="https://blog.mailjob.net/posts/163644071.html">
+            <!-- https://blog.mailjob.net/mysql/mysql视图基本操作 -->
+            https://blog.mailjob.net/posts/163644071.html
+        </a>
+    </div>
+    <div>
+        <!-- <span>欢迎任何形式的转载，请务必注明出处。</span> -->
+    </div>
+    <div>
+        <span>
+            该网站发布的内容，遵循
+            <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>
+            版权协议，转载请附上原文出处链接和本声明。
+        </span>
+    </div>
+</div>
+
+
+
+<style>
+    .post-copyright {
+        background-color: #fff;
+  box-shadow: 0px 0px 1px 1px rgba(0, 0, 0, 0.05);
+        display: block;
+        margin: 20px auto;
+        margin-bottom: 15px;
+        padding: 10px;
+        font-size: 15px;
+        color: #2e2d2d;
+        word-break: break-all;
+        line-height: 1.8;
+    }
+
+
+    .post-copyright a {
+        color: #2e2d2d;
+        border-bottom: 1px solid #999; 
+    }
+
+    .post-copyright a:hover {
+        color: #2e2d2d;
+        border-bottom: 1px solid #000; 
+    }
+</style>
+
+          <!-- comments -->
+          <div class="comments">
+    <h3 id="commenttitle" style="margin-top: 20px;margin-left: 10px;">评论区</h3>
+    <div id="tcomment"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/twikoo@0.6.0/dist/twikoo.all.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/twikoo@1.0.0/dist/twikoo.all.min.js"></script> -->
+
+<script>twikoo.init({ envId: 'jefferyjob-github-io-3b53ee3a93b', el: '#tcomment' })</script>
+
+            <div class="right-icon">
+              <div id="to-valine" class="right-icon-item">
+                <a href="#commenttitle">评论</a>
+              </div>
+            </div>
+
+  </div>
+
+
+  <aside>
+    <div class="aside-wrap">
+    
+        <section class="widget-wrap">
+    <h3 class="widget-title">简介</h3>
+    <div class="widget">
+        <div class="notice">
+            <img class="notice-img" src="https://img.github.mailjob.net/logo/libin.jpg">
+            <p>李斌的个人独立博客<br>此平台用作学习交流<br>日常分享</p>
+            
+            <p class="notice-item">
+                <!-- github -->
+                <span><a target="_blank" href="https://github.com/jefferyjob"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108165043.jpg" alt="Github"></a></span>
+                <!-- csdn -->
+                <span><a target="_blank" href="https://blog.csdn.net/libinemail"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108172932.ico" alt="CSDN"></a></span>
+                <!-- juejin -->
+                <span><a target="_blank" href="https://juejin.cn/user/782508009723783"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108165800.png" alt="掘金社区"></a></span>
+                <!-- zhihu -->
+                <span><a target="_blank" href="https://www.zhihu.com/people/JefferyJob"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108172745.ico" alt="知乎"></a></span>
+                
+            </p>
+            
+        </div>
+    </div>
+</section>
+
+
+    
+        
+  <section class="widget-wrap">
+    <h3 class="widget-title">文章分类</h3>
+    <div class="widget">
+      <div class="categories-list">
+        
+           
+            
+              <a class="category-list-item" href="/categories/算法">
+                <span class="category-list-link">算法</span>
+                <span class="category-list-number">(13)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/mysql">
+                <span class="category-list-link">mysql</span>
+                <span class="category-list-number">(36)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/docker">
+                <span class="category-list-link">docker</span>
+                <span class="category-list-number">(2)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/design">
+                <span class="category-list-link">design</span>
+                <span class="category-list-number">(3)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/linux">
+                <span class="category-list-link">linux</span>
+                <span class="category-list-number">(5)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/rabbitmq">
+                <span class="category-list-link">rabbitmq</span>
+                <span class="category-list-number">(2)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/php">
+                <span class="category-list-link">php</span>
+                <span class="category-list-number">(6)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/redis">
+                <span class="category-list-link">redis</span>
+                <span class="category-list-number">(25)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/blog">
+                <span class="category-list-link">blog</span>
+                <span class="category-list-number">(15)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/swoole">
+                <span class="category-list-link">swoole</span>
+                <span class="category-list-number">(3)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/notes">
+                <span class="category-list-link">notes</span>
+                <span class="category-list-number">(10)</span>
+              </a>
+            
+          
+        
+      </div>
+    </div>
+  </section>
+
+
+    
+        
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget widget_tag">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/blog/" rel="tag">blog</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/es/" rel="tag">es</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/haproxy/" rel="tag">haproxy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/keepalived/" rel="tag">keepalived</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mycat/" rel="tag">mycat</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nginx/" rel="tag">nginx</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/notes/" rel="tag">notes</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/openresty/" rel="tag">openresty</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/php/" rel="tag">php</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/rabbitmq/" rel="tag">rabbitmq</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/swoole/" rel="tag">swoole</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a></li></ul>
+    </div>
+  </div>
+
+
+<style>
+  .widget_tag ul li {
+    display: inline-block;
+    padding: 0px 5px;
+    border: 1px solid #eee;
+    margin-bottom: 7px;
+    margin-right: 5px;
+    border-radius: 5px;
+    font-size: 12px;
+    color: #999;
+  }
+</style>
+    
+        
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul class="recent-posts">
+        
+          <li>
+            <a href="/posts/1482114423.html">notes：解决github访问慢的问题</a>
+          </li>
+        
+          <li>
+            <a href="/posts/1634640555.html">雪花算法 snowflake</a>
+          </li>
+        
+          <li>
+            <a href="/posts/163644071.html">mysql视图基本操作</a>
+          </li>
+        
+          <li>
+            <a href="/posts/1198915737.html">mysql视图是什么</a>
+          </li>
+        
+          <li>
+            <a href="/posts/3520988043.html">PHP实现IO阻塞模型(blocking)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+    
+        
+  <section class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/04/">四月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/03/">三月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/02/">二月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a></li></ul>
+    </div>
+  </section>
+
+
+    
+        
+  <section class="widget-wrap">
+    <h3 class="widget-title">友情链接</h3>
+    <div>
+      <ul class="widget-links">
+          
+          <li>
+              <a target="_blank" rel="noopener" href="https://libinblog.gitee.io" title="">
+                  本站大陆节点
+              </a>
+          </li>
+          
+          <li>
+              <a target="_blank" rel="noopener" href="https://blog.senll.com" title="">
+                  Ethan 的博客
+              </a>
+          </li>
+          
+          <li>
+              <a target="_blank" rel="noopener" href="https://www.laruence.com" title="">
+                  鸟哥的博客
+              </a>
+          </li>
+          
+          <li>
+              <a target="_blank" rel="noopener" href="http://rango.swoole.com" title="">
+                  韩天峰的博客
+              </a>
+          </li>
+          
+      </ul>
+    </div>
+  </section>
+
+
+<style>
+  .widget-links {
+    list-style: none;
+    padding-left: 10px;
+  }
+  .widget-links >li > a:hover {
+    color: #f40;
+    text-decoration: underline;
+  }
+</style>
+    
+        <section class="widget-wrap">
+    <div class="widget">
+        <div class="notice attention">
+
+            <p>
+                该网站发布的内容，遵循
+                <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>
+                版权协议，转载请附上原文出处链接和本声明。
+                <br><br>
+                如果有其他问题，可以给我发邮件咨询。
+                <a target="_blank" href="https://www.mailjob.net">libin@mailjob.net</a>
+                。我看到后会在第一时间回复！
+            </p>
+            
+        </div>
+    </div>
+</section>
+
+    
+    
+</div>
+
+
+      <!-- 目录 -->
+      
+        <div id="toc"></div>
+        <script>
+          $(function () {
+            var elm = $('#toc');
+            var startPos = $(elm).offset().top;
+            $.event.add(window, "scroll", function () {
+              var p = $(window).scrollTop();
+              $(elm).css('margin-left', '0px');
+              $(elm).css('position', ((p) > startPos) ? 'fixed' : 'static');
+              $(elm).css('top', ((p) > startPos) ? '20px' : '')
+            })
+          })
+
+        </script>
+
+  </aside>
+  
+</div>
+
+
+<script>
+  $('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
+
+</script>
+                </div>
+            </div>
+            <div class="right-icon">
+                <div id="to-top" class="right-icon-item">
+                  <a>
+                    <span class="top-left"></span>
+                    <span class="top-right"></span>
+                  </a>
+                </div>
+              </div>
+    </div>
+    <footer class="footer">
+  <div class="links-wrap-wrap">
+    <div class="links-wrap">
+    
+      
+        <section class="link-wrap">
+          <h3 class="link-title">导航</h3>
+          <div>
+            <ul class="link-item-wrap">
+                
+                <li class="link-item">
+                    <a href="https://blog.mailjob.net" title="">
+                        李斌的技术博客
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://www.mailjob.net" title="">
+                        我的邮箱
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://github.com/mailjobblog/demo_code" title="">
+                        Demo Code
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://new.cnzz.com/v1/login.php?siteid=1279692087" title="">
+                        友盟
+                    </a>
+                </li>
+                
+            </ul>
+          </div>
+        </section>
+      
+
+
+      
+        <section class="link-wrap">
+          <h3 class="link-title">社区论坛</h3>
+          <div>
+            <ul class="link-item-wrap">
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail" title="">
+                        李斌的CSDN
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://www.cnblogs.com/jefferyjob" title="">
+                        李斌的博客园
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://github.com/jefferyjob" title="">
+                        GitHub
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://hub.docker.com/u/jefferyjob" title="">
+                        DockerHub
+                    </a>
+                </li>
+                
+            </ul>
+          </div>
+        </section>
+      
+
+    </div>
+  </div>
+  
+    <div class="copyright-wrap">
+      <span>Copyright &copy; 2020-2021 京ICP备17056825号</span>
+      <span id="timeDate">载入天数...</span>
+
+      <br><br>
+      <span>
+        本站由 <a style="color:#e4e7ee" target="_blank" rel="noopener" href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral"><img style="width: 10px;height: 10px;" src="//img.github.mailjob.net/oss.github/20210226141134.png">又拍云</a> 提供CDN加速/云储存服务
+      </span>
+    </div>
+    
+    <!-- <span id="busuanzi_container_site_pv">
+      本站总访问量<span id="busuanzi_value_site_pv"></span>次
+    </span>
+    <span id="busuanzi_container_site_uv">
+      ，本站访客数<span id="busuanzi_value_site_uv"></span>人次
+    </span> -->
+
+   
+    
+</footer>
+
+<script>
+    var now = new Date();
+    function createtime() {
+      var grt = new Date("06/14/2020 12:00:00");//此处修改你的建站时间或者网站上线时间 
+      now.setTime(now.getTime() + 250);
+      days = (now - grt) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+      document.getElementById("timeDate").innerHTML = "本站已运行 " + dnum + " 天 ";
+    }
+    setInterval("createtime()", 1000);
+</script>
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<script src="/lib/jquery.js"></script>
+
+
+<script src="/lib/waves.js"></script>
+
+
+<script src="/lib/jquery-ui.js"></script>
+
+
+<script src="/lib/jquery.tocify.js"></script>
+
+
+<script src="/js/main.js"></script>
+
+
+        
+<style>
+  .copy-btn {
+    display: inline-block;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 20px;
+    color: rgb(206, 206, 206);
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    border-radius: 3px;
+    user-select: none;
+    outline: 0;
+  }
+
+  .copy-btn:hover {
+    color: #888
+  }
+
+  .highlight-wrap .copy-btn {
+    padding: 2px 6px;
+    position: absolute;
+    right: 10px;
+    top: 1px;
+    z-index: 1;
+  }
+
+
+
+  .highlight-wrap {
+    position: relative;
+  }
+
+  #copysuccess {
+    width: 200px;
+    height: 75px;
+    position: fixed;
+    right: 50%;
+    margin-right: -100px;
+    top: 40%;
+    margin-top: -40px;
+    color: #fff;
+    font-weight: 600;
+    background: #444444d8;
+    display: none;
+    z-index: 99999;
+    border-radius: 10px;
+    text-align: center;
+    line-height: 30px;
+    padding-top: 10px;
+    user-select: none;
+  }
+</style>
+
+<script>
+  addLoadEvent(() => {
+    $('.highlight').each(function (i, e) {
+      var $wrap = $('<div>').addClass('highlight-wrap')
+      $(e).after($wrap)
+      $wrap.append($('<div>').addClass('copy-btn').append('复制代码').on('click', function (e) {
+        var copysuccess = document.getElementById('copysuccess');
+        copysuccess.style.display = 'block'
+        setTimeout(function () {
+          copysuccess.style.display = 'none'
+        }, 2000)
+        var code = $(this).parent().find(".code")[0].innerText
+          
+                var ta = document.createElement('textarea')
+        document.body.appendChild(ta)
+        ta.style.position = 'absolute'
+        ta.style.top = '0px'
+        ta.style.left = '0px'
+        ta.value = code
+        ta.select()
+        ta.focus()
+        var result = document.execCommand('copy')
+        document.body.removeChild(ta)
+          
+                  if (result) $(this).text('复制成功')
+            else $(this).text('复制失败')
+              
+                $(this).blur()
+      })).on('mouseleave', function (e) {
+        var $b = $(this).find('.copy-btn')
+        setTimeout(function () {
+          $b.text('复制代码')
+        }, 1000)
+      }).append(e)
+    })
+  })
+</script>
+
+            <div id="copysuccess">复制成功<br>Copy succeeded</div>
+</body>
+
+</html>
+
+<script>
+    $('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
+</script>
+
+<!-- 网站管理 start -->
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>
+
+<!-- 网站管理 end -->

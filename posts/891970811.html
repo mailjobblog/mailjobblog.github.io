@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>
+    Mysql 数据库冷备份 | 李斌的技术博客
+  </title>
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <meta name="theme-color" content="#4184f3">
+  
+  
+  <link href="https://img.github.mailjob.net/logo/favicon.ico" rel="icon" />
+  
+
+  
+<link rel="stylesheet" href="/css/highlight.light.css">
+
+  
+<link rel="stylesheet" href="/css/prism-customize.css">
+
+  
+<link rel="stylesheet" href="/css/nav-icon.css">
+
+  
+<link rel="stylesheet" href="/css/waves.min.css">
+
+  
+<link rel="stylesheet" href="/css/jquery.tocify.css">
+
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+<link rel="stylesheet" href="/css/nav-indicator.css">
+
+  
+<link rel="stylesheet" href="/css/twikoo.css">
+
+  
+<link rel="stylesheet" href="/css/search.css">
+
+  
+  
+
+  
+
+  </meta>
+  </meta>
+  <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.js"></script>
+  
+<script src="/js/comment.js"></script>
+
+  
+<script src="/js/copy.js"></script>
+
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 5.3.0"></head>
+
+<body>
+    <header>
+        <!-- cover image or sth. -->
+    </header>
+
+    <!-- tips_head start -->
+    <div class="tips_head">
+        <center><span id='tips_head_span'></span></center>
+<script>
+    var host = window.location.host;
+    if(host != 'blog.mailjob.net' && host != 'localhost:4000') {
+        document.getElementById("tips_head_span").innerHTML = "此访问域名为大陆节点，网站内容更新有一定的延迟且不支持评论。若要获取最新信息，请访问国际节点：<a href='https://blog.mailjob.net'>https://blog.mailjob.net</a>"
+        document.getElementById("tips_head_span").style.lineHeight = 3;
+    }
+</script>
+    </div>
+    <!-- tips_head end -->
+
+    <div id="main" class="m-scene">
+        
+<div class="nav-wrapper" id="header">
+
+    <div class="container">
+        <nav>
+            
+            
+            <div class="logo wave">
+                <a href="/" id="logo">
+                    李斌的技术博客
+                </a>
+            </div>
+
+            <div class="nav-toggle-icon" >
+                <div class="material-hamburger">
+                    <span>
+                    </span>
+                    <span>
+                    </span>
+                    <span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="menu-wrapper">
+                <div class="nav-indicator">
+                </div>
+                <ul class="menus">
+                    
+                     
+                        <li>
+                            <a class="wave " href="/">
+                                首页
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/archives">
+                                归档
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/about">
+                                关于
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/message">
+                                留言
+                            </a>
+                        </li>
+                     
+                        <li>
+                            <a class="wave " href="/search">
+                                搜索
+                            </a>
+                        </li>
+                     
+                    
+                   
+                </ul>
+            </div>
+
+        </nav>
+    </div>
+</div>
+
+
+            <div class="container content">
+                <div class="scene_element scene_element--fadein">
+                    <div class="row">
+  <div class="main main-article">
+    <article>
+
+      
+            <header class="post-header">
+              
+            </header>
+
+            <h1 class="post-title">
+              Mysql 数据库冷备份
+            </h1>
+
+            <section class="post-info post-info-bottom">
+
+              <span class="post-date">发布于
+                <span class="post-date-text">
+                   2021-02-17
+                </span>
+              </span>
+
+
+
+
+              
+                <span class="post-category">分类:
+                  <a class="article-category-link" href="/categories/mysql/">mysql</a>
+                </span>
+                
+                  
+                    <span class="post-tags">
+                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a></li></ul>
+                    </span>
+                    
+
+                      <!-- 阅读量统计 -->
+                      
+                        <span class="post-visitors">阅读量:<span id="twikoo_visitors">0</span></span>
+                        
+
+
+            </section>
+
+            <section class="post-content">
+
+              <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
+<p>本文主要介绍三种冷备份的方式</p>
+<p>暴力备份、mysqlsqldump、mydumper</p>
+<p><strong>说明</strong></p>
+<p>mysqldump 是mysql自身提供的工具，按照基本的命令即可使用，navicat中的导入导出用的就是这个</p>
+<p>mydumper 是一个第三方工具，需要下载后安装，其速度是前者的10倍有余，但是会产生锁表问题</p>
+</blockquote>
+<h2 id="相关链接"><a href="#相关链接" class="headerlink" title="相关链接"></a>相关链接</h2><blockquote>
+<p>mydumper官网：<a target="_blank" rel="noopener" href="https://launchpad.net/mydumper">https://launchpad.net/mydumper</a></p>
+</blockquote>
+<h2 id="暴力备份"><a href="#暴力备份" class="headerlink" title="暴力备份"></a>暴力备份</h2><p>暴力备份就是将 <code>mysql</code> 的 <code>data</code> 目录整体备份。</p>
+<p>需要注意的事，在备份和恢复的时候，停止mysql服务。等待完成后，在启动mysql服务，否则会由于 <code>pid</code> 的不一致，产生冲突等问题</p>
+<h2 id="mysqldump-工具"><a href="#mysqldump-工具" class="headerlink" title="mysqldump  工具"></a>mysqldump  工具</h2><blockquote>
+<p>它的备份原理是通过协议连接到 <code>MySQL</code> 数据库，将需要备份的数据查询出来，将查询出的数据转换成对应的<code>insert</code> 语句，当我们需要还原这些数据时，只要执行这些 <code>insert</code> 语句，即可将对应的数据还原。</p>
+</blockquote>
+<h2 id="备份命令"><a href="#备份命令" class="headerlink" title="备份命令"></a>备份命令</h2><h3 id="1-命令格式"><a href="#1-命令格式" class="headerlink" title="1 命令格式"></a>1 命令格式</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">mysqldump [选项] 数据库名 [表名] <span class="operator">&gt;</span> 脚本名</span><br><span class="line">    或</span><br><span class="line">mysqldump [选项] <span class="comment">--数据库名 [选项 表名] &gt; 脚本名</span></span><br><span class="line">    或</span><br><span class="line">mysqldump [选项] <span class="comment">--all-databases [选项]  &gt; 脚本名</span></span><br></pre></td></tr></table></figure>
+<h3 id="2-选项说明"><a href="#2-选项说明" class="headerlink" title="2 选项说明"></a>2 选项说明</h3><table>
+<thead>
+<tr>
+<th>参数名</th>
+<th>缩写</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>–host</td>
+<td>-h</td>
+<td>服务器IP地址</td>
+</tr>
+<tr>
+<td>–port</td>
+<td>-P</td>
+<td>服务器端口号</td>
+</tr>
+<tr>
+<td>–user</td>
+<td>-u</td>
+<td>MySQL 用户名</td>
+</tr>
+<tr>
+<td>–pasword</td>
+<td>-p</td>
+<td>MySQL 密码</td>
+</tr>
+<tr>
+<td>–databases</td>
+<td></td>
+<td>指定要备份的数据库</td>
+</tr>
+<tr>
+<td>–all-databases</td>
+<td></td>
+<td>备份mysql服务器上的所有数据库</td>
+</tr>
+<tr>
+<td>–compact</td>
+<td></td>
+<td>压缩模式，产生更少的输出</td>
+</tr>
+<tr>
+<td>–comments</td>
+<td></td>
+<td>添加注释信息</td>
+</tr>
+<tr>
+<td>–complete-insert</td>
+<td></td>
+<td>输出完成的插入语句</td>
+</tr>
+<tr>
+<td>–lock-tables</td>
+<td></td>
+<td>备份前，锁定所有数据库表</td>
+</tr>
+<tr>
+<td>–no-create-db/–no-create-info</td>
+<td></td>
+<td>禁止生成创建数据库语句</td>
+</tr>
+<tr>
+<td>–force</td>
+<td></td>
+<td>当出现错误时仍然继续备份操作</td>
+</tr>
+<tr>
+<td>–default-character-set</td>
+<td></td>
+<td>指定默认字符集</td>
+</tr>
+<tr>
+<td>–add-locks</td>
+<td></td>
+<td>备份数据库表时锁定数据库表</td>
+</tr>
+</tbody></table>
+<h3 id="3-实例"><a href="#3-实例" class="headerlink" title="3 实例"></a>3 实例</h3><p>备份所有数据库：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysqldump -uroot -p --all-databases &gt; /backup/mysqldump/all.db</span><br></pre></td></tr></table></figure>
+<p>备份指定数据库：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysqldump -uroot -p test &gt; /backup/mysqldump/test.db</span><br></pre></td></tr></table></figure>
+<p>备份指定数据库指定表(多个表以空格间隔)</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysqldump -uroot -p  mysql db event &gt; /backup/mysqldump/2table.db</span><br></pre></td></tr></table></figure>
+<p>备份指定数据库排除某些表</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysqldump -uroot -p test --ignore-table=test.t1 --ignore-table=test.t2 &gt; /backup/mysqldump/test2.db</span><br></pre></td></tr></table></figure>
+<h3 id="4、还原命令"><a href="#4、还原命令" class="headerlink" title="4、还原命令"></a>4、还原命令</h3><h5 id="4-1-系统行命令"><a href="#4-1-系统行命令" class="headerlink" title="4.1 系统行命令"></a>4.1 系统行命令</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mysqladmin -uroot -p create db_name </span><br><span class="line">mysql -uroot -p  db_name &lt; /backup/mysqldump/db_name.db</span><br><span class="line"></span><br><span class="line">注：在导入备份数据库前，db_name如果没有，是需要创建的； 而且与db_name.db中数据库名是一样的才可以导入。</span><br></pre></td></tr></table></figure>
+<h5 id="4-2-soure-方法"><a href="#4-2-soure-方法" class="headerlink" title="4.2 soure 方法"></a>4.2 soure 方法</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mysql &gt; use db_name</span><br><span class="line">mysql &gt; source /backup/mysqldump/db_name.db</span><br></pre></td></tr></table></figure>
+<h2 id="mydumper-工具"><a href="#mydumper-工具" class="headerlink" title="mydumper 工具"></a>mydumper 工具</h2><h3 id="1、备份原理"><a href="#1、备份原理" class="headerlink" title="1、备份原理"></a>1、备份原理</h3><blockquote>
+<p>1、主线程 FLUSH TABLES WITH READ LOCK, 施加全局只读锁，保证数据的一致性<br>2、读取当前时间点的二进制日志文件名和日志写入的位置并记录在metadata文件中，以供即使点恢复使用<br>3、N个（线程数可以指定，默认是4）dump线程把事务隔离级别改为可重复读 并开启读一致的事物<br>4、dump non-InnoDB tables, 首先导出非事物引擎的表<br>5、主线程 UNLOCK TABLES 非事物引擎备份完后，释放全局只读锁<br>6、dump InnoDB tables, 基于事物导出InnoDB表<br>7、事物结束</p>
+</blockquote>
+<h3 id="2、该工具介绍"><a href="#2、该工具介绍" class="headerlink" title="2、该工具介绍"></a>2、该工具介绍</h3><blockquote>
+<p>Mydumper是一个针对MySQL和Drizzle的高性能多线程备份和恢复工具。 </p>
+<p><strong>Mydumper主要特性：</strong></p>
+<ul>
+<li><p>轻量级C语言写的</p>
+</li>
+<li><p>多线程备份，备份后会生成多个备份文件</p>
+</li>
+<li><p>事务性和非事务性表一致的快照(适用于0.2.2以上版本)</p>
+</li>
+<li><p>快速的文件压缩</p>
+</li>
+<li><p>支持导出binlog</p>
+</li>
+<li><p>多线程恢复(适用于0.2.1以上版本)</p>
+</li>
+<li><p>以守护进程的工作方式，定时快照和连续二进制日志(适用于0.5.0以上版本)</p>
+</li>
+<li><p>开源 (GNU GPLv3)</p>
+</li>
+</ul>
+</blockquote>
+<h3 id="3、安装步骤"><a href="#3、安装步骤" class="headerlink" title="3、安装步骤"></a>3、安装步骤</h3><blockquote>
+<p>mydumper使用c语言编写，使用glibc库<br>mydumper安装所依赖的软件包，glibc, zlib, pcre, pcre-devel, gcc, gcc-c++, cmake, make, mysql客户端库文件</p>
+<p>1、安装依赖软件包，将mysql客户端库文件路径添加至/etc/ld.so.conf, 如/usr/local/mysql/lib<br>2、解压软件包进入目录，cmake<br>3、make &amp;&amp; make install </p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 安装依赖软件包</span></span><br><span class="line">[root@VM-0-15-centos local]# yum -y  install glib2-devel mysql-devel zlib-devel pcre-devel zlib gcc-c++ gcc cmake</span><br><span class="line"><span class="meta">#</span><span class="bash"> 我选择按照到了此目录</span></span><br><span class="line">[root@VM-0-15-centos local]# pwd</span><br><span class="line">/usr/local</span><br><span class="line"><span class="meta">#</span><span class="bash"> 下载软件</span></span><br><span class="line">[root@VM-0-15-centos local]# wget https://launchpad.net/mydumper/0.9/0.9.1/+download/mydumper-0.9.1.tar.gz</span><br><span class="line"><span class="meta">#</span><span class="bash"> 解压 tar 包</span></span><br><span class="line">[root@VM-0-15-centos local]# tar zxf mydumper-0.9.1.tar.gz</span><br><span class="line"><span class="meta">#</span><span class="bash"> 进入到解压目录</span></span><br><span class="line">[root@VM-0-15-centos local]# cd mydumper-0.9.1/</span><br><span class="line"><span class="meta">#</span><span class="bash"> 进行cmake编译</span></span><br><span class="line">[root@VM-0-15-centos mydumper-0.9.1]# cmake .</span><br><span class="line"><span class="meta">#</span><span class="bash"> 进行编译和安装</span></span><br><span class="line">[root@VM-0-15-centos mydumper-0.9.1]# make &amp;&amp; make install</span><br><span class="line"><span class="meta">#</span><span class="bash">安装完成后生成两个二进制文件mydumper和myloader位于/usr/<span class="built_in">local</span>/bin目录下</span></span><br><span class="line">[root@VM-0-15-centos mydumper-0.9.1]# ls /usr/local/bin/</span><br><span class="line">composer  iconv  libmcrypt-config  mcrypt  mdecrypt  mydumper  myloader</span><br></pre></td></tr></table></figure>
+<h3 id="mydumper-参数解释"><a href="#mydumper-参数解释" class="headerlink" title="mydumper 参数解释"></a>mydumper 参数解释</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">-B, --database              要备份的数据库，不指定则备份所有库</span><br><span class="line">-T, --tables-list           需要备份的表，名字用逗号隔开</span><br><span class="line">-o, --outputdir             备份文件输出的目录</span><br><span class="line">-s, --statement-size        生成的insert语句的字节数，默认1000000</span><br><span class="line">-r, --rows                  将表按行分块时，指定的块行数，指定这个选项会关闭 --chunk-filesize</span><br><span class="line">-F, --chunk-filesize        将表按大小分块时，指定的块大小，单位是 MB</span><br><span class="line">-c, --compress              压缩输出文件</span><br><span class="line">-e, --build-empty-files     如果表数据是空，还是产生一个空文件（默认无数据则只有表结构文件）</span><br><span class="line">-x, --regex                 是同正则表达式匹配 &#x27;db.table&#x27;</span><br><span class="line">-i, --ignore-engines        忽略的存储引擎，用都厚分割</span><br><span class="line">-m, --no-schemas            不备份表结构</span><br><span class="line">-k, --no-locks              不使用临时共享只读锁，使用这个选项会造成数据不一致</span><br><span class="line">--less-locking              减少对InnoDB表的锁施加时间（这种模式的机制下文详解）</span><br><span class="line">-l, --long-query-guard      设定阻塞备份的长查询超时时间，单位是秒，默认是60秒（超时后默认mydumper将会退出）</span><br><span class="line">--kill-long-queries         杀掉长查询 (不退出)</span><br><span class="line">-b, --binlogs               导出binlog</span><br><span class="line">-D, --daemon                启用守护进程模式，守护进程模式以某个间隔不间断对数据库进行备份</span><br><span class="line">-I, --snapshot-interval     dump快照间隔时间，默认60s，需要在daemon模式下</span><br><span class="line">-L, --logfile               使用的日志文件名(mydumper所产生的日志), 默认使用标准输出</span><br><span class="line">--tz-utc                    跨时区是使用的选项，不解释了</span><br><span class="line">--skip-tz-utc               同上</span><br><span class="line">--use-savepoints            使用savepoints来减少采集metadata所造成的锁时间，需要 SUPER 权限</span><br><span class="line">--success-on-1146           Not increment error count and Warning instead of Critical in case of table doesn&#x27;t exist</span><br><span class="line">-h, --host                  连接的主机名</span><br><span class="line">-u, --user                  备份所使用的用户</span><br><span class="line">-p, --password              密码</span><br><span class="line">-P, --port                  端口</span><br><span class="line">-S, --socket                使用socket通信时的socket文件</span><br><span class="line">-t, --threads               开启的备份线程数，默认是4</span><br><span class="line">-C, --compress-protocol     压缩与mysql通信的数据</span><br><span class="line">-V, --version               显示版本号</span><br><span class="line">-v, --verbose               输出信息模式, 0 = silent, 1 = errors, 2 = warnings, 3 = info, 默认为 2</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="myloader-参数解释"><a href="#myloader-参数解释" class="headerlink" title="myloader 参数解释"></a>myloader 参数解释</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">-d, --directory                   备份文件的文件夹</span><br><span class="line">-q, --queries-per-transaction     每次事物执行的查询数量，默认是1000</span><br><span class="line">-o, --overwrite-tables            如果要恢复的表存在，则先drop掉该表，使用该参数，需要备份时候要备份表结构</span><br><span class="line">-B, --database                    需要还原的数据库</span><br><span class="line">-e, --enable-binlog               启用还原数据的二进制日志</span><br><span class="line">-h, --host                        主机</span><br><span class="line">-u, --user                        还原的用户</span><br><span class="line">-p, --password                    密码</span><br><span class="line">-P, --port                        端口</span><br><span class="line">-S, --socket                      socket文件</span><br><span class="line">-t, --threads                     还原所使用的线程数，默认是4</span><br><span class="line">-C, --compress-protocol           压缩协议</span><br><span class="line">-V, --version                     显示版本</span><br><span class="line">-v, --verbose                     输出模式, 0 &#x3D; silent, 1 &#x3D; errors, 2 &#x3D; warnings, 3 &#x3D; info, 默认为2</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="5、使用案例"><a href="#5、使用案例" class="headerlink" title="5、使用案例"></a>5、使用案例</h3><h5 id="备份-study-数据库库-到-data-backup-mysql-文件夹中"><a href="#备份-study-数据库库-到-data-backup-mysql-文件夹中" class="headerlink" title="备份 study 数据库库 到  /data/backup/mysql 文件夹中"></a>备份 <code>study</code> 数据库库 到 <code> /data/backup/mysql</code> 文件夹中</h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 备份命令</span></span><br><span class="line">[root@VM-0-15-centos mysql]# mydumper -u root -p rootroot  -P 3306 -h 127.0.0.1 -B study  -o /data/backup/mysql/</span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看备份内容</span></span><br><span class="line">[root@VM-0-15-centos mysql]# ll</span><br><span class="line">total 16</span><br><span class="line"><span class="meta">#</span><span class="bash"> 记录了备份数据库在备份时间点的二进制日志文件名，日志的写入位置</span></span><br><span class="line">-rw-r--r-- 1 root root 137 Feb 17 16:35 metadata </span><br><span class="line"><span class="meta">#</span><span class="bash"> 库文件</span></span><br><span class="line">-rw-r--r-- 1 root root  67 Feb 17 16:35 study-schema-create.sql</span><br><span class="line"><span class="meta">#</span><span class="bash"> 表结构文件</span></span><br><span class="line">-rw-r--r-- 1 root root 497 Feb 17 16:35 study.user_test-schema.sql</span><br><span class="line"><span class="meta">#</span><span class="bash"> 表数据文件</span></span><br><span class="line">-rw-r--r-- 1 root root 244 Feb 17 16:35 study.user_test.sql</span><br></pre></td></tr></table></figure>
+<p>**如果是在从库进行备份，还会记录备份时同步至主库的二进制日志文件及写入位置 **</p>
+<h5 id="恢复-study-数据库"><a href="#恢复-study-数据库" class="headerlink" title="恢复 study 数据库"></a>恢复 <code>study</code> 数据库</h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 先删除 study 数据库</span></span><br><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> drop database study;</span></span><br><span class="line">Query OK, 1 row affected (0.09 sec)</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 恢复数据库</span></span><br><span class="line">[root@VM-0-15-centos mysql]# myloader -u root -p rootroot -h 127.0.0.1 -B study -d /data/backup/mysql/</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 恢复成功</span></span><br><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> show databases;</span></span><br><span class="line">+--------------------+</span><br><span class="line">| Database           |</span><br><span class="line">+--------------------+</span><br><span class="line">| information_schema |</span><br><span class="line">| mysql              |</span><br><span class="line">| performance_schema |</span><br><span class="line">| study              |</span><br><span class="line">| sys                |</span><br><span class="line">+--------------------+</span><br><span class="line">5 rows in set (0.00 sec)</span><br></pre></td></tr></table></figure>
+<h2 id="注意问题"><a href="#注意问题" class="headerlink" title="注意问题"></a>注意问题</h2><p>在使用 mydumper 的时候，由于会产生一个全局锁防止写入，所以会导致备份过程总无法写入。</p>
+<p>所以在使用的时候，要对用户提示一个短暂的维护提示</p>
+
+            </section>
+    </article>
+    
+
+
+        <!-- 版权声明 -->
+        
+<div class="post-copyright">
+    <!-- <div>
+        <strong>本文作者：</strong>
+        <span>李斌</span>
+    </div> -->
+    <div>
+        <strong>本文链接：</strong>
+        <a href="https://blog.mailjob.net/posts/891970811.html">
+            <!-- https://blog.mailjob.net/mysql/冷备热备/数据库冷备份 -->
+            https://blog.mailjob.net/posts/891970811.html
+        </a>
+    </div>
+    <div>
+        <!-- <span>欢迎任何形式的转载，请务必注明出处。</span> -->
+    </div>
+    <div>
+        <span>
+            该网站发布的内容，遵循
+            <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>
+            版权协议，转载请附上原文出处链接和本声明。
+        </span>
+    </div>
+</div>
+
+
+
+<style>
+    .post-copyright {
+        background-color: #fff;
+  box-shadow: 0px 0px 1px 1px rgba(0, 0, 0, 0.05);
+        display: block;
+        margin: 20px auto;
+        margin-bottom: 15px;
+        padding: 10px;
+        font-size: 15px;
+        color: #2e2d2d;
+        word-break: break-all;
+        line-height: 1.8;
+    }
+
+
+    .post-copyright a {
+        color: #2e2d2d;
+        border-bottom: 1px solid #999; 
+    }
+
+    .post-copyright a:hover {
+        color: #2e2d2d;
+        border-bottom: 1px solid #000; 
+    }
+</style>
+
+          <!-- comments -->
+          <div class="comments">
+    <h3 id="commenttitle" style="margin-top: 20px;margin-left: 10px;">评论区</h3>
+    <div id="tcomment"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/twikoo@0.6.0/dist/twikoo.all.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/twikoo@1.0.0/dist/twikoo.all.min.js"></script> -->
+
+<script>twikoo.init({ envId: 'jefferyjob-github-io-3b53ee3a93b', el: '#tcomment' })</script>
+
+            <div class="right-icon">
+              <div id="to-valine" class="right-icon-item">
+                <a href="#commenttitle">评论</a>
+              </div>
+            </div>
+
+  </div>
+
+
+  <aside>
+    <div class="aside-wrap">
+    
+        <section class="widget-wrap">
+    <h3 class="widget-title">简介</h3>
+    <div class="widget">
+        <div class="notice">
+            <img class="notice-img" src="https://img.github.mailjob.net/logo/libin.jpg">
+            <p>李斌的个人独立博客<br>此平台用作学习交流<br>日常分享</p>
+            
+            <p class="notice-item">
+                <!-- github -->
+                <span><a target="_blank" href="https://github.com/jefferyjob"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108165043.jpg" alt="Github"></a></span>
+                <!-- csdn -->
+                <span><a target="_blank" href="https://blog.csdn.net/libinemail"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108172932.ico" alt="CSDN"></a></span>
+                <!-- juejin -->
+                <span><a target="_blank" href="https://juejin.cn/user/782508009723783"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108165800.png" alt="掘金社区"></a></span>
+                <!-- zhihu -->
+                <span><a target="_blank" href="https://www.zhihu.com/people/JefferyJob"><img src="https://shuxhan-imgbed.oss-cn-hangzhou.aliyuncs.com/img/20210108172745.ico" alt="知乎"></a></span>
+                
+            </p>
+            
+        </div>
+    </div>
+</section>
+
+
+    
+        
+  <section class="widget-wrap">
+    <h3 class="widget-title">文章分类</h3>
+    <div class="widget">
+      <div class="categories-list">
+        
+           
+            
+              <a class="category-list-item" href="/categories/算法">
+                <span class="category-list-link">算法</span>
+                <span class="category-list-number">(13)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/mysql">
+                <span class="category-list-link">mysql</span>
+                <span class="category-list-number">(36)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/docker">
+                <span class="category-list-link">docker</span>
+                <span class="category-list-number">(2)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/design">
+                <span class="category-list-link">design</span>
+                <span class="category-list-number">(3)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/linux">
+                <span class="category-list-link">linux</span>
+                <span class="category-list-number">(5)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/rabbitmq">
+                <span class="category-list-link">rabbitmq</span>
+                <span class="category-list-number">(2)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/php">
+                <span class="category-list-link">php</span>
+                <span class="category-list-number">(6)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/redis">
+                <span class="category-list-link">redis</span>
+                <span class="category-list-number">(25)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/blog">
+                <span class="category-list-link">blog</span>
+                <span class="category-list-number">(15)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/swoole">
+                <span class="category-list-link">swoole</span>
+                <span class="category-list-number">(3)</span>
+              </a>
+            
+           
+            
+              <a class="category-list-item" href="/categories/notes">
+                <span class="category-list-link">notes</span>
+                <span class="category-list-number">(10)</span>
+              </a>
+            
+          
+        
+      </div>
+    </div>
+  </section>
+
+
+    
+        
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget widget_tag">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/blog/" rel="tag">blog</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/es/" rel="tag">es</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/haproxy/" rel="tag">haproxy</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/keepalived/" rel="tag">keepalived</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mycat/" rel="tag">mycat</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nginx/" rel="tag">nginx</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/notes/" rel="tag">notes</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/openresty/" rel="tag">openresty</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/php/" rel="tag">php</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/rabbitmq/" rel="tag">rabbitmq</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/swoole/" rel="tag">swoole</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a></li></ul>
+    </div>
+  </div>
+
+
+<style>
+  .widget_tag ul li {
+    display: inline-block;
+    padding: 0px 5px;
+    border: 1px solid #eee;
+    margin-bottom: 7px;
+    margin-right: 5px;
+    border-radius: 5px;
+    font-size: 12px;
+    color: #999;
+  }
+</style>
+    
+        
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul class="recent-posts">
+        
+          <li>
+            <a href="/posts/1482114423.html">notes：解决github访问慢的问题</a>
+          </li>
+        
+          <li>
+            <a href="/posts/1634640555.html">雪花算法 snowflake</a>
+          </li>
+        
+          <li>
+            <a href="/posts/163644071.html">mysql视图基本操作</a>
+          </li>
+        
+          <li>
+            <a href="/posts/1198915737.html">mysql视图是什么</a>
+          </li>
+        
+          <li>
+            <a href="/posts/3520988043.html">PHP实现IO阻塞模型(blocking)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+    
+        
+  <section class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/04/">四月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/03/">三月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/02/">二月 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a></li></ul>
+    </div>
+  </section>
+
+
+    
+        
+  <section class="widget-wrap">
+    <h3 class="widget-title">友情链接</h3>
+    <div>
+      <ul class="widget-links">
+          
+          <li>
+              <a target="_blank" rel="noopener" href="https://libinblog.gitee.io" title="">
+                  本站大陆节点
+              </a>
+          </li>
+          
+          <li>
+              <a target="_blank" rel="noopener" href="https://blog.senll.com" title="">
+                  Ethan 的博客
+              </a>
+          </li>
+          
+          <li>
+              <a target="_blank" rel="noopener" href="https://www.laruence.com" title="">
+                  鸟哥的博客
+              </a>
+          </li>
+          
+          <li>
+              <a target="_blank" rel="noopener" href="http://rango.swoole.com" title="">
+                  韩天峰的博客
+              </a>
+          </li>
+          
+      </ul>
+    </div>
+  </section>
+
+
+<style>
+  .widget-links {
+    list-style: none;
+    padding-left: 10px;
+  }
+  .widget-links >li > a:hover {
+    color: #f40;
+    text-decoration: underline;
+  }
+</style>
+    
+        <section class="widget-wrap">
+    <div class="widget">
+        <div class="notice attention">
+
+            <p>
+                该网站发布的内容，遵循
+                <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>
+                版权协议，转载请附上原文出处链接和本声明。
+                <br><br>
+                如果有其他问题，可以给我发邮件咨询。
+                <a target="_blank" href="https://www.mailjob.net">libin@mailjob.net</a>
+                。我看到后会在第一时间回复！
+            </p>
+            
+        </div>
+    </div>
+</section>
+
+    
+    
+</div>
+
+
+      <!-- 目录 -->
+      
+        <div id="toc"></div>
+        <script>
+          $(function () {
+            var elm = $('#toc');
+            var startPos = $(elm).offset().top;
+            $.event.add(window, "scroll", function () {
+              var p = $(window).scrollTop();
+              $(elm).css('margin-left', '0px');
+              $(elm).css('position', ((p) > startPos) ? 'fixed' : 'static');
+              $(elm).css('top', ((p) > startPos) ? '20px' : '')
+            })
+          })
+
+        </script>
+
+  </aside>
+  
+</div>
+
+
+<script>
+  $('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
+
+</script>
+                </div>
+            </div>
+            <div class="right-icon">
+                <div id="to-top" class="right-icon-item">
+                  <a>
+                    <span class="top-left"></span>
+                    <span class="top-right"></span>
+                  </a>
+                </div>
+              </div>
+    </div>
+    <footer class="footer">
+  <div class="links-wrap-wrap">
+    <div class="links-wrap">
+    
+      
+        <section class="link-wrap">
+          <h3 class="link-title">导航</h3>
+          <div>
+            <ul class="link-item-wrap">
+                
+                <li class="link-item">
+                    <a href="https://blog.mailjob.net" title="">
+                        李斌的技术博客
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://www.mailjob.net" title="">
+                        我的邮箱
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://github.com/mailjobblog/demo_code" title="">
+                        Demo Code
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://new.cnzz.com/v1/login.php?siteid=1279692087" title="">
+                        友盟
+                    </a>
+                </li>
+                
+            </ul>
+          </div>
+        </section>
+      
+
+
+      
+        <section class="link-wrap">
+          <h3 class="link-title">社区论坛</h3>
+          <div>
+            <ul class="link-item-wrap">
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail" title="">
+                        李斌的CSDN
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://www.cnblogs.com/jefferyjob" title="">
+                        李斌的博客园
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://github.com/jefferyjob" title="">
+                        GitHub
+                    </a>
+                </li>
+                
+                <li class="link-item">
+                    <a target="_blank" rel="noopener" href="https://hub.docker.com/u/jefferyjob" title="">
+                        DockerHub
+                    </a>
+                </li>
+                
+            </ul>
+          </div>
+        </section>
+      
+
+    </div>
+  </div>
+  
+    <div class="copyright-wrap">
+      <span>Copyright &copy; 2020-2021 京ICP备17056825号</span>
+      <span id="timeDate">载入天数...</span>
+
+      <br><br>
+      <span>
+        本站由 <a style="color:#e4e7ee" target="_blank" rel="noopener" href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral"><img style="width: 10px;height: 10px;" src="//img.github.mailjob.net/oss.github/20210226141134.png">又拍云</a> 提供CDN加速/云储存服务
+      </span>
+    </div>
+    
+    <!-- <span id="busuanzi_container_site_pv">
+      本站总访问量<span id="busuanzi_value_site_pv"></span>次
+    </span>
+    <span id="busuanzi_container_site_uv">
+      ，本站访客数<span id="busuanzi_value_site_uv"></span>人次
+    </span> -->
+
+   
+    
+</footer>
+
+<script>
+    var now = new Date();
+    function createtime() {
+      var grt = new Date("06/14/2020 12:00:00");//此处修改你的建站时间或者网站上线时间 
+      now.setTime(now.getTime() + 250);
+      days = (now - grt) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+      document.getElementById("timeDate").innerHTML = "本站已运行 " + dnum + " 天 ";
+    }
+    setInterval("createtime()", 1000);
+</script>
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<script src="/lib/jquery.js"></script>
+
+
+<script src="/lib/waves.js"></script>
+
+
+<script src="/lib/jquery-ui.js"></script>
+
+
+<script src="/lib/jquery.tocify.js"></script>
+
+
+<script src="/js/main.js"></script>
+
+
+        
+<style>
+  .copy-btn {
+    display: inline-block;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 20px;
+    color: rgb(206, 206, 206);
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    border-radius: 3px;
+    user-select: none;
+    outline: 0;
+  }
+
+  .copy-btn:hover {
+    color: #888
+  }
+
+  .highlight-wrap .copy-btn {
+    padding: 2px 6px;
+    position: absolute;
+    right: 10px;
+    top: 1px;
+    z-index: 1;
+  }
+
+
+
+  .highlight-wrap {
+    position: relative;
+  }
+
+  #copysuccess {
+    width: 200px;
+    height: 75px;
+    position: fixed;
+    right: 50%;
+    margin-right: -100px;
+    top: 40%;
+    margin-top: -40px;
+    color: #fff;
+    font-weight: 600;
+    background: #444444d8;
+    display: none;
+    z-index: 99999;
+    border-radius: 10px;
+    text-align: center;
+    line-height: 30px;
+    padding-top: 10px;
+    user-select: none;
+  }
+</style>
+
+<script>
+  addLoadEvent(() => {
+    $('.highlight').each(function (i, e) {
+      var $wrap = $('<div>').addClass('highlight-wrap')
+      $(e).after($wrap)
+      $wrap.append($('<div>').addClass('copy-btn').append('复制代码').on('click', function (e) {
+        var copysuccess = document.getElementById('copysuccess');
+        copysuccess.style.display = 'block'
+        setTimeout(function () {
+          copysuccess.style.display = 'none'
+        }, 2000)
+        var code = $(this).parent().find(".code")[0].innerText
+          
+                var ta = document.createElement('textarea')
+        document.body.appendChild(ta)
+        ta.style.position = 'absolute'
+        ta.style.top = '0px'
+        ta.style.left = '0px'
+        ta.value = code
+        ta.select()
+        ta.focus()
+        var result = document.execCommand('copy')
+        document.body.removeChild(ta)
+          
+                  if (result) $(this).text('复制成功')
+            else $(this).text('复制失败')
+              
+                $(this).blur()
+      })).on('mouseleave', function (e) {
+        var $b = $(this).find('.copy-btn')
+        setTimeout(function () {
+          $b.text('复制代码')
+        }, 1000)
+      }).append(e)
+    })
+  })
+</script>
+
+            <div id="copysuccess">复制成功<br>Copy succeeded</div>
+</body>
+
+</html>
+
+<script>
+    $('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
+</script>
+
+<!-- 网站管理 start -->
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>
+
+<!-- 网站管理 end -->

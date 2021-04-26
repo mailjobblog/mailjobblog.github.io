@@ -1,22 +1,36 @@
-# 李斌的技术博客
+<h1 align="center">李斌的技术博客</h1>
 
-### 网址
+<h3><a href='https://blog.mailjob.net'>https://blog.mailjob.net</a></h3>
 
-[https://blog.mailjob.net](https://blog.mailjob.net)
-
-### About
-
-> 作内容输出
-> 记录工作笔记
-> 分享知识
-
-### Share
+### SHARE
 
 [![GitHub issues](https://img.shields.io/github/issues/mailjobblog/mailjobblog.github.io.svg?style=flat)](https://github.com/mailjobblog/mailjobblog.github.io/issues)
 [![License MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/mailjobblog/mailjobblog.github.io/blob/main/LICENSEE)
 [![](https://img.shields.io/github/stars/mailjobblog/mailjobblog.github.io.svg?style=social&label=Star)](https://github.com/mailjobblog/mailjobblog.github.io)
 [![](https://img.shields.io/github/forks/mailjobblog/mailjobblog.github.io.svg?style=social&label=Fork)](https://github.com/mailjobblog/mailjobblog.github.io)
 
-### License
+### LICENSE
 
-遵循 MIT 许可证。有关详细，请参阅 [LICENSE](https://github.com/mailjobblog/mailjobblog.github.io/blob/master/LICENSE)。
+[LICENSE](https://github.com/mailjobblog/mailjobblog.github.io/blob/master/LICENSE)。
+
+MIT License
+
+Copyright (c) 2017 BY 
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

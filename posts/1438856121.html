@@ -3,7 +3,7 @@
   <meta charset="utf-8">
   
   <title>
-    OpenResty多级缓存策略 | 李斌的技术博客
+    swoole 端口监听，关闭tcp服务 | 李斌的技术博客
   </title>
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <meta name="theme-color" content="#4184f3">
@@ -160,14 +160,14 @@
             </header>
 
             <h1 class="post-title">
-              OpenResty多级缓存策略
+              swoole 端口监听，关闭tcp服务
             </h1>
 
             <section class="post-info post-info-bottom">
 
               <span class="post-date">发布于
                 <span class="post-date-text">
-                   2021-01-24
+                   2021-04-27
                 </span>
               </span>
 
@@ -176,12 +176,12 @@
 
               
                 <span class="post-category">分类:
-                  <a class="article-category-link" href="/categories/linux/">linux</a> <a class="article-category-link" href="/categories/redis/">redis</a>
+                  <a class="article-category-link" href="/categories/swoole/">swoole</a>
                 </span>
                 
                   
                     <span class="post-tags">
-                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/nginx/" rel="tag">nginx</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/openresty/" rel="tag">openresty</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/redis/" rel="tag">redis</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a></li></ul>
+                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/swoole/" rel="tag">swoole</a></li></ul>
                     </span>
                     
 
@@ -195,17 +195,42 @@
 
             <section class="post-content">
 
-              <meta name="referrer" content="no-referrer"/>
-
-<h2 id="相关链接"><a href="#相关链接" class="headerlink" title="相关链接"></a>相关链接</h2><blockquote>
-<p>多级缓存策略思维导图：<a target="_blank" rel="noopener" href="https://kdocs.cn/l/sfV9xmfovVKv">https://kdocs.cn/l/sfV9xmfovVKv</a><br>nginx基于openresty验证jwt：<a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000015677681">https://segmentfault.com/a/1190000015677681</a><br>OpenResty不完全指南：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/42082302">https://zhuanlan.zhihu.com/p/42082302</a><br>基于OpenResty实现 JWT验证2：<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/66d5163b9e99">https://www.jianshu.com/p/66d5163b9e99</a></p>
+              <h2 id="需求描述"><a href="#需求描述" class="headerlink" title="需求描述"></a>需求描述</h2><p><strong>场景描述</strong></p>
+<p>某直播平台，需要观察员去不定时的抽查直播平台的内容，对于直播网站不良的直播进行封禁和停播的处理。</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote>
+<p>Tcp server 服务：<a target="_blank" rel="noopener" href="https://wiki.swoole.com/#/start/start_tcp_server?id=%e7%a8%8b%e5%ba%8f%e4%bb%a3%e7%a0%81">https://wiki.swoole.com/#/start/start_tcp_server?id=%e7%a8%8b%e5%ba%8f%e4%bb%a3%e7%a0%81</a></p>
+<p>端口监听：<a target="_blank" rel="noopener" href="https://wiki.swoole.com/#/server/port?id=%e5%a4%9a%e7%ab%af%e5%8f%a3%e7%9b%91%e5%90%ac">https://wiki.swoole.com/#/server/port?id=%e5%a4%9a%e7%ab%af%e5%8f%a3%e7%9b%91%e5%90%ac</a></p>
+<p>面向对象代码实现：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/dev_swoole/tree/master/210427_listen">https://github.com/mailjobblog/dev_swoole/tree/master/210427_listen</a></p>
 </blockquote>
-<h2 id="思维导图"><a href="#思维导图" class="headerlink" title="思维导图"></a>思维导图</h2><p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210124224640.png" alt="image-20210124224639231"></p>
-<h2 id="OpenResty验证Jwt思维图"><a href="#OpenResty验证Jwt思维图" class="headerlink" title="OpenResty验证Jwt思维图"></a>OpenResty验证Jwt思维图</h2><p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210124224946.png" alt="整体架构"></p>
-<h3 id="保证业务连贯性用uuid"><a href="#保证业务连贯性用uuid" class="headerlink" title="保证业务连贯性用uuid"></a>保证业务连贯性用uuid</h3><h5 id="uuid生成"><a href="#uuid生成" class="headerlink" title="uuid生成"></a>uuid生成</h5><p>为每个请求生成唯一的uuid码可以将网关层上的请求和应用层的请求关联起来,对排查问题,接口统计都非常有用.</p>
-<p><strong>创建文件<code>/usr/local/openresty/nginx/jwt-lua/resty/uuid.lua</code></strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">local M  &#x3D; &#123;&#125;</span><br><span class="line">local charset &#x3D; &#123;&#125;  do -- [0-9a-zA-Z]</span><br><span class="line">    for c &#x3D; 48, 57  do table.insert(charset, string.char(c)) end</span><br><span class="line">    for c &#x3D; 65, 90  do table.insert(charset, string.char(c)) end</span><br><span class="line">    for c &#x3D; 97, 122 do table.insert(charset, string.char(c)) end</span><br><span class="line">end</span><br><span class="line">function M.uuid(length)</span><br><span class="line">        local res &#x3D; &quot;&quot;</span><br><span class="line">        for i &#x3D; 1, length do</span><br><span class="line">                res &#x3D; res .. charset[math.random(1, #charset)]</span><br><span class="line">        end</span><br><span class="line">        return res</span><br><span class="line">end</span><br><span class="line">return M</span><br></pre></td></tr></table></figure>
-<h5 id="修改配置文件nginx-conf"><a href="#修改配置文件nginx-conf" class="headerlink" title="修改配置文件nginx.conf"></a>修改配置文件<code>nginx.conf</code></h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">worker_processes  1;</span><br><span class="line">error_log logs&#x2F;error.log info;</span><br><span class="line">events &#123;</span><br><span class="line">    worker_connections 1024;</span><br><span class="line">&#125;</span><br><span class="line">http &#123;</span><br><span class="line">    upstream tomcat&#123;</span><br><span class="line">     server localhost:80;</span><br><span class="line">    &#125;</span><br><span class="line">    lua_package_path &quot;&#x2F;usr&#x2F;local&#x2F;openresty&#x2F;nginx&#x2F;jwt-lua&#x2F;?.lua;;&quot;;</span><br><span class="line">    server &#123;</span><br><span class="line">        listen 8080;</span><br><span class="line">        set $uid &#39;&#39;;</span><br><span class="line">        set $uuid &#39;&#39;;</span><br><span class="line">        location &#x2F; &#123;</span><br><span class="line">            access_by_lua &#39;</span><br><span class="line">            local jwt &#x3D; require(&quot;resty.nginx-jwt&quot;)</span><br><span class="line">            jwt.auth()</span><br><span class="line">            local u &#x3D; require(&quot;resty.uuid&quot;)</span><br><span class="line">            ngx.var.uuid &#x3D; u.uuid(64)</span><br><span class="line">        &#39;;</span><br><span class="line">            default_type application&#x2F;json;</span><br><span class="line">            proxy_set_header uid $uid;</span><br><span class="line">            proxy_set_header uuid $uuid;</span><br><span class="line">            proxy_pass http:&#x2F;&#x2F;tomcat;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h2><h3 id="面向过程代码"><a href="#面向过程代码" class="headerlink" title="面向过程代码"></a>面向过程代码</h3><p><strong>实现计划</strong></p>
+<blockquote>
+<p><strong>server</strong></p>
+<p>建立一个 【TCP服务，端口为9501】；</p>
+<p>再建立一个监听服务，端口为9505，去监听 9501的TCP服务；</p>
+<p><strong>client</strong></p>
+<p>作为观察角色，通过连接 9505 监听服务，然后监听服务再断掉 9501的TCP服务。</p>
+</blockquote>
+<p><strong>server.php</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="comment">//创建Server对象，监听 0.0.0.0:9501 端口</span></span><br><span class="line"><span class="variable">$server</span> = <span class="keyword">new</span> Swoole\Server(<span class="string">&#x27;0.0.0.0&#x27;</span>, <span class="number">9501</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">//监听连接进入事件</span></span><br><span class="line"><span class="variable">$server</span>-&gt;on(<span class="string">&#x27;Connect&#x27;</span>, <span class="function"><span class="keyword">function</span> (<span class="params"><span class="variable">$server</span>, <span class="variable">$fd</span></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&quot;Client: Connect.\n&quot;</span>;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">//监听数据接收事件</span></span><br><span class="line"><span class="variable">$server</span>-&gt;on(<span class="string">&#x27;Receive&#x27;</span>, <span class="function"><span class="keyword">function</span> (<span class="params"><span class="variable">$server</span>, <span class="variable">$fd</span>, <span class="variable">$reactor_id</span>, <span class="variable">$data</span></span>) </span>&#123;</span><br><span class="line">    <span class="variable">$server</span>-&gt;send(<span class="variable">$fd</span>, <span class="string">&quot;Server: <span class="subst">&#123;$data&#125;</span>&quot;</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">//监听连接关闭事件</span></span><br><span class="line"><span class="variable">$server</span>-&gt;on(<span class="string">&#x27;Close&#x27;</span>, <span class="function"><span class="keyword">function</span> (<span class="params"><span class="variable">$server</span>, <span class="variable">$fd</span></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&quot;Client: Close.\n&quot;</span>;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">//返回port对象</span></span><br><span class="line"><span class="variable">$port1</span> = <span class="variable">$server</span>-&gt;listen(<span class="string">&quot;127.0.0.1&quot;</span>, <span class="number">9505</span>, SWOOLE_SOCK_TCP);</span><br><span class="line"><span class="variable">$port1</span>-&gt;on(<span class="string">&#x27;connect&#x27;</span>, <span class="function"><span class="keyword">function</span> (<span class="params"><span class="variable">$serv</span>, <span class="variable">$fd</span></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&quot; port1 Client:<span class="subst">&#123;$fd&#125;</span>Connect 已经连接到监听服务.\n&quot;</span>;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="variable">$port1</span>-&gt;on(<span class="string">&#x27;receive&#x27;</span>, <span class="function"><span class="keyword">function</span> (<span class="params"><span class="variable">$serv</span>, <span class="variable">$fd</span>, <span class="variable">$from_id</span>, <span class="variable">$data</span> </span>)<span class="title">use</span> (<span class="params"><span class="variable">$server</span></span>) </span>&#123;</span><br><span class="line">    <span class="variable">$server</span>-&gt;shutdown(); <span class="comment">// 关闭 server 服务</span></span><br><span class="line">    <span class="variable">$serv</span>-&gt;send(<span class="variable">$fd</span>, <span class="string">&#x27;Swoole: &#x27;</span>.<span class="variable">$data</span>);</span><br><span class="line">    <span class="variable">$serv</span>-&gt;close(<span class="variable">$fd</span>);</span><br><span class="line">&#125;);</span><br><span class="line"><span class="variable">$port1</span>-&gt;on(<span class="string">&#x27;close&#x27;</span>, <span class="function"><span class="keyword">function</span> (<span class="params"><span class="variable">$serv</span>, <span class="variable">$fd</span></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&quot;  port1Client:<span class="subst">&#123;$fd&#125;</span> Close 关闭监听服务的连接.\n&quot;</span>;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">//启动服务器</span></span><br><span class="line"><span class="variable">$server</span>-&gt;start();</span><br></pre></td></tr></table></figure>
+<p><strong>client.php</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="variable">$client</span> = <span class="keyword">new</span> Swoole\Client(SWOOLE_SOCK_TCP);</span><br><span class="line"><span class="keyword">if</span> (!<span class="variable">$client</span>-&gt;connect(<span class="string">&#x27;127.0.0.1&#x27;</span>, <span class="number">9505</span>, <span class="number">-1</span>)) &#123;</span><br><span class="line">    <span class="keyword">exit</span>(<span class="string">&quot;connect failed. Error: <span class="subst">&#123;$client-&gt;errCode&#125;</span>\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="variable">$client</span>-&gt;send(<span class="string">&quot;我是来关闭你的server的\n&quot;</span>);</span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$client</span>-&gt;recv();</span><br><span class="line"><span class="variable">$client</span>-&gt;close();</span><br></pre></td></tr></table></figure>
+<p><strong>测试截图</strong></p>
+<p><img src="http://img.github.mailjob.net/20210427110836.png"></p>
+<h3 id="面向对象代码"><a href="#面向对象代码" class="headerlink" title="面向对象代码"></a>面向对象代码</h3><p><strong>代码下载</strong></p>
+<blockquote>
+<p>参照上文中的参考文献下载</p>
+</blockquote>
+<p><strong>逻辑描述</strong></p>
+<blockquote>
+<p>通过连接业务服务，然后发送 code=0 的标识。  </p>
+<p>业务服务将该请求进行判断，然后发送给监听服务。  </p>
+<p>监听服务根据需求，处理相关的业务(停止/详情)逻辑。  </p>
+</blockquote>
+<p><strong>stopClient.php 测试截图</strong></p>
+<p><img src="http://img.github.mailjob.net/20210427192458.png" alt="image-20210427192457010"></p>
+<p><strong>infoClient.php 测试截图</strong></p>
+<p><img src="http://img.github.mailjob.net/20210427190953.png" alt="image-20210427190951718"></p>
+
             </section>
     </article>
     
@@ -220,9 +245,9 @@
     </div> -->
     <div>
         <strong>本文链接：</strong>
-        <a href="https://blog.mailjob.net/posts/4139171783.html">
-            <!-- https://blog.mailjob.net/redis/openresty多级缓存 -->
-            https://blog.mailjob.net/posts/4139171783.html
+        <a href="https://blog.mailjob.net/posts/1438856121.html">
+            <!-- https://blog.mailjob.net/swoole/端口监听关闭服务 -->
+            https://blog.mailjob.net/posts/1438856121.html
         </a>
     </div>
     <div>

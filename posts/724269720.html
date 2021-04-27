@@ -3,7 +3,7 @@
   <meta charset="utf-8">
   
   <title>
-    OpenResty多级缓存策略 | 李斌的技术博客
+    PHP实现IO非阻塞模型(no-blocking) | 李斌的技术博客
   </title>
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <meta name="theme-color" content="#4184f3">
@@ -160,14 +160,14 @@
             </header>
 
             <h1 class="post-title">
-              OpenResty多级缓存策略
+              PHP实现IO非阻塞模型(no-blocking)
             </h1>
 
             <section class="post-info post-info-bottom">
 
               <span class="post-date">发布于
                 <span class="post-date-text">
-                   2021-01-24
+                   2021-04-25
                 </span>
               </span>
 
@@ -176,12 +176,12 @@
 
               
                 <span class="post-category">分类:
-                  <a class="article-category-link" href="/categories/linux/">linux</a> <a class="article-category-link" href="/categories/redis/">redis</a>
+                  <a class="article-category-link" href="/categories/swoole/">swoole</a>
                 </span>
                 
                   
                     <span class="post-tags">
-                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/linux/" rel="tag">linux</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/nginx/" rel="tag">nginx</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/openresty/" rel="tag">openresty</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/redis/" rel="tag">redis</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a></li></ul>
+                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/swoole/" rel="tag">swoole</a></li></ul>
                     </span>
                     
 
@@ -195,17 +195,26 @@
 
             <section class="post-content">
 
-              <meta name="referrer" content="no-referrer"/>
-
-<h2 id="相关链接"><a href="#相关链接" class="headerlink" title="相关链接"></a>相关链接</h2><blockquote>
-<p>多级缓存策略思维导图：<a target="_blank" rel="noopener" href="https://kdocs.cn/l/sfV9xmfovVKv">https://kdocs.cn/l/sfV9xmfovVKv</a><br>nginx基于openresty验证jwt：<a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000015677681">https://segmentfault.com/a/1190000015677681</a><br>OpenResty不完全指南：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/42082302">https://zhuanlan.zhihu.com/p/42082302</a><br>基于OpenResty实现 JWT验证2：<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/66d5163b9e99">https://www.jianshu.com/p/66d5163b9e99</a></p>
+              <h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote>
+<p>5种IO模型：<a href="https://blog.mailjob.net/posts/3565199751.html">https://blog.mailjob.net/posts/3565199751.html</a></p>
+<p>github代码下载：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/dev_php_io/tree/master/test/noblocking">https://github.com/mailjobblog/dev_php_io/tree/master/test/noblocking</a></p>
+<p>函数stream_set_blocking：<a target="_blank" rel="noopener" href="https://php.golaravel.com/function.stream-set-blocking.html">https://php.golaravel.com/function.stream-set-blocking.html</a></p>
+<p>函数feof：<a target="_blank" rel="noopener" href="https://php.golaravel.com/function.feof.html">https://php.golaravel.com/function.feof.html</a></p>
 </blockquote>
-<h2 id="思维导图"><a href="#思维导图" class="headerlink" title="思维导图"></a>思维导图</h2><p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210124224640.png" alt="image-20210124224639231"></p>
-<h2 id="OpenResty验证Jwt思维图"><a href="#OpenResty验证Jwt思维图" class="headerlink" title="OpenResty验证Jwt思维图"></a>OpenResty验证Jwt思维图</h2><p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210124224946.png" alt="整体架构"></p>
-<h3 id="保证业务连贯性用uuid"><a href="#保证业务连贯性用uuid" class="headerlink" title="保证业务连贯性用uuid"></a>保证业务连贯性用uuid</h3><h5 id="uuid生成"><a href="#uuid生成" class="headerlink" title="uuid生成"></a>uuid生成</h5><p>为每个请求生成唯一的uuid码可以将网关层上的请求和应用层的请求关联起来,对排查问题,接口统计都非常有用.</p>
-<p><strong>创建文件<code>/usr/local/openresty/nginx/jwt-lua/resty/uuid.lua</code></strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">local M  &#x3D; &#123;&#125;</span><br><span class="line">local charset &#x3D; &#123;&#125;  do -- [0-9a-zA-Z]</span><br><span class="line">    for c &#x3D; 48, 57  do table.insert(charset, string.char(c)) end</span><br><span class="line">    for c &#x3D; 65, 90  do table.insert(charset, string.char(c)) end</span><br><span class="line">    for c &#x3D; 97, 122 do table.insert(charset, string.char(c)) end</span><br><span class="line">end</span><br><span class="line">function M.uuid(length)</span><br><span class="line">        local res &#x3D; &quot;&quot;</span><br><span class="line">        for i &#x3D; 1, length do</span><br><span class="line">                res &#x3D; res .. charset[math.random(1, #charset)]</span><br><span class="line">        end</span><br><span class="line">        return res</span><br><span class="line">end</span><br><span class="line">return M</span><br></pre></td></tr></table></figure>
-<h5 id="修改配置文件nginx-conf"><a href="#修改配置文件nginx-conf" class="headerlink" title="修改配置文件nginx.conf"></a>修改配置文件<code>nginx.conf</code></h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">worker_processes  1;</span><br><span class="line">error_log logs&#x2F;error.log info;</span><br><span class="line">events &#123;</span><br><span class="line">    worker_connections 1024;</span><br><span class="line">&#125;</span><br><span class="line">http &#123;</span><br><span class="line">    upstream tomcat&#123;</span><br><span class="line">     server localhost:80;</span><br><span class="line">    &#125;</span><br><span class="line">    lua_package_path &quot;&#x2F;usr&#x2F;local&#x2F;openresty&#x2F;nginx&#x2F;jwt-lua&#x2F;?.lua;;&quot;;</span><br><span class="line">    server &#123;</span><br><span class="line">        listen 8080;</span><br><span class="line">        set $uid &#39;&#39;;</span><br><span class="line">        set $uuid &#39;&#39;;</span><br><span class="line">        location &#x2F; &#123;</span><br><span class="line">            access_by_lua &#39;</span><br><span class="line">            local jwt &#x3D; require(&quot;resty.nginx-jwt&quot;)</span><br><span class="line">            jwt.auth()</span><br><span class="line">            local u &#x3D; require(&quot;resty.uuid&quot;)</span><br><span class="line">            ngx.var.uuid &#x3D; u.uuid(64)</span><br><span class="line">        &#39;;</span><br><span class="line">            default_type application&#x2F;json;</span><br><span class="line">            proxy_set_header uid $uid;</span><br><span class="line">            proxy_set_header uuid $uuid;</span><br><span class="line">            proxy_pass http:&#x2F;&#x2F;tomcat;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="IO非阻塞模型原理"><a href="#IO非阻塞模型原理" class="headerlink" title="IO非阻塞模型原理"></a>IO非阻塞模型原理</h2><p>非阻塞IO发出read请求后发现数据没准备好，会继续往下执行，此时应用程序会不断轮询polling内核询问数据是否准备好，当数据没有准备好时，内核立即返回EWOULDBLOCK错误。直到数据被拷贝到应用程序缓冲区，read请求才获取到结果。并且你要注意！这里最后一次 read 调用获取数据的过程，是一个同步的过程，是需要等待的过程。这里的同步指的是<strong>内核态的数据拷贝到用户程序的缓存区这个过程</strong>。</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210425224727.png" alt="图片"></p>
+<h2 id="原生php代码演示"><a href="#原生php代码演示" class="headerlink" title="原生php代码演示"></a>原生php代码演示</h2><h3 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h3><p><strong>server.php</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="keyword">require</span> <span class="keyword">__DIR__</span>.<span class="string">&quot;/../../vendor/autoload.php&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">use</span> <span class="title">DevPhpIO</span>\<span class="title">Blocking</span>\<span class="title">Worker</span>;</span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span> = <span class="keyword">new</span> Worker(<span class="string">&#x27;0.0.0.0&#x27;</span>,<span class="number">9500</span>);</span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span>-&gt;on(<span class="string">&#x27;connect&#x27;</span>,<span class="function"><span class="keyword">function</span>(<span class="params"><span class="variable">$server</span>,<span class="variable">$client</span></span>)</span>&#123;</span><br><span class="line">    dd(<span class="variable">$client</span>,<span class="string">&#x27;连接成功&#x27;</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span>-&gt;on(<span class="string">&#x27;receive&#x27;</span>,<span class="function"><span class="keyword">function</span>(<span class="params"><span class="variable">$server</span>,<span class="variable">$client</span>,<span class="variable">$data</span></span>)</span>&#123;</span><br><span class="line">    dd(<span class="variable">$data</span>,<span class="string">&#x27;处理client的数据&#x27;</span>);</span><br><span class="line">    sleep(<span class="number">5</span>); <span class="comment">// 进行阻塞，方便演示</span></span><br><span class="line">    <span class="variable">$server</span>-&gt;send(<span class="variable">$client</span>, <span class="string">&quot;hello i’m is server&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="variable">$server</span>-&gt;close(<span class="variable">$client</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span>-&gt;on(<span class="string">&#x27;close&#x27;</span>,<span class="function"><span class="keyword">function</span>(<span class="params"><span class="variable">$server</span>,<span class="variable">$client</span></span>)</span>&#123;</span><br><span class="line">    dd(<span class="variable">$client</span>,<span class="string">&#x27;连接断开&#x27;</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span>-&gt;start();</span><br></pre></td></tr></table></figure>
+<p><strong>client.php</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="keyword">require</span> <span class="keyword">__DIR__</span>.<span class="string">&quot;/../../vendor/autoload.php&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="variable">$fp</span> = stream_socket_client(<span class="string">&quot;tcp://127.0.0.1:9500&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">//设置套接字为非阻塞模型</span></span><br><span class="line">stream_set_blocking(<span class="variable">$fp</span>, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">fwrite(<span class="variable">$fp</span>,<span class="string">&#x27;hello NO-blocking&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="variable">$time</span> = time();</span><br><span class="line"></span><br><span class="line"><span class="keyword">echo</span> fread(<span class="variable">$fp</span>,<span class="number">65535</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">echo</span> <span class="string">&quot;\n此处执行其他业务代码\r\n&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="variable">$m</span> = time() - <span class="variable">$time</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">echo</span> <span class="string">&quot;执行时间&quot;</span> . <span class="variable">$m</span> . <span class="string">&quot;秒钟\n&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// #1# 用 feof 判断是否到达结尾的位置，如果到达，则跳出输出服务端返回的结果</span></span><br><span class="line"><span class="comment">// while(!feof($fp))&#123;</span></span><br><span class="line"><span class="comment">//  sleep(1);</span></span><br><span class="line"><span class="comment">//  var_dump(fread($fp,65535));</span></span><br><span class="line"><span class="comment">// &#125;</span></span><br><span class="line"></span><br><span class="line">fclose(<span class="variable">$fp</span>);</span><br></pre></td></tr></table></figure>
+<p><strong>Tips:</strong></p>
+<p>和 <code>php阻塞模型</code> 相比，该模型代码中，在 <code>client.php</code> 中增加了 <code>stream_set_blocking($fp, 0);</code> 进而达到了，不等待服务端返回结果，而直接进行下一步处理的过程。</p>
+<h3 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h3><p>测试后发现，虽然服务端阻塞了 <code>5s</code> ，但是该模型，并不需要等待阻塞，而直接返回结果。</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210425230808.png" alt="image-20210425230806578"></p>
+<p>上面的测试，虽然解决了，阻塞问题，但是又带来了一个新的问题，就是对于 <code>server</code> 返回的结果，无法拿到，所以根据上面的代码，打开 <code>#1#</code> 的注释，然后进行了如下的测试：</p>
+<p>用 <code>feof</code> 判断是否到了指针的结束位置，如果到达了指针的结束位置，则输出 <code>server</code> 反馈的值。</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210425232605.png" alt="image-20210425232603592"></p>
+
             </section>
     </article>
     
@@ -220,9 +229,9 @@
     </div> -->
     <div>
         <strong>本文链接：</strong>
-        <a href="https://blog.mailjob.net/posts/4139171783.html">
-            <!-- https://blog.mailjob.net/redis/openresty多级缓存 -->
-            https://blog.mailjob.net/posts/4139171783.html
+        <a href="https://blog.mailjob.net/posts/724269720.html">
+            <!-- https://blog.mailjob.net/swoole/PHP实现IO非阻塞模型 -->
+            https://blog.mailjob.net/posts/724269720.html
         </a>
     </div>
     <div>

@@ -167,7 +167,7 @@
 
               <span class="post-date">发布于
                 <span class="post-date-text">
-                   2021-04-02
+                   2021-04-01
                 </span>
               </span>
 
@@ -200,6 +200,11 @@
 </blockquote>
 <h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote>
 <p>5种IO模型：<a href="https://blog.mailjob.net/posts/3565199751.html">https://blog.mailjob.net/posts/3565199751.html</a></p>
+<p>github代码下载：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/dev_php_io/tree/master/test/blocking">https://github.com/mailjobblog/dev_php_io/tree/master/test/blocking</a></p>
+<p>函数stream_socket_server：<a target="_blank" rel="noopener" href="https://php.golaravel.com/function.stream-socket-server.html">https://php.golaravel.com/function.stream-socket-server.html</a></p>
+<p>函数stream_socket_client：<a target="_blank" rel="noopener" href="https://php.golaravel.com/function.stream-socket-client.html">https://php.golaravel.com/function.stream-socket-client.html</a></p>
+<p>函数fread：<a target="_blank" rel="noopener" href="https://php.golaravel.com/function.fread.html">https://php.golaravel.com/function.fread.html</a></p>
+<p>函数fwrtie：<a target="_blank" rel="noopener" href="https://php.golaravel.com/function.fwrite.html">https://php.golaravel.com/function.fwrite.html</a></p>
 </blockquote>
 <h2 id="IO阻塞模型"><a href="#IO阻塞模型" class="headerlink" title="IO阻塞模型"></a>IO阻塞模型</h2><p>阻塞IO情况下，当用户调用<code>read</code>后，用户线程会被阻塞，等内核数据准备好并且数据从内核缓冲区拷贝到用户态缓存区后<code>read</code>才会返回。可以看到是阻塞的两个部分。</p>
 <ol>
@@ -207,14 +212,7 @@
 <li>CPU把数据从内核缓冲区拷贝到用户缓冲区。</li>
 </ol>
 <p><img src="http://img.github.mailjob.net/oss.github/20210401233151.png" alt="图片"></p>
-<h2 id="原生PHP代码演示"><a href="#原生PHP代码演示" class="headerlink" title="原生PHP代码演示"></a>原生PHP代码演示</h2><h3 id="参考文献-1"><a href="#参考文献-1" class="headerlink" title="参考文献"></a>参考文献</h3><blockquote>
-<p>github代码下载：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/dev_php_io">https://github.com/mailjobblog/dev_php_io</a></p>
-<p>函数stream_socket_server：<a target="_blank" rel="noopener" href="https://php.golaravel.com/function.stream-socket-server.html">https://php.golaravel.com/function.stream-socket-server.html</a></p>
-<p>函数stream_socket_client：<a target="_blank" rel="noopener" href="https://php.golaravel.com/function.stream-socket-client.html">https://php.golaravel.com/function.stream-socket-client.html</a></p>
-<p>函数fread：<a target="_blank" rel="noopener" href="https://php.golaravel.com/function.fread.html">https://php.golaravel.com/function.fread.html</a></p>
-<p>函数fwrtie：<a target="_blank" rel="noopener" href="https://php.golaravel.com/function.fwrite.html">https://php.golaravel.com/function.fwrite.html</a></p>
-</blockquote>
-<h3 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h3><p><strong>server.php</strong></p>
+<h2 id="原生PHP代码演示"><a href="#原生PHP代码演示" class="headerlink" title="原生PHP代码演示"></a>原生PHP代码演示</h2><h3 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h3><p><strong>server.php</strong></p>
 <figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="keyword">require</span> <span class="keyword">__DIR__</span>.<span class="string">&quot;/../../vendor/autoload.php&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">use</span> <span class="title">DevPhpIO</span>\<span class="title">Blocking</span>\<span class="title">Worker</span>;</span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span> = <span class="keyword">new</span> Worker(<span class="string">&#x27;0.0.0.0&#x27;</span>,<span class="number">9500</span>);</span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span>-&gt;on(<span class="string">&#x27;connect&#x27;</span>,<span class="function"><span class="keyword">function</span>(<span class="params"><span class="variable">$server</span>,<span class="variable">$client</span></span>)</span>&#123;</span><br><span class="line">    dd(<span class="variable">$client</span>,<span class="string">&#x27;连接成功&#x27;</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span>-&gt;on(<span class="string">&#x27;receive&#x27;</span>,<span class="function"><span class="keyword">function</span>(<span class="params"><span class="variable">$server</span>,<span class="variable">$client</span>,<span class="variable">$data</span></span>)</span>&#123;</span><br><span class="line">    dd(<span class="variable">$data</span>,<span class="string">&#x27;处理client的数据&#x27;</span>);</span><br><span class="line">    sleep(<span class="number">5</span>); <span class="comment">// 进行阻塞，方便演示</span></span><br><span class="line">    <span class="variable">$server</span>-&gt;send(<span class="variable">$client</span>, <span class="string">&quot;hello i’m is server&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="variable">$server</span>-&gt;close(<span class="variable">$client</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span>-&gt;on(<span class="string">&#x27;close&#x27;</span>,<span class="function"><span class="keyword">function</span>(<span class="params"><span class="variable">$server</span>,<span class="variable">$client</span></span>)</span>&#123;</span><br><span class="line">    dd(<span class="variable">$client</span>,<span class="string">&#x27;连接断开&#x27;</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span>-&gt;start();</span><br></pre></td></tr></table></figure>
 <p><strong>client.php</strong></p>
 <figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="keyword">require</span> <span class="keyword">__DIR__</span>.<span class="string">&quot;/../../vendor/autoload.php&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="variable">$fp</span> = stream_socket_client(<span class="string">&quot;tcp://127.0.0.1:9500&quot;</span>);</span><br><span class="line"></span><br><span class="line">fwrite(<span class="variable">$fp</span>,<span class="string">&#x27;hello blocking&#x27;</span>);</span><br><span class="line"></span><br><span class="line">var_dump(fread(<span class="variable">$fp</span>,<span class="number">65535</span>));</span><br></pre></td></tr></table></figure>
@@ -400,7 +398,7 @@
             
               <a class="category-list-item" href="/categories/swoole">
                 <span class="category-list-link">swoole</span>
-                <span class="category-list-number">(3)</span>
+                <span class="category-list-number">(5)</span>
               </a>
             
            
@@ -454,6 +452,14 @@
       <ul class="recent-posts">
         
           <li>
+            <a href="/posts/1438856121.html">swoole 端口监听，关闭tcp服务</a>
+          </li>
+        
+          <li>
+            <a href="/posts/724269720.html">PHP实现IO非阻塞模型(no-blocking)</a>
+          </li>
+        
+          <li>
             <a href="/posts/1619852991.html">go语言示例项目</a>
           </li>
         
@@ -463,14 +469,6 @@
         
           <li>
             <a href="/posts/1482114423.html">notes：解决github访问慢的问题</a>
-          </li>
-        
-          <li>
-            <a href="/posts/1634640555.html">雪花算法 snowflake</a>
-          </li>
-        
-          <li>
-            <a href="/posts/163644071.html">mysql视图基本操作</a>
           </li>
         
       </ul>

@@ -29,6 +29,69 @@
     
     
     <entry>
+      <title>PHP实现IO复用模型(multiplexing)</title>
+      <link href="posts/1073733062.html"/>
+      <url>posts/1073733062.html</url>
+      
+        <content type="html"><![CDATA[<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote><p>5种IO模型：<a href="https://blog.mailjob.net/posts/3565199751.html">https://blog.mailjob.net/posts/3565199751.html</a></p><p>github代码下载：<a href="https://github.com/mailjobblog/dev_php_io/tree/master/test/multiplexing">https://github.com/mailjobblog/dev_php_io/tree/master/test/multiplexing</a></p><p>io复用模型理解：<a href="https://www.itzhai.com/articles/thoroughly-understand-io-reuse-take-you-in-depth-understanding-of-select-poll-epoll.html">https://www.itzhai.com/articles/thoroughly-understand-io-reuse-take-you-in-depth-understanding-of-select-poll-epoll.html</a></p></blockquote><h2 id="IO多路复用原理"><a href="#IO多路复用原理" class="headerlink" title="IO多路复用原理"></a>IO多路复用原理</h2><p><img src="http://img.github.mailjob.net/oss.github/20210426225453.png" alt="图片"></p><p>非阻塞情况下无可用数据时，应用程序每次轮询内核看数据是否准备好了也耗费CPU，能否不让它轮询，当内核缓冲区数据准备好了，以事件通知当机制告知应用进程数据准备好了呢？应用进程在没有收到数据准备好的事件通知信号时可以忙写其他的工作。此时<strong>IO多路复用</strong>就派上用场了。</p><p>IO多路复用中文比较让人头大，IO多路复用的原文叫 I/O multiplexing，这里的 multiplexing 指的其实是在单个线程通过记录跟踪每一个Sock(I/O流)的状态来同时管理多个I/O流. 发明它的目的是尽量多的提高服务器的吞吐能力。实现一个线程监控多个IO请求，哪个IO有请求就把数据从内核拷贝到进程缓冲区，拷贝期间是阻塞的！现在已经可以通过采用mmap地址映射的方法，达到内存共享效果，避免真复制，提高效率。</p><p><img src="http://img.github.mailjob.net/20210426225611.png" alt="图片"></p><p>像<strong>select、poll、epoll</strong> 都是I/O多路复用的具体的实现。</p><h4 id="select"><a href="#select" class="headerlink" title="select"></a>select</h4><p>select是第一版IO复用，提出后暴漏了很多问题。</p><ol><li>select 会修改传入的参数数组，这个对于一个需要调用很多次的函数，是非常不友好的。</li><li>select 如果任何一个sock(I/O stream)出现了数据，select 仅仅会返回，但不会告诉是那个sock上有数据，只能自己遍历查找。</li><li>select 只能监视1024个链接。</li><li>select 不是线程安全的，如果你把一个sock加入到select, 然后突然另外一个线程发现这个sock不用，要收回，这个select 不支持的。</li></ol><h4 id="poll"><a href="#poll" class="headerlink" title="poll"></a>poll</h4><p>poll 修复了 select 的很多问题。</p><ol><li>poll 去掉了1024个链接的限制。</li><li>poll 从设计上来说不再修改传入数组。</li></ol><p>但是poll仍然不是线程安全的， 这就意味着不管服务器有多强悍，你也只能在一个线程里面处理一组 I/O 流。你当然可以拿多进程来配合了，不过然后你就有了多进程的各种问题。</p><h4 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h4><p>epoll 可以说是 I/O  多路复用最新的一个实现，epoll 修复了poll 和select绝大部分问题， 比如：</p><ol><li>epoll 现在是线程安全的。</li><li>epoll 现在不仅告诉你sock组里面数据，还会告诉你具体哪个sock有数据，你不用自己去找了。</li><li>epoll 内核态管理了各种IO文件描述符， 以前用户态发送所有文件描述符到内核态，然后内核态负责筛选返回可用数组，现在epoll模式下所有文件描述符在内核态有存，查询时不用传文件描述符进去了。</li></ol><h4 id="三者对比"><a href="#三者对比" class="headerlink" title="三者对比"></a>三者对比</h4><p><img src="http://img.github.mailjob.net/20210426225718.png" alt="图片"></p><p>横轴 Dead connections 是链接数的意思，叫这个名字只是它的测试工具叫deadcon。纵轴是每秒处理请求的数量，可看到epoll每秒处理请求的数量基本不会随着链接变多而下降的。poll 和/dev/poll 就很惨了。但 epoll 有个致命的缺点是只有<strong>linux</strong>支持。</p><p>比如平常Nginx为何可以支持4W的QPS是因为它会使用目标平台上面最高效的I/O多路复用模型。</p><h2 id="原生PHP代码演示"><a href="#原生PHP代码演示" class="headerlink" title="原生PHP代码演示"></a>原生PHP代码演示</h2>]]></content>
+      
+      
+      <categories>
+          
+          <category> swoole </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> swoole </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>PHP实现异步IO模型(asynchronous)</title>
+      <link href="posts/1057148844.html"/>
+      <url>posts/1057148844.html</url>
+      
+        <content type="html"><![CDATA[<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote><p>5种IO模型：<a href="https://blog.mailjob.net/posts/3565199751.html">https://blog.mailjob.net/posts/3565199751.html</a></p><p>github代码下载：<a href="https://github.com/mailjobblog/dev_php_io/tree/master/test/">https://github.com/mailjobblog/dev_php_io/tree/master/test/</a></p></blockquote><h2 id="异步IO原理"><a href="#异步IO原理" class="headerlink" title="异步IO原理"></a>异步IO原理</h2><p>对于异步来说，用户进行读或者写后，将立刻返回，由内核去完成数据读取以及拷贝工作，完成后通知用户，并执行回调函数（用户提供的callback），此时数据已从内核拷贝到用户空间，用户线程只需要对数据进行处理即可，不需要关注读写，用户不需要等待内核对数据的复制操作，用户在得到通知时数据已经被复制到用户空间。我们以如下的真实异步非阻塞为例。</p><p><img src="http://img.github.mailjob.net/20210428094755.png" alt="图片"></p><h3 id="同步跟异步对比"><a href="#同步跟异步对比" class="headerlink" title="同步跟异步对比"></a>同步跟异步对比</h3><p>同步关注的消息通信机制synchronous communication，在发出一个调用时，在没有得到结果之前，该调用就不返回。但是一旦调用返回，就得到返回值了。换句话说，就是由调用者主动等待这个调用的结果。</p><p>异步关注消息通信机制asynchronous communication，调用在发出之后，这个调用就直接返回了，所以没有返回结果。换句话说，当一个异步过程调用发出后，调用者不会立刻得到结果。而是在调用发出后，被调用者通过状态、通知来通知调用者，或通过回调函数处理这个调用。</p><h2 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h2>]]></content>
+      
+      
+      
+        <tags>
+            
+            <tag> swore </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>PHP实现信号驱动IO(Signal)</title>
+      <link href="posts/92825410.html"/>
+      <url>posts/92825410.html</url>
+      
+        <content type="html"><![CDATA[<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote><p>5种IO模型：<a href="https://blog.mailjob.net/posts/3565199751.html">https://blog.mailjob.net/posts/3565199751.html</a></p><p>github代码下载：<a href="https://github.com/mailjobblog/dev_php_io/tree/master/test/">https://github.com/mailjobblog/dev_php_io/tree/master/test/</a></p><p>快速了解信号驱动io：<a href="https://www.itzhai.com/articles/it-seems-not-so-perfect-signal-driven-io.html">https://www.itzhai.com/articles/it-seems-not-so-perfect-signal-driven-io.html</a></p></blockquote><h2 id="信号驱动IO原理"><a href="#信号驱动IO原理" class="headerlink" title="信号驱动IO原理"></a>信号驱动IO原理</h2><p>所谓信号驱动式I/O(signal-driven I/O)，就是预先告知内核，当某个描述符准备发生某件事情的时候，让内核发送一个信号通知应用进程。</p><p>主要的实现：</p><ul><li>Berkeley的实现使用<code>SIGIO</code>信号支持套接字和终端设备上的信号驱动式I/O；</li><li>SVR4使用SIGPOLL信号支持流设备上的信号驱动。</li></ul><p>SIGPOLL等价于SIGIO。</p><p>通过UDP的<code>recvfrom()</code>函数演示其工作原理如下图所示：</p><p><img src="http://img.github.mailjob.net/20210428095139.png-itzhai" alt="image-20201101160607451"></p><p>系统注册了ISGIO信号处理函数，并且启动了信号驱动式IO后，就可以继续执行程序了，等到数据报准备好之后，内核会发送一个SIGIO信号给应用进程，然后应用进程在信号处理函数中调用recvfrom读取数据报。</p><p>这种模型在内核等待数据报达到期间进程不会被阻塞，可以继续执行。</p><h2 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h2>]]></content>
+      
+      
+      
+        <tags>
+            
+            <tag> swore </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>PHP实现IO非阻塞模型(no-blocking)</title>
       <link href="posts/724269720.html"/>
       <url>posts/724269720.html</url>

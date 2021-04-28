@@ -200,6 +200,9 @@
 <p><strong>阻塞IO（blocking）、非阻塞IO（non-blocking）、多路复用IO（multiplexing）、信号驱动IO（Signal ）、异步IO（asynchronous）</strong></p>
 <p>对于一个应用程序即一个操作系统进程来说，它既有内核空间(与其他进程共享),也有用户空间(进程私有)，它们都是处于虚拟地址空间中。用户进程是无法访问内核空间的，它只能访问用户空间，通过用户空间去内核空间复制数据，然后进行处理。</p>
 </blockquote>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote>
+<p>图解网络io模型：<a target="_blank" rel="noopener" href="https://www.itzhai.com/articles/necessary-knowledge-of-network-programming-graphic-socket-core-insider-and-five-io-models.html">https://www.itzhai.com/articles/necessary-knowledge-of-network-programming-graphic-socket-core-insider-and-five-io-models.html</a></p>
+</blockquote>
 <h2 id="IO是什么"><a href="#IO是什么" class="headerlink" title="IO是什么"></a>IO是什么</h2><p><img src="http://img.github.mailjob.net/oss.github/20210329112549.png" alt="ft105m3xiv"></p>
 <p><strong>IO (Input/Output，输入/输出)：</strong>即数据的读取（接收）或写入（发送）操作，通常用户进程中的一个完整IO分为两阶段：用户进程空间&lt;–&gt;内核空间、内核空间&lt;–&gt;设备空间（磁盘、网络等）。IO有内存IO、网络IO和磁盘IO三种，通常我们说的IO指的是后两者。</p>
 <p>LINUX中进程无法直接操作I/O设备，其必须通过系统调用请求kernel来协助完成I/O动作；内核会为每个I/O设备维护一个缓冲区。</p>

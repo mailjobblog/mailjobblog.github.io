@@ -3,7 +3,7 @@
   <meta charset="utf-8">
   
   <title>
-    选择排序算法 | 李斌的技术博客
+    UML类图 | 李斌的技术博客
   </title>
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <meta name="theme-color" content="#4184f3">
@@ -160,14 +160,14 @@
             </header>
 
             <h1 class="post-title">
-              选择排序算法
+              UML类图
             </h1>
 
             <section class="post-info post-info-bottom">
 
               <span class="post-date">发布于
                 <span class="post-date-text">
-                   2021-02-01
+                   2021-04-28
                 </span>
               </span>
 
@@ -176,12 +176,12 @@
 
               
                 <span class="post-category">分类:
-                  <a class="article-category-link" href="/categories/%E7%AE%97%E6%B3%95/">算法</a>
+                  <a class="article-category-link" href="/categories/design/">design</a>
                 </span>
                 
                   
                     <span class="post-tags">
-                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a></li></ul>
+                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/design/" rel="tag">design</a></li></ul>
                     </span>
                     
 
@@ -195,33 +195,64 @@
 
             <section class="post-content">
 
-              <meta name="referrer" content="no-referrer"/>
-
-<h2 id="相关链接"><a href="#相关链接" class="headerlink" title="相关链接"></a>相关链接</h2><blockquote>
-<p>思路excel地址：<a target="_blank" rel="noopener" href="https://kdocs.cn/l/srV223fnVHGa">https://kdocs.cn/l/srV223fnVHGa</a></p>
+              <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>UML类图是一种结构图，用于描述一个系统的静态结构。类图以反映类结构和类之间关系为目的，用以描述软件系统的结构，是一种静态建模方法。类图中的类，与面向对象语言中的类的概念是对应的。</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote>
+<p>uml图例工具：<a target="_blank" rel="noopener" href="https://www.umlet.com/">https://www.umlet.com</a></p>
+<p>php根据uml生成代码：<a target="_blank" rel="noopener" href="https://www.laruence.com/2010/05/14/1473.html">https://www.laruence.com/2010/05/14/1473.html</a></p>
 </blockquote>
-<h2 id="故事背景"><a href="#故事背景" class="headerlink" title="故事背景"></a>故事背景</h2><p><strong>假如本次考试，本学校有100个学生，对于每个学生我们记录了他的分数，现在你需要将同学们的分数，按照从高到低排名</strong></p>
-<p><img src="https://img-blog.csdnimg.cn/20210114105813290.png" alt="img"></p>
-<p>那么该如何做呢，一种办法是，遍历整个数据，然后吧分数最高的加入到一个新的列表中</p>
-<p><img src="https://img-blog.csdnimg.cn/20210114110044278.png" alt="img"></p>
-<p>依次这样做，我们可以得到一个<strong>有序列表</strong></p>
-<p><img src="https://img-blog.csdnimg.cn/20210114110227156.png" alt="img"></p>
-<h3 id="从计算机的角度看待一个这个问题"><a href="#从计算机的角度看待一个这个问题" class="headerlink" title="从计算机的角度看待一个这个问题"></a><strong>从计算机的角度看待一个这个问题</strong></h3><p><img src="https://img-blog.csdnimg.cn/2021011411090648.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xpYmluZW1haWw=,size_16,color_FFFFFF,t_70" alt="img"></p>
-<p>O(n)时间意味着查看列表中的每个元素一次。例如，对学生列表进行简单查找时，意味着每个学生都要查看一次</p>
-<p>要找出分数最高的学生，必须检查列表中的每个元素。正如你刚才看到的，这需要的时间为O(n)。因此对于这种时间为O(n)的操作，你需要执行n次</p>
-<blockquote>
-<p>需要检查的元素数越来越少</p>
-<p>随着排序的进行，每次需要检查的元素数在逐渐减少，最后一次需要检查的元素都只有一个。既然如此，运行时间怎么还是O(n2)呢？这个问题问得好，这与大O表示法中的常数相关。<br>后面将详细解释，这里只简单地说一说。<br>你说得没错，并非每次都需要检查n个元素。第一次需要检查n个元素，但随后检查的元素数依次为n  1, n – 2, …, 2和1。平均每次检查的元素数为1/2 × n，因此运行时间为O(n × 1/2 × n)。<br>但大O表示法省略诸如1/2这样的常数（有关这方面的完整讨论，后面我会接着讨论），</p>
-<p>因此简单地写作O(n × n)或O(n^2)。</p>
-</blockquote>
-<p>选择排序是一种灵巧的算法，但其速度不是很快。快速排序是一种更快的排序算法，其运行时间为O(n log n)，这将在后面介绍</p>
-<p><strong>选择排序</strong>（Selection sort）是一种简单直观的<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95">排序算法</a>。它的工作原理如下。首先在未排序序列中找到最小（大）元素，存放到排序序列的起始位置，然后，再从剩余未排序元素中继续寻找最小（大）元素，然后放到已排序序列的末尾。以此类推，直到所有元素均排序完毕。</p>
-<p>选择排序的主要优点与数据移动有关。如果某个元素位于正确的最终位置上，则它不会被移动。选择排序每次交换一对元素，它们当中至少有一个将被移到其最终位置上，因此对 n 个元素的表进行排序总共进行至多 n -1 次交换。在所有的完全依靠交换去移动元素的排序方法中，选择排序属于非常好的一种</p>
-<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210203103906.png" alt="image-20210203103904383"></p>
-<p>下述代码提供了类似的功能：将数组元素按从小到大的顺序排列。先编写一个用于找出数组中最小元素的函数</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">C 语言演示</span><br><span class="line"> </span><br><span class="line">def findSmallest(arr):</span><br><span class="line">    smallest &#x3D; arr[0]</span><br><span class="line">    smallest_index &#x3D; 0</span><br><span class="line">    for i in range(1, len(arr)):</span><br><span class="line">        if arr[i] &lt; smallest:</span><br><span class="line">            smallest &#x3D; arr[i]</span><br><span class="line">            smallest_index &#x3D; i</span><br><span class="line">    return smallest_index</span><br><span class="line"> </span><br><span class="line">&#x2F;&#x2F; 现在可以使用这个函数来编写选择排序算法了。</span><br><span class="line">def selectionSort(arr):</span><br><span class="line">    newArr &#x3D; []</span><br><span class="line">    for i in range(len(arr)):</span><br><span class="line">        smallest &#x3D; findSmallest(arr)</span><br><span class="line">        newArr.append(arr.pop(smallest))</span><br><span class="line">    return newArr</span><br><span class="line"> </span><br><span class="line">&#x2F;&#x2F; 进行测试</span><br><span class="line">print selectionSort([5, 3, 6, 2, 10])</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">PHP 语言演示</span><br><span class="line"> </span><br><span class="line">&lt;?php</span><br><span class="line">$arr &#x3D; array(5, 8, 6, 7, 3);</span><br><span class="line"> </span><br><span class="line">&#x2F;&#x2F; 选择排序算法实现 </span><br><span class="line">function SelectSort($arr &#x3D; array()) &#123;</span><br><span class="line">	&#x2F;&#x2F;获取数组长度</span><br><span class="line">    $size &#x3D; sizeof($arr);</span><br><span class="line">	&#x2F;&#x2F;外层循环控制比较的数值下标与轮询次数</span><br><span class="line">    for ($i&#x3D;0; $i&lt;$size; $i++) &#123;</span><br><span class="line">		&#x2F;&#x2F; 先假设最小值的位置</span><br><span class="line">        $p&#x3D;$i;</span><br><span class="line">		&#x2F;&#x2F;内层循环控制比较次数</span><br><span class="line">        for ($j&#x3D;$i+1; $j&lt;$size; $j++) &#123;</span><br><span class="line">			&#x2F;&#x2F; 如果 j 下标的值比 p 小标的值小</span><br><span class="line">            if ($arr[$p] &gt; $arr[$j]) &#123;</span><br><span class="line">				&#x2F;&#x2F;记录最小值的下标</span><br><span class="line">                $p &#x3D; $j;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">		&#x2F;&#x2F; 不相同则互换位置</span><br><span class="line">        if ($p !&#x3D; $i)&#123;</span><br><span class="line">            $tmp &#x3D; $arr[$i];</span><br><span class="line">            $arr[$i] &#x3D; $arr[$p];</span><br><span class="line">            $arr[$p] &#x3D; $tmp;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return $arr;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line">&#x2F;&#x2F; 测试运行</span><br><span class="line">print_r(SelectSort($arr));</span><br></pre></td></tr></table></figure>
-<h2 id="动画演示"><a href="#动画演示" class="headerlink" title="动画演示"></a>动画演示</h2><p><img src="https://img-blog.csdnimg.cn/img_convert/8caee134cb6960fb45af494d33f13490.gif" alt="选择排序"></p>
-<p><img src="https://img-blog.csdnimg.cn/img_convert/fc57900b3424fcdbf9b84f669b82b3fc.gif" alt="选择排序的示例动画。红色表示当前最小值，黄色表示已排序序列，蓝色表示当前位置。"></p>
+<h2 id="UML类图"><a href="#UML类图" class="headerlink" title="UML类图"></a>UML类图</h2><h3 id="类结构"><a href="#类结构" class="headerlink" title="类结构"></a>类结构</h3><p>在类的UML图中，使用长方形描述一个类的主要构成，长方形垂直地分为三层，以此放置类的名称、属性和方法。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/6163575-4254d8c74804b04a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/220/format/webp" alt="img"></p>
+<p>其中，</p>
+<p>一般类的类名用正常字体粗体表示，如上图；抽象类名用斜体字粗体，如<em>User</em>；接口则需在上方加上&lt;&gt;。</p>
+<p>属性和方法都需要标注可见性符号，**+代表public，#代表protected，-代表private**。</p>
+<p>另外，还可以用冒号:表明属性的类型和方法的返回类型，如+$name:string、+getName():string。当然，类型说明并非必须。</p>
+<h3 id="类关系"><a href="#类关系" class="headerlink" title="类关系"></a>类关系</h3><p>类与类之间的关系主要有六种：继承、实现、组合、聚合、关联和依赖，这六种关系的箭头表示如下，</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/6163575-88acabd1f5cdf457.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/300/format/webp" alt="img"></p>
+<p>接着我们来了解类关系的具体内容。</p>
+<h3 id="六种类关系"><a href="#六种类关系" class="headerlink" title="六种类关系"></a>六种类关系</h3><p>六种类关系中，组合、聚合、关联这三种类关系的代码结构一样，都是用属性来保存另一个类的引用，所以要通过内容间的关系来区别。</p>
+<h4 id="继承关系"><a href="#继承关系" class="headerlink" title="继承关系"></a>继承关系</h4><p>继承关系也称泛化关系（Generalization），用于描述父类与子类之间的关系。父类又称作基类，子类又称作派生类。</p>
+<p>继承关系中，子类继承父类的所有功能，父类所具有的属性、方法，子类应该都有。子类中除了与父类一致的信息以外，还包括额外的信息。</p>
+<p>例如：公交车、出租车和小轿车都是汽车，他们都有名称，并且都能在路上行驶。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/6163575-6d9aa5e7745bccc5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/420/format/webp" alt="img"></p>
+<p>Php代码实现如下：</p>
+<p>name =’公交车’;  }}classTaxiextendsCar{publicfunction__construct(){$this-&gt;name =’出租车’;  }}// 客户端代码$line2 =newBus;echo$line2-&gt;name . $line2-&gt;run();</p>
+<h4 id="实现关系"><a href="#实现关系" class="headerlink" title="实现关系"></a>实现关系</h4><p>实现关系（Implementation），主要用来规定接口和实现类的关系。</p>
+<p>接口（包括抽象类）是方法的集合，在实现关系中，类实现了接口，类中的方法实现了接口声明的所有方法。</p>
+<p>例如：汽车和轮船都是交通工具，而交通工具只是一个可移动工具的抽象概念，船和车实现了具体移动的功能。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/6163575-1840adbad071f825.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/410/format/webp" alt="img"></p>
+<p>name .’在路上行驶’;  }}classShipimplementsVehicle{public$name =’轮船’;publicfunctionrun(){return$this-&gt;name .’在海上航行’;  }}// 客户端代码$car =newCar;echo$car-&gt;run();</p>
+<h4 id="组合关系"><a href="#组合关系" class="headerlink" title="组合关系"></a>组合关系</h4><p>组合关系（Composition）：整体与部分的关系，但是整体与部分不可以分开。</p>
+<p>组合关系表示类之间整体与部分的关系，整体和部分有一致的生存期。一旦整体对象不存在，部分对象也将不存在，是同生共死的关系。</p>
+<p>例如：人由头部和身体组成，两者不可分割，共同存在。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/6163575-0334a91426b17b7e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/510/format/webp" alt="img"></p>
+<p>head = $head;  }publicfunctionsetBody(Body $body){$this-&gt;body = $body;  }publicfunctiondisplay(){returnsprintf(‘人由%s和%s组成’,$this-&gt;head-&gt;name,$this-&gt;body-&gt;name);  }}// 客户端代码$man =newHuman();$man-&gt;setHead(newHead());$man-&gt;setBody(newBody());echo$man-&gt;display();</p>
+<h4 id="聚合关系"><a href="#聚合关系" class="headerlink" title="聚合关系"></a>聚合关系</h4><p>聚合关系（Aggregation）：整体和部分的关系，整体与部分可以分开。</p>
+<p>聚合关系也表示类之间整体与部分的关系，成员对象是整体对象的一部分，但是成员对象可以脱离整体对象独立存在。</p>
+<p>例如：公交车司机和工衣、工帽是整体与部分的关系，但是可以分开，工衣、工帽可以穿在别的司机身上，公交司机也可以穿别的工衣、工帽。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/6163575-461b3cad2aecca9f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/550/format/webp" alt="img"></p>
+<p>clothes = $clothes;  }publicfunctionwearHat(Hat $hat){$this-&gt;hat = $hat;  }publicfunctionshow(){returnsprintf(‘公交车司机穿着%s和%s’,$this-&gt;clothes-&gt;name,$this-&gt;hat-&gt;name);  }}// 客户端代码$driver =newDriver();$driver-&gt;wearClothes(newClothes());$driver-&gt;wearHat(newHat());echo$driver-&gt;show();</p>
+<h4 id="关联关系"><a href="#关联关系" class="headerlink" title="关联关系"></a>关联关系</h4><p>关联关系（Association）：表示一个类的属性保存了对另一个类的一个实例（或多个实例）的引用。</p>
+<p>关联关系是类与类之间最常用的一种关系，表示一类对象与另一类对象之间有联系。组合、聚合也属于关联关系，只是关联关系的类间关系比其他两种要弱。</p>
+<p>关联关系有四种：双向关联、单向关联、自关联、多重数关联。</p>
+<p>例如：汽车和司机，一辆汽车对应特定的司机，一个司机也可以开多辆车。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/6163575-6e9a74ff9fe091f7.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/570/format/webp" alt="img"></p>
+<p>在UML图中，双向的关联可以有两个箭头或者没有箭头，单向的关联或自关联有一个箭头。上图对应的PHP代码如下：</p>
+<p>cars[] = $car;  }}classCar{public$drivers =array();publicfunctionaddDriver(Driver $driver){$this-&gt;drivers[] = $driver;  }}// 客户端代码$jack =newDriver();$line1 =newCar();$jack-&gt;addCar($line1);$line1-&gt;addDriver($jack);print_r($jack);</p>
+<p>在多重性关系中，可以直接在关联直线上增加一个数字，表示与之对应的另一个类的对象的个数。</p>
+<p>1..1：仅一个</p>
+<p>0..*：零个或多个</p>
+<p>1..*：一个或多个</p>
+<p>0..1：没有或只有一个</p>
+<p>m..n：最少m、最多n个 (m&lt;=n)</p>
+<h4 id="依赖关系"><a href="#依赖关系" class="headerlink" title="依赖关系"></a>依赖关系</h4><p>依赖关系（Dependence）：假设A类的变化引起了B类的变化，则说名B类依赖于A类。</p>
+<p>大多数情况下，依赖关系体现在某个类的方法使用另一个类的对象作为参数。</p>
+<p>依赖关系是一种“使用”关系，特定事物的改变有可能会影响到使用该事物的其他事物，在需要表示一个事物使用另一个事物时使用依赖关系。</p>
+<p>例如：汽车依赖汽油，如果没有汽油，汽车将无法行驶。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/6163575-4567ca4a95115541.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/510/format/webp" alt="img"></p>
+<p>type;  }}classCar{publicfunctionbeforeRun(Oil $oil){return’添加’. $oil-&gt;add();  }}// 客户端代码$car =newCar;echo$car-&gt;beforeRun(newOil());</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>这六种类关系中，组合、聚合和关联的代码结构一样，可以从关系的强弱来理解，各类关系从强到弱依次是：继承→实现→组合→聚合→关联→依赖。如下是完整的一张UML关系图。</p>
+<p><img src="https://upload-images.jianshu.io/upload_images/6163575-9aa78cb17a444ce8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1200/format/webp" alt="img"></p>
+<p>UML类图是面向对象设计的辅助工具，但并非是必须工具，如果暂时不理解本文的内容，可以继续看设计模式部分，并不会影响。</p>
 
             </section>
     </article>
@@ -237,9 +268,9 @@
     </div> -->
     <div>
         <strong>本文链接：</strong>
-        <a href="https://blog.mailjob.net/posts/2477822459.html">
-            <!-- https://blog.mailjob.net/algs4/选择排序算法 -->
-            https://blog.mailjob.net/posts/2477822459.html
+        <a href="https://blog.mailjob.net/posts/305120434.html">
+            <!-- https://blog.mailjob.net/design/UML类图 -->
+            https://blog.mailjob.net/posts/305120434.html
         </a>
     </div>
     <div>

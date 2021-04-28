@@ -3,7 +3,7 @@
   <meta charset="utf-8">
   
   <title>
-    选择排序算法 | 李斌的技术博客
+    标签: design | 李斌的技术博客
   </title>
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <meta name="theme-color" content="#4184f3">
@@ -151,158 +151,32 @@
             <div class="container content">
                 <div class="scene_element scene_element--fadein">
                     <div class="row">
-  <div class="main main-article">
-    <article>
-
-      
-            <header class="post-header">
-              
-            </header>
-
-            <h1 class="post-title">
-              选择排序算法
-            </h1>
-
-            <section class="post-info post-info-bottom">
-
-              <span class="post-date">发布于
-                <span class="post-date-text">
-                   2021-02-01
-                </span>
-              </span>
-
-
-
-
-              
-                <span class="post-category">分类:
-                  <a class="article-category-link" href="/categories/%E7%AE%97%E6%B3%95/">算法</a>
-                </span>
+    <div class="main">
+   
+        <article class="title-list">
+            
+                <h3>
+                    design
+                </h3>
+            
+            
+            <section>
+                <time class="post-date" datetime="2021-04-28T03:11:43.000Z">
+                    2021-04-28
+                </time>
+                <a href="/posts/305120434.html">
+                    UML类图
+                </a>
                 
-                  
-                    <span class="post-tags">
-                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a></li></ul>
-                    </span>
-                    
-
-                      <!-- 阅读量统计 -->
-                      
-                        <span class="post-visitors">阅读量:<span id="twikoo_visitors">0</span></span>
-                        
-
-
             </section>
-
-            <section class="post-content">
-
-              <meta name="referrer" content="no-referrer"/>
-
-<h2 id="相关链接"><a href="#相关链接" class="headerlink" title="相关链接"></a>相关链接</h2><blockquote>
-<p>思路excel地址：<a target="_blank" rel="noopener" href="https://kdocs.cn/l/srV223fnVHGa">https://kdocs.cn/l/srV223fnVHGa</a></p>
-</blockquote>
-<h2 id="故事背景"><a href="#故事背景" class="headerlink" title="故事背景"></a>故事背景</h2><p><strong>假如本次考试，本学校有100个学生，对于每个学生我们记录了他的分数，现在你需要将同学们的分数，按照从高到低排名</strong></p>
-<p><img src="https://img-blog.csdnimg.cn/20210114105813290.png" alt="img"></p>
-<p>那么该如何做呢，一种办法是，遍历整个数据，然后吧分数最高的加入到一个新的列表中</p>
-<p><img src="https://img-blog.csdnimg.cn/20210114110044278.png" alt="img"></p>
-<p>依次这样做，我们可以得到一个<strong>有序列表</strong></p>
-<p><img src="https://img-blog.csdnimg.cn/20210114110227156.png" alt="img"></p>
-<h3 id="从计算机的角度看待一个这个问题"><a href="#从计算机的角度看待一个这个问题" class="headerlink" title="从计算机的角度看待一个这个问题"></a><strong>从计算机的角度看待一个这个问题</strong></h3><p><img src="https://img-blog.csdnimg.cn/2021011411090648.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xpYmluZW1haWw=,size_16,color_FFFFFF,t_70" alt="img"></p>
-<p>O(n)时间意味着查看列表中的每个元素一次。例如，对学生列表进行简单查找时，意味着每个学生都要查看一次</p>
-<p>要找出分数最高的学生，必须检查列表中的每个元素。正如你刚才看到的，这需要的时间为O(n)。因此对于这种时间为O(n)的操作，你需要执行n次</p>
-<blockquote>
-<p>需要检查的元素数越来越少</p>
-<p>随着排序的进行，每次需要检查的元素数在逐渐减少，最后一次需要检查的元素都只有一个。既然如此，运行时间怎么还是O(n2)呢？这个问题问得好，这与大O表示法中的常数相关。<br>后面将详细解释，这里只简单地说一说。<br>你说得没错，并非每次都需要检查n个元素。第一次需要检查n个元素，但随后检查的元素数依次为n  1, n – 2, …, 2和1。平均每次检查的元素数为1/2 × n，因此运行时间为O(n × 1/2 × n)。<br>但大O表示法省略诸如1/2这样的常数（有关这方面的完整讨论，后面我会接着讨论），</p>
-<p>因此简单地写作O(n × n)或O(n^2)。</p>
-</blockquote>
-<p>选择排序是一种灵巧的算法，但其速度不是很快。快速排序是一种更快的排序算法，其运行时间为O(n log n)，这将在后面介绍</p>
-<p><strong>选择排序</strong>（Selection sort）是一种简单直观的<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95">排序算法</a>。它的工作原理如下。首先在未排序序列中找到最小（大）元素，存放到排序序列的起始位置，然后，再从剩余未排序元素中继续寻找最小（大）元素，然后放到已排序序列的末尾。以此类推，直到所有元素均排序完毕。</p>
-<p>选择排序的主要优点与数据移动有关。如果某个元素位于正确的最终位置上，则它不会被移动。选择排序每次交换一对元素，它们当中至少有一个将被移到其最终位置上，因此对 n 个元素的表进行排序总共进行至多 n -1 次交换。在所有的完全依靠交换去移动元素的排序方法中，选择排序属于非常好的一种</p>
-<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210203103906.png" alt="image-20210203103904383"></p>
-<p>下述代码提供了类似的功能：将数组元素按从小到大的顺序排列。先编写一个用于找出数组中最小元素的函数</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">C 语言演示</span><br><span class="line"> </span><br><span class="line">def findSmallest(arr):</span><br><span class="line">    smallest &#x3D; arr[0]</span><br><span class="line">    smallest_index &#x3D; 0</span><br><span class="line">    for i in range(1, len(arr)):</span><br><span class="line">        if arr[i] &lt; smallest:</span><br><span class="line">            smallest &#x3D; arr[i]</span><br><span class="line">            smallest_index &#x3D; i</span><br><span class="line">    return smallest_index</span><br><span class="line"> </span><br><span class="line">&#x2F;&#x2F; 现在可以使用这个函数来编写选择排序算法了。</span><br><span class="line">def selectionSort(arr):</span><br><span class="line">    newArr &#x3D; []</span><br><span class="line">    for i in range(len(arr)):</span><br><span class="line">        smallest &#x3D; findSmallest(arr)</span><br><span class="line">        newArr.append(arr.pop(smallest))</span><br><span class="line">    return newArr</span><br><span class="line"> </span><br><span class="line">&#x2F;&#x2F; 进行测试</span><br><span class="line">print selectionSort([5, 3, 6, 2, 10])</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">PHP 语言演示</span><br><span class="line"> </span><br><span class="line">&lt;?php</span><br><span class="line">$arr &#x3D; array(5, 8, 6, 7, 3);</span><br><span class="line"> </span><br><span class="line">&#x2F;&#x2F; 选择排序算法实现 </span><br><span class="line">function SelectSort($arr &#x3D; array()) &#123;</span><br><span class="line">	&#x2F;&#x2F;获取数组长度</span><br><span class="line">    $size &#x3D; sizeof($arr);</span><br><span class="line">	&#x2F;&#x2F;外层循环控制比较的数值下标与轮询次数</span><br><span class="line">    for ($i&#x3D;0; $i&lt;$size; $i++) &#123;</span><br><span class="line">		&#x2F;&#x2F; 先假设最小值的位置</span><br><span class="line">        $p&#x3D;$i;</span><br><span class="line">		&#x2F;&#x2F;内层循环控制比较次数</span><br><span class="line">        for ($j&#x3D;$i+1; $j&lt;$size; $j++) &#123;</span><br><span class="line">			&#x2F;&#x2F; 如果 j 下标的值比 p 小标的值小</span><br><span class="line">            if ($arr[$p] &gt; $arr[$j]) &#123;</span><br><span class="line">				&#x2F;&#x2F;记录最小值的下标</span><br><span class="line">                $p &#x3D; $j;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">		&#x2F;&#x2F; 不相同则互换位置</span><br><span class="line">        if ($p !&#x3D; $i)&#123;</span><br><span class="line">            $tmp &#x3D; $arr[$i];</span><br><span class="line">            $arr[$i] &#x3D; $arr[$p];</span><br><span class="line">            $arr[$p] &#x3D; $tmp;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return $arr;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line">&#x2F;&#x2F; 测试运行</span><br><span class="line">print_r(SelectSort($arr));</span><br></pre></td></tr></table></figure>
-<h2 id="动画演示"><a href="#动画演示" class="headerlink" title="动画演示"></a>动画演示</h2><p><img src="https://img-blog.csdnimg.cn/img_convert/8caee134cb6960fb45af494d33f13490.gif" alt="选择排序"></p>
-<p><img src="https://img-blog.csdnimg.cn/img_convert/fc57900b3424fcdbf9b84f669b82b3fc.gif" alt="选择排序的示例动画。红色表示当前最小值，黄色表示已排序序列，蓝色表示当前位置。"></p>
-
-            </section>
-    </article>
-    
-
-
-        <!-- 版权声明 -->
+            
+        </article>
         
-<div class="post-copyright">
-    <!-- <div>
-        <strong>本文作者：</strong>
-        <span>李斌</span>
-    </div> -->
-    <div>
-        <strong>本文链接：</strong>
-        <a href="https://blog.mailjob.net/posts/2477822459.html">
-            <!-- https://blog.mailjob.net/algs4/选择排序算法 -->
-            https://blog.mailjob.net/posts/2477822459.html
-        </a>
+  
     </div>
-    <div>
-        <!-- <span>欢迎任何形式的转载，请务必注明出处。</span> -->
-    </div>
-    <div>
-        <span>
-            该网站发布的内容，遵循
-            <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>
-            版权协议，转载请附上原文出处链接和本声明。
-        </span>
-    </div>
-</div>
-
-
-
-<style>
-    .post-copyright {
-        background-color: #fff;
-  box-shadow: 0px 0px 1px 1px rgba(0, 0, 0, 0.05);
-        display: block;
-        margin: 20px auto;
-        margin-bottom: 15px;
-        padding: 10px;
-        font-size: 15px;
-        color: #2e2d2d;
-        word-break: break-all;
-        line-height: 1.8;
-    }
-
-
-    .post-copyright a {
-        color: #2e2d2d;
-        border-bottom: 1px solid #999; 
-    }
-
-    .post-copyright a:hover {
-        color: #2e2d2d;
-        border-bottom: 1px solid #000; 
-    }
-</style>
-
-          <!-- comments -->
-          <div class="comments">
-    <h3 id="commenttitle" style="margin-top: 20px;margin-left: 10px;">评论区</h3>
-    <div id="tcomment"></div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/twikoo@0.6.0/dist/twikoo.all.min.js"></script>
-<!-- <script src="https://cdn.jsdelivr.net/npm/twikoo@1.0.0/dist/twikoo.all.min.js"></script> -->
-
-<script>twikoo.init({ envId: 'jefferyjob-github-io-3b53ee3a93b', el: '#tcomment' })</script>
-
-            <div class="right-icon">
-              <div id="to-valine" class="right-icon-item">
-                <a href="#commenttitle">评论</a>
-              </div>
-            </div>
-
-  </div>
-
-
-  <aside>
-    <div class="aside-wrap">
+    
+    <aside>
+        <div class="aside-wrap">
     
         <section class="widget-wrap">
     <h3 class="widget-title">简介</h3>
@@ -558,33 +432,12 @@
     
 </div>
 
-
-      <!-- 目录 -->
-      
-        <div id="toc"></div>
-        <script>
-          $(function () {
-            var elm = $('#toc');
-            var startPos = $(elm).offset().top;
-            $.event.add(window, "scroll", function () {
-              var p = $(window).scrollTop();
-              $(elm).css('margin-left', '0px');
-              $(elm).css('position', ((p) > startPos) ? 'fixed' : 'static');
-              $(elm).css('top', ((p) > startPos) ? '20px' : '')
-            })
-          })
-
-        </script>
-
-  </aside>
-  
+    </aside>
+   
+    
 </div>
 
 
-<script>
-  $('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
-
-</script>
                 </div>
             </div>
             <div class="right-icon">

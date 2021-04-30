@@ -3,7 +3,7 @@
   <meta charset="utf-8">
   
   <title>
-    PHP实现信号驱动IO(Signal) | 李斌的技术博客
+    设计模式之工厂方法模式 | 李斌的技术博客
   </title>
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <meta name="theme-color" content="#4184f3">
@@ -160,14 +160,14 @@
             </header>
 
             <h1 class="post-title">
-              PHP实现信号驱动IO(Signal)
+              设计模式之工厂方法模式
             </h1>
 
             <section class="post-info post-info-bottom">
 
               <span class="post-date">发布于
                 <span class="post-date-text">
-                   2021-04-26
+                   2021-04-30
                 </span>
               </span>
 
@@ -175,9 +175,13 @@
 
 
               
+                <span class="post-category">分类:
+                  <a class="article-category-link" href="/categories/design/">design</a>
+                </span>
+                
                   
                     <span class="post-tags">
-                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/swore/" rel="tag">swore</a></li></ul>
+                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/design/" rel="tag">design</a></li></ul>
                     </span>
                     
 
@@ -191,23 +195,7 @@
 
             <section class="post-content">
 
-              <h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote>
-<p>5种IO模型：<a href="https://blog.mailjob.net/posts/3565199751.html">https://blog.mailjob.net/posts/3565199751.html</a></p>
-<p>github代码下载：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/dev_php_io/tree/master/test/">https://github.com/mailjobblog/dev_php_io/tree/master/test/</a></p>
-<p>快速了解信号驱动io：<a target="_blank" rel="noopener" href="https://www.itzhai.com/articles/it-seems-not-so-perfect-signal-driven-io.html">https://www.itzhai.com/articles/it-seems-not-so-perfect-signal-driven-io.html</a></p>
-</blockquote>
-<h2 id="信号驱动IO原理"><a href="#信号驱动IO原理" class="headerlink" title="信号驱动IO原理"></a>信号驱动IO原理</h2><p>所谓信号驱动式I/O(signal-driven I/O)，就是预先告知内核，当某个描述符准备发生某件事情的时候，让内核发送一个信号通知应用进程。</p>
-<p>主要的实现：</p>
-<ul>
-<li>Berkeley的实现使用<code>SIGIO</code>信号支持套接字和终端设备上的信号驱动式I/O；</li>
-<li>SVR4使用SIGPOLL信号支持流设备上的信号驱动。</li>
-</ul>
-<p>SIGPOLL等价于SIGIO。</p>
-<p>通过UDP的<code>recvfrom()</code>函数演示其工作原理如下图所示：</p>
-<p><img src="http://img.github.mailjob.net/20210428095139.png-itzhai" alt="image-20201101160607451"></p>
-<p>系统注册了ISGIO信号处理函数，并且启动了信号驱动式IO后，就可以继续执行程序了，等到数据报准备好之后，内核会发送一个SIGIO信号给应用进程，然后应用进程在信号处理函数中调用recvfrom读取数据报。</p>
-<p>这种模型在内核等待数据报达到期间进程不会被阻塞，可以继续执行。</p>
-<h2 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h2>
+              <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><h2 id="UML"><a href="#UML" class="headerlink" title="UML"></a>UML</h2>
             </section>
     </article>
     
@@ -222,9 +210,9 @@
     </div> -->
     <div>
         <strong>本文链接：</strong>
-        <a href="https://blog.mailjob.net/posts/92825410.html">
-            <!-- https://blog.mailjob.net/swoole/PHP实现信号驱动IO -->
-            https://blog.mailjob.net/posts/92825410.html
+        <a href="https://blog.mailjob.net/posts/3453473789.html">
+            <!-- https://blog.mailjob.net/design/设计模式之工厂方法模式 -->
+            https://blog.mailjob.net/posts/3453473789.html
         </a>
     </div>
     <div>

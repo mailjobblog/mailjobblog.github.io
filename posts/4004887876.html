@@ -3,7 +3,7 @@
   <meta charset="utf-8">
   
   <title>
-    Redis哨兵选举算法Raft | 李斌的技术博客
+    设计模式之简单工厂模式 | 李斌的技术博客
   </title>
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <meta name="theme-color" content="#4184f3">
@@ -160,14 +160,14 @@
             </header>
 
             <h1 class="post-title">
-              Redis哨兵选举算法Raft
+              设计模式之简单工厂模式
             </h1>
 
             <section class="post-info post-info-bottom">
 
               <span class="post-date">发布于
                 <span class="post-date-text">
-                   2021-02-06
+                   2021-04-29
                 </span>
               </span>
 
@@ -176,12 +176,12 @@
 
               
                 <span class="post-category">分类:
-                  <a class="article-category-link" href="/categories/redis/">redis</a>
+                  <a class="article-category-link" href="/categories/design/">design</a>
                 </span>
                 
                   
                     <span class="post-tags">
-                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/redis/" rel="tag">redis</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a></li></ul>
+                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/design/" rel="tag">design</a></li></ul>
                     </span>
                     
 
@@ -195,62 +195,21 @@
 
             <section class="post-content">
 
-              <meta name="referrer" content="no-referrer"/>
-
-<h1 id="相关链接"><a href="#相关链接" class="headerlink" title="相关链接"></a>相关链接</h1><blockquote>
-<p>Raft详解：<a target="_blank" rel="noopener" href="http://www.cnblogs.com/likehua/p/5845575.html">http://www.cnblogs.com/likehua/p/5845575.html</a></p>
-<p>分布式Raft算法：<a target="_blank" rel="noopener" href="http://www.jdon.com/artichect/raft.html">http://www.jdon.com/artichect/raft.html</a></p>
-<p>分布式一致算法——Paxos：<a target="_blank" rel="noopener" href="http://www.cnblogs.com/cchust/p/5617989.html">http://www.cnblogs.com/cchust/p/5617989.html</a></p>
+              <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>对于工厂模式主要分为：<strong>简单工厂，工厂模式，抽象工厂</strong>。</p>
+<p>简单工厂模式是一个精简版的工厂模式。</p>
+<p>它与静态工厂模式最大的区别是它不是『静态』的。因为非静态，所以你可以拥有多个不同参数的工厂，你可以为其创建子类。甚至可以模拟（Mock）他，这对编写可测试的代码来讲至关重要。 这也是它比静态工厂模式受欢迎的原因！</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote>
+<p>代码下载：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/design/tree/master/simple-factory">https://github.com/mailjobblog/design/tree/master/simple-factory</a></p>
 </blockquote>
-<h1 id="选举Leader哨兵，来进行故障转移"><a href="#选举Leader哨兵，来进行故障转移" class="headerlink" title="选举Leader哨兵，来进行故障转移"></a>选举Leader哨兵，来进行故障转移</h1><h5 id="（1）Raft简单介绍"><a href="#（1）Raft简单介绍" class="headerlink" title="（1）Raft简单介绍"></a>（1）Raft简单介绍</h5><p>哨兵的选举采用的是Raft算法，Raft是一个用户管理日志一致性的协议，它将分布式一致性问题分解为多个子问题：<strong>Leader选举</strong>、<strong>日志复制</strong>、<strong>安全性</strong>、<strong>日志压缩</strong>等。Raft将系统中的角色分为领导者（Leader）、跟从者（Follower）和候选者（Candidate）：</p>
-<ul>
-<li>Leader：接受客户端请求，并向Follower同步请求日式，当日志同步到大多数节点上后告诉Follower提交日志。</li>
-<li>Follower：接受并持久化Leader同步的日志，在Leader告知日志可以提交之后，提交日志。</li>
-<li>Candidate：Leader选举过程中的临时角色。</li>
-</ul>
-<h5 id="（2）-Term（任期）"><a href="#（2）-Term（任期）" class="headerlink" title="（2） Term（任期）"></a>（2） Term（任期）</h5><blockquote>
-<p>在分布式系统中，各个节点的时间同步是一个很大的难题，但是为了识别过期时间，时间信息有必不可少。Raft协议为了解决这个问题，引入了term（任期）的概念。</p>
-</blockquote>
-<p><strong>Raft算法将时间划分为任意不同长度的任期（term）</strong>。任期用连续的数字进行表示。每<strong>一个任期的开始都是一次选举（election），一个或多个候选人会试图成为领导人</strong>，如果一个候选人赢得了选举，它就会在该任期的剩余时间担任领导人。在某些情况下，选票会被瓜分，有可能没有选出领导人，那么将会开始另一个任期，并且立刻开始下一次选举。<strong>Raft算法保证在给定的一个任期内最多是有一个领导人</strong>。</p>
-<h5 id="（3）-RPC"><a href="#（3）-RPC" class="headerlink" title="（3） RPC"></a>（3） RPC</h5><p><strong>Raft算法中服务器节点之间通信使用远程过程调用（RPC）</strong>，并且基本的一致性算法只需要两种类型的RPC，为了在服务器之间传输快照增加了第三种 RPC。</p>
-<ul>
-<li><strong>RequestVote RPC</strong>：候选人在选举期间发起。</li>
-<li><strong>AppendEntries RPC</strong>：领导人发起的一种心跳机制，复制日志也在该命令中完成。</li>
-<li><strong>InstallSnapshot RPC</strong>：领导者使用该RPC来发送快照给太落后的追随者。</li>
-</ul>
-<h5 id="（4）-选举流程"><a href="#（4）-选举流程" class="headerlink" title="（4） 选举流程"></a>（4） 选举流程</h5><blockquote>
-<p><strong>redis中的纪元（epoch）</strong>：使用了类似于Raft算法term（任期）的概念称为epoch（纪元），用来给时间增加版本号。主要有两种：</p>
-<ul>
-<li><strong>currentEpoch</strong>：它的作用在于，当集群的状态发生改变，某个节点为了执行一些动作需要寻求其他节点的统一时，就会增加currentEpoch的值。目前curretnEpoch只用于slabe的故障转移流程。</li>
-<li><strong>configEpoch</strong>：这是一个集群节点配置相关的概念，每个集群节点都有自己独一无二的configepoch，所谓的节点配置，实际上是指节点所负责的槽位信息。每一个master在向其他节点发送包时，都会附带其configEpoch信息，以及一份表示它负责的slots信息。</li>
-</ul>
-</blockquote>
-<ul>
-<li>1、某个Sentinel认定master客观下线的节点后，该Sentinel会先看看自己有没有投过票，如果自己已经投过票给其他Sentinel了，在2倍故障转移的超时时间自己就不会成为Leader。相当于它是一个Follower。</li>
-<li>2、如果该Sentinel还没投过票，那么它就成为Candidate。</li>
-<li>3、和Raft协议描述的一样，成为Candidate，Sentinel需要完成几件事情</li>
-</ul>
-<blockquote>
-<ul>
-<li>1）更新故障转移状态为start</li>
-<li>2）当前epoch加1，相当于进入一个新term，在Sentinel中epoch就是Raft协议中的term。</li>
-<li>3）更新自己的超时时间为当前时间随机加上一段时间，随机时间为1s内的随机毫秒数。</li>
-<li>4）向其他节点发送is-master-down-by-addr命令请求投票。命令会带上自己的epoch。</li>
-<li>5）给自己投一票，在Sentinel中，投票的方式是把自己master结构体里的leader和leader_epoch改成投给的Sentinel和它的epoch。</li>
-</ul>
-</blockquote>
-<ul>
-<li>4、其他Sentinel会收到Candidate的is-master-down-by-addr命令。如果Sentinel当前epoch和Candidate传给他的epoch一样，说明他已经把自己master结构体里的leader和leader_epoch改成其他Candidate，相当于把票投给了其他Candidate。投过票给别的Sentinel后，在当前epoch内自己就只能成为Follower。</li>
-<li>5、Candidate会不断的统计自己的票数，直到他发现认同他成为Leader的票数超过一半而且超过它配置的quorum（quorum可以参考《redis sentinel设计与实现》）。Sentinel比Raft协议增加了quorum，这样一个Sentinel能否当选Leader还取决于它配置的quorum。</li>
-<li>6、如果在一个选举时间内，Candidate没有获得超过一半且超过它配置的quorum的票数，自己的这次选举就失败了。</li>
-<li>7、如果在一个epoch内，没有一个Candidate获得更多的票数。那么等待超过2倍故障转移的超时时间后，Candidate增加epoch重新投票。</li>
-<li>8、如果某个Candidate获得超过一半且超过它配置的quorum的票数，那么它就成为了Leader。</li>
-<li>9、与Raft协议不同，Leader并不会把自己成为Leader的消息发给其他Sentinel。其他Sentinel等待Leader从slave选出master后，检测到新的master正常工作后，就会去掉客观下线的标识，从而不需要进入故障转移流程。</li>
-</ul>
-<p><strong>大致简单过程</strong></p>
-<blockquote>
-<p>1、每个做主观下线的sentinel节点像其他sentinel节点发送命令，要求将自己设置为领导者<br>2、接收到的sentinel可以同意或者拒绝<br>3、如果该sentinel节点发现自己的票数已经超过半数并且超过了quorum<br>4、如果此过程选举出了多个领导者，那么将等待一段时重新进行选举</p>
-</blockquote>
+<h2 id="UML"><a href="#UML" class="headerlink" title="UML"></a>UML</h2><p><img src="http://img.github.mailjob.net/20210429192739.png" alt="image-20210429192738179"></p>
+<h2 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h2><p>先从一个简单的代码开始看起，先实现一个工厂方法</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 工厂类</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Factory</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">static</span> <span class="function"><span class="keyword">function</span> <span class="title">createProduct</span>(<span class="params"><span class="keyword">string</span> <span class="variable">$type</span></span>) : <span class="title">Product</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="variable">$product</span> = <span class="literal">null</span>;</span><br><span class="line">        <span class="keyword">switch</span> (<span class="variable">$type</span>) &#123;</span><br><span class="line">            <span class="keyword">case</span> <span class="string">&#x27;A&#x27;</span>:</span><br><span class="line">                <span class="variable">$product</span> = <span class="keyword">new</span> ProductA();</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> <span class="string">&#x27;B&#x27;</span>:</span><br><span class="line">                <span class="variable">$product</span> = <span class="keyword">new</span> ProductB();</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="variable">$product</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后在接下来的代码中，实现 产品接口 和 产品</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 接口类</span></span><br><span class="line"><span class="class"><span class="keyword">interface</span> <span class="title">Product</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">show</span>(<span class="params"></span>)</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 实现类 A</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ProductA</span> <span class="keyword">implements</span> <span class="title">Product</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">show</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">&#x27;Show ProductA&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 实现类 B</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ProductB</span> <span class="keyword">implements</span> <span class="title">Product</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">show</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">&#x27;Show ProductB&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最后客户端实现逻辑</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Client</span></span><br><span class="line"><span class="variable">$productA</span> = Factory::createProduct(<span class="string">&#x27;A&#x27;</span>);</span><br><span class="line"><span class="variable">$productB</span> = Factory::createProduct(<span class="string">&#x27;B&#x27;</span>);</span><br><span class="line"><span class="variable">$productA</span>-&gt;show();</span><br><span class="line"><span class="variable">$productB</span>-&gt;show();</span><br></pre></td></tr></table></figure>
+<h2 id="场景化代码实现"><a href="#场景化代码实现" class="headerlink" title="场景化代码实现"></a>场景化代码实现</h2><h3 id="场景描述"><a href="#场景描述" class="headerlink" title="场景描述"></a>场景描述</h3><p>高端的汽车品牌，会根据顾客的需求，完成定制化的需求。常见的汽车颜色有：黑，白，红，蓝，灰。如果你想按照自己的需求定制，比如你想要：紫色，黄色，绿色。则会按照你的定制化需求，到达不同的流水线工作。</p>
+<h3 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h3><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Class FactoryClass</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * 简单工厂</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * 场景：汽车表层刷漆工厂</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">FactoryClass</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 实现汽车上色</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">static</span> <span class="function"><span class="keyword">function</span> <span class="title">production</span>(<span class="params"><span class="keyword">string</span> <span class="variable">$color</span></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">switch</span> (<span class="variable">$color</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">case</span> <span class="string">&#x27;violet&#x27;</span>:</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">new</span> VioletClass();</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> <span class="string">&#x27;yellow&#x27;</span>:</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">new</span> YellowClass();</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> <span class="string">&#x27;green&#x27;</span>:</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">new</span> GreenClass();</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Interface Product</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * 定义接口类</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">interface</span> <span class="title">Product</span></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">color_make</span>(<span class="params"></span>) : <span class="title">String</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Class VioletClass</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * 紫色车身涂改车间</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">VioletClass</span> <span class="keyword">implements</span> <span class="title">Product</span></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">color_make</span>(<span class="params"></span>): <span class="title">String</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&#x27;this car color is Violet&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Class VioletClass</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * 紫色车身涂改车间</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">YellowClass</span> <span class="keyword">implements</span> <span class="title">Product</span></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">color_make</span>(<span class="params"></span>): <span class="title">String</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&#x27;this car color is Violet&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Class VioletClass</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * 紫色车身涂改车间</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">GreenClass</span> <span class="keyword">implements</span> <span class="title">Product</span></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">color_make</span>(<span class="params"></span>): <span class="title">String</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&#x27;this car color is Violet&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 客户端调用实现</span></span><br><span class="line"><span class="variable">$factory</span> = <span class="keyword">new</span> FactoryClass();</span><br><span class="line"><span class="variable">$class</span> = <span class="variable">$factory</span>-&gt;production(<span class="string">&#x27;violet&#x27;</span>);</span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$class</span>-&gt;color_make();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 输出</span></span><br><span class="line"><span class="comment">// this car color is Violet</span></span><br></pre></td></tr></table></figure>
 
             </section>
     </article>
@@ -266,9 +225,9 @@
     </div> -->
     <div>
         <strong>本文链接：</strong>
-        <a href="https://blog.mailjob.net/posts/1396323676.html">
-            <!-- https://blog.mailjob.net/redis/redis哨兵选举算法Raft -->
-            https://blog.mailjob.net/posts/1396323676.html
+        <a href="https://blog.mailjob.net/posts/4004887876.html">
+            <!-- https://blog.mailjob.net/design/设计模式之简单工厂模式 -->
+            https://blog.mailjob.net/posts/4004887876.html
         </a>
     </div>
     <div>

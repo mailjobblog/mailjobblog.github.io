@@ -196,10 +196,8 @@
             <section class="post-content">
 
               <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>工厂方法模式和简单工厂相比较，就是把：实现推迟到了继承改工厂类的子类中实现。</p>
-<p>可以这样理解：</p>
-<p>1、首先定义一个基础的工厂类</p>
-<p>2、然后一堆的子类去继承这个工厂类，并且实现工厂类中的抽象方法</p>
-<p>3、 最终，返回 product 的实例化对象</p>
+<p><strong>可以这样理解：</strong></p>
+<p>1、首先定义一个基础的工厂类<br>2、然后一堆的子类去继承这个工厂类，并且实现工厂类中的抽象方法<br>3、 最终，返回 product 的实例化对象</p>
 <h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote>
 <p>代码：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/design/tree/master/abstract-factory">https://github.com/mailjobblog/design/tree/master/abstract-factory</a></p>
 </blockquote>
@@ -218,7 +216,7 @@
 <p>工厂类中的实现，我们相比简单工厂，去掉了 swith ，然后让每个具体的实现类来创建对象。</p>
 <p>从这里体现了对象的两个特点：<strong>单一</strong>，<strong>封闭</strong>。</p>
 <p>每个继承于父工厂类的子类，只和一个 product 有耦合，和其他的 product 没有耦合，通过这个方法，对程序也起到了结偶的作用。该工厂子类和其他子类之间完全没有关系。</p>
-<h2 id="场景化代码实现"><a href="#场景化代码实现" class="headerlink" title="场景化代码实现"></a>场景化代码实现</h2><h3 id="场景描述"><a href="#场景描述" class="headerlink" title="场景描述"></a>场景描述</h3><p>书接上回，还是【简单工厂】的那个思路和需求</p>
+<h2 id="场景化代码实现"><a href="#场景化代码实现" class="headerlink" title="场景化代码实现"></a>场景化代码实现</h2><h3 id="场景描述"><a href="#场景描述" class="headerlink" title="场景描述"></a>场景描述</h3><p>书接上回，对于高端品牌的汽车生产商来说，为客户进行定制化需求，必不可少。现在，我要把这个生产车间，再次进行升级，我不想要中心工厂判断，到底要把需求交给哪个车间制作。我想做的是，让各个车间各司其职，彼此的工作互不干扰。所以，接着这个思路，继续对这个软件逻辑进行解耦。</p>
 <h3 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h3><p><strong>FactoryClass.php</strong></p>
 <figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="keyword">require_once</span> <span class="string">&#x27;Product.php&#x27;</span>;</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 定义工厂方法的抽象类</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">FactoryClass</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="keyword">abstract</span> <span class="keyword">protected</span> <span class="function"><span class="keyword">function</span> <span class="title">factoryMethod</span>(<span class="params"></span>)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">getObject</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;factoryMethod();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Class Violet</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * 继承抽象类</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Violet</span> <span class="keyword">extends</span> <span class="title">FactoryClass</span></span>&#123;</span><br><span class="line">    <span class="comment">// 实现抽象方法</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="function"><span class="keyword">function</span> <span class="title">factoryMethod</span>(<span class="params"></span>) : <span class="title">VioletClass</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> VioletClass();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Yellow</span> <span class="keyword">extends</span> <span class="title">FactoryClass</span></span>&#123;</span><br><span class="line">    <span class="keyword">protected</span> <span class="function"><span class="keyword">function</span> <span class="title">factoryMethod</span>(<span class="params"></span>) : <span class="title">YellowClass</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> YellowClass();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Green</span> <span class="keyword">extends</span> <span class="title">FactoryClass</span></span>&#123;</span><br><span class="line">    <span class="keyword">protected</span> <span class="function"><span class="keyword">function</span> <span class="title">factoryMethod</span>(<span class="params"></span>) : <span class="title">GreenClass</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> GreenClass();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 客户端测试</span></span><br><span class="line"><span class="variable">$factory</span> = <span class="keyword">new</span> Yellow();</span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$factory</span>-&gt;getObject()-&gt;color_make();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 输出</span></span><br><span class="line"><span class="comment">// this car color is Yellow</span></span><br></pre></td></tr></table></figure>
 <p><strong>Product.php</strong></p>
@@ -361,7 +359,7 @@
             
               <a class="category-list-item" href="/categories/design">
                 <span class="category-list-link">design</span>
-                <span class="category-list-number">(6)</span>
+                <span class="category-list-number">(7)</span>
               </a>
             
            
@@ -457,6 +455,10 @@
       <ul class="recent-posts">
         
           <li>
+            <a href="/posts/876260517.html">设计模式之抽象工厂</a>
+          </li>
+        
+          <li>
             <a href="/posts/3453473789.html">设计模式之工厂方法模式</a>
           </li>
         
@@ -470,10 +472,6 @@
         
           <li>
             <a href="/posts/1438856121.html">swoole 端口监听，关闭tcp服务</a>
-          </li>
-        
-          <li>
-            <a href="/posts/1073733062.html">PHP实现IO复用模型(multiplexing)</a>
           </li>
         
       </ul>

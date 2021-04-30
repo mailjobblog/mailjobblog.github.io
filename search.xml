@@ -161,6 +161,12 @@
         <content type="html"><![CDATA[<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote><p>5种IO模型：<a href="https://blog.mailjob.net/posts/3565199751.html">https://blog.mailjob.net/posts/3565199751.html</a></p><p>github代码下载：<a href="https://github.com/mailjobblog/dev_php_io/tree/master/test/">https://github.com/mailjobblog/dev_php_io/tree/master/test/</a></p></blockquote><h2 id="异步IO原理"><a href="#异步IO原理" class="headerlink" title="异步IO原理"></a>异步IO原理</h2><p>对于异步来说，用户进行读或者写后，将立刻返回，由内核去完成数据读取以及拷贝工作，完成后通知用户，并执行回调函数（用户提供的callback），此时数据已从内核拷贝到用户空间，用户线程只需要对数据进行处理即可，不需要关注读写，用户不需要等待内核对数据的复制操作，用户在得到通知时数据已经被复制到用户空间。我们以如下的真实异步非阻塞为例。</p><p><img src="http://img.github.mailjob.net/20210428094755.png" alt="图片"></p><h3 id="同步跟异步对比"><a href="#同步跟异步对比" class="headerlink" title="同步跟异步对比"></a>同步跟异步对比</h3><p>同步关注的消息通信机制synchronous communication，在发出一个调用时，在没有得到结果之前，该调用就不返回。但是一旦调用返回，就得到返回值了。换句话说，就是由调用者主动等待这个调用的结果。</p><p>异步关注消息通信机制asynchronous communication，调用在发出之后，这个调用就直接返回了，所以没有返回结果。换句话说，当一个异步过程调用发出后，调用者不会立刻得到结果。而是在调用发出后，被调用者通过状态、通知来通知调用者，或通过回调函数处理这个调用。</p><h2 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h2>]]></content>
       
       
+      <categories>
+          
+          <category> swoole </category>
+          
+      </categories>
+      
       
         <tags>
             
@@ -179,6 +185,12 @@
       
         <content type="html"><![CDATA[<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote><p>5种IO模型：<a href="https://blog.mailjob.net/posts/3565199751.html">https://blog.mailjob.net/posts/3565199751.html</a></p><p>github代码下载：<a href="https://github.com/mailjobblog/dev_php_io/tree/master/test/">https://github.com/mailjobblog/dev_php_io/tree/master/test/</a></p><p>快速了解信号驱动io：<a href="https://www.itzhai.com/articles/it-seems-not-so-perfect-signal-driven-io.html">https://www.itzhai.com/articles/it-seems-not-so-perfect-signal-driven-io.html</a></p></blockquote><h2 id="信号驱动IO原理"><a href="#信号驱动IO原理" class="headerlink" title="信号驱动IO原理"></a>信号驱动IO原理</h2><p>所谓信号驱动式I/O(signal-driven I/O)，就是预先告知内核，当某个描述符准备发生某件事情的时候，让内核发送一个信号通知应用进程。</p><p>主要的实现：</p><ul><li>Berkeley的实现使用<code>SIGIO</code>信号支持套接字和终端设备上的信号驱动式I/O；</li><li>SVR4使用SIGPOLL信号支持流设备上的信号驱动。</li></ul><p>SIGPOLL等价于SIGIO。</p><p>通过UDP的<code>recvfrom()</code>函数演示其工作原理如下图所示：</p><p><img src="http://img.github.mailjob.net/20210428095139.png-itzhai" alt="image-20201101160607451"></p><p>系统注册了ISGIO信号处理函数，并且启动了信号驱动式IO后，就可以继续执行程序了，等到数据报准备好之后，内核会发送一个SIGIO信号给应用进程，然后应用进程在信号处理函数中调用recvfrom读取数据报。</p><p>这种模型在内核等待数据报达到期间进程不会被阻塞，可以继续执行。</p><h2 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h2>]]></content>
       
+      
+      <categories>
+          
+          <category> swoole </category>
+          
+      </categories>
       
       
         <tags>

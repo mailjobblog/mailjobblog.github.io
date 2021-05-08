@@ -196,12 +196,42 @@
             <section class="post-content">
 
               <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>PHP事件的基础设施的 libevent ，然后基于 event 做事件的处理</p>
-<h3 id="什么是事件"><a href="#什么是事件" class="headerlink" title="什么是事件"></a>什么是事件</h3><p><em>正常</em>的程序执行, 或者说人的思维趋势, 都是按照 <strong>时间线性串行</strong> 的, 保持 <strong>连续性</strong>. 不过现实中会存在各种 <strong>打断</strong>, 程序也不是永远都是 <strong>就绪状态</strong>, 那么, 就需要有一种机制, 来处理可能出现的各种打断, 或者在程序不同状态之间切换.</p>
+<h3 id="什么是事件"><a href="#什么是事件" class="headerlink" title="什么是事件?"></a>什么是事件?</h3><p><em>正常</em>的程序执行, 或者说人的思维趋势, 都是按照 <strong>时间线性串行</strong> 的, 保持 <strong>连续性</strong>. 不过现实中会存在各种 <strong>打断</strong>, 程序也不是永远都是 <strong>就绪状态</strong>, 那么, 就需要有一种机制, 来处理可能出现的各种打断, 或者在程序不同状态之间切换.</p>
 <h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote>
 <p>PHP event 事件文档：<a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/book.event.php">https://www.php.net/manual/zh/book.event.php</a></p>
 <p>libevent 下载地址：<a target="_blank" rel="noopener" href="https://libevent.org/">https://libevent.org</a></p>
 <p>event 扩展下载地址：<a target="_blank" rel="noopener" href="https://pecl.php.net/package/event">https://pecl.php.net/package/event</a></p>
+<p><strong>EventBase</strong> 类：<a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/class.eventbase.php">https://www.php.net/manual/zh/class.eventbase.php</a></p>
+<p>注册事件函数（Event::__construct）：<a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/event.construct.php">https://www.php.net/manual/zh/event.construct.php</a></p>
+<p>添加事件函数（Event::add）：<a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/event.add.php">https://www.php.net/manual/zh/event.add.php</a></p>
+<p>创建应用监督事件函数（EventBase::__construct）：<a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/eventbase.construct.php">https://www.php.net/manual/zh/eventbase.construct.php</a></p>
+<p>调度未决事件（EventBase::loop）：<a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/eventbase.loop.php">https://www.php.net/manual/zh/eventbase.loop.php</a></p>
 </blockquote>
+<h2 id="Event预定义常量"><a href="#Event预定义常量" class="headerlink" title="Event预定义常量"></a>Event预定义常量</h2><p>参考文档：<a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/class.event.php#event.constants.read">https://www.php.net/manual/zh/class.event.php#event.constants.read</a></p>
+<table>
+<thead>
+<tr>
+<th><strong>Event-flags</strong></th>
+<th><strong>函数描述</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Event::READ</td>
+<td>此标志表示当所提供的文件描述符(通常是流资源或套接字)准备好可读取时活动的事件。</td>
+</tr>
+<tr>
+<td>Event::WRITE</td>
+<td>标志表示当提供的文件描述符(通常是流资源或套接字)准备好写入时活动的事件。</td>
+</tr>
+<tr>
+<td>Event::SIGNAL</td>
+<td>用于实现信号检测。参见下面的“构造信号事件”</td>
+</tr>
+<tr>
+<td>Event::TIMEOUT</td>
+<td>这个<strong>Event::TIMEOUT</strong>在构造事件时忽略标志：可以在事件发生时设置超时。<em>加</em>或者不是。设置为 <code>$什么</code> 当超时发生时，回调函数的参数</td>
+</tr>
+</tbody></table>
 <h2 id="扩展安装"><a href="#扩展安装" class="headerlink" title="扩展安装"></a>扩展安装</h2><h4 id="libevent-安装"><a href="#libevent-安装" class="headerlink" title="libevent 安装"></a>libevent 安装</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 下载软件</span></span><br><span class="line">wget https://github.com/libevent/libevent/releases/download/release-2.1.12-stable/libevent-2.1.12-stable.tar.gz</span><br><span class="line"><span class="comment"># 解压软件</span></span><br><span class="line">tar -zxvf libevent-2.1.12-stable.tar.gz</span><br><span class="line"><span class="comment"># 进入软件目录</span></span><br><span class="line"><span class="built_in">cd</span> libevent-2.1.12-stable/</span><br><span class="line"><span class="comment"># 生成 makeFile</span></span><br><span class="line">./configure --prefix=/usr/<span class="built_in">local</span>/libevent-2.1.12</span><br><span class="line"><span class="comment"># 编译软件</span></span><br><span class="line">make</span><br><span class="line"><span class="comment"># 安装软件</span></span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
 <h4 id="event-扩展安装"><a href="#event-扩展安装" class="headerlink" title="event 扩展安装"></a>event 扩展安装</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 下载软件</span></span><br><span class="line">wget https://pecl.php.net/get/event-3.0.4.tgz</span><br><span class="line"><span class="comment"># 解压软件</span></span><br><span class="line">tar -zxvf event-3.0.4.tgz</span><br><span class="line"><span class="comment"># 进入软件目录</span></span><br><span class="line"><span class="built_in">cd</span> event-3.0.4</span><br><span class="line"><span class="comment"># 校验软件</span></span><br><span class="line">phpize</span><br><span class="line"><span class="comment"># 生成 makeFile</span></span><br><span class="line">./configure --with-php-config=/usr/<span class="built_in">local</span>/php/bin/php-config</span><br><span class="line"><span class="comment"># 编译软件</span></span><br><span class="line">make</span><br><span class="line"><span class="comment"># 安装软件</span></span><br><span class="line">make install</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 <h4 id="在php-ini添加下面配置"><a href="#在php-ini添加下面配置" class="headerlink" title="在php.ini添加下面配置"></a>在php.ini添加下面配置</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">extension=event.so</span><br></pre></td></tr></table></figure>

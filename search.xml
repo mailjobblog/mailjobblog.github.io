@@ -4,6 +4,58 @@
   
     
     <entry>
+      <title>PHP中 event 事件扩展</title>
+      <link href="posts/877067227.html"/>
+      <url>posts/877067227.html</url>
+      
+        <content type="html"><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>PHP事件的基础设施的 libevent ，然后基于 event 做事件的处理</p><h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote><p>PHP event 事件文档：<a href="https://www.php.net/manual/zh/book.event.php">https://www.php.net/manual/zh/book.event.php</a></p><p>libevent 下载地址：<a href="https://libevent.org/">https://libevent.org</a></p><p>event 扩展下载地址：<a href="https://pecl.php.net/package/event">https://pecl.php.net/package/event</a></p></blockquote><h2 id="扩展安装"><a href="#扩展安装" class="headerlink" title="扩展安装"></a>扩展安装</h2><h4 id="libevent-安装"><a href="#libevent-安装" class="headerlink" title="libevent 安装"></a>libevent 安装</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 下载软件</span></span><br><span class="line">wget https://github.com/libevent/libevent/releases/download/release-2.1.12-stable/libevent-2.1.12-stable.tar.gz</span><br><span class="line"><span class="meta">#</span><span class="bash"> 解压软件</span></span><br><span class="line">tar -zxvf libevent-2.1.12-stable.tar.gz</span><br><span class="line"><span class="meta">#</span><span class="bash"> 进入软件目录</span></span><br><span class="line">cd libevent-2.1.12-stable/</span><br><span class="line"><span class="meta">#</span><span class="bash"> 生成 makeFile</span></span><br><span class="line">./configure --prefix=/usr/local/libevent-2.1.12</span><br><span class="line"><span class="meta">#</span><span class="bash"> 编译软件</span></span><br><span class="line">make</span><br><span class="line"><span class="meta">#</span><span class="bash"> 安装软件</span></span><br><span class="line">make install</span><br></pre></td></tr></table></figure><h4 id="event-扩展安装"><a href="#event-扩展安装" class="headerlink" title="event 扩展安装"></a>event 扩展安装</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 下载软件</span></span><br><span class="line">wget https://pecl.php.net/get/event-3.0.4.tgz</span><br><span class="line"><span class="comment"># 解压软件</span></span><br><span class="line">tar -zxvf event-3.0.4.tgz</span><br><span class="line"><span class="comment"># 进入软件目录</span></span><br><span class="line"><span class="built_in">cd</span> event-3.0.4</span><br><span class="line"><span class="comment"># 校验软件</span></span><br><span class="line">phpize</span><br><span class="line"><span class="comment"># 生成 makeFile</span></span><br><span class="line">./configure --with-php-config=/usr/<span class="built_in">local</span>/php/bin/php-config</span><br><span class="line"><span class="comment"># 编译软件</span></span><br><span class="line">make</span><br><span class="line"><span class="comment"># 安装软件</span></span><br><span class="line">make install</span><br><span class="line"></span><br></pre></td></tr></table></figure><h4 id="在php-ini添加下面配置"><a href="#在php-ini添加下面配置" class="headerlink" title="在php.ini添加下面配置"></a>在php.ini添加下面配置</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">extension=event.so</span><br></pre></td></tr></table></figure><p>重启 php-fpm 后，使用 <code>php -m | grep event</code> 查看event库插件是否安装成功</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> swoole </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> php </tag>
+            
+            <tag> swoole </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>PHP实现信号驱动IO(Signal)</title>
+      <link href="posts/92825410.html"/>
+      <url>posts/92825410.html</url>
+      
+        <content type="html"><![CDATA[<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote><p>5种IO模型：<a href="https://blog.mailjob.net/posts/3565199751.html">https://blog.mailjob.net/posts/3565199751.html</a></p><p>github代码下载：<a href="https://github.com/mailjobblog/dev_php_io/tree/master/test/signal">https://github.com/mailjobblog/dev_php_io/tree/master/test/signal</a></p><p>快速了解信号驱动io：<a href="https://www.itzhai.com/articles/it-seems-not-so-perfect-signal-driven-io.html">https://www.itzhai.com/articles/it-seems-not-so-perfect-signal-driven-io.html</a></p><p>Linux 信号列表：<a href="https://wiki.swoole.com/#/other/signal">https://wiki.swoole.com/#/other/signal</a></p><p>安装信号处理器函数（pcntl_signal）：<a href="https://www.php.net/manual/zh/function.pcntl-signal.php">https://www.php.net/manual/zh/function.pcntl-signal.php</a></p><p>向进程发送信号函数（posix_kill）：<a href="https://www.php.net/manual/zh/function.posix-kill.php">https://www.php.net/manual/zh/function.posix-kill.php</a></p><p>调用等待信号的处理器函数（pcntl_signal_dispatch）：<a href="https://www.php.net/manual/zh/function.pcntl-signal-dispatch.php">https://www.php.net/manual/zh/function.pcntl-signal-dispatch.php</a></p><p>获取进程的 PID 函数（posix_getpid）：<a href="https://www.php.net/manual/zh/function.posix-getpid.php">https://www.php.net/manual/zh/function.posix-getpid.php</a></p></blockquote><h2 id="信号驱动IO原理"><a href="#信号驱动IO原理" class="headerlink" title="信号驱动IO原理"></a>信号驱动IO原理</h2><p>所谓信号驱动式I/O(signal-driven I/O)，就是预先告知内核，当某个描述符准备发生某件事情的时候，让内核发送一个信号通知应用进程。</p><p>主要的实现：</p><ul><li>Berkeley的实现使用<code>SIGIO</code>信号支持套接字和终端设备上的信号驱动式I/O；</li><li>SVR4使用SIGPOLL信号支持流设备上的信号驱动。</li></ul><p>SIGPOLL等价于SIGIO。</p><p>通过UDP的<code>recvfrom()</code>函数演示其工作原理如下图所示：</p><p><img src="http://img.github.mailjob.net/20210428095139.png-itzhai" alt="image-20201101160607451"></p><p>系统注册了ISGIO信号处理函数，并且启动了信号驱动式IO后，就可以继续执行程序了，等到数据报准备好之后，内核会发送一个SIGIO信号给应用进程，然后应用进程在信号处理函数中调用recvfrom读取数据报。</p><p>这种模型在内核等待数据报达到期间进程不会被阻塞，可以继续执行。</p><h2 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h2><p><strong>server.php</strong></p><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="keyword">require_once</span> <span class="keyword">__DIR__</span>.<span class="string">&quot;/../../vendor/autoload.php&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">use</span> <span class="title">DevPhpIO</span>\<span class="title">Signal</span>\<span class="title">Worker</span>;</span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span> = <span class="keyword">new</span> Worker(<span class="string">&#x27;0.0.0.0&#x27;</span>, <span class="number">9500</span>);</span><br><span class="line"><span class="variable">$server</span>-&gt;on(<span class="string">&#x27;connect&#x27;</span>, <span class="function"><span class="keyword">function</span>(<span class="params"><span class="variable">$server</span>, <span class="variable">$client</span></span>)</span>&#123;</span><br><span class="line">    dd(<span class="variable">$client</span>, <span class="string">&quot;客户端成功建立连接&quot;</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span>-&gt;on(<span class="string">&#x27;receive&#x27;</span>, <span class="function"><span class="keyword">function</span>(<span class="params">Worker <span class="variable">$server</span>, <span class="variable">$client</span>, <span class="variable">$data</span></span>)</span>&#123;</span><br><span class="line">    dd(<span class="variable">$data</span>, <span class="string">&quot;处理client的数据&quot;</span>);</span><br><span class="line">    <span class="variable">$server</span>-&gt;send(<span class="variable">$client</span>, <span class="string">&quot;hello i’m is server&quot;</span>);</span><br><span class="line">    <span class="comment">// $server-&gt;close($client);</span></span><br><span class="line">&#125;); </span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span>-&gt;on(<span class="string">&#x27;close&#x27;</span>, <span class="function"><span class="keyword">function</span>(<span class="params"><span class="variable">$server</span>, <span class="variable">$client</span></span>)</span>&#123;</span><br><span class="line">    dd(<span class="variable">$client</span>, <span class="string">&quot;连接断开&quot;</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span>-&gt;start();</span><br></pre></td></tr></table></figure><p><strong>client.php</strong></p><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="keyword">require_once</span> <span class="keyword">__DIR__</span>.<span class="string">&quot;/../../vendor/autoload.php&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 连接服务端</span></span><br><span class="line"><span class="variable">$fp</span> = stream_socket_client(<span class="string">&quot;tcp://127.0.0.1:9500&quot;</span>);</span><br><span class="line">fwrite(<span class="variable">$fp</span>, <span class="string">&quot;hello world lalala&quot;</span>);</span><br><span class="line">dd(fread(<span class="variable">$fp</span>, <span class="number">65535</span>));</span><br></pre></td></tr></table></figure><p><strong>演示截图</strong></p><p><img src="http://img.github.mailjob.net/20210507222350.png" alt="image-20210507222339142"></p>]]></content>
+      
+      
+      <categories>
+          
+          <category> swoole </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> swoole </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>设计模式之建造者模式</title>
       <link href="posts/1915639727.html"/>
       <url>posts/1915639727.html</url>
@@ -209,31 +261,6 @@
       <url>posts/1057148844.html</url>
       
         <content type="html"><![CDATA[<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote><p>5种IO模型：<a href="https://blog.mailjob.net/posts/3565199751.html">https://blog.mailjob.net/posts/3565199751.html</a></p><p>github代码下载：<a href="https://github.com/mailjobblog/dev_php_io/tree/master/test/">https://github.com/mailjobblog/dev_php_io/tree/master/test/</a></p></blockquote><h2 id="异步IO原理"><a href="#异步IO原理" class="headerlink" title="异步IO原理"></a>异步IO原理</h2><p>对于异步来说，用户进行读或者写后，将立刻返回，由内核去完成数据读取以及拷贝工作，完成后通知用户，并执行回调函数（用户提供的callback），此时数据已从内核拷贝到用户空间，用户线程只需要对数据进行处理即可，不需要关注读写，用户不需要等待内核对数据的复制操作，用户在得到通知时数据已经被复制到用户空间。我们以如下的真实异步非阻塞为例。</p><p><img src="http://img.github.mailjob.net/20210428094755.png" alt="图片"></p><h3 id="同步跟异步对比"><a href="#同步跟异步对比" class="headerlink" title="同步跟异步对比"></a>同步跟异步对比</h3><p>同步关注的消息通信机制synchronous communication，在发出一个调用时，在没有得到结果之前，该调用就不返回。但是一旦调用返回，就得到返回值了。换句话说，就是由调用者主动等待这个调用的结果。</p><p>异步关注消息通信机制asynchronous communication，调用在发出之后，这个调用就直接返回了，所以没有返回结果。换句话说，当一个异步过程调用发出后，调用者不会立刻得到结果。而是在调用发出后，被调用者通过状态、通知来通知调用者，或通过回调函数处理这个调用。</p><h2 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h2>]]></content>
-      
-      
-      <categories>
-          
-          <category> swoole </category>
-          
-      </categories>
-      
-      
-        <tags>
-            
-            <tag> swoole </tag>
-            
-        </tags>
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title>PHP实现信号驱动IO(Signal)</title>
-      <link href="posts/92825410.html"/>
-      <url>posts/92825410.html</url>
-      
-        <content type="html"><![CDATA[<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote><p>5种IO模型：<a href="https://blog.mailjob.net/posts/3565199751.html">https://blog.mailjob.net/posts/3565199751.html</a></p><p>github代码下载：<a href="https://github.com/mailjobblog/dev_php_io/tree/master/test/">https://github.com/mailjobblog/dev_php_io/tree/master/test/</a></p><p>快速了解信号驱动io：<a href="https://www.itzhai.com/articles/it-seems-not-so-perfect-signal-driven-io.html">https://www.itzhai.com/articles/it-seems-not-so-perfect-signal-driven-io.html</a></p></blockquote><h2 id="信号驱动IO原理"><a href="#信号驱动IO原理" class="headerlink" title="信号驱动IO原理"></a>信号驱动IO原理</h2><p>所谓信号驱动式I/O(signal-driven I/O)，就是预先告知内核，当某个描述符准备发生某件事情的时候，让内核发送一个信号通知应用进程。</p><p>主要的实现：</p><ul><li>Berkeley的实现使用<code>SIGIO</code>信号支持套接字和终端设备上的信号驱动式I/O；</li><li>SVR4使用SIGPOLL信号支持流设备上的信号驱动。</li></ul><p>SIGPOLL等价于SIGIO。</p><p>通过UDP的<code>recvfrom()</code>函数演示其工作原理如下图所示：</p><p><img src="http://img.github.mailjob.net/20210428095139.png-itzhai" alt="image-20201101160607451"></p><p>系统注册了ISGIO信号处理函数，并且启动了信号驱动式IO后，就可以继续执行程序了，等到数据报准备好之后，内核会发送一个SIGIO信号给应用进程，然后应用进程在信号处理函数中调用recvfrom读取数据报。</p><p>这种模型在内核等待数据报达到期间进程不会被阻塞，可以继续执行。</p><h2 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h2>]]></content>
       
       
       <categories>

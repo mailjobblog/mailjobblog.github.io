@@ -3,7 +3,7 @@
   <meta charset="utf-8">
   
   <title>
-    归档 | 李斌的技术博客
+    PHP中 event 事件扩展 | 李斌的技术博客
   </title>
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <meta name="theme-color" content="#4184f3">
@@ -151,122 +151,141 @@
             <div class="container content">
                 <div class="scene_element scene_element--fadein">
                     <div class="row">
-    <div class="main">
-   
-        <article class="title-list">
-            
-            
-            <section>
-                <time class="post-date" datetime="2021-02-07T14:51:13.000Z">
-                    2021-02-07
-                </time>
-                <a href="/posts/353228769.html">
-                    Linux CentOS 系统 防火墙管理
-                </a>
+  <div class="main main-article">
+    <article>
+
+      
+            <header class="post-header">
+              
+            </header>
+
+            <h1 class="post-title">
+              PHP中 event 事件扩展
+            </h1>
+
+            <section class="post-info post-info-bottom">
+
+              <span class="post-date">发布于
+                <span class="post-date-text">
+                   2021-05-08
+                </span>
+              </span>
+
+
+
+
+              
+                <span class="post-category">分类:
+                  <a class="article-category-link" href="/categories/swoole/">swoole</a>
+                </span>
                 
+                  
+                    <span class="post-tags">
+                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/php/" rel="tag">php</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/swoole/" rel="tag">swoole</a></li></ul>
+                    </span>
+                    
+
+                      <!-- 阅读量统计 -->
+                      
+                        <span class="post-visitors">阅读量:<span id="twikoo_visitors">0</span></span>
+                        
+
+
             </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-02-06T13:57:32.000Z">
-                    2021-02-06
-                </time>
-                <a href="/posts/1396323676.html">
-                    Redis哨兵选举算法Raft
-                </a>
-                
+
+            <section class="post-content">
+
+              <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>PHP事件的基础设施的 libevent ，然后基于 event 做事件的处理</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote>
+<p>PHP event 事件文档：<a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/book.event.php">https://www.php.net/manual/zh/book.event.php</a></p>
+<p>libevent 下载地址：<a target="_blank" rel="noopener" href="https://libevent.org/">https://libevent.org</a></p>
+<p>event 扩展下载地址：<a target="_blank" rel="noopener" href="https://pecl.php.net/package/event">https://pecl.php.net/package/event</a></p>
+</blockquote>
+<h2 id="扩展安装"><a href="#扩展安装" class="headerlink" title="扩展安装"></a>扩展安装</h2><h4 id="libevent-安装"><a href="#libevent-安装" class="headerlink" title="libevent 安装"></a>libevent 安装</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 下载软件</span></span><br><span class="line">wget https://github.com/libevent/libevent/releases/download/release-2.1.12-stable/libevent-2.1.12-stable.tar.gz</span><br><span class="line"><span class="meta">#</span><span class="bash"> 解压软件</span></span><br><span class="line">tar -zxvf libevent-2.1.12-stable.tar.gz</span><br><span class="line"><span class="meta">#</span><span class="bash"> 进入软件目录</span></span><br><span class="line">cd libevent-2.1.12-stable/</span><br><span class="line"><span class="meta">#</span><span class="bash"> 生成 makeFile</span></span><br><span class="line">./configure --prefix=/usr/local/libevent-2.1.12</span><br><span class="line"><span class="meta">#</span><span class="bash"> 编译软件</span></span><br><span class="line">make</span><br><span class="line"><span class="meta">#</span><span class="bash"> 安装软件</span></span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+<h4 id="event-扩展安装"><a href="#event-扩展安装" class="headerlink" title="event 扩展安装"></a>event 扩展安装</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 下载软件</span></span><br><span class="line">wget https://pecl.php.net/get/event-3.0.4.tgz</span><br><span class="line"><span class="comment"># 解压软件</span></span><br><span class="line">tar -zxvf event-3.0.4.tgz</span><br><span class="line"><span class="comment"># 进入软件目录</span></span><br><span class="line"><span class="built_in">cd</span> event-3.0.4</span><br><span class="line"><span class="comment"># 校验软件</span></span><br><span class="line">phpize</span><br><span class="line"><span class="comment"># 生成 makeFile</span></span><br><span class="line">./configure --with-php-config=/usr/<span class="built_in">local</span>/php/bin/php-config</span><br><span class="line"><span class="comment"># 编译软件</span></span><br><span class="line">make</span><br><span class="line"><span class="comment"># 安装软件</span></span><br><span class="line">make install</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h4 id="在php-ini添加下面配置"><a href="#在php-ini添加下面配置" class="headerlink" title="在php.ini添加下面配置"></a>在php.ini添加下面配置</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">extension=event.so</span><br></pre></td></tr></table></figure>
+<p>重启 php-fpm 后，使用 <code>php -m | grep event</code> 查看event库插件是否安装成功</p>
+
             </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-02-06T13:47:38.000Z">
-                    2021-02-06
-                </time>
-                <a href="/posts/3302527039.html">
-                    Redis主从复制-增量同步
-                </a>
-                
-            </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-02-05T15:50:38.000Z">
-                    2021-02-05
-                </time>
-                <a href="/posts/3861076249.html">
-                    notes：docker的network指定ip报错
-                </a>
-                
-            </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-02-05T15:27:26.000Z">
-                    2021-02-05
-                </time>
-                <a href="/posts/3351160326.html">
-                    notes：Git Flow 工作流
-                </a>
-                
-            </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-02-04T22:59:57.000Z">
-                    2021-02-05
-                </time>
-                <a href="/posts/3529675595.html">
-                    Redis哨兵 - 实战搭建
-                </a>
-                
-            </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-02-04T22:59:57.000Z">
-                    2021-02-05
-                </time>
-                <a href="/posts/2778025183.html">
-                    Redis哨兵 - 故障自动转移
-                </a>
-                
-            </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-02-04T18:38:51.000Z">
-                    2021-02-05
-                </time>
-                <a href="/posts/115868213.html">
-                    notes：centos7 通过 rpm 安装 crontab
-                </a>
-                
-            </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-02-04T06:06:06.000Z">
-                    2021-02-04
-                </time>
-                <a href="/posts/3429638983.html">
-                    notes：linux复制指定文件到指定目录
-                </a>
-                
-            </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-02-03T11:53:17.000Z">
-                    2021-02-03
-                </time>
-                <a href="/posts/707463622.html">
-                    Redis主从复制 - 实现原理
-                </a>
-                
-            </section>
-            
-        </article>
-        
-  
-    <div class="pagination">
-      <a class="extend prev" rel="prev" href="/archives/page/8/">上一页</a><a class="page-number" href="/archives/">1</a><span class="space">&hellip;</span><a class="page-number" href="/archives/page/7/">7</a><a class="page-number" href="/archives/page/8/">8</a><span class="page-number current">9</span><a class="page-number" href="/archives/page/10/">10</a><a class="page-number" href="/archives/page/11/">11</a><span class="space">&hellip;</span><a class="page-number" href="/archives/page/14/">14</a><a class="extend next" rel="next" href="/archives/page/10/">下一页</a>
-    </div>
-  
-    </div>
+    </article>
     
-    <aside>
-        <div class="aside-wrap">
+
+
+        <!-- 版权声明 -->
+        
+<div class="post-copyright">
+    <!-- <div>
+        <strong>本文作者：</strong>
+        <span>李斌</span>
+    </div> -->
+    <div>
+        <strong>本文链接：</strong>
+        <a href="https://blog.mailjob.net/posts/877067227.html">
+            <!-- https://blog.mailjob.net/swoole/PHP中event扩展 -->
+            https://blog.mailjob.net/posts/877067227.html
+        </a>
+    </div>
+    <div>
+        <!-- <span>欢迎任何形式的转载，请务必注明出处。</span> -->
+    </div>
+    <div>
+        <span>
+            该网站发布的内容，遵循
+            <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>
+            版权协议，转载请附上原文出处链接和本声明。
+        </span>
+    </div>
+</div>
+
+
+
+<style>
+    .post-copyright {
+        background-color: #fff;
+  box-shadow: 0px 0px 1px 1px rgba(0, 0, 0, 0.05);
+        display: block;
+        margin: 20px auto;
+        margin-bottom: 15px;
+        padding: 10px;
+        font-size: 15px;
+        color: #2e2d2d;
+        word-break: break-all;
+        line-height: 1.8;
+    }
+
+
+    .post-copyright a {
+        color: #2e2d2d;
+        border-bottom: 1px solid #999; 
+    }
+
+    .post-copyright a:hover {
+        color: #2e2d2d;
+        border-bottom: 1px solid #000; 
+    }
+</style>
+
+          <!-- comments -->
+          <div class="comments">
+    <h3 id="commenttitle" style="margin-top: 20px;margin-left: 10px;">评论区</h3>
+    <div id="tcomment"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/twikoo@0.6.0/dist/twikoo.all.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/twikoo@1.0.0/dist/twikoo.all.min.js"></script> -->
+
+<script>twikoo.init({ envId: 'jefferyjob-github-io-3b53ee3a93b', el: '#tcomment' })</script>
+
+            <div class="right-icon">
+              <div id="to-valine" class="right-icon-item">
+                <a href="#commenttitle">评论</a>
+              </div>
+            </div>
+
+  </div>
+
+
+  <aside>
+    <div class="aside-wrap">
     
         <section class="widget-wrap">
     <h3 class="widget-title">简介</h3>
@@ -522,11 +541,33 @@
     
 </div>
 
-    </aside>
-   
-    
+
+      <!-- 目录 -->
+      
+        <div id="toc"></div>
+        <script>
+          $(function () {
+            var elm = $('#toc');
+            var startPos = $(elm).offset().top;
+            $.event.add(window, "scroll", function () {
+              var p = $(window).scrollTop();
+              $(elm).css('margin-left', '0px');
+              $(elm).css('position', ((p) > startPos) ? 'fixed' : 'static');
+              $(elm).css('top', ((p) > startPos) ? '20px' : '')
+            })
+          })
+
+        </script>
+
+  </aside>
+  
 </div>
 
+
+<script>
+  $('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
+
+</script>
                 </div>
             </div>
             <div class="right-icon">

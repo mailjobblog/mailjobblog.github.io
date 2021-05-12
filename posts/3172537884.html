@@ -3,7 +3,7 @@
   <meta charset="utf-8">
   
   <title>
-    标签: mysql | 李斌的技术博客
+    设计模式之桥接模式 | 李斌的技术博客
   </title>
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <meta name="theme-color" content="#4184f3">
@@ -151,126 +151,170 @@
             <div class="container content">
                 <div class="scene_element scene_element--fadein">
                     <div class="row">
-    <div class="main">
-   
-        <article class="title-list">
-            
-                <h3>
-                    mysql
-                </h3>
-            
-            
-            <section>
-                <time class="post-date" datetime="2021-02-17T14:54:59.000Z">
-                    2021-02-17
-                </time>
-                <a href="/posts/3006260634.html">
-                    Mysql 主从复制原理
-                </a>
+  <div class="main main-article">
+    <article>
+
+      
+            <header class="post-header">
+              
+            </header>
+
+            <h1 class="post-title">
+              设计模式之桥接模式
+            </h1>
+
+            <section class="post-info post-info-bottom">
+
+              <span class="post-date">发布于
+                <span class="post-date-text">
+                   2021-05-12
+                </span>
+              </span>
+
+
+
+
+              
+                <span class="post-category">分类:
+                  <a class="article-category-link" href="/categories/design/">design</a>
+                </span>
                 
+                  
+                    <span class="post-tags">
+                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/design/" rel="tag">design</a></li></ul>
+                    </span>
+                    
+
+                      <!-- 阅读量统计 -->
+                      
+                        <span class="post-visitors">阅读量:<span id="twikoo_visitors">0</span></span>
+                        
+
+
             </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-02-17T13:10:36.000Z">
-                    2021-02-17
-                </time>
-                <a href="/posts/2151902749.html">
-                    数据库设计三范式
-                </a>
-                
+
+            <section class="post-content">
+
+              <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p><em><strong>GoF定义：将抽象部分与它的实现部分分离，使它们都可以独立地变化。</strong></em></p>
+<p>桥接模式，在程序世界中，其实就是组合/聚合的代名词。为什么这么说呢？熟悉面向对象的我们都知道继承的好处，子类可以共享父类的很多属性、功能。但是，继承也会带来一个问题，那就是严重的耦合性。父类的修改多少都会对子类产生影响，甚至一个方法或属性的修改都有可能让所有子类都去修改一遍。这样就违背了开放封装原则。而桥接就是为了解决这个问题，它强调的是用组合/聚合的方式来共享一些能用的方法。</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote>
+<p>代码下载：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/design/tree/master/bridge">https://github.com/mailjobblog/design/tree/master/bridge</a></p>
+</blockquote>
+<h2 id="UML"><a href="#UML" class="headerlink" title="UML"></a>UML</h2><p><img src="http://img.github.mailjob.net/20210512131801" alt="桥接模式"></p>
+<h2 id="解释Demo"><a href="#解释Demo" class="headerlink" title="解释Demo"></a>解释Demo</h2><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">interface</span> <span class="title">Implementor</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">OperationImp</span>(<span class="params"></span>)</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ConcreteImplementorA</span> <span class="keyword">implements</span> <span class="title">Implementor</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">OperationImp</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">&#x27;具体实现A&#x27;</span>, PHP_EOL;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ConcreteImplementorB</span> <span class="keyword">implements</span> <span class="title">Implementor</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">OperationImp</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">&#x27;具体实现B&#x27;</span>, PHP_EOL;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们先来定义实现接口以及它们具体的实现，也就是真正要执行的功能。就像是适配器模式中的Adaptee。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">Abstraction</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="keyword">protected</span> <span class="variable">$imp</span>;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">SetImplementor</span>(<span class="params">Implementor <span class="variable">$imp</span></span>)</span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;imp = <span class="variable">$imp</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">abstract</span> <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">Operation</span>(<span class="params"></span>)</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">RefinedAbstraction</span> <span class="keyword">extends</span> <span class="title">Abstraction</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">Operation</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;imp-&gt;OperationImp();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>定义抽象类的接口，并维护一个对实现的引用。具体的抽象类的实现方法中，我们直接调用实现接口的真实操作方法。类似于适配器中的Adapter。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$impA</span> = <span class="keyword">new</span> ConcreteImplementorA();</span><br><span class="line"><span class="variable">$impB</span> = <span class="keyword">new</span> ConcreteImplementorB();</span><br><span class="line"></span><br><span class="line"><span class="variable">$ra</span> = <span class="keyword">new</span> RefinedAbstraction();</span><br><span class="line"></span><br><span class="line"><span class="variable">$ra</span>-&gt;SetImplementor(<span class="variable">$impA</span>);</span><br><span class="line"><span class="variable">$ra</span>-&gt;Operation();</span><br><span class="line"></span><br><span class="line"><span class="variable">$ra</span>-&gt;SetImplementor(<span class="variable">$impB</span>);</span><br><span class="line"><span class="variable">$ra</span>-&gt;Operation();</span><br></pre></td></tr></table></figure>
+<p>客户端调用，我们的抽象类使用不用的实现类就可以让操作方法变成多态的感觉。</p>
+<ul>
+<li>在源码解释中，我们会发现，这个模式和适配器模式非常相似。但是，适配器的目的是为了帮助两个不太相关的类，让它们能够协同工作，实现中间转换工作。而桥接则是为了让方法的行为解除继承耦合，方便地添加、修改，动态调用行为，让抽象接口和实现部分可以独立进行改变</li>
+<li>让抽象接口和实现部分可以独立进行改变的意思是，只要维护了实现接口的引用，我们的实现接口的具体实现类可以是完全不同的类，里面有不同的功能，并且可以任意改变。让实现来自己决定它自己是什么。</li>
+<li>桥接模式的优点：分享接口及其实现部分、提高可扩充性、实现细节对客户透明</li>
+<li>桥接模式最主要解决的问题就是继承的不断增长而带来的紧耦合问题</li>
+<li>组合与聚合：聚合是弱关系，A可以包含B，但B不是A的一部分；组合是强关系，A包含B，B也是A的一部分，整体和部分的关系</li>
+</ul>
+<h2 id="场景化代码实现"><a href="#场景化代码实现" class="headerlink" title="场景化代码实现"></a>场景化代码实现</h2><h3 id="场景描述"><a href="#场景描述" class="headerlink" title="场景描述"></a>场景描述</h3><p>作为一个高端的汽车品牌，我们可以为客户提供定制化的需求。比如，定制化的颜色，定制化的检测，定制化的引擎 等等。在 <strong>抽象工厂</strong> 设计模式中，我们开发了，针对每个颜色的<strong>车身涂改车间</strong>配备每个对应的<strong>检测车间</strong>。</p>
+<p>但是这里有两个问题：1、涂改车间和对应的检测检车的高耦合性问题；2、涂改车间和检测车间的强依赖关系。</p>
+<p>在 <strong>桥接模式</strong> 中，我们要做的就是对这个设计模式进行解偶，以便让<strong>涂改车间</strong>和<strong>检测车间</strong>之间<strong>随意组合</strong>。</p>
+<h3 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h3><p>首先，我们计划建造3个车身涂改车间，2个检测车间。流程上是车身涂改完成后，可以随意的进入某一个检测车间。</p>
+<p><strong>interface.php</strong></p>
+<ul>
+<li>定义车身涂改的接口</li>
+<li>对于颜色车间：黄色、红色、蓝色，去继承这个接口类，并且实现其中的车身涂改方法</li>
+</ul>
+<p><strong>abstract.php</strong></p>
+<ul>
+<li>定义桥接模式的抽象类</li>
+<li>定义绑定的车身涂改类</li>
+<li>抽象化检测方法</li>
+<li>两个检测车间，分别去实现这个检测方法</li>
+</ul>
+<p><strong>bridge.php 测试</strong></p>
+<ul>
+<li>将涂改蓝色车身的车间，和2号检测车间，进行组装。测试输出。</li>
+</ul>
+
             </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-02-17T12:27:15.000Z">
-                    2021-02-17
-                </time>
-                <a href="/posts/287046586.html">
-                    notes：mysql 8.0 索引函数
-                </a>
-                
-            </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-02-17T12:27:00.000Z">
-                    2021-02-17
-                </time>
-                <a href="/posts/1228407361.html">
-                    notes：mysql5.7虚拟列
-                </a>
-                
-            </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-02-17T10:28:08.000Z">
-                    2021-02-17
-                </time>
-                <a href="/posts/2162225682.html">
-                    Mysql优化器追踪分析sql语句
-                </a>
-                
-            </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-02-16T22:08:09.000Z">
-                    2021-02-17
-                </time>
-                <a href="/posts/694055385.html">
-                    Mysql 的IO写入流程与写入方式
-                </a>
-                
-            </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-02-16T21:10:08.000Z">
-                    2021-02-17
-                </time>
-                <a href="/posts/2104264831.html">
-                    Mysql 事务与锁的关系
-                </a>
-                
-            </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-02-16T17:46:33.000Z">
-                    2021-02-17
-                </time>
-                <a href="/posts/2327774433.html">
-                    MVCC 多版本并发控制机制详解
-                </a>
-                
-            </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-02-16T17:45:45.000Z">
-                    2021-02-17
-                </time>
-                <a href="/posts/1291031357.html">
-                    MVCC undo-log 版本链详解
-                </a>
-                
-            </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-02-16T17:45:05.000Z">
-                    2021-02-17
-                </time>
-                <a href="/posts/607672036.html">
-                    Mysql事务隔离级别
-                </a>
-                
-            </section>
-            
-        </article>
-        
-  
-    <div class="pagination">
-      <a class="extend prev" rel="prev" href="/tags/mysql/page/2/">上一页</a><a class="page-number" href="/tags/mysql/">1</a><a class="page-number" href="/tags/mysql/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/tags/mysql/page/4/">4</a><a class="extend next" rel="next" href="/tags/mysql/page/4/">下一页</a>
-    </div>
-  
-    </div>
+    </article>
     
-    <aside>
-        <div class="aside-wrap">
+
+
+        <!-- 版权声明 -->
+        
+<div class="post-copyright">
+    <!-- <div>
+        <strong>本文作者：</strong>
+        <span>李斌</span>
+    </div> -->
+    <div>
+        <strong>本文链接：</strong>
+        <a href="https://blog.mailjob.net/posts/3172537884.html">
+            <!-- https://blog.mailjob.net/design/设计模式之桥接模式 -->
+            https://blog.mailjob.net/posts/3172537884.html
+        </a>
+    </div>
+    <div>
+        <!-- <span>欢迎任何形式的转载，请务必注明出处。</span> -->
+    </div>
+    <div>
+        <span>
+            该网站发布的内容，遵循
+            <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>
+            版权协议，转载请附上原文出处链接和本声明。
+        </span>
+    </div>
+</div>
+
+
+
+<style>
+    .post-copyright {
+        background-color: #fff;
+  box-shadow: 0px 0px 1px 1px rgba(0, 0, 0, 0.05);
+        display: block;
+        margin: 20px auto;
+        margin-bottom: 15px;
+        padding: 10px;
+        font-size: 15px;
+        color: #2e2d2d;
+        word-break: break-all;
+        line-height: 1.8;
+    }
+
+
+    .post-copyright a {
+        color: #2e2d2d;
+        border-bottom: 1px solid #999; 
+    }
+
+    .post-copyright a:hover {
+        color: #2e2d2d;
+        border-bottom: 1px solid #000; 
+    }
+</style>
+
+          <!-- comments -->
+          <div class="comments">
+    <h3 id="commenttitle" style="margin-top: 20px;margin-left: 10px;">评论区</h3>
+    <div id="tcomment"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/twikoo@0.6.0/dist/twikoo.all.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/twikoo@1.0.0/dist/twikoo.all.min.js"></script> -->
+
+<script>twikoo.init({ envId: 'jefferyjob-github-io-3b53ee3a93b', el: '#tcomment' })</script>
+
+            <div class="right-icon">
+              <div id="to-valine" class="right-icon-item">
+                <a href="#commenttitle">评论</a>
+              </div>
+            </div>
+
+  </div>
+
+
+  <aside>
+    <div class="aside-wrap">
     
         <section class="widget-wrap">
     <h3 class="widget-title">简介</h3>
@@ -526,12 +570,33 @@
     
 </div>
 
-    </aside>
-   
-    
+
+      <!-- 目录 -->
+      
+        <div id="toc"></div>
+        <script>
+          $(function () {
+            var elm = $('#toc');
+            var startPos = $(elm).offset().top;
+            $.event.add(window, "scroll", function () {
+              var p = $(window).scrollTop();
+              $(elm).css('margin-left', '0px');
+              $(elm).css('position', ((p) > startPos) ? 'fixed' : 'static');
+              $(elm).css('top', ((p) > startPos) ? '20px' : '')
+            })
+          })
+
+        </script>
+
+  </aside>
+  
 </div>
 
 
+<script>
+  $('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
+
+</script>
                 </div>
             </div>
             <div class="right-icon">

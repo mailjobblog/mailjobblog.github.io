@@ -3,7 +3,7 @@
   <meta charset="utf-8">
   
   <title>
-    PHP的错误与异常处理 | 李斌的技术博客
+    PHP实现IO异步模型(asynchronous) | 李斌的技术博客
   </title>
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <meta name="theme-color" content="#4184f3">
@@ -160,14 +160,14 @@
             </header>
 
             <h1 class="post-title">
-              PHP的错误与异常处理
+              PHP实现IO异步模型(asynchronous)
             </h1>
 
             <section class="post-info post-info-bottom">
 
               <span class="post-date">发布于
                 <span class="post-date-text">
-                   2021-03-19
+                   2021-05-19
                 </span>
               </span>
 
@@ -176,12 +176,12 @@
 
               
                 <span class="post-category">分类:
-                  <a class="article-category-link" href="/categories/php/">php</a>
+                  <a class="article-category-link" href="/categories/swoole/">swoole</a>
                 </span>
                 
                   
                     <span class="post-tags">
-                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/php/" rel="tag">php</a></li></ul>
+                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/php/" rel="tag">php</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/swoole/" rel="tag">swoole</a></li></ul>
                     </span>
                     
 
@@ -195,53 +195,7 @@
 
             <section class="post-content">
 
-              <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
-<p>PHP提供了错误处理和日志记录的功能. 这些函数允许你定义自己的错误处理规则，以及修改错误记录的方式. 这样，你就可以根据自己的需要，来更改和加强错误输出信息以满足实际需要.</p>
-<p>通过日志记录功能，你可以将信息直接发送到其他日志服务器，或者发送到指定的电子邮箱（或者通过邮件网关发送），或者发送到操作系统日志等，从而可以有选择的记录和监视你的应用程序和网站的最重要的部分。</p>
-<p>错误报告功能允许你自定义错误反馈的级别和类型，可以是简单的提示信息或者使用自定义的函数进行处理并返回信息.</p>
-</blockquote>
-<p><strong>error：</strong></p>
-<p>不能在编译期发现的运行期错误，不如试图用 echo 输出一个未赋值的变量，这类问题往往导致程序或逻辑无法继续下去而需要中断；</p>
-<p><strong>exception：</strong></p>
-<p>程序执行过程中出现意料之外的情况，逻辑上往往是行得通的，但不符合应用场景，比如接收到一个长度超出预定格式的用户命名，因此，异常主要靠编码人员做预先做判断后抛出，捕获异常后改变程序流程来处理这些情况，不必中断程序。</p>
-<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote>
-<p>PHP官方文档：<a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/book.errorfunc.php">https://www.php.net/manual/zh/book.errorfunc.php</a></p>
-<p>Exception预定义异常：<a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/class.exception.php">https://www.php.net/manual/zh/class.exception.php</a></p>
-<p>错误处理函数：<a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/ref.errorfunc.php">https://www.php.net/manual/zh/ref.errorfunc.php</a></p>
-</blockquote>
-<h2 id="示例演示"><a href="#示例演示" class="headerlink" title="示例演示"></a>示例演示</h2><h3 id="try-catch"><a href="#try-catch" class="headerlink" title="try-catch"></a>try-catch</h3><p><strong>try-catch捕获异常</strong></p>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">	<span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Exception</span>(<span class="string">&#x27;an error&#x27;</span>); <span class="comment">// 抛出异常</span></span><br><span class="line">	<span class="comment">// you codes that maybe cause an error</span></span><br><span class="line">&#125;<span class="keyword">catch</span>(\<span class="built_in">Exception</span> <span class="variable">$e</span>)&#123; <span class="comment">// 这个错误对象需要声明类型， Exception 是系统默认异常处理类</span></span><br><span class="line">	<span class="keyword">echo</span> <span class="variable">$e</span>-&gt;getMessage().PHP_EOL;</span><br><span class="line">	var_dump(<span class="variable">$e</span>-&gt;getCode());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 输出</span></span><br><span class="line"><span class="comment">//an error int(0)</span></span><br></pre></td></tr></table></figure>
-<p><strong>try-catch扩展catch子句</strong></p>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="comment">// ErrorException：用set_error_handler()函数将错误信息托管至ErrorException。是 PHP 5 增加的异常类以便将错误封装为异常，可以更好地处理错误信息，继承于 Exception。</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 自定义错误类</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MyException</span> <span class="keyword">extends</span> <span class="title">Exception</span></span>&#123;</span><br><span class="line">   <span class="keyword">public</span> <span class="variable">$errType</span> = <span class="string">&#x27;default&#x27;</span>;</span><br><span class="line">   <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__construct</span>(<span class="params"><span class="variable">$errType</span>=<span class="string">&#x27;&#x27;</span></span>)</span>&#123;</span><br><span class="line">      <span class="keyword">$this</span>-&gt;errType = <span class="variable">$errType</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 测试实例</span></span><br><span class="line"><span class="keyword">try</span>&#123;  <span class="comment">// you codes that maybe cause an error</span></span><br><span class="line">   <span class="keyword">throw</span> <span class="keyword">new</span> MyException(<span class="string">&#x27;My an error&#x27;</span>);</span><br><span class="line">&#125;<span class="keyword">catch</span>(MyException <span class="variable">$err</span>)&#123; <span class="comment">// 这个错误对象需要声明类型 </span></span><br><span class="line">   <span class="keyword">echo</span> <span class="variable">$err</span>-&gt;errType.PHP_EOL; </span><br><span class="line">&#125;<span class="keyword">catch</span>(<span class="built_in">ErrorException</span> <span class="variable">$e</span>)&#123;</span><br><span class="line">   <span class="keyword">echo</span> <span class="string">&#x27;error !&#x27;</span>.<span class="variable">$e</span>-&gt;getMessage().PHP_EOL; </span><br><span class="line">&#125;<span class="keyword">catch</span>(<span class="built_in">Exception</span> <span class="variable">$e</span>)&#123;</span><br><span class="line">   <span class="keyword">echo</span> <span class="variable">$e</span>-&gt;getMessage().PHP_EOL;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 输出</span></span><br><span class="line"><span class="comment">// My an error</span></span><br></pre></td></tr></table></figure>
-<h3 id="Exception异常的回调函数"><a href="#Exception异常的回调函数" class="headerlink" title="Exception异常的回调函数"></a>Exception异常的回调函数</h3><p><strong>error_log</strong></p>
-<blockquote>
-<p>error_log() 函数向服务器错误记录、文件或远程目标发送一个错误。</p>
-<p>如果成功该函数返回 TRUE，如果失败该函数返回 FALSE。</p>
-</blockquote>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="variable">$test</span>=<span class="number">2</span>;</span><br><span class="line"><span class="keyword">if</span> (<span class="variable">$test</span>&gt;<span class="number">1</span>) &#123;</span><br><span class="line">	error_log(<span class="string">&quot;触发自定义错误&quot;</span>,<span class="number">1</span>,<span class="string">&quot;someone@example.com&quot;</span>,<span class="string">&quot;From: webmaster@example.com&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><strong>set_error_handler 自定义错误处理函数</strong></p>
-<blockquote>
-<p>该函数用于创建运行期间的用户自己的错误处理方法。</p>
-<p>该函数返回旧的错误处理程序，如果失败则返回 NULL</p>
-</blockquote>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="comment">//error handler function</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">customError</span>(<span class="params"><span class="variable">$errno</span>, <span class="variable">$errstr</span>, <span class="variable">$errfile</span>, <span class="variable">$errline</span></span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">echo</span> <span class="string">&quot;&lt;b&gt;Custom error:&lt;/b&gt; [<span class="subst">$errno</span>] <span class="subst">$errstr</span>&lt;br /&gt;&quot;</span>;</span><br><span class="line">	<span class="keyword">echo</span> <span class="string">&quot; Error on line 错误行数 <span class="subst">$errline</span> in <span class="subst">$errfile</span>&lt;br /&gt;&quot;</span>;</span><br><span class="line">	<span class="keyword">echo</span> <span class="string">&quot;Ending Script&quot;</span>;</span><br><span class="line">	<span class="keyword">die</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//set error handler</span></span><br><span class="line">set_error_handler(<span class="string">&quot;customError&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="variable">$test</span>=<span class="number">2</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">//trigger error</span></span><br><span class="line"><span class="keyword">if</span> (<span class="variable">$test</span>&gt;<span class="number">1</span>) &#123;</span><br><span class="line">	trigger_error(<span class="string">&quot;出发自定义错误&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">输出</span></span><br><span class="line"><span class="comment">Custom error: [1024] 出发自定义错误</span></span><br><span class="line"><span class="comment">Error on line 错误行数 18 in F:\www\aaa.php</span></span><br><span class="line"><span class="comment">Ending Script</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
-<p><strong>set_exception_handler 自定义异常处理函数</strong></p>
-<blockquote>
-<p>该函数用于创建运行期间的用户自己的异常处理方法。</p>
-<p>该函数返回旧的异常处理程序，如果失败则返回 NULL。</p>
-</blockquote>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">myException</span>(<span class="params"><span class="variable">$exception</span></span>) </span>&#123;</span><br><span class="line">	<span class="keyword">echo</span> <span class="string">&quot;&lt;b&gt;Exception:&lt;/b&gt; &quot;</span> , <span class="variable">$exception</span>-&gt;getMessage();</span><br><span class="line">&#125;</span><br><span class="line">set_exception_handler(<span class="string">&#x27;myException&#x27;</span>);</span><br><span class="line"><span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Exception</span>(<span class="string">&#x27;自定义异常处理返回&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">返回：</span></span><br><span class="line"><span class="comment">Exception: 自定义异常处理返回</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
-<p><strong>error_get_last 获得最后发生的错误</strong></p>
-<blockquote>
-<p>该函数以数组的形式返回最后发生的错误。如果没有错误发生则返回 NULL</p>
-</blockquote>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$test</span> + <span class="variable">$abc</span>;</span><br><span class="line">print_r(error_get_last());</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">输出</span></span><br><span class="line"><span class="comment">Array ( [type] =&gt; 8 [message] =&gt; Undefined variable: abc [file] =&gt; F:\www\aaa.php [line] =&gt; 2 )</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
-<p><strong>register_shutdown_function 注册一个会在php中止时执行的函数</strong></p>
-<blockquote>
-<p>注册一个 <code>callback</code> ，它会在脚本执行完成或者 <a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/function.exit.php">exit()</a> 后被调用。</p>
-</blockquote>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">shutdown</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// This is our shutdown function, in </span></span><br><span class="line">    <span class="comment">// here we can do any last operations</span></span><br><span class="line">    <span class="comment">// before the script is complete.</span></span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&#x27;Script executed with success&#x27;</span>, PHP_EOL;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">register_shutdown_function(<span class="string">&#x27;shutdown&#x27;</span>);</span><br></pre></td></tr></table></figure>
-
+              
             </section>
     </article>
     
@@ -256,9 +210,9 @@
     </div> -->
     <div>
         <strong>本文链接：</strong>
-        <a href="https://blog.mailjob.net/posts/3400454965.html">
-            <!-- https://blog.mailjob.net/php/错误与异常处理 -->
-            https://blog.mailjob.net/posts/3400454965.html
+        <a href="https://blog.mailjob.net/posts/3605085039.html">
+            <!-- https://blog.mailjob.net/swoole/PHP实现IO异步模型 -->
+            https://blog.mailjob.net/posts/3605085039.html
         </a>
     </div>
     <div>

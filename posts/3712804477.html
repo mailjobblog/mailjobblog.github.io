@@ -3,7 +3,7 @@
   <meta charset="utf-8">
   
   <title>
-    Elasticsearch 基本概念 | 李斌的技术博客
+    docker中安装php的扩展 | 李斌的技术博客
   </title>
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <meta name="theme-color" content="#4184f3">
@@ -160,14 +160,14 @@
             </header>
 
             <h1 class="post-title">
-              Elasticsearch 基本概念
+              docker中安装php的扩展
             </h1>
 
             <section class="post-info post-info-bottom">
 
               <span class="post-date">发布于
                 <span class="post-date-text">
-                   2021-02-22
+                   2021-05-19
                 </span>
               </span>
 
@@ -176,12 +176,12 @@
 
               
                 <span class="post-category">分类:
-                  <a class="article-category-link" href="/categories/mysql/">mysql</a>
+                  <a class="article-category-link" href="/categories/docker/">docker</a>
                 </span>
                 
                   
                     <span class="post-tags">
-                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/es/" rel="tag">es</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li></ul>
+                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/php/" rel="tag">php</a></li></ul>
                     </span>
                     
 
@@ -195,86 +195,45 @@
 
             <section class="post-content">
 
-              <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
-<p>对于 es 这个搜索引擎来说，某些数据命名上和mysql的叫法不一样，所以也就存在不同的理解</p>
-</blockquote>
-<h2 id="概念理解"><a href="#概念理解" class="headerlink" title="概念理解"></a>概念理解</h2><h3 id="基本命名"><a href="#基本命名" class="headerlink" title="基本命名"></a>基本命名</h3><table>
-<thead>
-<tr>
-<th>DB</th>
-<th>Elasticsearch</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>数据库(database)</td>
-<td>索引(indices)</td>
-</tr>
-<tr>
-<td>表(tables)</td>
-<td>类型(types)</td>
-</tr>
-<tr>
-<td>行(rows)</td>
-<td>文档(documents)</td>
-</tr>
-<tr>
-<td>字段(columns)</td>
-<td>字段(fields)</td>
-</tr>
-</tbody></table>
-<p>elasticsearch(集群)中可以包含多个索引(数据库)，每个索引中可以包含多个类型(表)，每个类型下又包含多个文档(行)，每个文档中又包含多个字段(列)。</p>
-<h3 id="物理设计"><a href="#物理设计" class="headerlink" title="物理设计"></a>物理设计</h3><p>elasticsearch 在后台把每个索引划分成多个分片，每分分片可以在集群中的不同服务器间迁移。一个人就是一个集群！默认的集群名称就是 elaticsearh</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;node-1&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;cluster_name&quot;</span>: <span class="string">&quot;my-application&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;cluster_uuid&quot;</span>: <span class="string">&quot;yM6l-wYUSQSSwAVaQKhNzA&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;version&quot;</span>: &#123;</span><br><span class="line">        <span class="attr">&quot;number&quot;</span>: <span class="string">&quot;7.6.1&quot;</span>,</span><br><span class="line">        <span class="attr">&quot;build_flavor&quot;</span>: <span class="string">&quot;default&quot;</span>,</span><br><span class="line">        <span class="attr">&quot;build_type&quot;</span>: <span class="string">&quot;tar&quot;</span>,</span><br><span class="line">        <span class="attr">&quot;build_hash&quot;</span>: <span class="string">&quot;aa751e09be0a5072e8570670309b1f12348f023b&quot;</span>,</span><br><span class="line">        <span class="attr">&quot;build_date&quot;</span>: <span class="string">&quot;2020-02-29T00:15:25.529771Z&quot;</span>,</span><br><span class="line">        <span class="attr">&quot;build_snapshot&quot;</span>: <span class="literal">false</span>,</span><br><span class="line">        <span class="attr">&quot;lucene_version&quot;</span>: <span class="string">&quot;8.4.0&quot;</span>,</span><br><span class="line">        <span class="attr">&quot;minimum_wire_compatibility_version&quot;</span>: <span class="string">&quot;6.8.0&quot;</span>,</span><br><span class="line">        <span class="attr">&quot;minimum_index_compatibility_version&quot;</span>: <span class="string">&quot;6.0.0-beta1&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;tagline&quot;</span>: <span class="string">&quot;You Know, for Search&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="逻辑设计"><a href="#逻辑设计" class="headerlink" title="逻辑设计"></a>逻辑设计</h3><p>一个索引类型中，包含多个文档，比如说文档1，文档2。 当我们索引一篇文档时，可以通过这样的一各 顺序找到 它: <code>索引 ▷ 类型 ▷ 文档ID</code> ，通过这个组合我们就能索引到某个具体的文档。 注意:ID不必是整 数，实际上它是个字 符串。</p>
-<h2 id="ES基本概念理解"><a href="#ES基本概念理解" class="headerlink" title="ES基本概念理解"></a>ES基本概念理解</h2><h3 id="文档"><a href="#文档" class="headerlink" title="文档"></a>文档</h3><p>就是我们的一条条数据</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">user</span><br><span class="line">1 zhangsan 18</span><br><span class="line">2 kuangshen 3</span><br></pre></td></tr></table></figure>
-<p>之前说elasticsearch是面向文档的，那么就意味着索引和搜索数据的最小单位是文档，elasticsearch 中，文档有几个 重要属性 :</p>
-<ul>
-<li>自我包含，一篇文档同时包含字段和对应的值，也就是同时包含 key:value！</li>
-<li>可以是层次型的，一个文档中包含自文档，复杂的逻辑实体就是这么来的！ {就是一个json对象！ fastjson进行自动转换！}</li>
-<li>灵活的结构，文档不依赖预先定义的模式，我们知道关系型数据库中，要提前定义字段才能使用， 在elasticsearch中，对于字段是非常灵活的，有时候，我们可以忽略该字段，或者动态的添加一个 新的字段。</li>
+              <h2 id="Docker-中的PHP容器安装扩展的方式有"><a href="#Docker-中的PHP容器安装扩展的方式有" class="headerlink" title="Docker 中的PHP容器安装扩展的方式有"></a>Docker 中的PHP容器安装扩展的方式有</h2><ol>
+<li>通过pecl方式安装</li>
+<li>通过php 容器中自带的几个特殊命令来安装，这些特殊命令可以在Dockerfile中的RUN命令中进行使用。</li>
+<li>下载安装扩展，或者复制进容器安装扩展</li>
+</ol>
+<h2 id="通过pecl方式安装"><a href="#通过pecl方式安装" class="headerlink" title="通过pecl方式安装"></a>通过pecl方式安装</h2><p>因为一些扩展并不包含在 PHP 源码文件中，所有需要使用 PECL（PHP 的扩展库仓库，通过 PEAR 打包）。用 pecl install 安装扩展，然后再用官方提供的 docker-php-ext-enable 快捷脚本来启用扩展，如下示例</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> php:<span class="number">7.1</span>-fpm</span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> apt-get update \</span></span><br><span class="line"><span class="bash">	<span class="comment"># 手动安装依赖</span></span></span><br><span class="line">	&amp;&amp; apt-get install -y libmemcached-dev zlib1g-dev \</span><br><span class="line">	<span class="comment"># 安装需要的扩展</span></span><br><span class="line">   &amp;&amp; pecl install memcached-<span class="number">2.2</span>.<span class="number">0</span> \</span><br><span class="line">   <span class="comment"># 启用扩展</span></span><br><span class="line">   &amp;&amp; docker-php-ext-enable memcached</span><br></pre></td></tr></table></figure>
+<h2 id="通过几个特殊命令安装"><a href="#通过几个特殊命令安装" class="headerlink" title="通过几个特殊命令安装"></a>通过几个特殊命令安装</h2><ul>
+<li>docker-php-source</li>
+<li>docker-php-ext-install</li>
+<li>docker-php-ext-enable</li>
+<li>docker-php-ext-configure</li>
 </ul>
-<p>尽管我们可以随意的新增或者忽略某个字段，但是，每个字段的类型非常重要，比如一个年龄字段类 型，可以是字符 串也可以是整形。因为elasticsearch会保存字段和类型之间的映射及其他的设置。这种映射具体到每个映射的每种类型，这也是为什么在elasticsearch中，类型有时候也称为映射类型。</p>
-<h3 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h3><p>就是数据库！</p>
-<p>索引是映射类型的容器，elasticsearch中的索引是一个非常大的文档集合。索引存储了映射类型的字段 和其他设置。 然后它们被存储到了各个分片上了。 我们来研究下分片是如何工作的。</p>
-<p><strong>物理设计 ：节点和分片 如何工作</strong></p>
-<p><img src="http://img.github.mailjob.net/oss.github/20210222124657.png" alt="img"></p>
-<p>一个集群至少有一个节点，而一个节点就是一个elasricsearch进程，节点可以有多个索引默认的，如果 你创建索引，那么索引将会有个5个分片 ( primary shard ,又称主分片 ) 构成的，每一个主分片会有一个 副本 ( replica shard ,又称复制分片 )</p>
-<p><img src="http://img.github.mailjob.net/oss.github/20210222124710.png" alt="img"></p>
-<p>上图是一个有3个节点的集群，可以看到主分片和对应的复制分片都不会在同一个节点内，这样有利于某 个节点挂掉 了，数据也不至于丢失。 实际上，一个分片是一个Lucene索引，一个包含倒排索引的文件 目录，倒排索引的结构使 得elasticsearch在不扫描全部文档的情况下，就能告诉你哪些文档包含特定的 关键字。 不过，等等，倒排索引是什 么鬼?</p>
-<h3 id="倒排索引"><a href="#倒排索引" class="headerlink" title="倒排索引"></a>倒排索引</h3><p>elasticsearch使用的是一种称为倒排索引的结构，采用Lucene倒排索作为底层。这种结构适用于快速的全文搜索， 一个索引由文档中所有不重复的列表构成，对于每一个词，都有一个包含它的文档列表。 例如，现在有两个文档， 每个文档包含如下内容：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Study every day, good good up to forever # 文档1包含的内容</span><br><span class="line">To forever, study every day, good good up # 文档2包含的内容</span><br></pre></td></tr></table></figure>
-<p>为了创建倒排索引，我们首先要将每个文档拆分成独立的词(或称为词条或者tokens)，然后创建一个包 含所有不重 复的词条的排序列表，然后列出每个词条出现在哪个文档</p>
-<p>现在，我们试图搜索 to forever，只需要查看包含每个词条的文档</p>
-<table>
-<thead>
-<tr>
-<th>term</th>
-<th>doc_1</th>
-<th>doc_2</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>to</td>
-<td>√</td>
-<td>×</td>
-</tr>
-<tr>
-<td>forever</td>
-<td>√</td>
-<td>√</td>
-</tr>
-<tr>
-<td>total</td>
-<td>2</td>
-<td>1</td>
-</tr>
-</tbody></table>
-<p>两个文档都匹配，但是第一个文档比第二个匹配程度更高。如果没有别的条件，现在，这两个包含关键 字的文档都将返回。</p>
-<p>再来看一个示例，比如我们通过博客标签来搜索博客文章。那么倒排索引列表就是这样的一个结构 :</p>
-<p><img src="http://img.github.mailjob.net/oss.github/20210222124732.png" alt="img"></p>
-<p>如果要搜索含有 python 标签的文章，那相对于查找所有原始数据而言，查找倒排索引后的数据将会快 的多。只需要 查看标签这一栏，然后获取相关的文章ID即可。完全过滤掉无关的所有数据，提高效率！</p>
-<h3 id="elasticsearch的索引和Lucene的索引对比"><a href="#elasticsearch的索引和Lucene的索引对比" class="headerlink" title="elasticsearch的索引和Lucene的索引对比"></a>elasticsearch的索引和Lucene的索引对比</h3><p>在elasticsearch中， 索引 （库）这个词被频繁使用，这就是术语的使用。 在elasticsearch中，索引被 分为多个分片，每份 分片是一个Lucene的索引。所以一个elasticsearch索引是由多个Lucene索引组成 的。别问为什么，谁让elasticsearch使用Lucene作为底层呢! 如无特指，说起索引都是指elasticsearch 的索引。</p>
+<h3 id="演示这三个命令的作用"><a href="#演示这三个命令的作用" class="headerlink" title="演示这三个命令的作用"></a>演示这三个命令的作用</h3><p>都是在PHP容器中进行演示的，PHP容器启动太简单，不作过多介绍</p>
+<h4 id="docker-php-source"><a href="#docker-php-source" class="headerlink" title="docker-php-source"></a>docker-php-source</h4><p>此命令，实际上就是在PHP容器中创建一个/usr/src/php的目录，里面放了一些自带的文件而已。我们就把它当作一个从互联网中下载下来的PHP扩展源码的存放目录即可。事实上，所有PHP扩展源码扩展存放的路径： /usr/src/php/ext 里面。</p>
+<p><strong>格式</strong>：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker-php-source extract | delete</span><br></pre></td></tr></table></figure>
+<p><strong>参数说明</strong>：<br>* extract : 创建并初始化 /usr/src/php目录<br>* delete : 删除 /usr/src/php目录</p>
+<p><strong>案例</strong>：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">root@803cbcf702a4:/usr/src# ls -l</span><br><span class="line">total 11896 #此时，并没有php目录</span><br><span class="line">-rw-r--r-- 1 root root 12176404 Jun 28 03:23 php.tar.xz</span><br><span class="line">-rw-r--r-- 1 root root      801 Jun 28 03:23 php.tar.xz.asc</span><br><span class="line"></span><br><span class="line">root@803cbcf702a4:/usr/src# docker-php-source extract</span><br><span class="line">root@803cbcf702a4:/usr/src# ls -l</span><br><span class="line">total 11900 #此时，生产了php目录，里面还有一些文件，由于篇幅问题，就不进去查看了</span><br><span class="line">drwxr-xr-x 14 root root     4096 Aug  9 09:01 php</span><br><span class="line">-rw-r--r--  1 root root 12176404 Jun 28 03:23 php.tar.xz</span><br><span class="line">-rw-r--r--  1 root root      801 Jun 28 03:23 php.tar.xz.asc</span><br><span class="line"></span><br><span class="line">root@803cbcf702a4:/usr/src# docker-php-source delete</span><br><span class="line">root@803cbcf702a4:/usr/src# ls -l</span><br><span class="line">total 11896 #此时，将已创建 php 目录给删除了</span><br><span class="line">-rw-r--r-- 1 root root 12176404 Jun 28 03:23 php.tar.xz</span><br><span class="line">-rw-r--r-- 1 root root      801 Jun 28 03:23 php.tar.xz.asc</span><br><span class="line"></span><br><span class="line">root@803cbcf702a4:/usr/src#</span><br></pre></td></tr></table></figure>
+<h4 id="docker-php-ext-enable"><a href="#docker-php-ext-enable" class="headerlink" title="docker-php-ext-enable"></a>docker-php-ext-enable</h4><p>这个命令，就是用来启动 <strong>PHP扩展</strong> 的。我们使用pecl安装PHP扩展的时候，默认是没有启动这个扩展的，如果想要使用这个扩展必须要在php.ini这个配置文件中去配置一下才能使用这个PHP扩展。而 docker-php-ext-enable 这个命令则是自动给我们来启动PHP扩展的，不需要你去php.ini这个配置文件中去配置。<br><strong>案例</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 查看现有可以启动的扩展</span></span><br><span class="line">root@517b9c67507a:/usr/local/etc/php# ls /usr/local/lib/php/extensions/no-debug-non-zts-20170718/</span><br><span class="line">opcache.so  redis.so  sodium.so</span><br><span class="line">root@517b9c67507a:/usr/local/etc/php#</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看redis 扩展是否可以启动</span></span><br><span class="line">root@517b9c67507a:/usr/local/etc/php# php -m | grep redis</span><br><span class="line">root@517b9c67507a:/usr/local/etc/php#</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 启动 redis 扩展</span></span><br><span class="line">root@517b9c67507a:/usr/local/etc/php# docker-php-ext-enable redis</span><br><span class="line"><span class="meta">#</span><span class="bash"> 启动 成功</span></span><br><span class="line">root@517b9c67507a:/usr/local/etc/php# php -m | grep redis</span><br><span class="line">redis</span><br><span class="line">root@517b9c67507a:/usr/local/etc/php#</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash">说明，php容器中默认是没有php.ini配置文件的,加载原理如下所示</span></span><br><span class="line"></span><br><span class="line">root@517b9c67507a:/usr/local/etc/php# php -i | grep -A 5 php.ini</span><br><span class="line">Configuration File (php.ini) Path =&gt; /usr/local/etc/php</span><br><span class="line">Loaded Configuration File =&gt; (none)</span><br><span class="line"><span class="meta">#</span><span class="bash"> 核心是 /usr/<span class="built_in">local</span>/etc/php/conf.d 目录下的扩展配置文件</span></span><br><span class="line">Scan this dir for additional .ini files =&gt; /usr/local/etc/php/conf.d</span><br><span class="line">Additional .ini files parsed =&gt; /usr/local/etc/php/conf.d/docker-php-ext-redis.ini,</span><br><span class="line">/usr/local/etc/php/conf.d/docker-php-ext-sodium.ini</span><br><span class="line"></span><br><span class="line">root@517b9c67507a:/usr/local/etc/php#</span><br></pre></td></tr></table></figure>
+<h4 id="docker-php-ext-install"><a href="#docker-php-ext-install" class="headerlink" title="docker-php-ext-install"></a>docker-php-ext-install</h4><p>这个命令，是用来安装并启动<strong>PHP扩展</strong>的。<br>命令格式：<br>docker-php-ext-install “源码包目录名”</p>
+<p>注意点：</p>
+<ul>
+<li>“源码包“需要放在 /usr/src/php/ext 下</li>
+<li>默认情况下，PHP容器没有 /usr/src/php这个目录，需要使用 docker-php-source extract来生成。</li>
+<li>docker-php-ext-install 安装的扩展在安装完成后，会自动调用docker-php-ext-enable来启动安装的扩展。</li>
+<li>卸载扩展，直接删除/usr/local/etc/php/conf.d 对应的配置文件即可。</li>
+</ul>
+<p><strong>案例</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 卸载redis 扩展</span></span><br><span class="line">root@803cbcf702a4:/usr/local# rm -rf /usr/local/etc/php/conf.d/docker-php-ext-redis.ini</span><br><span class="line">root@803cbcf702a4:/usr/local# php -m </span><br><span class="line">[PHP Modules]</span><br><span class="line">Core</span><br><span class="line">ctype</span><br><span class="line">curl</span><br><span class="line">date</span><br><span class="line">dom</span><br><span class="line">fileinfo</span><br><span class="line">filter</span><br><span class="line">ftp</span><br><span class="line">hash</span><br><span class="line">iconv</span><br><span class="line">json</span><br><span class="line">libxml</span><br><span class="line">mbstring</span><br><span class="line">mysqlnd</span><br><span class="line">openssl</span><br><span class="line">pcre</span><br><span class="line">PDO</span><br><span class="line">pdo_sqlite</span><br><span class="line">Phar</span><br><span class="line">posix</span><br><span class="line">readline</span><br><span class="line">Reflection</span><br><span class="line">session</span><br><span class="line">SimpleXML</span><br><span class="line">sodium</span><br><span class="line">SPL</span><br><span class="line">sqlite3</span><br><span class="line">standard</span><br><span class="line">tokenizer</span><br><span class="line">xml</span><br><span class="line">xmlreader</span><br><span class="line">xmlwriter</span><br><span class="line">zlib</span><br><span class="line"></span><br><span class="line">[Zend Modules]</span><br><span class="line"></span><br><span class="line">root@803cbcf702a4:/usr/local#</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash">PHP容器默认是没有redis扩展的。所以我们通过docker-php-ext-install安装redis扩展</span></span><br><span class="line"></span><br><span class="line">root@803cbcf702a4:/# curl -L -o /tmp/reids.tar.gz https://codeload.github.com/phpredis/phpredis/tar.gz/5.0.2</span><br><span class="line"></span><br><span class="line">root@803cbcf702a4:/# cd /tmp</span><br><span class="line">root@517b9c67507a:/tmp# tar -xzf reids.tar.gz</span><br><span class="line">root@517b9c67507a:/tmp# ls</span><br><span class="line">phpredis-5.0.2	reids.tar.gz</span><br><span class="line">root@517b9c67507a:/tmp# docker-php-source extract</span><br><span class="line">root@517b9c67507a:/tmp# mv phpredis-5.0.2 /usr/src/php/ext/phpredis</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash">检查移过去的插件源码包是否存在</span></span><br><span class="line">root@517b9c67507a:/tmp# ls -l /usr/src/php/ext | grep redis</span><br><span class="line">drwxrwxr-x  6 root root 4096 Jul 29 15:04 phpredis</span><br><span class="line">root@517b9c67507a:/tmp# docker-php-ext-install phpredis</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 检查redis 扩展是否已经安装上</span></span><br><span class="line">root@517b9c67507a:/tmp# php -m | grep redis</span><br><span class="line">redis</span><br><span class="line">root@517b9c67507a:/tmp#</span><br></pre></td></tr></table></figure>
+<h4 id="docker-php-ext-configure"><a href="#docker-php-ext-configure" class="headerlink" title="docker-php-ext-configure"></a>docker-php-ext-configure</h4><p>docker-php-ext-configure 一般都是需要跟 docker-php-ext-install搭配使用的。它的作用就是，当你安装扩展的时候，需要自定义配置时，就可以使用它来帮你做到。</p>
+<p><strong>案例</strong></p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> php:<span class="number">7.1</span>-fpm</span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> apt-get update \</span></span><br><span class="line"><span class="bash">	<span class="comment"># 相关依赖必须手动安装</span></span></span><br><span class="line">	&amp;&amp; apt-get install -y \</span><br><span class="line">        libfreetype6-dev \</span><br><span class="line">        libjpeg62-turbo-dev \</span><br><span class="line">        libmcrypt-dev \</span><br><span class="line">        libpng-dev \</span><br><span class="line">    <span class="comment"># 安装扩展</span></span><br><span class="line">    &amp;&amp; docker-php-ext-install -j$(nproc) iconv mcrypt \</span><br><span class="line">    <span class="comment"># 如果安装的扩展需要自定义配置时</span></span><br><span class="line">    &amp;&amp; docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \</span><br><span class="line">    &amp;&amp; docker-php-ext-install -j$(nproc) gd</span><br></pre></td></tr></table></figure>
+<h2 id="下载安装扩展"><a href="#下载安装扩展" class="headerlink" title="下载安装扩展"></a>下载安装扩展</h2><p>一些既不在 PHP 源码包，也不再 PECL 扩展仓库中的扩展，可以通过下载扩展程序源码，编译安装的方式安装，如下示例：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> php:<span class="number">5.6</span>-apache</span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> curl -fsSL <span class="string">&#x27;https://xcache.lighttpd.net/pub/Releases/3.2.0/xcache-3.2.0.tar.gz&#x27;</span> -o xcache.tar.gz \</span></span><br><span class="line"><span class="bash">    &amp;&amp; mkdir -p xcache \</span></span><br><span class="line"><span class="bash">    &amp;&amp; tar -xf xcache.tar.gz -C xcache --strip-components=1 \</span></span><br><span class="line"><span class="bash">    &amp;&amp; rm xcache.tar.gz \</span></span><br><span class="line"><span class="bash">    &amp;&amp; ( \</span></span><br><span class="line"><span class="bash">        <span class="built_in">cd</span> xcache \</span></span><br><span class="line"><span class="bash">        &amp;&amp; phpize \</span></span><br><span class="line"><span class="bash">        &amp;&amp; ./configure --enable-xcache \</span></span><br><span class="line"><span class="bash">        &amp;&amp; make -j$(nproc) \</span></span><br><span class="line"><span class="bash">        &amp;&amp; make install \</span></span><br><span class="line"><span class="bash">    ) \</span></span><br><span class="line"><span class="bash">    &amp;&amp; rm -r xcache \</span></span><br><span class="line"><span class="bash">    &amp;&amp; docker-php-ext-enable xcache</span></span><br></pre></td></tr></table></figure>
+<p>注意：官方提供的 docker-php-ext-* 脚本接受任意的绝对路径（不支持相对路径，以便与系统内置的扩展程序进行区分），所以，上面的例子也可以这样写：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> php:<span class="number">5.6</span>-apache</span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> curl -fsSL <span class="string">&#x27;https://xcache.lighttpd.net/pub/Releases/3.2.0/xcache-3.2.0.tar.gz&#x27;</span> -o xcache.tar.gz \</span></span><br><span class="line"><span class="bash">    &amp;&amp; mkdir -p /tmp/xcache \</span></span><br><span class="line"><span class="bash">    &amp;&amp; tar -xf xcache.tar.gz -C /tmp/xcache --strip-components=1 \</span></span><br><span class="line"><span class="bash">    &amp;&amp; rm xcache.tar.gz \</span></span><br><span class="line"><span class="bash">    &amp;&amp; docker-php-ext-configure /tmp/xcache --enable-xcache \</span></span><br><span class="line"><span class="bash">    &amp;&amp; docker-php-ext-install /tmp/xcache \</span></span><br><span class="line"><span class="bash">    &amp;&amp; rm -r /tmp/xcache</span></span><br></pre></td></tr></table></figure>
 
             </section>
     </article>
@@ -290,9 +249,9 @@
     </div> -->
     <div>
         <strong>本文链接：</strong>
-        <a href="https://blog.mailjob.net/posts/729016645.html">
-            <!-- https://blog.mailjob.net/mysql/Elasticsearch/es基本概念 -->
-            https://blog.mailjob.net/posts/729016645.html
+        <a href="https://blog.mailjob.net/posts/3712804477.html">
+            <!-- https://blog.mailjob.net/docker/docker中安装php的扩展 -->
+            https://blog.mailjob.net/posts/3712804477.html
         </a>
     </div>
     <div>

@@ -200,7 +200,8 @@
 <li>通过php 容器中自带的几个特殊命令来安装，这些特殊命令可以在Dockerfile中的RUN命令中进行使用。</li>
 <li>下载安装扩展，或者复制进容器安装扩展</li>
 </ol>
-<h2 id="通过pecl方式安装"><a href="#通过pecl方式安装" class="headerlink" title="通过pecl方式安装"></a>通过pecl方式安装</h2><p>因为一些扩展并不包含在 PHP 源码文件中，所有需要使用 PECL（PHP 的扩展库仓库，通过 PEAR 打包）。用 pecl install 安装扩展，然后再用官方提供的 docker-php-ext-enable 快捷脚本来启用扩展，如下示例</p>
+<h2 id="通过pecl方式安装"><a href="#通过pecl方式安装" class="headerlink" title="通过pecl方式安装"></a>通过pecl方式安装</h2><p><strong>pecl软件地址：</strong><a target="_blank" rel="noopener" href="http://pecl.php.net/">http://pecl.php.net/</a></p>
+<p>因为一些扩展并不包含在 PHP 源码文件中，所有需要使用 PECL（PHP 的扩展库仓库，通过 PEAR 打包）。用 pecl install 安装扩展，然后再用官方提供的 docker-php-ext-enable 快捷脚本来启用扩展，如下示例</p>
 <figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> php:<span class="number">7.1</span>-fpm</span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> apt-get update \</span></span><br><span class="line"><span class="bash">	<span class="comment"># 手动安装依赖</span></span></span><br><span class="line">	&amp;&amp; apt-get install -y libmemcached-dev zlib1g-dev \</span><br><span class="line">	<span class="comment"># 安装需要的扩展</span></span><br><span class="line">   &amp;&amp; pecl install memcached-<span class="number">2.2</span>.<span class="number">0</span> \</span><br><span class="line">   <span class="comment"># 启用扩展</span></span><br><span class="line">   &amp;&amp; docker-php-ext-enable memcached</span><br></pre></td></tr></table></figure>
 <h2 id="通过几个特殊命令安装"><a href="#通过几个特殊命令安装" class="headerlink" title="通过几个特殊命令安装"></a>通过几个特殊命令安装</h2><ul>
 <li>docker-php-source</li>
@@ -414,7 +415,7 @@
             
               <a class="category-list-item" href="/categories/swoole">
                 <span class="category-list-link">swoole</span>
-                <span class="category-list-number">(10)</span>
+                <span class="category-list-number">(11)</span>
               </a>
             
            
@@ -468,6 +469,10 @@
       <ul class="recent-posts">
         
           <li>
+            <a href="/posts/1280406180.html">PHP中event扩展简单使用</a>
+          </li>
+        
+          <li>
             <a href="/posts/3712804477.html">docker中安装php的扩展</a>
           </li>
         
@@ -481,10 +486,6 @@
         
           <li>
             <a href="/posts/2036993657.html">设计模式之适配器模式</a>
-          </li>
-        
-          <li>
-            <a href="/posts/441148158.html">设计模式之单例模式</a>
           </li>
         
       </ul>

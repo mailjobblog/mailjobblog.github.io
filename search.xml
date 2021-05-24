@@ -4,11 +4,63 @@
   
     
     <entry>
+      <title>swoole进程结构</title>
+      <link href="posts/1773018433.html"/>
+      <url>posts/1773018433.html</url>
+      
+        <content type="html"><![CDATA[<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote><p>进程结构官方文档：<a href="https://wiki.swoole.com/#/learn?id=diff-process">https://wiki.swoole.com/#/learn?id=diff-process</a></p><p>进程结构图：<a href="https://wiki.swoole.com/#/server/init?id=%e8%bf%9b%e7%a8%8b%e7%ba%bf%e7%a8%8b%e7%bb%93%e6%9e%84%e5%9b%be">https://wiki.swoole.com/#/server/init?id=%e8%bf%9b%e7%a8%8b%e7%ba%bf%e7%a8%8b%e7%bb%93%e6%9e%84%e5%9b%be</a></p><p>图例：<a href="https://www.kdocs.cn/view/l/sfUsBSd2K1f2">https://www.kdocs.cn/view/l/sfUsBSd2K1f2</a></p><p>图例：<a href="https://www.kdocs.cn/view/l/snjd2FtKwsew">https://www.kdocs.cn/view/l/snjd2FtKwsew</a></p></blockquote><h2 id="Swoole进程结构"><a href="#Swoole进程结构" class="headerlink" title="Swoole进程结构"></a>Swoole进程结构</h2><ul><li>Master 进程 （主进程）</li><li>Manager 进程 （管理进程）</li><li>Worker 进程 （工作进程）</li><li>task 进程 （异步任务工作进程）</li></ul><p><img src="http://img.github.mailjob.net/20210524132302.png" alt="image-20210524132300439"></p><h3 id="client与server的交互"><a href="#client与server的交互" class="headerlink" title="client与server的交互"></a>client与server的交互</h3><p>1、<code>client</code> 请求到达<code>main reactor</code>,与<code>master</code>进程中的某个<code>reactor</code>线程连接</p><p>2、<code>main reactor</code>将请求注册给对应的<code>reactor</code></p><p>3、客户端有变化时<code>reactor</code>将数据交给<code>worker</code>处理</p><p>4、<code>worker</code>处理完毕,通过进程间通信,发给对应的<code>reactor</code></p><p>5、<code>reactor</code>将响应结果发给相应的连接请求处理完成</p><p>6、<code>Manager</code> 负责 （创建/回收）<code>worker/task</code> 进程</p><h3 id="通俗比喻"><a href="#通俗比喻" class="headerlink" title="通俗比喻"></a>通俗比喻</h3><p>假设<code>Server</code>就是一个工厂，那<code>Reactor</code>就是销售，接受客户订单。而<code>Worker</code>就是工人，当销售接到订单后，<code>Worker</code>去工作生产出客户要的东西。而<code>TaskWorker</code>可以理解为行政人员，可以帮助<code>Worker</code>干些杂事，让<code>Worker</code>专心工作。 <code>Manager</code> 相当于HR，负责招聘员工（<code>Worker</code>），或者吧不干活的员工(<code>Worker</code>)开除。</p><p><img src="http://img.github.mailjob.net/20210524133824.png" alt="image-20210524133823196"></p><h2 id="Swoole进程测试"><a href="#Swoole进程测试" class="headerlink" title="Swoole进程测试"></a>Swoole进程测试</h2><h3 id="测试代码"><a href="#测试代码" class="headerlink" title="测试代码"></a>测试代码</h3><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="variable">$server</span> = <span class="keyword">new</span> Swoole\Server(<span class="string">&#x27;127.0.0.1&#x27;</span>, <span class="number">9503</span>);</span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span>-&gt;on(<span class="string">&#x27;connect&#x27;</span>, <span class="function"><span class="keyword">function</span> (<span class="params"><span class="variable">$server</span>, <span class="variable">$fd</span></span>)</span>&#123;</span><br><span class="line">  <span class="keyword">echo</span> <span class="string">&quot;connection open: <span class="subst">&#123;$fd&#125;</span>\n&quot;</span>;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span>-&gt;on(<span class="string">&#x27;receive&#x27;</span>, <span class="function"><span class="keyword">function</span> (<span class="params"><span class="variable">$server</span>, <span class="variable">$fd</span>, <span class="variable">$reactor_id</span>, <span class="variable">$data</span></span>) </span>&#123;</span><br><span class="line">  <span class="variable">$server</span>-&gt;send(<span class="variable">$fd</span>, <span class="string">&quot;Swoole: <span class="subst">&#123;$data&#125;</span>&quot;</span>);</span><br><span class="line">  <span class="variable">$server</span>-&gt;close(<span class="variable">$fd</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span>-&gt;on(<span class="string">&#x27;close&#x27;</span>, <span class="function"><span class="keyword">function</span> (<span class="params"><span class="variable">$server</span>, <span class="variable">$fd</span></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">echo</span> <span class="string">&quot;connection close: <span class="subst">&#123;$fd&#125;</span>\n&quot;</span>;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span>-&gt;start();</span><br></pre></td></tr></table></figure><h3 id="进程查看"><a href="#进程查看" class="headerlink" title="进程查看"></a>进程查看</h3><p><img src="http://img.github.mailjob.net/20210524134627.png" alt="image-20210524134625911"></p>]]></content>
+      
+      
+      <categories>
+          
+          <category> swoole </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> swoole </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>PHP简单实现Reactor模型</title>
+      <link href="posts/236519737.html"/>
+      <url>posts/236519737.html</url>
+      
+        <content type="html"><![CDATA[<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote><p>什么是reactor模型：<a href="https://www.cnblogs.com/52php/p/5701354.html">https://www.cnblogs.com/52php/p/5701354.html</a></p><p>php代码下载：<a href="https://github.com/mailjobblog/dev_php_io/tree/master/test/reactor">https://github.com/mailjobblog/dev_php_io/tree/master/test/reactor</a></p><p>图解reactor模型：<a href="https://blog.csdn.net/weixin_39724469/article/details/111295927">https://blog.csdn.net/weixin_39724469/article/details/111295927</a></p></blockquote><h2 id="Reactor介绍"><a href="#Reactor介绍" class="headerlink" title="Reactor介绍"></a>Reactor介绍</h2><h3 id="connection-per-thread"><a href="#connection-per-thread" class="headerlink" title="connection per thread"></a>connection per thread</h3><p>在BIO线程模型中，为了解决同步阻塞的问题，采用了多线程的方式处理并发，即经典的connection per thread，每一个连接用一个线程处理。虽然在单个线程内仍然是阻塞的，但在整体上看是可以同时处理多个连接请求的，原理图如下：</p><p><img src="http://img.github.mailjob.net/20210520105517.png" alt="8c9d2203ab7b7a059d241a091f7280fd.png"></p><p>但这种方式的缺点在于资源要求太高，系统中创建线程是需要比较高的系统资源的，如果连接数太多，系统无法承受，而且，线程的反复创建和销毁也需要代价。</p><h3 id="Reactor线程思想"><a href="#Reactor线程思想" class="headerlink" title="Reactor线程思想"></a>Reactor线程思想</h3><p>为了解决这个问题，出现了Reactor线程模型。简单来说，<strong>Reactor线程模型就是<code>多路I/O复用</code>结合<code>线程池</code>的思想</strong>。</p><ul><li>I/O多路复用：多个连接共用一个阻塞对象(即下图中的ServiceHandler)，应用程序只需要在一个阻塞对象等待，无需阻塞等待所有连接，当某个连接有新的数据可以处理时，操作系统通知应用程序线程从阻塞状态返回，并将数据分发给对应的线程处理</li><li>基于线程池复用线程资源：不必再为每个连接创建线程，将连接完成后的业务处理任务交给线程池中的线程处理，处理完成后归还线程，同一个线程可以处理多个连接的业务，达到线程复用</li></ul><p><img src="http://img.github.mailjob.net/20210520105744.png" alt="0bc3701da6ea80285ce9175e1d5f87fa.png"></p><h2 id="PHP原生代码实现"><a href="#PHP原生代码实现" class="headerlink" title="PHP原生代码实现"></a>PHP原生代码实现</h2><p><img src="http://img.github.mailjob.net/20210520104709.png" alt="image-20210520104707852"></p><p><img src="http://img.github.mailjob.net/20210520104730.png" alt="image-20210520104728279"></p>]]></content>
+      
+      
+      <categories>
+          
+          <category> swoole </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> php </tag>
+            
+            <tag> swoole </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>PHP实现IO异步模型(asynchronous)</title>
       <link href="posts/3605085039.html"/>
       <url>posts/3605085039.html</url>
       
-        <content type="html"><![CDATA[]]></content>
+        <content type="html"><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>PHP 原生实现 异步模型，主要依靠于 Event 事件实现</p><h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote><p>5种IO模型：<a href="https://blog.mailjob.net/posts/3565199751.html">https://blog.mailjob.net/posts/3565199751.html</a></p><p>github代码下载：<a href="https://github.com/mailjobblog/dev_php_io/tree/master/test/async">https://github.com/mailjobblog/dev_php_io/tree/master/test/async</a></p><p>php Event 事件使用：<a href="https://blog.mailjob.net/posts/1280406180.html">https://blog.mailjob.net/posts/1280406180.html</a></p></blockquote><h2 id="模型图"><a href="#模型图" class="headerlink" title="模型图"></a>模型图</h2><p>对于异步来说，用户进行读或者写后，将立刻返回，由内核去完成数据读取以及拷贝工作，完成后通知用户，并执行回调函数（用户提供的callback），此时数据已从内核拷贝到用户空间，用户线程只需要对数据进行处理即可，不需要关注读写，用户不需要等待内核对数据的复制操作，用户在得到通知时数据已经被复制到用户空间。我们以如下的真实异步非阻塞为例。</p><p>可以发现，用户在调用之后会立即返回，由内核完成数据的拷贝工作，并通知用户线程，进行回调。</p><p><img src="http://img.github.mailjob.net/20210519232758.png" alt="图片"></p><h2 id="PHP原生代码实现"><a href="#PHP原生代码实现" class="headerlink" title="PHP原生代码实现"></a>PHP原生代码实现</h2><p><img src="http://img.github.mailjob.net/20210519232229.png" alt="image-20210519232228213"></p>]]></content>
       
       
       <categories>

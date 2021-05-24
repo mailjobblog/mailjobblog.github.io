@@ -195,7 +195,17 @@
 
             <section class="post-content">
 
-              
+              <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>PHP 原生实现 异步模型，主要依靠于 Event 事件实现</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote>
+<p>5种IO模型：<a href="https://blog.mailjob.net/posts/3565199751.html">https://blog.mailjob.net/posts/3565199751.html</a></p>
+<p>github代码下载：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/dev_php_io/tree/master/test/async">https://github.com/mailjobblog/dev_php_io/tree/master/test/async</a></p>
+<p>php Event 事件使用：<a href="https://blog.mailjob.net/posts/1280406180.html">https://blog.mailjob.net/posts/1280406180.html</a></p>
+</blockquote>
+<h2 id="模型图"><a href="#模型图" class="headerlink" title="模型图"></a>模型图</h2><p>对于异步来说，用户进行读或者写后，将立刻返回，由内核去完成数据读取以及拷贝工作，完成后通知用户，并执行回调函数（用户提供的callback），此时数据已从内核拷贝到用户空间，用户线程只需要对数据进行处理即可，不需要关注读写，用户不需要等待内核对数据的复制操作，用户在得到通知时数据已经被复制到用户空间。我们以如下的真实异步非阻塞为例。</p>
+<p>可以发现，用户在调用之后会立即返回，由内核完成数据的拷贝工作，并通知用户线程，进行回调。</p>
+<p><img src="http://img.github.mailjob.net/20210519232758.png" alt="图片"></p>
+<h2 id="PHP原生代码实现"><a href="#PHP原生代码实现" class="headerlink" title="PHP原生代码实现"></a>PHP原生代码实现</h2><p><img src="http://img.github.mailjob.net/20210519232229.png" alt="image-20210519232228213"></p>
+
             </section>
     </article>
     
@@ -375,7 +385,7 @@
             
               <a class="category-list-item" href="/categories/swoole">
                 <span class="category-list-link">swoole</span>
-                <span class="category-list-number">(12)</span>
+                <span class="category-list-number">(14)</span>
               </a>
             
            
@@ -429,6 +439,14 @@
       <ul class="recent-posts">
         
           <li>
+            <a href="/posts/1773018433.html">swoole进程结构</a>
+          </li>
+        
+          <li>
+            <a href="/posts/236519737.html">PHP简单实现Reactor模型</a>
+          </li>
+        
+          <li>
             <a href="/posts/3605085039.html">PHP实现IO异步模型(asynchronous)</a>
           </li>
         
@@ -438,14 +456,6 @@
         
           <li>
             <a href="/posts/3712804477.html">docker中安装php的扩展</a>
-          </li>
-        
-          <li>
-            <a href="/posts/883747154.html">设计模式之组合模式</a>
-          </li>
-        
-          <li>
-            <a href="/posts/3172537884.html">设计模式之桥接模式</a>
           </li>
         
       </ul>

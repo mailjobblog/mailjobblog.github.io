@@ -3,7 +3,7 @@
   <meta charset="utf-8">
   
   <title>
-    李斌的技术博客
+    swoole进程结构 | 李斌的技术博客
   </title>
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <meta name="theme-color" content="#4184f3">
@@ -151,602 +151,154 @@
             <div class="container content">
                 <div class="scene_element scene_element--fadein">
                     <div class="row">
-  <div class="main index">
-    
-      <article class="list-item">
+  <div class="main main-article">
+    <article>
 
-
-        <!-- 置顶 -->
-        
-
-            <a href="/posts/1022633166.html">
+      
+            <header class="post-header">
               
-                    <header class="post-header">
-                      
-                        <h1 class="post-title">
-                          <span>Percona Toolkit 工具检查 Mysql</span>
-                        </h1>
-                    </header>
-            </a>
+            </header>
 
+            <h1 class="post-title">
+              swoole进程结构
+            </h1>
 
-            <section class="post-info">
+            <section class="post-info post-info-bottom">
+
               <span class="post-date">发布于
-                <span class="post-date-text"> 2021-02-18</span>
+                <span class="post-date-text">
+                   2021-05-24
+                </span>
               </span>
-  
+
+
+
+
               
-                <span class="post-category">
-                  <a class="post-category-link" href="/categories/mysql/">mysql</a>
+                <span class="post-category">分类:
+                  <a class="article-category-link" href="/categories/swoole/">swoole</a>
                 </span>
                 
                   
                     <span class="post-tags">
-                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a></li></ul>
+                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/swoole/" rel="tag">swoole</a></li></ul>
                     </span>
                     
-                    
-            </section>
 
-
-            <div class="post-main">
-              <div class="post-item">
-                <section class="post-abstract">
-                  
-                        前言
-Percona Toolkit 简称 pt  工具，PT-Too...
-                          
-                            
-                </section>
-    
-              
-                        <span class="read-more btn"><a href="/posts/1022633166.html" >阅读更多...</a></span>
-               
-              </div>
-  
-  
-              
-            </div>
-
-      
-      </article>
-      
-      <article class="list-item">
-
-
-        <!-- 置顶 -->
-        
-
-            <a href="/posts/3939687293.html">
-              
-                    <header class="post-header">
+                      <!-- 阅读量统计 -->
                       
-                        <h1 class="post-title">
-                          <span>Mysql 主从复制搭建</span>
-                        </h1>
-                    </header>
-            </a>
+                        <span class="post-visitors">阅读量:<span id="twikoo_visitors">0</span></span>
+                        
 
 
-            <section class="post-info">
-              <span class="post-date">发布于
-                <span class="post-date-text"> 2021-02-18</span>
-              </span>
-  
-              
-                <span class="post-category">
-                  <a class="post-category-link" href="/categories/mysql/">mysql</a>
-                </span>
-                
-                  
-                    <span class="post-tags">
-                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a></li></ul>
-                    </span>
-                    
-                    
             </section>
 
+            <section class="post-content">
 
-            <div class="post-main">
-              <div class="post-item">
-                <section class="post-abstract">
-                  
-                        前言
-搭建一个完全新的主从节点，非常容易，直接使用命令就行
-但是，当对于一个存在业务的主节点的数据库服务器搭建主从的时候...
-                          
-                            
-                </section>
+              <h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote>
+<p>进程结构官方文档：<a target="_blank" rel="noopener" href="https://wiki.swoole.com/#/learn?id=diff-process">https://wiki.swoole.com/#/learn?id=diff-process</a></p>
+<p>进程结构图：<a target="_blank" rel="noopener" href="https://wiki.swoole.com/#/server/init?id=%e8%bf%9b%e7%a8%8b%e7%ba%bf%e7%a8%8b%e7%bb%93%e6%9e%84%e5%9b%be">https://wiki.swoole.com/#/server/init?id=%e8%bf%9b%e7%a8%8b%e7%ba%bf%e7%a8%8b%e7%bb%93%e6%9e%84%e5%9b%be</a></p>
+<p>图例：<a target="_blank" rel="noopener" href="https://www.kdocs.cn/view/l/sfUsBSd2K1f2">https://www.kdocs.cn/view/l/sfUsBSd2K1f2</a></p>
+<p>图例：<a target="_blank" rel="noopener" href="https://www.kdocs.cn/view/l/snjd2FtKwsew">https://www.kdocs.cn/view/l/snjd2FtKwsew</a></p>
+</blockquote>
+<h2 id="Swoole进程结构"><a href="#Swoole进程结构" class="headerlink" title="Swoole进程结构"></a>Swoole进程结构</h2><ul>
+<li>Master 进程 （主进程）</li>
+<li>Manager 进程 （管理进程）</li>
+<li>Worker 进程 （工作进程）</li>
+<li>task 进程 （异步任务工作进程）</li>
+</ul>
+<p><img src="http://img.github.mailjob.net/20210524132302.png" alt="image-20210524132300439"></p>
+<h3 id="client与server的交互"><a href="#client与server的交互" class="headerlink" title="client与server的交互"></a>client与server的交互</h3><p>1、<code>client</code> 请求到达<code>main reactor</code>,与<code>master</code>进程中的某个<code>reactor</code>线程连接</p>
+<p>2、<code>main reactor</code>将请求注册给对应的<code>reactor</code></p>
+<p>3、客户端有变化时<code>reactor</code>将数据交给<code>worker</code>处理</p>
+<p>4、<code>worker</code>处理完毕,通过进程间通信,发给对应的<code>reactor</code></p>
+<p>5、<code>reactor</code>将响应结果发给相应的连接请求处理完成</p>
+<p>6、<code>Manager</code> 负责 （创建/回收）<code>worker/task</code> 进程</p>
+<h3 id="通俗比喻"><a href="#通俗比喻" class="headerlink" title="通俗比喻"></a>通俗比喻</h3><p>假设<code>Server</code>就是一个工厂，那<code>Reactor</code>就是销售，接受客户订单。而<code>Worker</code>就是工人，当销售接到订单后，<code>Worker</code>去工作生产出客户要的东西。而<code>TaskWorker</code>可以理解为行政人员，可以帮助<code>Worker</code>干些杂事，让<code>Worker</code>专心工作。 <code>Manager</code> 相当于HR，负责招聘员工（<code>Worker</code>），或者吧不干活的员工(<code>Worker</code>)开除。</p>
+<p><img src="http://img.github.mailjob.net/20210524133824.png" alt="image-20210524133823196"></p>
+<h2 id="Swoole进程测试"><a href="#Swoole进程测试" class="headerlink" title="Swoole进程测试"></a>Swoole进程测试</h2><h3 id="测试代码"><a href="#测试代码" class="headerlink" title="测试代码"></a>测试代码</h3><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="variable">$server</span> = <span class="keyword">new</span> Swoole\Server(<span class="string">&#x27;127.0.0.1&#x27;</span>, <span class="number">9503</span>);</span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span>-&gt;on(<span class="string">&#x27;connect&#x27;</span>, <span class="function"><span class="keyword">function</span> (<span class="params"><span class="variable">$server</span>, <span class="variable">$fd</span></span>)</span>&#123;</span><br><span class="line">  <span class="keyword">echo</span> <span class="string">&quot;connection open: <span class="subst">&#123;$fd&#125;</span>\n&quot;</span>;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span>-&gt;on(<span class="string">&#x27;receive&#x27;</span>, <span class="function"><span class="keyword">function</span> (<span class="params"><span class="variable">$server</span>, <span class="variable">$fd</span>, <span class="variable">$reactor_id</span>, <span class="variable">$data</span></span>) </span>&#123;</span><br><span class="line">  <span class="variable">$server</span>-&gt;send(<span class="variable">$fd</span>, <span class="string">&quot;Swoole: <span class="subst">&#123;$data&#125;</span>&quot;</span>);</span><br><span class="line">  <span class="variable">$server</span>-&gt;close(<span class="variable">$fd</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span>-&gt;on(<span class="string">&#x27;close&#x27;</span>, <span class="function"><span class="keyword">function</span> (<span class="params"><span class="variable">$server</span>, <span class="variable">$fd</span></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">echo</span> <span class="string">&quot;connection close: <span class="subst">&#123;$fd&#125;</span>\n&quot;</span>;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="variable">$server</span>-&gt;start();</span><br></pre></td></tr></table></figure>
+<h3 id="进程查看"><a href="#进程查看" class="headerlink" title="进程查看"></a>进程查看</h3><p><img src="http://img.github.mailjob.net/20210524134627.png" alt="image-20210524134625911"></p>
+
+            </section>
+    </article>
     
-              
-                        <span class="read-more btn"><a href="/posts/3939687293.html" >阅读更多...</a></span>
-               
-              </div>
-  
-  
-              
-            </div>
-
-      
-      </article>
-      
-      <article class="list-item">
 
 
-        <!-- 置顶 -->
+        <!-- 版权声明 -->
         
-
-            <a href="/posts/3523564565.html">
-              
-                    <header class="post-header">
-                      
-                        <h1 class="post-title">
-                          <span>Mysql 数据库热备份工具 Xtrabackup</span>
-                        </h1>
-                    </header>
-            </a>
-
-
-            <section class="post-info">
-              <span class="post-date">发布于
-                <span class="post-date-text"> 2021-02-18</span>
-              </span>
-  
-              
-                <span class="post-category">
-                  <a class="post-category-link" href="/categories/mysql/">mysql</a>
-                </span>
-                
-                  
-                    <span class="post-tags">
-                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a></li></ul>
-                    </span>
-                    
-                    
-            </section>
-
-
-            <div class="post-main">
-              <div class="post-item">
-                <section class="post-abstract">
-                  
-                        前言
-热备份的方式也是直接复制数据物理文件，和冷备份一样，但热备份可以不停机直接复制，一般用于7×24小时不间断的重要核心业务。
-                          
-                            
-                </section>
-    
-              
-                        <span class="read-more btn"><a href="/posts/3523564565.html" >阅读更多...</a></span>
-               
-              </div>
-  
-  
-              
-            </div>
-
-      
-      </article>
-      
-      <article class="list-item">
-
-
-        <!-- 置顶 -->
-        
-
-            <a href="/posts/891970811.html">
-              
-                    <header class="post-header">
-                      
-                        <h1 class="post-title">
-                          <span>Mysql 数据库冷备份</span>
-                        </h1>
-                    </header>
-            </a>
-
-
-            <section class="post-info">
-              <span class="post-date">发布于
-                <span class="post-date-text"> 2021-02-17</span>
-              </span>
-  
-              
-                <span class="post-category">
-                  <a class="post-category-link" href="/categories/mysql/">mysql</a>
-                </span>
-                
-                  
-                    <span class="post-tags">
-                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a></li></ul>
-                    </span>
-                    
-                    
-            </section>
-
-
-            <div class="post-main">
-              <div class="post-item">
-                <section class="post-abstract">
-                  
-                        前言
-本文主要介绍三种冷备份的方式
-暴力备份、mysqlsqldump、mydumper
-...
-                          
-                            
-                </section>
-    
-              
-                        <span class="read-more btn"><a href="/posts/891970811.html" >阅读更多...</a></span>
-               
-              </div>
-  
-  
-              
-            </div>
-
-      
-      </article>
-      
-      <article class="list-item">
-
-
-        <!-- 置顶 -->
-        
-
-            <a href="/posts/3006260634.html">
-              
-                    <header class="post-header">
-                      
-                        <h1 class="post-title">
-                          <span>Mysql 主从复制原理</span>
-                        </h1>
-                    </header>
-            </a>
-
-
-            <section class="post-info">
-              <span class="post-date">发布于
-                <span class="post-date-text"> 2021-02-17</span>
-              </span>
-  
-              
-                <span class="post-category">
-                  <a class="post-category-link" href="/categories/mysql/">mysql</a>
-                </span>
-                
-                  
-                    <span class="post-tags">
-                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a></li></ul>
-                    </span>
-                    
-                    
-            </section>
-
-
-            <div class="post-main">
-              <div class="post-item">
-                <section class="post-abstract">
-                  
-                        相关链接
-MySQL 官网主从复制：
-                          
-                            
-                </section>
-    
-              
-                        <span class="read-more btn"><a href="/posts/3006260634.html" >阅读更多...</a></span>
-               
-              </div>
-  
-  
-              
-            </div>
-
-      
-      </article>
-      
-      <article class="list-item">
-
-
-        <!-- 置顶 -->
-        
-
-            <a href="/posts/2151902749.html">
-              
-                    <header class="post-header">
-                      
-                        <h1 class="post-title">
-                          <span>数据库设计三范式</span>
-                        </h1>
-                    </header>
-            </a>
-
-
-            <section class="post-info">
-              <span class="post-date">发布于
-                <span class="post-date-text"> 2021-02-17</span>
-              </span>
-  
-              
-                <span class="post-category">
-                  <a class="post-category-link" href="/categories/mysql/">mysql</a>
-                </span>
-                
-                  
-                    <span class="post-tags">
-                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li></ul>
-                    </span>
-                    
-                    
-            </section>
-
-
-            <div class="post-main">
-              <div class="post-item">
-                <section class="post-abstract">
-                  
-                        1. 数据库设计三大范式在设计关系数据库的时候，一般来说我们都是需要遵从不同的规范要求来设计出合理的关...
-                          
-                            
-                </section>
-    
-              
-                        <span class="read-more btn"><a href="/posts/2151902749.html" >阅读更多...</a></span>
-               
-              </div>
-  
-  
-              
-            </div>
-
-      
-      </article>
-      
-      <article class="list-item">
-
-
-        <!-- 置顶 -->
-        
-
-            <a href="/posts/287046586.html">
-              
-                    <header class="post-header">
-                      
-                        <h1 class="post-title">
-                          <span>notes：mysql 8.0 索引函数</span>
-                        </h1>
-                    </header>
-            </a>
-
-
-            <section class="post-info">
-              <span class="post-date">发布于
-                <span class="post-date-text"> 2021-02-17</span>
-              </span>
-  
-              
-                <span class="post-category">
-                  <a class="post-category-link" href="/categories/notes/">notes</a>
-                </span>
-                
-                  
-                    <span class="post-tags">
-                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/notes/" rel="tag">notes</a></li></ul>
-                    </span>
-                    
-                    
-            </section>
-
-
-            <div class="post-main">
-              <div class="post-item">
-                <section class="post-abstract">
-                  
-                        前言
-该功能需要 mysql8.0 以上版本实现
-MySQL8.0的函数索引内部其实也是依据5.7中提出的虚拟列来实现的...
-                          
-                            
-                </section>
-    
-              
-                        <span class="read-more btn"><a href="/posts/287046586.html" >阅读更多...</a></span>
-               
-              </div>
-  
-  
-              
-            </div>
-
-      
-      </article>
-      
-      <article class="list-item">
-
-
-        <!-- 置顶 -->
-        
-
-            <a href="/posts/1228407361.html">
-              
-                    <header class="post-header">
-                      
-                        <h1 class="post-title">
-                          <span>notes：mysql5.7虚拟列</span>
-                        </h1>
-                    </header>
-            </a>
-
-
-            <section class="post-info">
-              <span class="post-date">发布于
-                <span class="post-date-text"> 2021-02-17</span>
-              </span>
-  
-              
-                <span class="post-category">
-                  <a class="post-category-link" href="/categories/notes/">notes</a>
-                </span>
-                
-                  
-                    <span class="post-tags">
-                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/notes/" rel="tag">notes</a></li></ul>
-                    </span>
-                    
-                    
-            </section>
-
-
-            <div class="post-main">
-              <div class="post-item">
-                <section class="post-abstract">
-                  
-                        前言
-在MySQL 5.7中，支持两种Generated Column，即Virtual Generated Column和Store...
-                          
-                            
-                </section>
-    
-              
-                        <span class="read-more btn"><a href="/posts/1228407361.html" >阅读更多...</a></span>
-               
-              </div>
-  
-  
-              
-            </div>
-
-      
-      </article>
-      
-      <article class="list-item">
-
-
-        <!-- 置顶 -->
-        
-
-            <a href="/posts/2162225682.html">
-              
-                    <header class="post-header">
-                      
-                        <h1 class="post-title">
-                          <span>Mysql优化器追踪分析sql语句</span>
-                        </h1>
-                    </header>
-            </a>
-
-
-            <section class="post-info">
-              <span class="post-date">发布于
-                <span class="post-date-text"> 2021-02-17</span>
-              </span>
-  
-              
-                <span class="post-category">
-                  <a class="post-category-link" href="/categories/mysql/">mysql</a>
-                </span>
-                
-                  
-                    <span class="post-tags">
-                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li></ul>
-                    </span>
-                    
-                    
-            </section>
-
-
-            <div class="post-main">
-              <div class="post-item">
-                <section class="post-abstract">
-                  
-                        前言
-平常用 explain 就可以sql语句的性能了。但是，如果你觉得分析的不够详尽，你想查看内部的拆解过程，那么你可以试试用mys...
-                          
-                            
-                </section>
-    
-              
-                        <span class="read-more btn"><a href="/posts/2162225682.html" >阅读更多...</a></span>
-               
-              </div>
-  
-  
-              
-            </div>
-
-      
-      </article>
-      
-      <article class="list-item">
-
-
-        <!-- 置顶 -->
-        
-
-            <a href="/posts/694055385.html">
-              
-                    <header class="post-header">
-                      
-                        <h1 class="post-title">
-                          <span>Mysql 的IO写入流程与写入方式</span>
-                        </h1>
-                    </header>
-            </a>
-
-
-            <section class="post-info">
-              <span class="post-date">发布于
-                <span class="post-date-text"> 2021-02-17</span>
-              </span>
-  
-              
-                <span class="post-category">
-                  <a class="post-category-link" href="/categories/mysql/">mysql</a>
-                </span>
-                
-                  
-                    <span class="post-tags">
-                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li></ul>
-                    </span>
-                    
-                    
-            </section>
-
-
-            <div class="post-main">
-              <div class="post-item">
-                <section class="post-abstract">
-                  
-                        MySQL支持用户自定义在commit时如何将log buffer中的日志刷log file中。这种控制通过变量 innodb_flush_log_at_trx_commit 的值来决定。该变量有3种值：0、1、2，默认为1。
-但注意，这个变量只是...
-                          
-                            
-                </section>
-    
-              
-                        <span class="read-more btn"><a href="/posts/694055385.html" >阅读更多...</a></span>
-               
-              </div>
-  
-  
-              
-            </div>
-
-      
-      </article>
-      
-      
-  
-    <div class="pagination">
-      <a class="extend prev" rel="prev" href="/page/7/">上一页</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/6/">6</a><a class="page-number" href="/page/7/">7</a><span class="page-number current">8</span><a class="page-number" href="/page/9/">9</a><a class="page-number" href="/page/10/">10</a><span class="space">&hellip;</span><a class="page-number" href="/page/15/">15</a><a class="extend next" rel="next" href="/page/9/">下一页</a>
+<div class="post-copyright">
+    <!-- <div>
+        <strong>本文作者：</strong>
+        <span>李斌</span>
+    </div> -->
+    <div>
+        <strong>本文链接：</strong>
+        <a href="https://blog.mailjob.net/posts/1773018433.html">
+            <!-- https://blog.mailjob.net/swoole/swoole进程结构 -->
+            https://blog.mailjob.net/posts/1773018433.html
+        </a>
     </div>
-  
+    <div>
+        <!-- <span>欢迎任何形式的转载，请务必注明出处。</span> -->
+    </div>
+    <div>
+        <span>
+            该网站发布的内容，遵循
+            <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>
+            版权协议，转载请附上原文出处链接和本声明。
+        </span>
+    </div>
+</div>
+
+
+
+<style>
+    .post-copyright {
+        background-color: #fff;
+  box-shadow: 0px 0px 1px 1px rgba(0, 0, 0, 0.05);
+        display: block;
+        margin: 20px auto;
+        margin-bottom: 15px;
+        padding: 10px;
+        font-size: 15px;
+        color: #2e2d2d;
+        word-break: break-all;
+        line-height: 1.8;
+    }
+
+
+    .post-copyright a {
+        color: #2e2d2d;
+        border-bottom: 1px solid #999; 
+    }
+
+    .post-copyright a:hover {
+        color: #2e2d2d;
+        border-bottom: 1px solid #000; 
+    }
+</style>
+
+          <!-- comments -->
+          <div class="comments">
+    <h3 id="commenttitle" style="margin-top: 20px;margin-left: 10px;">评论区</h3>
+    <div id="tcomment"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/twikoo@0.6.0/dist/twikoo.all.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/twikoo@1.0.0/dist/twikoo.all.min.js"></script> -->
+
+<script>twikoo.init({ envId: 'jefferyjob-github-io-3b53ee3a93b', el: '#tcomment' })</script>
+
+            <div class="right-icon">
+              <div id="to-valine" class="right-icon-item">
+                <a href="#commenttitle">评论</a>
+              </div>
+            </div>
 
   </div>
-  
-    <aside>
-      <div class="aside-wrap">
+
+
+  <aside>
+    <div class="aside-wrap">
     
         <section class="widget-wrap">
     <h3 class="widget-title">简介</h3>
@@ -1002,11 +554,33 @@ MySQL8.0的函数索引内部其实也是依据5.7中提出的虚拟列来实现
     
 </div>
 
-    </aside>
-    
+
+      <!-- 目录 -->
+      
+        <div id="toc"></div>
+        <script>
+          $(function () {
+            var elm = $('#toc');
+            var startPos = $(elm).offset().top;
+            $.event.add(window, "scroll", function () {
+              var p = $(window).scrollTop();
+              $(elm).css('margin-left', '0px');
+              $(elm).css('position', ((p) > startPos) ? 'fixed' : 'static');
+              $(elm).css('top', ((p) > startPos) ? '20px' : '')
+            })
+          })
+
+        </script>
+
+  </aside>
+  
 </div>
 
 
+<script>
+  $('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
+
+</script>
                 </div>
             </div>
             <div class="right-icon">

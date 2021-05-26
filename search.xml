@@ -4,6 +4,31 @@
   
     
     <entry>
+      <title>swoole协程之channel</title>
+      <link href="posts/1459446780.html"/>
+      <url>posts/1459446780.html</url>
+      
+        <content type="html"><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>php业务场景中，我们在<code>多个进程之间的通信</code>一般会通过redis内存缓存来达到效果 在<code>协程间的通信</code>，我们可以使用<code>Channel</code>来实现，在类比php多进程处理的时候，可以将<code>Channel</code>类比成<code>redis的队列</code></p>]]></content>
+      
+      
+      <categories>
+          
+          <category> swoole </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> swoole </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>Swoole协程的多种实现方式</title>
       <link href="posts/3050366645.html"/>
       <url>posts/3050366645.html</url>

@@ -3,7 +3,7 @@
   <meta charset="utf-8">
   
   <title>
-    归档 | 李斌的技术博客
+    swoole协程之channel | 李斌的技术博客
   </title>
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <meta name="theme-color" content="#4184f3">
@@ -151,122 +151,132 @@
             <div class="container content">
                 <div class="scene_element scene_element--fadein">
                     <div class="row">
-    <div class="main">
-   
-        <article class="title-list">
-            
-            
-            <section>
-                <time class="post-date" datetime="2021-05-11T01:46:53.000Z">
-                    2021-05-11
-                </time>
-                <a href="/posts/2036993657.html">
-                    设计模式之适配器模式
-                </a>
+  <div class="main main-article">
+    <article>
+
+      
+            <header class="post-header">
+              
+            </header>
+
+            <h1 class="post-title">
+              swoole协程之channel
+            </h1>
+
+            <section class="post-info post-info-bottom">
+
+              <span class="post-date">发布于
+                <span class="post-date-text">
+                   2021-05-25
+                </span>
+              </span>
+
+
+
+
+              
+                <span class="post-category">分类:
+                  <a class="article-category-link" href="/categories/swoole/">swoole</a>
+                </span>
                 
+                  
+                    <span class="post-tags">
+                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/swoole/" rel="tag">swoole</a></li></ul>
+                    </span>
+                    
+
+                      <!-- 阅读量统计 -->
+                      
+                        <span class="post-visitors">阅读量:<span id="twikoo_visitors">0</span></span>
+                        
+
+
             </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-05-08T09:10:51.000Z">
-                    2021-05-08
-                </time>
-                <a href="/posts/441148158.html">
-                    设计模式之单例模式
-                </a>
-                
+
+            <section class="post-content">
+
+              <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>php业务场景中，我们在<code>多个进程之间的通信</code>一般会通过redis内存缓存来达到效果 在<code>协程间的通信</code>，我们可以使用<code>Channel</code>来实现，在类比php多进程处理的时候，可以将<code>Channel</code>类比成<code>redis的队列</code></p>
+
             </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-05-08T02:17:26.000Z">
-                    2021-05-08
-                </time>
-                <a href="/posts/3624417909.html">
-                    PHP实现一个简单的事件逻辑
-                </a>
-                
-            </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-05-08T01:56:03.000Z">
-                    2021-05-08
-                </time>
-                <a href="/posts/877067227.html">
-                    PHP中 event 事件扩展安装
-                </a>
-                
-            </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-05-07T14:30:19.000Z">
-                    2021-05-07
-                </time>
-                <a href="/posts/92825410.html">
-                    PHP实现信号驱动IO(Signal)
-                </a>
-                
-            </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-05-07T09:21:55.000Z">
-                    2021-05-07
-                </time>
-                <a href="/posts/1915639727.html">
-                    设计模式之建造者模式
-                </a>
-                
-            </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-05-06T05:40:50.000Z">
-                    2021-05-06
-                </time>
-                <a href="/posts/2055660067.html">
-                    设计模式之原型模式
-                </a>
-                
-            </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-04-30T05:52:55.000Z">
-                    2021-04-30
-                </time>
-                <a href="/posts/876260517.html">
-                    设计模式之抽象工厂
-                </a>
-                
-            </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-04-30T02:16:10.000Z">
-                    2021-04-30
-                </time>
-                <a href="/posts/3453473789.html">
-                    设计模式之工厂方法模式
-                </a>
-                
-            </section>
-            
-            <section>
-                <time class="post-date" datetime="2021-04-29T11:16:16.000Z">
-                    2021-04-29
-                </time>
-                <a href="/posts/4004887876.html">
-                    设计模式之简单工厂模式
-                </a>
-                
-            </section>
-            
-        </article>
-        
-  
-    <div class="pagination">
-      <a class="extend prev" rel="prev" href="/archives/">上一页</a><a class="page-number" href="/archives/">1</a><span class="page-number current">2</span><a class="page-number" href="/archives/page/3/">3</a><a class="page-number" href="/archives/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/archives/page/15/">15</a><a class="extend next" rel="next" href="/archives/page/3/">下一页</a>
-    </div>
-  
-    </div>
+    </article>
     
-    <aside>
-        <div class="aside-wrap">
+
+
+        <!-- 版权声明 -->
+        
+<div class="post-copyright">
+    <!-- <div>
+        <strong>本文作者：</strong>
+        <span>李斌</span>
+    </div> -->
+    <div>
+        <strong>本文链接：</strong>
+        <a href="https://blog.mailjob.net/posts/1459446780.html">
+            <!-- https://blog.mailjob.net/swoole/swoole协程之channel -->
+            https://blog.mailjob.net/posts/1459446780.html
+        </a>
+    </div>
+    <div>
+        <!-- <span>欢迎任何形式的转载，请务必注明出处。</span> -->
+    </div>
+    <div>
+        <span>
+            该网站发布的内容，遵循
+            <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>
+            版权协议，转载请附上原文出处链接和本声明。
+        </span>
+    </div>
+</div>
+
+
+
+<style>
+    .post-copyright {
+        background-color: #fff;
+  box-shadow: 0px 0px 1px 1px rgba(0, 0, 0, 0.05);
+        display: block;
+        margin: 20px auto;
+        margin-bottom: 15px;
+        padding: 10px;
+        font-size: 15px;
+        color: #2e2d2d;
+        word-break: break-all;
+        line-height: 1.8;
+    }
+
+
+    .post-copyright a {
+        color: #2e2d2d;
+        border-bottom: 1px solid #999; 
+    }
+
+    .post-copyright a:hover {
+        color: #2e2d2d;
+        border-bottom: 1px solid #000; 
+    }
+</style>
+
+          <!-- comments -->
+          <div class="comments">
+    <h3 id="commenttitle" style="margin-top: 20px;margin-left: 10px;">评论区</h3>
+    <div id="tcomment"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/twikoo@0.6.0/dist/twikoo.all.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/twikoo@1.0.0/dist/twikoo.all.min.js"></script> -->
+
+<script>twikoo.init({ envId: 'jefferyjob-github-io-3b53ee3a93b', el: '#tcomment' })</script>
+
+            <div class="right-icon">
+              <div id="to-valine" class="right-icon-item">
+                <a href="#commenttitle">评论</a>
+              </div>
+            </div>
+
+  </div>
+
+
+  <aside>
+    <div class="aside-wrap">
     
         <section class="widget-wrap">
     <h3 class="widget-title">简介</h3>
@@ -516,11 +526,33 @@
     
 </div>
 
-    </aside>
-   
-    
+
+      <!-- 目录 -->
+      
+        <div id="toc"></div>
+        <script>
+          $(function () {
+            var elm = $('#toc');
+            var startPos = $(elm).offset().top;
+            $.event.add(window, "scroll", function () {
+              var p = $(window).scrollTop();
+              $(elm).css('margin-left', '0px');
+              $(elm).css('position', ((p) > startPos) ? 'fixed' : 'static');
+              $(elm).css('top', ((p) > startPos) ? '20px' : '')
+            })
+          })
+
+        </script>
+
+  </aside>
+  
 </div>
 
+
+<script>
+  $('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
+
+</script>
                 </div>
             </div>
             <div class="right-icon">

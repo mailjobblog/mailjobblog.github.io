@@ -3,7 +3,7 @@
   <meta charset="utf-8">
   
   <title>
-    Mysql 事务与锁的关系 | 李斌的技术博客
+    Swoole异步任务Task实现 | 李斌的技术博客
   </title>
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <meta name="theme-color" content="#4184f3">
@@ -160,14 +160,14 @@
             </header>
 
             <h1 class="post-title">
-              Mysql 事务与锁的关系
+              Swoole异步任务Task实现
             </h1>
 
             <section class="post-info post-info-bottom">
 
               <span class="post-date">发布于
                 <span class="post-date-text">
-                   2021-02-17
+                   2021-05-27
                 </span>
               </span>
 
@@ -176,12 +176,12 @@
 
               
                 <span class="post-category">分类:
-                  <a class="article-category-link" href="/categories/mysql/">mysql</a>
+                  <a class="article-category-link" href="/categories/swoole/">swoole</a>
                 </span>
                 
                   
                     <span class="post-tags">
-                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/mysql/" rel="tag">mysql</a></li></ul>
+                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/swoole/" rel="tag">swoole</a></li></ul>
                     </span>
                     
 
@@ -195,27 +195,31 @@
 
             <section class="post-content">
 
-              <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
-<p>本文所说的 MySQL 事务都是指在 InnoDB 引擎下，MyISAM 引擎是不支持事务的。</p>
-<h6 id="重点说明"><a href="#重点说明" class="headerlink" title="重点说明"></a>重点说明</h6><p>可重复读是默认的隔离级别。</p>
-<p>读未提交和串行化基本上是不需要考虑的隔离级别，前者不加锁限制。串行化相当于单线程执行，效率太差。</p>
-<p>读提交解决了脏读问题，行锁解决了并发更新的问题。并且 MySQL 在可重复读级别解决了幻读问题，是通过行锁和间隙锁的组合 Next-Key 锁实现的。</p>
+              <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在 Server 程序中如果需要执行很耗时的操作，比如一个聊天服务器发送广播，Web 服务器中发送邮件。如果直接去执行这些函数就会阻塞当前进程，导致服务器响应变慢。</p>
+<p>Swoole 提供了异步任务处理的功能，可以投递一个异步任务到 <code>TaskWorker </code>进程池中执行，不影响当前请求的处理速度。</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote>
+<p><strong>task异步任务初实现</strong><br>task异步任务解释：<a target="_blank" rel="noopener" href="https://wiki.swoole.com/#/start/start_task">https://wiki.swoole.com/#/start/start_task</a><br>异步服务器实现：<a target="_blank" rel="noopener" href="https://wiki.swoole.com/#/start/start_tcp_server">https://wiki.swoole.com/#/start/start_tcp_server</a><br>task异步任务数量计算：<a target="_blank" rel="noopener" href="https://wiki.swoole.com/#/server/setting?id=task_worker_num">https://wiki.swoole.com/#/server/setting?id=task_worker_num</a><br>测试代码下载：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/dev_swoole/tree/master/210524_task">https://github.com/mailjobblog/dev_swoole/tree/master/210524_task</a>  </p>
+<p><strong>task异步消息丢失问题解决</strong><br>swoole用 <code>sysvmsg</code> 消息队列通信：<a target="_blank" rel="noopener" href="https://wiki.swoole.com/#/server/setting?id=task_ipc_mode">https://wiki.swoole.com/#/server/setting?id=task_ipc_mode</a><br>swoole 设置linux消息队列的key：<a target="_blank" rel="noopener" href="https://wiki.swoole.com/#/server/setting?id=message_queue_key">https://wiki.swoole.com/#/server/setting?id=message_queue_key</a><br>php实现IPC消息队列：<a target="_blank" rel="noopener" href="http://rango.swoole.com/archives/103">http://rango.swoole.com/archives/103</a><br>linux的IPC消息队列：<a target="_blank" rel="noopener" href="https://www.linuxidc.com/Linux/2018-05/152191.htm">https://www.linuxidc.com/Linux/2018-05/152191.htm</a>  </p>
+<p><strong>图例：</strong><br>worker和task关系图：<a target="_blank" rel="noopener" href="https://www.kdocs.cn/view/l/sjVNT7NoZs3G">https://www.kdocs.cn/view/l/sjVNT7NoZs3G</a><br>task处理大量数据图：<a target="_blank" rel="noopener" href="https://www.kdocs.cn/view/l/scsd4tcZHaqg">https://www.kdocs.cn/view/l/scsd4tcZHaqg</a>  </p>
 </blockquote>
-<h2 id="相关链接"><a href="#相关链接" class="headerlink" title="相关链接"></a>相关链接</h2><blockquote>
-<p>优秀博文：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/117476959">https://zhuanlan.zhihu.com/p/117476959</a></p>
-<p>mysql的checkpoint：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/lintong/p/4381578.html">https://www.cnblogs.com/lintong/p/4381578.html</a></p>
-</blockquote>
-<h2 id="事务的生命周期"><a href="#事务的生命周期" class="headerlink" title="事务的生命周期"></a>事务的生命周期</h2><p>MySQL的checkpoint <a target="_blank" rel="noopener" href="https://www.cnblogs.com/lintong/p/4381578.html">https://www.cnblogs.com/lintong/p/4381578.html</a></p>
-<p>checkpoint，即检查点。在undolog中写入检查点，表示在checkpoint前的事务都已经完成commit或者rollback了，也就是检查点前面的事务已经不存在数据一 致性的问题了(此处暂时不会深入解释)</p>
-<p>Innodb的事务日志是指Redo log，简称Log,保存在日志文件ib_logfile里面（去mysql数据目录下看下）。</p>
-<p>Innodb还有另外一个日志Undo log，但Undo log是存 放在共享表空间里面的（ibdata*文件，存储的是check point日志序列号）。</p>
-<p><img src="http://img.github.mailjob.net/oss.github/20210216113454.png"></p>
-<h2 id="事务的重做日志（redo）与回滚日志（undo）"><a href="#事务的重做日志（redo）与回滚日志（undo）" class="headerlink" title="事务的重做日志（redo）与回滚日志（undo）"></a>事务的重做日志（redo）与回滚日志（undo）</h2><p>到现在为止我们了解了 MySQL 中的两种日志，回滚日志（undo log）和重做日志（redo log）；在数据库系统中，事务的原子性和持久性是由事务日志 （transaction log）保证的，在实现时也就是上面提到的两种日志，前者用于对事务的影响进行撤销，后者在错误处理时对已经提交的事务进行重做，它们能保 证两点：</p>
-<ol>
-<li>发生错误或者需要回滚的事务能够成功回滚（原子性）；</li>
-<li>在事务提交后，数据没来得及写会磁盘就宕机时，在下次重新启动后能够成功恢复数据（持久性）； 在数据库中，这两种日志经常都是一起工作的，我们可以将它们整体看做一条事务日志，其中包含了事务的 ID、修改的行元素以及修改前后的值。</li>
-</ol>
-<p><img src="http://img.github.mailjob.net/oss.github/20210216113207.png" alt="img"></p>
+<h2 id="Task异步任务的实现解析"><a href="#Task异步任务的实现解析" class="headerlink" title="Task异步任务的实现解析"></a>Task异步任务的实现解析</h2><h3 id="异步任务-task-id-计算方式"><a href="#异步任务-task-id-计算方式" class="headerlink" title="异步任务 task id 计算方式"></a>异步任务 task id 计算方式</h3><p><strong>假设 Worker id 的范围是：</strong><br><code>min：</code>0，<code>max：</code>$serv-&gt;setting[‘worker_num’]  </p>
+<p><strong>则 Task 任务 id 计算范围如下：</strong><br><code>min：</code>$serv-&gt;setting[‘worker_num’]，<code>max：</code>$serv-&gt;setting[‘worker_num’] + $serv-&gt;setting[‘task_worker_num’]</p>
+<h3 id="Task如何产生"><a href="#Task如何产生" class="headerlink" title="Task如何产生"></a>Task如何产生</h3><p>当 worker 进程得到任务后， fork 出来一个 task 进程。然后把任务投递到 taskWorker 进程池中执行。</p>
+<h4 id="Worker-和-Task-投递实现"><a href="#Worker-和-Task-投递实现" class="headerlink" title="Worker 和 Task 投递实现"></a>Worker 和 Task 投递实现</h4><p><img src="http://img.github.mailjob.net/20210527135123.png" alt="image-20210527135121857"></p>
+<h3 id="测试代码"><a href="#测试代码" class="headerlink" title="测试代码"></a>测试代码</h3><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="variable">$serv</span> = <span class="keyword">new</span> Swoole\Server(<span class="string">&#x27;0.0.0.0&#x27;</span>, <span class="number">9601</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">//设置异步任务的工作进程数量</span></span><br><span class="line"><span class="variable">$serv</span>-&gt;set([</span><br><span class="line">    <span class="string">&#x27;worker_num&#x27;</span>      =&gt; <span class="number">4</span>,</span><br><span class="line">    <span class="string">&#x27;task_worker_num&#x27;</span> =&gt; <span class="number">6</span></span><br><span class="line">]);</span><br><span class="line"></span><br><span class="line"><span class="comment">//此回调函数在worker进程中执行</span></span><br><span class="line"><span class="variable">$serv</span>-&gt;on(<span class="string">&#x27;Receive&#x27;</span>, <span class="function"><span class="keyword">function</span> (<span class="params"><span class="variable">$serv</span>, <span class="variable">$fd</span>, <span class="variable">$reactor_id</span>, <span class="variable">$data</span></span>) </span>&#123;</span><br><span class="line">    <span class="comment">//投递异步任务</span></span><br><span class="line">    <span class="variable">$task_id</span> = <span class="variable">$serv</span>-&gt;task(<span class="variable">$data</span>);</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&quot;代码继续执行中: id=<span class="subst">&#123;$task_id&#125;</span>\n&quot;</span>;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">//处理异步任务(此回调函数在task进程中执行)</span></span><br><span class="line"><span class="variable">$serv</span>-&gt;on(<span class="string">&#x27;Task&#x27;</span>, <span class="function"><span class="keyword">function</span> (<span class="params"><span class="variable">$serv</span>, <span class="variable">$task_id</span>, <span class="variable">$reactor_id</span>, <span class="variable">$data</span></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&quot;正在处理异步任务[id=<span class="subst">&#123;$task_id&#125;</span>]&quot;</span> . PHP_EOL;</span><br><span class="line">    sleep(<span class="number">6</span>);<span class="comment">// 睡眠中，模拟任务处理</span></span><br><span class="line">    <span class="comment">//返回任务执行的结果</span></span><br><span class="line">    <span class="variable">$serv</span>-&gt;finish(<span class="string">&quot;<span class="subst">&#123;$data&#125;</span> -&gt; OK&quot;</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">//处理异步任务的结果(此回调函数在worker进程中执行)</span></span><br><span class="line"><span class="variable">$serv</span>-&gt;on(<span class="string">&#x27;Finish&#x27;</span>, <span class="function"><span class="keyword">function</span> (<span class="params"><span class="variable">$serv</span>, <span class="variable">$task_id</span>, <span class="variable">$data</span></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&quot;异步任务执行完成咯[<span class="subst">&#123;$task_id&#125;</span>] Finish: <span class="subst">&#123;$data&#125;</span>&quot;</span> . PHP_EOL;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="variable">$serv</span>-&gt;start();</span><br></pre></td></tr></table></figure>
+<h4 id="测试说明"><a href="#测试说明" class="headerlink" title="测试说明"></a>测试说明</h4><ul>
+<li>服务端启动以上代码，设置4个worker和6个task，启动服务</li>
+<li>客户端在服务器执行 <code> telnet 127.0.0.1 9601</code> 进行消息投递。</li>
+<li>然后查看 task 进程树。可以发现 4 个worker进程，6个task进程。</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 查看进程树</span></span><br><span class="line">pstree -ap | grep -v grep | grep task</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 树状展示</span></span><br><span class="line">pstree -p 25658</span><br></pre></td></tr></table></figure>
+<p><img src="http://img.github.mailjob.net/20210527133843.png" alt="image-20210527133841965"></p>
+<h2 id="Task异步任务消息丢失问题"><a href="#Task异步任务消息丢失问题" class="headerlink" title="Task异步任务消息丢失问题"></a>Task异步任务消息丢失问题</h2><p><strong>问题描述：</strong>task 异步任务，处理大量数据的时候。当 <code>worker</code> 进程不断的向 <code>task</code> 进程投递任务，然而当所有的 <code>task</code> 任务都处于忙碌状态的时候，此时的 <code>task</code> 异步任务会被暂时存放到 <code>linux</code> 服务器的临时目录 <code>tmp</code> 中。当 <code>tmp</code> 临时目录里存在一些数据的并且服务器宕机后，重启服务器后，然后再启动<code>server</code>服务，<code>socket</code> 连接会被重置，导致新的 <code>server</code> 服务中的 <code>task</code> “不认识” <code>tmp</code> 中的数据，由此产生丢失问题。</p>
+<p><img src="http://img.github.mailjob.net/20210527144239.png" alt="image-20210527144237618"></p>
+<p><strong>解决方案：</strong>Linux底层实现了 <code>IPC 消息机制</code>，对于默认<code>task</code>消息投递，加入了<code>sysvms</code>消息队列中间层。一个简单的流程表达是 <code>Worker -&gt; Sysvms -&gt; tmp -&gt; Task</code>。在投递任务的时候，先定义一个<code>key</code>，然后基于这个<code>key</code>生成一个消息队列。<code>worker</code> 投递任务的时候到达 <code>Sysvms</code> 中间者，如果所有 <code>task</code> 都处于<code>忙碌</code>状态，则此任务会存储在 <code>linux Sysvms</code> 消息队列中。如果发送宕机，基于之前定义的 <code>key</code> ，就可以得到还没处理完毕的<code>task</code>任务，然后接着处理。</p>
+<p><img src="http://img.github.mailjob.net/20210527144256.png" alt="image-20210527144254975"></p>
+<p>swoole 解决问题方案：</p>
+<p><img src="http://img.github.mailjob.net/20210527144315.png" alt="image-20210527144313867"></p>
 
             </section>
     </article>
@@ -231,9 +235,9 @@
     </div> -->
     <div>
         <strong>本文链接：</strong>
-        <a href="https://blog.mailjob.net/posts/2104264831.html">
-            <!-- https://blog.mailjob.net/mysql/事务与锁的关系 -->
-            https://blog.mailjob.net/posts/2104264831.html
+        <a href="https://blog.mailjob.net/posts/1102334855.html">
+            <!-- https://blog.mailjob.net/swoole/Swoole异步任务Task实现 -->
+            https://blog.mailjob.net/posts/1102334855.html
         </a>
     </div>
     <div>

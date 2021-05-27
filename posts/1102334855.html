@@ -218,6 +218,9 @@
 <p><img src="http://img.github.mailjob.net/20210527144239.png" alt="image-20210527144237618"></p>
 <p><strong>解决方案：</strong>Linux底层实现了 <code>IPC 消息机制</code>，对于默认<code>task</code>消息投递，加入了<code>sysvms</code>消息队列中间层。一个简单的流程表达是 <code>Worker -&gt; Sysvms -&gt; tmp -&gt; Task</code>。在投递任务的时候，先定义一个<code>key</code>，然后基于这个<code>key</code>生成一个消息队列。<code>worker</code> 投递任务的时候到达 <code>Sysvms</code> 中间者，如果所有 <code>task</code> 都处于<code>忙碌</code>状态，则此任务会存储在 <code>linux Sysvms</code> 消息队列中。如果发送宕机，基于之前定义的 <code>key</code> ，就可以得到还没处理完毕的<code>task</code>任务，然后接着处理。</p>
 <p><img src="http://img.github.mailjob.net/20210527144256.png" alt="image-20210527144254975"></p>
+<p>查看 linux sysvmsg 消息队列：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ipcs -qa</span><br></pre></td></tr></table></figure>
+<p><img src="http://img.github.mailjob.net/20210527203011.png" alt="image-20210527203009809"></p>
 <p>swoole 解决问题方案：</p>
 <p><img src="http://img.github.mailjob.net/20210527144315.png" alt="image-20210527144313867"></p>
 
@@ -466,7 +469,7 @@
           </li>
         
           <li>
-            <a href="/posts/1911473056.html">Swoole多进程普通实现</a>
+            <a href="/posts/1911473056.html">Swoole多进程普通实现(Process)</a>
           </li>
         
           <li>

@@ -3,7 +3,7 @@
   <meta charset="utf-8">
   
   <title>
-    分类: go | 李斌的技术博客
+    think-swoole 的安装和使用 | 李斌的技术博客
   </title>
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <meta name="theme-color" content="#4184f3">
@@ -151,32 +151,136 @@
             <div class="container content">
                 <div class="scene_element scene_element--fadein">
                     <div class="row">
-    <div class="main">
-   
-        <article class="title-list">
-            
-                <h3>
-                    go
-                </h3>
-            
-            
-            <section>
-                <time class="post-date" datetime="2021-04-23T02:04:01.000Z">
-                    2021-04-23
-                </time>
-                <a href="/posts/1619852991.html">
-                    go语言示例项目
-                </a>
+  <div class="main main-article">
+    <article>
+
+      
+            <header class="post-header">
+              
+            </header>
+
+            <h1 class="post-title">
+              think-swoole 的安装和使用
+            </h1>
+
+            <section class="post-info post-info-bottom">
+
+              <span class="post-date">发布于
+                <span class="post-date-text">
+                   2021-05-28
+                </span>
+              </span>
+
+
+
+
+              
+                <span class="post-category">分类:
+                  <a class="article-category-link" href="/categories/swoole/">swoole</a>
+                </span>
                 
+                  
+                    <span class="post-tags">
+                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/swoole/" rel="tag">swoole</a></li></ul>
+                    </span>
+                    
+
+                      <!-- 阅读量统计 -->
+                      
+                        <span class="post-visitors">阅读量:<span id="twikoo_visitors">0</span></span>
+                        
+
+
             </section>
-            
-        </article>
-        
-  
-    </div>
+
+            <section class="post-content">
+
+              <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote>
+<p>ThinkPHP 6.0 开发文档：<a target="_blank" rel="noopener" href="https://www.kancloud.cn/manual/thinkphp6_0/1037479">https://www.kancloud.cn/manual/thinkphp6_0/1037479</a></p>
+<p>Think-swoole 文档：<a target="_blank" rel="noopener" href="https://www.kancloud.cn/manual/thinkphp6_0/1359700">https://www.kancloud.cn/manual/thinkphp6_0/1359700</a></p>
+<p>socket.io 客户端Api：<a target="_blank" rel="noopener" href="https://www.w3cschool.cn/socket/socket-k49j2eia.html">https://www.w3cschool.cn/socket/socket-k49j2eia.html</a></p>
+</blockquote>
+<h2 id="框架构建"><a href="#框架构建" class="headerlink" title="框架构建"></a>框架构建</h2>
+            </section>
+    </article>
     
-    <aside>
-        <div class="aside-wrap">
+
+
+        <!-- 版权声明 -->
+        
+<div class="post-copyright">
+    <!-- <div>
+        <strong>本文作者：</strong>
+        <span>李斌</span>
+    </div> -->
+    <div>
+        <strong>本文链接：</strong>
+        <a href="https://blog.mailjob.net/posts/1305994970.html">
+            <!-- https://blog.mailjob.net/swoole/think-swoole的安装和使用 -->
+            https://blog.mailjob.net/posts/1305994970.html
+        </a>
+    </div>
+    <div>
+        <!-- <span>欢迎任何形式的转载，请务必注明出处。</span> -->
+    </div>
+    <div>
+        <span>
+            该网站发布的内容，遵循
+            <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>
+            版权协议，转载请附上原文出处链接和本声明。
+        </span>
+    </div>
+</div>
+
+
+
+<style>
+    .post-copyright {
+        background-color: #fff;
+  box-shadow: 0px 0px 1px 1px rgba(0, 0, 0, 0.05);
+        display: block;
+        margin: 20px auto;
+        margin-bottom: 15px;
+        padding: 10px;
+        font-size: 15px;
+        color: #2e2d2d;
+        word-break: break-all;
+        line-height: 1.8;
+    }
+
+
+    .post-copyright a {
+        color: #2e2d2d;
+        border-bottom: 1px solid #999; 
+    }
+
+    .post-copyright a:hover {
+        color: #2e2d2d;
+        border-bottom: 1px solid #000; 
+    }
+</style>
+
+          <!-- comments -->
+          <div class="comments">
+    <h3 id="commenttitle" style="margin-top: 20px;margin-left: 10px;">评论区</h3>
+    <div id="tcomment"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/twikoo@0.6.0/dist/twikoo.all.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/twikoo@1.0.0/dist/twikoo.all.min.js"></script> -->
+
+<script>twikoo.init({ envId: 'jefferyjob-github-io-3b53ee3a93b', el: '#tcomment' })</script>
+
+            <div class="right-icon">
+              <div id="to-valine" class="right-icon-item">
+                <a href="#commenttitle">评论</a>
+              </div>
+            </div>
+
+  </div>
+
+
+  <aside>
+    <div class="aside-wrap">
     
         <section class="widget-wrap">
     <h3 class="widget-title">简介</h3>
@@ -426,11 +530,33 @@
     
 </div>
 
-    </aside>
-   
-    
+
+      <!-- 目录 -->
+      
+        <div id="toc"></div>
+        <script>
+          $(function () {
+            var elm = $('#toc');
+            var startPos = $(elm).offset().top;
+            $.event.add(window, "scroll", function () {
+              var p = $(window).scrollTop();
+              $(elm).css('margin-left', '0px');
+              $(elm).css('position', ((p) > startPos) ? 'fixed' : 'static');
+              $(elm).css('top', ((p) > startPos) ? '20px' : '')
+            })
+          })
+
+        </script>
+
+  </aside>
+  
 </div>
 
+
+<script>
+  $('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
+
+</script>
                 </div>
             </div>
             <div class="right-icon">

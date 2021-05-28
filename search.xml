@@ -4,6 +4,31 @@
   
     
     <entry>
+      <title>think-swoole 的安装和使用</title>
+      <link href="posts/1305994970.html"/>
+      <url>posts/1305994970.html</url>
+      
+        <content type="html"><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote><p>ThinkPHP 6.0 开发文档：<a href="https://www.kancloud.cn/manual/thinkphp6_0/1037479">https://www.kancloud.cn/manual/thinkphp6_0/1037479</a></p><p>Think-swoole 文档：<a href="https://www.kancloud.cn/manual/thinkphp6_0/1359700">https://www.kancloud.cn/manual/thinkphp6_0/1359700</a></p><p>socket.io 客户端Api：<a href="https://www.w3cschool.cn/socket/socket-k49j2eia.html">https://www.w3cschool.cn/socket/socket-k49j2eia.html</a></p></blockquote><h2 id="框架构建"><a href="#框架构建" class="headerlink" title="框架构建"></a>框架构建</h2>]]></content>
+      
+      
+      <categories>
+          
+          <category> swoole </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> swoole </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>Swoole异步任务Task实现</title>
       <link href="posts/1102334855.html"/>
       <url>posts/1102334855.html</url>

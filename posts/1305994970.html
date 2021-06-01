@@ -205,13 +205,20 @@
 <p>Laravel 开发文档：<a target="_blank" rel="noopener" href="https://learnku.com/docs/laravel/8.x/installation/9354">https://learnku.com/docs/laravel/8.x/installation/9354</a></p>
 <p>laravels 中文文档：<a target="_blank" rel="noopener" href="https://github.com/hhxsv5/laravel-s/blob/master/README-CN.md">https://github.com/hhxsv5/laravel-s/blob/master/README-CN.md</a></p>
 <p>代码下载：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/dev_swoole/tree/master/210601_laravels">https://github.com/mailjobblog/dev_swoole/tree/master/210601_laravels</a></p>
-<p>修改代码后自动Reload：<a target="_blank" rel="noopener" href="https://github.com/hhxsv5/laravel-s/blob/master/README-CN.md#%E4%BF%AE%E6%94%B9%E4%BB%A3%E7%A0%81%E5%90%8E%E8%87%AA%E5%8A%A8reload">https://github.com/hhxsv5/laravel-s/blob/master/README-CN.md#%E4%BF%AE%E6%94%B9%E4%BB%A3%E7%A0%81%E5%90%8E%E8%87%AA%E5%8A%A8reload</a></p>
+<p>inotify修改代码后自动Reload：<a target="_blank" rel="noopener" href="https://github.com/hhxsv5/laravel-s/blob/master/README-CN.md#%E4%BF%AE%E6%94%B9%E4%BB%A3%E7%A0%81%E5%90%8E%E8%87%AA%E5%8A%A8reload">https://github.com/hhxsv5/laravel-s/blob/master/README-CN.md#%E4%BF%AE%E6%94%B9%E4%BB%A3%E7%A0%81%E5%90%8E%E8%87%AA%E5%8A%A8reload</a></p>
 <p>supervisorctl使用详解：<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/0b9054b33db3">https://www.jianshu.com/p/0b9054b33db3</a></p>
 </blockquote>
 <h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2><p><strong>think-swoole的通信协议问题</strong></p>
 <p>think-swoole 中的websocket协议聊天，使用的是 socket.io 协议，开发的时候要注意规范。</p>
-<p>举个例子，比如 websocket 客户端使用 send 发送消息。但是 socket.io 使用的是 emit 发送消息。</p>
-<p>还有时间的绑定，客户端绑定的事件名称要和服务端监听的事件名称一致</p>
+<p>举个例子，比如 websocket 客户端可以使用 send 向服务端发送消息，但是 socket.io 使用的是 emit 发送消息。</p>
+<p>还有事件的绑定，客户端绑定的事件名称要和服务端监听的事件名称一致。</p>
+<p><strong>swoole是长驻内存，修改代码后需要重启服务吗</strong></p>
+<p>由于swoole服务启动后会把 php-fpm 加载到服务里面，所以php每次访问的时候直接访问服务而省去了服务启动步骤。但是这样做的时候，新加入程序代码由于是在服务器启动后加入的，没有被加入到服务中，导致修改的代码不生效。</p>
+<p>所以针对这个问题，有如下的解决方案：</p>
+<ul>
+<li>采用swoole提供的 <code>reload</code> 重载方法，<a target="_blank" rel="noopener" href="https://wiki.swoole.com/#/server/methods?id=reload">点击链接</a> 阅读</li>
+<li>采用第三方软件<code>inotify</code>实现自动重栽，参考上文中的链接</li>
+</ul>
 
             </section>
     </article>

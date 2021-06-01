@@ -8,7 +8,32 @@
       <link href="posts/1305994970.html"/>
       <url>posts/1305994970.html</url>
       
-        <content type="html"><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote><p>ThinkPHP 6.0 开发文档：<a href="https://www.kancloud.cn/manual/thinkphp6_0/1037479">https://www.kancloud.cn/manual/thinkphp6_0/1037479</a></p><p>Think-swoole 文档：<a href="https://www.kancloud.cn/manual/thinkphp6_0/1359700">https://www.kancloud.cn/manual/thinkphp6_0/1359700</a></p><p>socket.io 客户端Api：<a href="https://www.w3cschool.cn/socket/socket-k49j2eia.html">https://www.w3cschool.cn/socket/socket-k49j2eia.html</a></p></blockquote><h2 id="框架构建"><a href="#框架构建" class="headerlink" title="框架构建"></a>框架构建</h2>]]></content>
+        <content type="html"><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote><p>ThinkPHP 6.0 开发文档：<a href="https://www.kancloud.cn/manual/thinkphp6_0/1037479">https://www.kancloud.cn/manual/thinkphp6_0/1037479</a></p><p>Think-swoole 文档：<a href="https://www.kancloud.cn/manual/thinkphp6_0/1359700">https://www.kancloud.cn/manual/thinkphp6_0/1359700</a></p><p>socket.io 客户端Api：<a href="https://www.w3cschool.cn/socket/socket-k49j2eia.html">https://www.w3cschool.cn/socket/socket-k49j2eia.html</a></p><p>解释WebSocket，socketio：<a href="https://www.jianshu.com/p/395dbc022678">https://www.jianshu.com/p/395dbc022678</a></p></blockquote><h2 id="框架构建"><a href="#框架构建" class="headerlink" title="框架构建"></a>框架构建</h2>]]></content>
+      
+      
+      <categories>
+          
+          <category> swoole </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> swoole </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>think-swoole 和 laravels 的简单使用</title>
+      <link href="posts/1305994970.html"/>
+      <url>posts/1305994970.html</url>
+      
+        <content type="html"><![CDATA[<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><h3 id="think-swoole"><a href="#think-swoole" class="headerlink" title="think-swoole"></a>think-swoole</h3><blockquote><p>ThinkPHP 6.0 开发文档：<a href="https://www.kancloud.cn/manual/thinkphp6_0/1037479">https://www.kancloud.cn/manual/thinkphp6_0/1037479</a></p><p>Think-swoole 文档：<a href="https://www.kancloud.cn/manual/thinkphp6_0/1359700">https://www.kancloud.cn/manual/thinkphp6_0/1359700</a></p><p>socket.io 客户端Api：<a href="https://www.w3cschool.cn/socket/socket-k49j2eia.html">https://www.w3cschool.cn/socket/socket-k49j2eia.html</a></p><p>代码下载：<a href="https://github.com/mailjobblog/dev_swoole/tree/master/210529_think-swoole">https://github.com/mailjobblog/dev_swoole/tree/master/210529_think-swoole</a></p></blockquote><h3 id="laravels"><a href="#laravels" class="headerlink" title="laravels"></a>laravels</h3><blockquote><p>Laravel 开发文档：<a href="https://learnku.com/docs/laravel/8.x/installation/9354">https://learnku.com/docs/laravel/8.x/installation/9354</a></p><p>laravels 中文文档：<a href="https://github.com/hhxsv5/laravel-s/blob/master/README-CN.md">https://github.com/hhxsv5/laravel-s/blob/master/README-CN.md</a></p><p>代码下载：<a href="https://github.com/mailjobblog/dev_swoole/tree/master/210601_laravels">https://github.com/mailjobblog/dev_swoole/tree/master/210601_laravels</a></p><p>修改代码后自动Reload：<a href="https://github.com/hhxsv5/laravel-s/blob/master/README-CN.md#%E4%BF%AE%E6%94%B9%E4%BB%A3%E7%A0%81%E5%90%8E%E8%87%AA%E5%8A%A8reload">https://github.com/hhxsv5/laravel-s/blob/master/README-CN.md#%E4%BF%AE%E6%94%B9%E4%BB%A3%E7%A0%81%E5%90%8E%E8%87%AA%E5%8A%A8reload</a></p><p>supervisorctl使用详解：<a href="https://www.jianshu.com/p/0b9054b33db3">https://www.jianshu.com/p/0b9054b33db3</a></p></blockquote><h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2><p><strong>think-swoole的通信协议问题</strong></p><p>think-swoole 中的websocket协议聊天，使用的是 socket.io 协议，开发的时候要注意规范。</p><p>举个例子，比如 websocket 客户端使用 send 发送消息。但是 socket.io 使用的是 emit 发送消息。</p><p>还有时间的绑定，客户端绑定的事件名称要和服务端监听的事件名称一致</p>]]></content>
       
       
       <categories>

@@ -3,7 +3,7 @@
   <meta charset="utf-8">
   
   <title>
-    PHP简单实现Reactor模型 | 李斌的技术博客
+    标签: swoole | 李斌的技术博客
   </title>
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <meta name="theme-color" content="#4184f3">
@@ -151,147 +151,36 @@
             <div class="container content">
                 <div class="scene_element scene_element--fadein">
                     <div class="row">
-  <div class="main main-article">
-    <article>
-
-      
-            <header class="post-header">
-              
-            </header>
-
-            <h1 class="post-title">
-              PHP简单实现Reactor模型
-            </h1>
-
-            <section class="post-info post-info-bottom">
-
-              <span class="post-date">发布于
-                <span class="post-date-text">
-                   2021-05-20
-                </span>
-              </span>
-
-
-
-
-              
-                <span class="post-category">分类:
-                  <a class="article-category-link" href="/categories/swoole/">swoole</a>
-                </span>
+    <div class="main">
+   
+        <article class="title-list">
+            
+                <h3>
+                    swoole
+                </h3>
+            
+            
+            <section>
+                <time class="post-date" datetime="2021-03-08T07:43:59.000Z">
+                    2021-03-08
+                </time>
+                <a href="/posts/3565199751.html">
+                    Linux五大网络IO模型图解
+                </a>
                 
-                  
-                    <span class="post-tags">
-                      <ul class="post-tag-list" itemprop="keywords"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/php/" rel="tag">php</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/swoole/" rel="tag">swoole</a></li></ul>
-                    </span>
-                    
-
-                      <!-- 阅读量统计 -->
-                      
-                        <span class="post-visitors">阅读量:<span id="twikoo_visitors">0</span></span>
-                        
-
-
             </section>
-
-            <section class="post-content">
-
-              <h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote>
-<p>什么是reactor模型：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/52php/p/5701354.html">https://www.cnblogs.com/52php/p/5701354.html</a></p>
-<p>php代码下载：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/dev_php_io/tree/master/test/reactor">https://github.com/mailjobblog/dev_php_io/tree/master/test/reactor</a></p>
-<p>图解reactor模型：<a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_39724469/article/details/111295927">https://blog.csdn.net/weixin_39724469/article/details/111295927</a></p>
-</blockquote>
-<h2 id="Reactor介绍"><a href="#Reactor介绍" class="headerlink" title="Reactor介绍"></a>Reactor介绍</h2><h3 id="connection-per-thread"><a href="#connection-per-thread" class="headerlink" title="connection per thread"></a>connection per thread</h3><p>在BIO线程模型中，为了解决同步阻塞的问题，采用了多线程的方式处理并发，即经典的connection per thread，每一个连接用一个线程处理。虽然在单个线程内仍然是阻塞的，但在整体上看是可以同时处理多个连接请求的，原理图如下：</p>
-<p><img src="http://img.github.mailjob.net/20210520105517.png" alt="8c9d2203ab7b7a059d241a091f7280fd.png"></p>
-<p>但这种方式的缺点在于资源要求太高，系统中创建线程是需要比较高的系统资源的，如果连接数太多，系统无法承受，而且，线程的反复创建和销毁也需要代价。</p>
-<h3 id="Reactor线程思想"><a href="#Reactor线程思想" class="headerlink" title="Reactor线程思想"></a>Reactor线程思想</h3><p>为了解决这个问题，出现了Reactor线程模型。简单来说，<strong>Reactor线程模型就是<code>多路I/O复用</code>结合<code>线程池</code>的思想</strong>。</p>
-<ul>
-<li>I/O多路复用：多个连接共用一个阻塞对象(即下图中的ServiceHandler)，应用程序只需要在一个阻塞对象等待，无需阻塞等待所有连接，当某个连接有新的数据可以处理时，操作系统通知应用程序线程从阻塞状态返回，并将数据分发给对应的线程处理</li>
-<li>基于线程池复用线程资源：不必再为每个连接创建线程，将连接完成后的业务处理任务交给线程池中的线程处理，处理完成后归还线程，同一个线程可以处理多个连接的业务，达到线程复用</li>
-</ul>
-<p><img src="http://img.github.mailjob.net/20210520105744.png" alt="0bc3701da6ea80285ce9175e1d5f87fa.png"></p>
-<h2 id="PHP原生代码实现"><a href="#PHP原生代码实现" class="headerlink" title="PHP原生代码实现"></a>PHP原生代码实现</h2><p><img src="http://img.github.mailjob.net/20210520104709.png" alt="image-20210520104707852"></p>
-<p><img src="http://img.github.mailjob.net/20210520104730.png" alt="image-20210520104728279"></p>
-
-            </section>
-    </article>
-    
-
-
-        <!-- 版权声明 -->
+            
+        </article>
         
-<div class="post-copyright">
-    <!-- <div>
-        <strong>本文作者：</strong>
-        <span>李斌</span>
-    </div> -->
-    <div>
-        <strong>本文链接：</strong>
-        <a href="https://blog.mailjob.net/posts/236519737.html">
-            <!-- https://blog.mailjob.net/swoole/PHP简单实现Reactor模型 -->
-            https://blog.mailjob.net/posts/236519737.html
-        </a>
+  
+    <div class="pagination">
+      <a class="extend prev" rel="prev" href="/tags/swoole/page/2/">上一页</a><a class="page-number" href="/tags/swoole/">1</a><a class="page-number" href="/tags/swoole/page/2/">2</a><span class="page-number current">3</span>
     </div>
-    <div>
-        <!-- <span>欢迎任何形式的转载，请务必注明出处。</span> -->
+  
     </div>
-    <div>
-        <span>
-            该网站发布的内容，遵循
-            <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>
-            版权协议，转载请附上原文出处链接和本声明。
-        </span>
-    </div>
-</div>
-
-
-
-<style>
-    .post-copyright {
-        background-color: #fff;
-  box-shadow: 0px 0px 1px 1px rgba(0, 0, 0, 0.05);
-        display: block;
-        margin: 20px auto;
-        margin-bottom: 15px;
-        padding: 10px;
-        font-size: 15px;
-        color: #2e2d2d;
-        word-break: break-all;
-        line-height: 1.8;
-    }
-
-
-    .post-copyright a {
-        color: #2e2d2d;
-        border-bottom: 1px solid #999; 
-    }
-
-    .post-copyright a:hover {
-        color: #2e2d2d;
-        border-bottom: 1px solid #000; 
-    }
-</style>
-
-          <!-- comments -->
-          <div class="comments">
-    <h3 id="commenttitle" style="margin-top: 20px;margin-left: 10px;">评论区</h3>
-    <div id="tcomment"></div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/twikoo@0.6.0/dist/twikoo.all.min.js"></script>
-<!-- <script src="https://cdn.jsdelivr.net/npm/twikoo@1.0.0/dist/twikoo.all.min.js"></script> -->
-
-<script>twikoo.init({ envId: 'jefferyjob-github-io-3b53ee3a93b', el: '#tcomment' })</script>
-
-            <div class="right-icon">
-              <div id="to-valine" class="right-icon-item">
-                <a href="#commenttitle">评论</a>
-              </div>
-            </div>
-
-  </div>
-
-
-  <aside>
-    <div class="aside-wrap">
+    
+    <aside>
+        <div class="aside-wrap">
     
         <section class="widget-wrap">
     <h3 class="widget-title">简介</h3>
@@ -541,33 +430,12 @@
     
 </div>
 
-
-      <!-- 目录 -->
-      
-        <div id="toc"></div>
-        <script>
-          $(function () {
-            var elm = $('#toc');
-            var startPos = $(elm).offset().top;
-            $.event.add(window, "scroll", function () {
-              var p = $(window).scrollTop();
-              $(elm).css('margin-left', '0px');
-              $(elm).css('position', ((p) > startPos) ? 'fixed' : 'static');
-              $(elm).css('top', ((p) > startPos) ? '20px' : '')
-            })
-          })
-
-        </script>
-
-  </aside>
-  
+    </aside>
+   
+    
 </div>
 
 
-<script>
-  $('#to-top').click(function () { $('html,body').animate({ scrollTop: '0px' }, 500); return false; });
-
-</script>
                 </div>
             </div>
             <div class="right-icon">

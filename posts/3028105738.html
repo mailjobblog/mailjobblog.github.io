@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Redis数据类型List | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="相关链接  Redis 常用命令，思维导图 ：https:&#x2F;&#x2F;www.kdocs.cn&#x2F;view&#x2F;l&#x2F;ss49IFenIOSm  List 是一个字符串链表 Left、right都可插入元素 如果，key不存在，创建链表 如果，key存在，链表添加内容 如果，链表值全部移除，key也就消失了 效率分析 链表的头尾元素操作，效率都非常高 链表中间元素操作，效率比较低 List 底层实现 链表是一种">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis数据类型List">
+<meta property="og:url" content="https://blog.mailjob.net/posts/3028105738.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="相关链接  Redis 常用命令，思维导图 ：https:&#x2F;&#x2F;www.kdocs.cn&#x2F;view&#x2F;l&#x2F;ss49IFenIOSm  List 是一个字符串链表 Left、right都可插入元素 如果，key不存在，创建链表 如果，key存在，链表添加内容 如果，链表值全部移除，key也就消失了 效率分析 链表的头尾元素操作，效率都非常高 链表中间元素操作，效率比较低 List 底层实现 链表是一种">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/2020121620330018.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201216203334161.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1NoYW5neGluZ3lh,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201216204636878.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1NoYW5neGluZ3lh,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201216195534411.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201216195637810.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1NoYW5neGluZ3lh,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://imgconvert.csdnimg.cn/aHR0cHM6Ly91cGxvYWQtaW1hZ2VzLmppYW5zaHUuaW8vdXBsb2FkX2ltYWdlcy8zMDQxMjY4LWRiZGMzNTlhYTFlNTYzZGYucG5n?x-oss-process=image/format,png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/img_convert/63a1231e1bd6115df08546137ef361c1.png">
+<meta property="article:published_time" content="2021-01-19T13:54:55.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.986Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="redis">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/2020121620330018.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Redis数据类型List
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3028105738.html" class="article-date">
+	  <time datetime="2021-01-19T13:54:55.000Z" itemprop="datePublished">2021-01-19</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/redis/" rel="tag">redis</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/3028105738.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 3.6k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 14(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <meta name="referrer" content="no-referrer"/>
+<h1 id="相关链接">相关链接</h1>
+<blockquote>
+<p>Redis 常用命令，思维导图 ：<a target="_blank" rel="noopener" href="https://www.kdocs.cn/view/l/ss49IFenIOSm">https://www.kdocs.cn/view/l/ss49IFenIOSm</a></p>
+</blockquote>
+<h1 id="List">List</h1>
+<p>是一个字符串链表<br>
+Left、right都可插入元素</p>
+<p>如果，key不存在，创建链表<br>
+如果，key存在，链表添加内容<br>
+如果，链表值全部移除，key也就消失了</p>
+<p>效率分析<br>
+链表的头尾元素操作，效率都非常高<br>
+链表中间元素操作，效率比较低</p>
+<h1 id="List-底层实现">List 底层实现</h1>
+<p>链表是一种常用的数据结构，C 语言内部是没有内置这种数据结构的实现，所以Redis自己构建了链表的实现</p>
+<p>链表的定义</p>
+<pre class="line-numbers language-none"><code class="language-none">typedef  struct listNode&#123;
+       &#x2F;&#x2F;前置节点
+       struct listNode *prev;
+       &#x2F;&#x2F;后置节点
+       struct listNode *next;
+       &#x2F;&#x2F;节点的值
+       void *value;  
+&#125;listNode<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>通过多个 listNode 结构就可以组成链表，这是一个双向链表，Redis还提供了操作链表的数据结构</p>
+<pre class="line-numbers language-none"><code class="language-none">typedef struct list&#123;
+     &#x2F;&#x2F;表头节点
+     listNode *head;
+     &#x2F;&#x2F;表尾节点
+     listNode *tail;
+     &#x2F;&#x2F;链表所包含的节点数量
+     unsigned long len;
+     &#x2F;&#x2F;节点值复制函数
+     void (*free) (void *ptr);
+     &#x2F;&#x2F;节点值释放函数
+     void (*free) (void *ptr);
+     &#x2F;&#x2F;节点值对比函数
+     int (*match) (void *ptr,void *key);
+&#125;list;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>在版本3.2之前，Redis 列表list使用两种数据结构作为底层实现</strong>：</p>
+<ul>
+<li>压缩列表ziplist</li>
+<li>双向链表linkedlist</li>
+</ul>
+<p>因为双向链表占用的内存比压缩列表要多， 所以当创建新的列表键时， 列表会优先考虑使用压缩列表， 并且在有需要的时候， 才从压缩列表实现转换到双向链表实现</p>
+<blockquote>
+<h3 id="zipList"><strong>zipList</strong></h3>
+<p>**压缩列表 ziplist 的原理：压缩列表并不是对数据利用某种算法进行压缩，**<strong>而是将数据按照一定规则编码在一块连续的内存区域，目的是节省内存</strong></p>
+<p><em><strong>*当元素个数较少时，Redis 用 ziplist 来存储数据，当元素个数超过某个值时，链表键中会把 ziplist 转化为 linkedlist，字典键中会把 ziplist 转化为 hashtable。<br>
+由于内存是连续分配的，所以遍历速度很快。*</strong></em></p>
+<p><strong>在3.2之后，*<em>ziplist被quicklist替代*</em>。但是仍然是zset底层实现之一</strong></p>
+<p>quickList就是一个标准的双向链表的配置，有head 有tail;<br>
+每一个节点是一个quicklistNode，包含prev和next指针。<br>
+每一个quicklistNode 包含 一个ziplist，*zp 压缩链表里存储键值。<br>
+所以quicklist是对ziplist进行一次封装，使用小块的ziplist来既保证了少使用内存，也保证了性能。</p>
+<ul>
+<li>下图展示了压缩列表的各个组成部分<br>
+<img src="https://img-blog.csdnimg.cn/2020121620330018.png" alt="在这里插入图片描述"></li>
+<li>下表则记录了各个组成部分的类型、长度以及用途<br>
+<img src="https://img-blog.csdnimg.cn/20201216203334161.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1NoYW5neGluZ3lh,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></li>
+</ul>
+<h3 id="连锁更新">连锁更新</h3>
+<ul>
+<li>使用压缩链表使, 放置的数据是有限制的, 自如字符个数要在64个以内, 但是如果出现这种情况, 连续节点放置的数据都是63个, 如果突然第一个节点的字符超过了64个需要扩展, 因为压缩列表使用的内存是连续的, 所以后面的节点也应该扩展<br>
+<img src="https://img-blog.csdnimg.cn/20201216204636878.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1NoYW5neGluZ3lh,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></li>
+</ul>
+<h3 id="尽管连锁更新的复杂度较高，但它真正造成性能问题的几率是很低的：">尽管连锁更新的复杂度较高，但它真正造成性能问题的几率是很低的：</h3>
+<ol>
+<li>首先，压缩列表里要恰好有多个连续的、长度介于250字节至253字节之间的节点，连锁 更新才有可能被引发，在实际中，这种情况并不多见</li>
+<li>其次，即使出现连锁更新，但只要被更新的节点数量不多，就不会对性能造成任何影 响：比如说，对三五个节点进行连锁更新是绝对不会影响性能的</li>
+</ol>
+<p>因为以上原因，ziplistPush等命令的平均复杂度仅为O（N），在实际中，我们可以放心 地使用这些函数，而不必担心连锁更新会影响压缩列表的性能</p>
+<p>因为连锁更新在最坏情况下需要对压缩列表执行N次空间重分配操作，而每次空间重分配的最坏复杂度为O（N），所以连锁更新的最坏复杂度为O（N^{2}）</p>
+</blockquote>
+<blockquote>
+<h3 id="linkedlist"><strong>linkedlist</strong></h3>
+<ul>
+<li>多个listNode可以通过prev和next指针组成双端链表，如下图所示：<br>
+<img src="https://img-blog.csdnimg.cn/20201216195534411.png" alt="在这里插入图片描述"></li>
+<li>从上面的结构可以看出，Redis的链表是一个带头尾节点的双向无环链表，并且通过len字段记录了链表节点的长度</li>
+</ul>
+<p><img src="https://img-blog.csdnimg.cn/20201216195637810.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1NoYW5neGluZ3lh,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<ul>
+<li>list结构为链表提供了表头指针head、表尾指针tail，以及链表长度计数器len</li>
+<li>dup、 free和match成员则是用于实现多态链表所需的类型特定函数：</li>
+</ul>
+<ol>
+<li>dup函数用于复制链表节点所保存的值</li>
+<li>free函数用于释放链表节点所保存的值</li>
+<li>match函数则用于对比链表节点所保存的值和另一个输入值是否相等</li>
+</ol>
+<h3 id="总结Redis的链表实现的特性">总结Redis的链表实现的特性</h3>
+<ul>
+<li>双向：链表节点带有prev和next指针，获取某个节点的前置节点和后置节点的复杂度都 是O(1)</li>
+<li>无环：表头节点的prev指针和表尾节点的next指针都指向NULL，对链表的访问以 NULL为终点</li>
+<li>带表头指针和表尾指针：通过list结构的head指针和tail指针，程序获取链表的表头节点 和表尾节点的复杂度为O(1)</li>
+<li>带链表长度计数器：程序使用list结构的len属性来对list持有的链表节点进行计数，程序 获取链表中节点数量的复杂度为O(1)</li>
+<li>多态：链表节点使用void*指针来保存节点值，并且可以通过list结构的dup、free、 match三个属性为节点值设置类型特定函数，所以链表可以用于保存各种不同类型的值</li>
+</ul>
+</blockquote>
+<blockquote>
+<h3 id="总结">总结</h3>
+<p><strong>双向链表，每个数据都有头和尾。但是压缩列表，只有一个头和尾，然后吧所有的数据都放在了中间，所以使用的内存最小</strong></p>
+</blockquote>
+<h1 id="压缩列表转化成双向链表条件"><strong>压缩列表转化成双向链表条件</strong></h1>
+<p>创建新列表时 redis 默认使用 redis_encoding_ziplist 编码， 当以下任意一个<strong>条件被满足时， 列表会被转换成 redis_encoding_linkedlist</strong> 编码：</p>
+<ul>
+<li>试图往列表新添加一个字符串值，且这个字符串的长度超过 server.list_max_ziplist_value （默认值为 64 ）。</li>
+<li>ziplist 包含的节点超过 server.list_max_ziplist_entries （默认值为 512 ）。</li>
+</ul>
+<p>注意：这两个条件是可以修改的，在 redis.conf 中：</p>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;&#x2F; 保存的所有元素成员的长度都小于64字节
+list-max-ziplist-value 64 
+ 
+ 
+&#x2F;&#x2F; 保存的元素数量小于512个
+list-max-ziplist-entries 512 <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h1 id="Redis-List-应用场景">Redis List 应用场景</h1>
+<h3 id="1、消息队列">1、消息队列</h3>
+<p>如下图所示，Redis的lpush + brpop命令组合即可实现阻塞队列，生产者使用 lpush 从列表左侧插入元素，多个消费者客户端使用 brpop 命令阻塞式的争抢列表尾部的元素，多个客户端保证了消费的负载均衡和高可用；</p>
+<p><img src="https://imgconvert.csdnimg.cn/aHR0cHM6Ly91cGxvYWQtaW1hZ2VzLmppYW5zaHUuaW8vdXBsb2FkX2ltYWdlcy8zMDQxMjY4LWRiZGMzNTlhYTFlNTYzZGYucG5n?x-oss-process=image/format,png" alt="img"></p>
+<h3 id="2、最新列表">2、最新列表</h3>
+<p>list类型的lpush命令和lrange命令能实现最新列表的功能，每次通过lpush命令往列表里插入新的元素，然后通过lrange命令读取最新的元素列表，如朋友圈的点赞列表、评论列表。</p>
+<p>但是，并不是所有的最新列表都能用list类型实现，因为对于频繁更新的列表，list类型的分页可能导致列表元素重复或漏掉，</p>
+<p>举个例子，当前列表里由表头到表尾依次有（E，D，C，B，A）五个元素，每页获取3个元素，用户第一次获取到（E，D，C）三个元素，然后表头新增了一个元素F，列表变成了（F，E，D，C，B，A），此时用户取第二页拿到（C，B，A），元素C重复了。只有不需要分页（比如每次都只取列表的前5个元素）或者更新频率低（比如每天凌晨更新一次）的列表才适合用list类型实现。</p>
+<p>对于需要分页并且会频繁更新的列表，需用使用有序集合sorted set类型实现。</p>
+<p>另外，需要通过时间范围查找的最新列表，list类型也实现不了，也需要通过有序集合sorted set类型实现，如以成交时间范围作为条件来查询的订单列表</p>
+<h3 id="3、排行榜">3、排行榜</h3>
+<p>list类型的lrange命令可以分页查看队列中的数据。可将每隔一段时间计算一次的排行榜存储在list类型中，如京东每日的手机销量排行、学校每次月考学生的成绩排名、斗鱼年终盛典主播排名等，每日计算一次，存储在list类型中，接口访问时，通过page和size分页获取排行榜。</p>
+<p>但是，并不是所有的排行榜都能用list类型实现，只有定时计算的排行榜才适合使用list类型存储，与定时计算的排行榜相对应的是实时计算的排行榜，list类型不能支持实时计算的排行榜</p>
+<h1 id="操作命令">操作命令</h1>
+<p><img src="https://img-blog.csdnimg.cn/img_convert/63a1231e1bd6115df08546137ef361c1.png" alt="img"></p>
+<pre class="line-numbers language-none"><code class="language-none">1、redis中list列表的数据插入命令：lpush，rpush，linsert
+ 
+127.0.0.1:6379&gt;rpush mylist 1   
+---结果为：(integer) 1
+ 
+127.0.0.1:6379&gt;rpush mylist 2   
+---结果为：(integer) 2
+ 
+127.0.0.1:6379&gt;rpush mylist 3   
+---rpush命令：向mylist列表中,从右边插入3条数据，返回值为当前列表的容量。结果为：(integer) 3
+ 
+127.0.0.1:6379&gt;lrange mylist 0 -1   
+---lrange命令：查看mylist列表中的数据，0开始位置，-1结束位置，结束位置为-1时，表示列表的最后一个位置，即查看所有。结果为：1&gt; &quot;1&quot;  2&gt; &quot;2&quot;  3&gt; &quot;3&quot;
+ 
+127.0.0.1:6379&gt;lpush mylist 0   
+---lpush命令：向mylist列表中，从左边插入一条数据为0的数据
+ 
+127.0.0.1:6379&gt;lrange mylist 0 -1   
+---结果为：1&gt;&quot;0&quot;  2&gt;&quot;1&quot;  3&gt;&quot;2&quot;  4&gt;&quot;3&quot;
+ 
+127.0.0.1:6379&gt;linsert mylist after 3 4   
+---linsert命令，表达式为linsert key before|after pivot value ;这句命令的意思是在key为mylist的列表中查找值为3的数据，在其后插入一条值为4的数据。
+ 
+127.0.0.1:6379&gt;lrange mylist 0 -1   
+---结果为：1&gt;&quot;0&quot;  2&gt;&quot;1&quot;  3&gt;&quot;2&quot;  4&gt;&quot;3&quot;  5&gt;&quot;4&quot;
+ 
+127.0.0.1:6379&gt;linsert mylist before 0 -1   
+---意思是：在key为mylist的列表中查找值为0的数据，在其前插入一条值为-1的数据。
+ 
+127.0.0.1:6379&gt;lrange mylist 0 -1    
+---结果为：1&gt;&quot;-1&quot;  2&gt;&quot;0&quot;  3&gt;&quot;1&quot;  4&gt;&quot;2&quot;  5&gt;&quot;3&quot;  6&gt;&quot;4&quot;
+ 
+127.0.0.1:6379&gt;lisert mylist after 5 8    
+---结果为：-1，由于mylist列表不存在值为5的数据，所以不执行任何操作，返回状态值-1。如果key不存在时，返回错误提示。
+ 
+127.0.0.1:6379&gt;lrange mylist 0 -1   
+---结果为：1&gt;&quot;-1&quot;  2&gt;&quot;0&quot;  3&gt;&quot;1&quot;  4&gt;&quot;2&quot;  5&gt;&quot;3&quot;  6&gt;&quot;4&quot;
+ 
+ 
+2、redis中list列表的数据删除命令：lpop，rpop
+ 
+127.0.0.1:6379&gt;lpop mylist    
+---lpop命令：从列表中的左边移除一条数据，同时输出被删除的数据，这里输出的结果为-1
+ 
+127.0.0.1:6379&gt;lrange mylist 0 -1   
+---结果为：1&gt;&quot;0&quot;  2&gt;&quot;1&quot;  3&gt;&quot;2&quot;  4&gt;&quot;3&quot;  5&gt;&quot;4&quot;
+ 
+127.0.0.1:6379&gt;rpop mylist   
+---rpop命令：从列表的右边移除一条数据，同时输出被删除的数据，这里输出的结果为4
+ 
+127.0.0.1:6379&gt;lrange mylist 0 -1   
+---结果为：1&gt;&quot;0&quot;  2&gt;&quot;1&quot;  3&gt;&quot;2&quot;  4&gt;&quot;3&quot; 
+ 
+127.0.0.1:6379&gt;ltrim mylist 1 3   
+----ltrim命令：保留设定的两个下标区间的值，删除不在其区间的所有值。1为开始保留的下标值，3为结束保留的下标值。
+ 
+127.0.0.1:6379&gt;lrange mylist 0 -1   
+---结果为：1&gt;&quot;1&quot;  2&gt;&quot;2&quot;  3&gt;&quot;3&quot; 
+ 
+ 
+3、redis中list列表的数据查看命令：lrange，llen，lindex
+ 
+127.0.0.1:6379&gt;llen mylist   
+---llen命令：返回列表的长度，这里mylist只剩下4条数据，故输出结果为4
+ 
+127.0.0.1:6379&gt;lindex mylist 3   
+---lindex命令：获取给定位置的数据，这里坐标为3的数据是&quot;2&quot;,所以结果为2.
+ 
+ 
+4、redis中list列表数据修改命令：lset
+ 
+127.0.0.1:6379&gt;lset mylist 2 zlh   
+---lset命令：把下标为2的值设置为zlh，如果下标值超出范围或对一个空list列表进行lset，那么将返回一个错误提示
+ 
+127.0.0.1:6379&gt;lrange mylist 0 -1   
+---结果为: 1&gt;&quot;1&quot;  2&gt;&quot;2&quot;  3&gt;&quot;zlh&quot;
+ 
+ 
+5、redis中list列表，两个列表A,B，将A列表的尾元素添加到B列表的头元素中，命令：rpoplpush
+ 
+#这里我有连个列表A数据为&#123;1,2,3&#125; ，B列表数据为&#123;4,5,6&#125;
+ 
+127.0.0.1:6379&gt;rpoplpush A B
+ 
+127.0.0.1:6379&gt;lrange A   
+---结果为：1&gt;&quot;1&#39; 2&gt;&quot;2&quot;
+ 
+127.0.0.1:6379&gt;lrange B   
+---结果为：1&gt;&quot;3&#39; 2&gt;&quot;4&quot; 3&gt;&quot;5&quot; 4&gt;&quot;6&quot;
+ 
+ 
+6、redis中的几个带阻塞的高级命令：blpop,brpop,brpoplpush
+ 
+127.0.0.1:6379&gt;blpop A 30   
+---意思是：A列表有值的话，从左边移除一个数据，如果没有值的话，则等待A中插入数据为止，等待时间为30秒，如果时间设置为0表示阻塞时间无限延长
+ 
+127.0.0.1:6379&gt;blpop B30   
+---意思是：A列表有值的话，从左边移除一个数据，如果没有值的话，则等待A中插入数据为止，等待时间为30秒，如果时间设置为0表示阻塞时间无限延长
+ 
+127.0.0.1:6379&gt;brpoplpush A B 30   
+---意思是：将A列表的尾元素添加到B列表的头元素中，如果A列表中有值则插入，如果没值，则等待A中插入数据为止，等待时间为30秒，如果时间设置为0表示阻塞时间无限延长<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/3028105738.html">https://blog.mailjob.net/posts/3028105738.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E9%93%BE%E6%8E%A5"><span class="toc-text">相关链接</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#List"><span class="toc-text">List</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#List-%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0"><span class="toc-text">List 底层实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#zipList"><span class="toc-text">zipList</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%9E%E9%94%81%E6%9B%B4%E6%96%B0"><span class="toc-text">连锁更新</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B0%BD%E7%AE%A1%E8%BF%9E%E9%94%81%E6%9B%B4%E6%96%B0%E7%9A%84%E5%A4%8D%E6%9D%82%E5%BA%A6%E8%BE%83%E9%AB%98%EF%BC%8C%E4%BD%86%E5%AE%83%E7%9C%9F%E6%AD%A3%E9%80%A0%E6%88%90%E6%80%A7%E8%83%BD%E9%97%AE%E9%A2%98%E7%9A%84%E5%87%A0%E7%8E%87%E6%98%AF%E5%BE%88%E4%BD%8E%E7%9A%84%EF%BC%9A"><span class="toc-text">尽管连锁更新的复杂度较高，但它真正造成性能问题的几率是很低的：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#linkedlist"><span class="toc-text">linkedlist</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93Redis%E7%9A%84%E9%93%BE%E8%A1%A8%E5%AE%9E%E7%8E%B0%E7%9A%84%E7%89%B9%E6%80%A7"><span class="toc-text">总结Redis的链表实现的特性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8E%8B%E7%BC%A9%E5%88%97%E8%A1%A8%E8%BD%AC%E5%8C%96%E6%88%90%E5%8F%8C%E5%90%91%E9%93%BE%E8%A1%A8%E6%9D%A1%E4%BB%B6"><span class="toc-text">压缩列表转化成双向链表条件</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Redis-List-%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">Redis List 应用场景</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97"><span class="toc-text">1、消息队列</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E6%9C%80%E6%96%B0%E5%88%97%E8%A1%A8"><span class="toc-text">2、最新列表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81%E6%8E%92%E8%A1%8C%E6%A6%9C"><span class="toc-text">3、排行榜</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%93%8D%E4%BD%9C%E5%91%BD%E4%BB%A4"><span class="toc-text">操作命令</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

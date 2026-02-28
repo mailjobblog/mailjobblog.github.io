@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>PHP的错误与异常处理 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="前言 PHP提供了错误处理和日志记录的功能. 这些函数允许你定义自己的错误处理规则，以及修改错误记录的方式. 这样，你就可以根据自己的需要，来更改和加强错误输出信息以满足实际需要。 通过日志记录功能，你可以将信息直接发送到其他日志服务器，或者发送到指定的电子邮箱（或者通过邮件网关发送），或者发送到操作系统日志等，从而可以有选择的记录和监视你的应用程序和网站的最重要的部分。 错误报告功能允许你自定义">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PHP的错误与异常处理">
+<meta property="og:url" content="https://blog.mailjob.net/posts/3400454965.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="前言 PHP提供了错误处理和日志记录的功能. 这些函数允许你定义自己的错误处理规则，以及修改错误记录的方式. 这样，你就可以根据自己的需要，来更改和加强错误输出信息以满足实际需要。 通过日志记录功能，你可以将信息直接发送到其他日志服务器，或者发送到指定的电子邮箱（或者通过邮件网关发送），或者发送到操作系统日志等，从而可以有选择的记录和监视你的应用程序和网站的最重要的部分。 错误报告功能允许你自定义">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-03-19T06:01:21.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.984Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="php">
+<meta name="twitter:card" content="summary">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            PHP的错误与异常处理
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3400454965.html" class="article-date">
+	  <time datetime="2021-03-19T06:01:21.000Z" itemprop="datePublished">2021-03-19</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/php/">php</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/php/" rel="tag">php</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/3400454965.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.1k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 4(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="前言">前言</h2>
+<p>PHP提供了错误处理和日志记录的功能. 这些函数允许你定义自己的错误处理规则，以及修改错误记录的方式. 这样，你就可以根据自己的需要，来更改和加强错误输出信息以满足实际需要。</p>
+<p>通过日志记录功能，你可以将信息直接发送到其他日志服务器，或者发送到指定的电子邮箱（或者通过邮件网关发送），或者发送到操作系统日志等，从而可以有选择的记录和监视你的应用程序和网站的最重要的部分。</p>
+<p>错误报告功能允许你自定义错误反馈的级别和类型，可以是简单的提示信息或者使用自定义的函数进行处理并返回信息。</p>
+<p><strong>error</strong>：</p>
+<p>不能在编译期发现的运行期错误，不如试图用 echo 输出一个未赋值的变量，这类问题往往导致程序或逻辑无法继续下去而需要中断；</p>
+<p><strong>exception</strong>：</p>
+<p>程序执行过程中出现意料之外的情况，逻辑上往往是行得通的，但不符合应用场景，比如接收到一个长度超出预定格式的用户命名，因此，异常主要靠编码人员做预先做判断后抛出，捕获异常后改变程序流程来处理这些情况，不必中断程序。</p>
+<h2 id="参考文献">参考文献</h2>
+<p>PHP官方文档：<a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/book.errorfunc.php">https://www.php.net/manual/zh/book.errorfunc.php</a></p>
+<p>Exception预定义异常：<a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/class.exception.php">https://www.php.net/manual/zh/class.exception.php</a></p>
+<p>错误处理函数：<a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/ref.errorfunc.php">https://www.php.net/manual/zh/ref.errorfunc.php</a></p>
+<h2 id="示例演示">示例演示</h2>
+<h3 id="try-catch">try-catch</h3>
+<p><strong>try-catch捕获异常</strong></p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token keyword">try</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Exception</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'an error'</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 抛出异常</span>
+	<span class="token comment">// you codes that maybe cause an error</span>
+<span class="token punctuation">&#125;</span><span class="token keyword">catch</span><span class="token punctuation">(</span><span class="token class-name class-name-fully-qualified"><span class="token punctuation">\</span>Exception</span> <span class="token variable">$e</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span> <span class="token comment">// 这个错误对象需要声明类型， Exception 是系统默认异常处理类</span>
+	<span class="token keyword">echo</span> <span class="token variable">$e</span><span class="token operator">-></span><span class="token function">getMessage</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">.</span><span class="token constant">PHP_EOL</span><span class="token punctuation">;</span>
+	<span class="token function">var_dump</span><span class="token punctuation">(</span><span class="token variable">$e</span><span class="token operator">-></span><span class="token function">getCode</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// 输出</span>
+<span class="token comment">//an error int(0)</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>try-catch扩展catch子句</strong></p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token comment">// ErrorException：用set_error_handler()函数将错误信息托管至ErrorException。是 PHP 5 增加的异常类以便将错误封装为异常，可以更好地处理错误信息，继承于 Exception。</span>
+
+<span class="token comment">// 自定义错误类</span>
+<span class="token keyword">class</span> <span class="token class-name-definition class-name">MyException</span> <span class="token keyword">extends</span> <span class="token class-name">Exception</span><span class="token punctuation">&#123;</span>
+   <span class="token keyword">public</span> <span class="token variable">$errType</span> <span class="token operator">=</span> <span class="token string single-quoted-string">'default'</span><span class="token punctuation">;</span>
+   <span class="token keyword">public</span> <span class="token keyword">function</span> <span class="token function-definition function">__construct</span><span class="token punctuation">(</span><span class="token variable">$errType</span><span class="token operator">=</span><span class="token string single-quoted-string">''</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+      <span class="token variable">$this</span><span class="token operator">-></span><span class="token property">errType</span> <span class="token operator">=</span> <span class="token variable">$errType</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// 测试实例</span>
+<span class="token keyword">try</span><span class="token punctuation">&#123;</span>  <span class="token comment">// you codes that maybe cause an error</span>
+   <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">MyException</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'My an error'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token keyword">catch</span><span class="token punctuation">(</span><span class="token class-name">MyException</span> <span class="token variable">$err</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span> <span class="token comment">// 这个错误对象需要声明类型 </span>
+   <span class="token keyword">echo</span> <span class="token variable">$err</span><span class="token operator">-></span><span class="token property">errType</span><span class="token operator">.</span><span class="token constant">PHP_EOL</span><span class="token punctuation">;</span> 
+<span class="token punctuation">&#125;</span><span class="token keyword">catch</span><span class="token punctuation">(</span><span class="token class-name">ErrorException</span> <span class="token variable">$e</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+   <span class="token keyword">echo</span> <span class="token string single-quoted-string">'error !'</span><span class="token operator">.</span><span class="token variable">$e</span><span class="token operator">-></span><span class="token function">getMessage</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">.</span><span class="token constant">PHP_EOL</span><span class="token punctuation">;</span> 
+<span class="token punctuation">&#125;</span><span class="token keyword">catch</span><span class="token punctuation">(</span><span class="token class-name">Exception</span> <span class="token variable">$e</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+   <span class="token keyword">echo</span> <span class="token variable">$e</span><span class="token operator">-></span><span class="token function">getMessage</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">.</span><span class="token constant">PHP_EOL</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// 输出</span>
+<span class="token comment">// My an error</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="Exception异常的回调函数">Exception异常的回调函数</h3>
+<p><strong>error_log</strong></p>
+<p>error_log() 函数向服务器错误记录、文件或远程目标发送一个错误。如果成功该函数返回 TRUE，如果失败该函数返回 FALSE。</p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token variable">$test</span><span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">;</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token variable">$test</span><span class="token operator">></span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token function">error_log</span><span class="token punctuation">(</span><span class="token string double-quoted-string">"触发自定义错误"</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token string double-quoted-string">"someone@example.com"</span><span class="token punctuation">,</span><span class="token string double-quoted-string">"From: webmaster@example.com"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>set_error_handler 自定义错误处理函数</strong></p>
+<p>该函数用于创建运行期间的用户自己的错误处理方法。该函数返回旧的错误处理程序，如果失败则返回 NULL</p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token comment">//error handler function</span>
+<span class="token keyword">function</span> <span class="token function-definition function">customError</span><span class="token punctuation">(</span><span class="token variable">$errno</span><span class="token punctuation">,</span> <span class="token variable">$errstr</span><span class="token punctuation">,</span> <span class="token variable">$errfile</span><span class="token punctuation">,</span> <span class="token variable">$errline</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+	<span class="token keyword">echo</span> <span class="token string double-quoted-string">"&lt;b>Custom error:&lt;/b> [<span class="token interpolation"><span class="token variable">$errno</span></span>] <span class="token interpolation"><span class="token variable">$errstr</span></span>&lt;br />"</span><span class="token punctuation">;</span>
+	<span class="token keyword">echo</span> <span class="token string double-quoted-string">" Error on line 错误行数 <span class="token interpolation"><span class="token variable">$errline</span></span> in <span class="token interpolation"><span class="token variable">$errfile</span></span>&lt;br />"</span><span class="token punctuation">;</span>
+	<span class="token keyword">echo</span> <span class="token string double-quoted-string">"Ending Script"</span><span class="token punctuation">;</span>
+	<span class="token keyword">die</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">//set error handler</span>
+<span class="token function">set_error_handler</span><span class="token punctuation">(</span><span class="token string double-quoted-string">"customError"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$test</span><span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">;</span>
+
+<span class="token comment">//trigger error</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token variable">$test</span><span class="token operator">></span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token function">trigger_error</span><span class="token punctuation">(</span><span class="token string double-quoted-string">"出发自定义错误"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/*
+输出
+Custom error: [1024] 出发自定义错误
+Error on line 错误行数 18 in F:\www\aaa.php
+Ending Script
+*/</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>set_exception_handler 自定义异常处理函数</strong></p>
+<p>该函数用于创建运行期间的用户自己的异常处理方法。该函数返回旧的异常处理程序，如果失败则返回 NULL。</p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token keyword">function</span> <span class="token function-definition function">myException</span><span class="token punctuation">(</span><span class="token variable">$exception</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">echo</span> <span class="token string double-quoted-string">"&lt;b>Exception:&lt;/b> "</span> <span class="token punctuation">,</span> <span class="token variable">$exception</span><span class="token operator">-></span><span class="token function">getMessage</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token function">set_exception_handler</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'myException'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Exception</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'自定义异常处理返回'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">/*
+返回：
+Exception: 自定义异常处理返回
+*/</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>error_get_last 获得最后发生的错误</strong></p>
+<p>该函数以数组的形式返回最后发生的错误。如果没有错误发生则返回 NULL</p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token keyword">echo</span> <span class="token variable">$test</span> <span class="token operator">+</span> <span class="token variable">$abc</span><span class="token punctuation">;</span>
+<span class="token function">print_r</span><span class="token punctuation">(</span><span class="token function">error_get_last</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">/*
+输出
+Array ( [type] => 8 [message] => Undefined variable: abc [file] => F:\www\aaa.php [line] => 2 )
+*/</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>register_shutdown_function 注册一个会在php中止时执行的函数</strong></p>
+<p>注册一个 <code>callback</code> ，它会在脚本执行完成或者 <a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/function.exit.php">exit()</a> 后被调用。</p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token keyword">function</span> <span class="token function-definition function">shutdown</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token comment">// This is our shutdown function, in </span>
+    <span class="token comment">// here we can do any last operations</span>
+    <span class="token comment">// before the script is complete.</span>
+    <span class="token keyword">echo</span> <span class="token string single-quoted-string">'Script executed with success'</span><span class="token punctuation">,</span> <span class="token constant">PHP_EOL</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token function">register_shutdown_function</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'shutdown'</span><span class="token punctuation">)</span><span class="token punctuation">;</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/3400454965.html">https://blog.mailjob.net/posts/3400454965.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A4%BA%E4%BE%8B%E6%BC%94%E7%A4%BA"><span class="toc-text">示例演示</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#try-catch"><span class="toc-text">try-catch</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Exception%E5%BC%82%E5%B8%B8%E7%9A%84%E5%9B%9E%E8%B0%83%E5%87%BD%E6%95%B0"><span class="toc-text">Exception异常的回调函数</span></a></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

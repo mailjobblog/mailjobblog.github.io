@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>consul介绍与安装 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="consul介绍 Consul是一个微服务管理软件。支持多数据中心下，分布式高可用的，服务发现和配置共享。采用 Raft 算法,用来保证服务的高可用。 参考文献 软件下载：https:&#x2F;&#x2F;www.consul.io&#x2F;downloads 软件安装 下载软件 wget https:&#x2F;&#x2F;releases.hashicorp.com&#x2F;consul&#x2F;1.10.1&#x2F;consul_1.10.1_linux_am">
+<meta property="og:type" content="article">
+<meta property="og:title" content="consul介绍与安装">
+<meta property="og:url" content="https://blog.mailjob.net/posts/827300568.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="consul介绍 Consul是一个微服务管理软件。支持多数据中心下，分布式高可用的，服务发现和配置共享。采用 Raft 算法,用来保证服务的高可用。 参考文献 软件下载：https:&#x2F;&#x2F;www.consul.io&#x2F;downloads 软件安装 下载软件 wget https:&#x2F;&#x2F;releases.hashicorp.com&#x2F;consul&#x2F;1.10.1&#x2F;consul_1.10.1_linux_am">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/20210806172112.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20210806171958.png">
+<meta property="article:published_time" content="2021-08-06T08:45:16.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.984Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="swoole">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/20210806172112.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            consul介绍与安装
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/827300568.html" class="article-date">
+	  <time datetime="2021-08-06T08:45:16.000Z" itemprop="datePublished">2021-08-06</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/php/">php</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/swoole/" rel="tag">swoole</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/827300568.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.1k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 6(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="consul介绍">consul介绍</h2>
+<p>Consul是一个微服务管理软件。支持多数据中心下，分布式高可用的，服务发现和配置共享。采用 <code>Raft 算法</code>,用来保证服务的高可用。</p>
+<h2 id="参考文献">参考文献</h2>
+<p>软件下载：<a target="_blank" rel="noopener" href="https://www.consul.io/downloads">https://www.consul.io/downloads</a></p>
+<h2 id="软件安装">软件安装</h2>
+<p><strong>下载软件</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">wget</span> https://releases.hashicorp.com/consul/1.10.1/consul_1.10.1_linux_amd64.zip<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>解压软件</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">unzip</span> consul_1.10.1_linux_amd64.zip<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>将软件置于系统启动目录</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">mv</span> consul /usr/local/bin/consul<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>软件启动</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">consul agent <span class="token parameter variable">-server</span> -bootstrap-expect <span class="token number">1</span> -data-dir /data/consul <span class="token parameter variable">-node</span><span class="token operator">=</span>sn1 <span class="token parameter variable">-bind</span><span class="token operator">=</span><span class="token number">192.168</span>.1.100 <span class="token parameter variable">-ui</span> <span class="token parameter variable">-client</span><span class="token operator">=</span><span class="token number">0.0</span>.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><img src="http://img.github.mailjob.net/20210806172112.png" alt="image-20210806172111277"></p>
+<p><strong>访问ui界面</strong></p>
+<p>访问地址：ip:8500</p>
+<p><img src="http://img.github.mailjob.net/20210806171958.png" alt="image-20210806171949244"></p>
+<p><strong>软件启动说明</strong>：</p>
+<p>consul必须启动agent才能使用，有两种启动模式server和client。</p>
+<p>server用与持久化服务信息，集群官方建议3或5个节点。client只用与于server交互。ui界面可以查看集群情况的。</p>
+<p><strong>参数解释</strong>：</p>
+<p>-bootstrap-expect:集群期望的节点数，只有节点数量达到这个值才会选举leader。</p>
+<p>-server： 运行在server模式</p>
+<p>-data-dir：指定数据目录，其他的节点对于这个目录必须有读的权限</p>
+<p>-node：指定节点的名称</p>
+<p>-bind：为该节点绑定一个地址</p>
+<p>-config-dir：指定配置文件，定义服务的，默认所有一.json结尾的文件都会读</p>
+<p>-enable-script-checks=true：设置检查服务为可用</p>
+<p>-datacenter: 数据中心没名称，</p>
+<p>-join：加入到已有的集群中</p>
+<h2 id="基本使用">基本使用</h2>
+<h3 id="常用命令介绍">常用命令介绍</h3>
+<p>如果不想用命令操作，当然你也可以通过 ui 界面进行服务管理。</p>
+<h4 id="服务管理">服务管理</h4>
+<p><strong>注册一个服务</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@204 ~<span class="token punctuation">]</span><span class="token comment"># curl -X PUT -d '&#123;"ID":"order_1","Name":"order","Tags":["xdp-\/core.order"],"Address":"192.168.232.201","Port":18307,"Check":&#123;"name":"order_1.check","tcp":"192.168.232.201:18307","interval":"10s","timeout":"2s"&#125;&#125;' http://192.168.169.99:8500/v1/agent/service/register</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>查询指定服务</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@204 ~<span class="token punctuation">]</span><span class="token comment"># curl http://192.168.169.99:8500/v1/health/service/order</span>
+
+<span class="token punctuation">[</span><span class="token punctuation">&#123;</span><span class="token string">"Node"</span>:<span class="token punctuation">&#123;</span><span class="token string">"ID"</span><span class="token builtin class-name">:</span><span class="token string">"0d05756b-e7d3-6fbb-38e4-334de3220fea"</span>,<span class="token string">"Node"</span><span class="token builtin class-name">:</span><span class="token string">"consul1.4.4_client_public_5"</span>,<span class="token string">"Address"</span><span class="token builtin class-name">:</span><span class="token string">"172.17.0.5"</span>,<span class="token string">"Datacenter"</span><span class="token builtin class-name">:</span><span class="token string">"xdp_dc"</span>,<span class="token string">"TaggedAddresses"</span>:<span class="token punctuation">&#123;</span><span class="token string">"lan"</span><span class="token builtin class-name">:</span><span class="token string">"172.17.0.5"</span>,<span class="token string">"wan"</span><span class="token builtin class-name">:</span><span class="token string">"172.17.0.5"</span><span class="token punctuation">&#125;</span>,<span class="token string">"Meta"</span>:<span class="token punctuation">&#123;</span><span class="token string">"consul-network-segment"</span><span class="token builtin class-name">:</span><span class="token string">""</span><span class="token punctuation">&#125;</span>,<span class="token string">"CreateIndex"</span>:229415,<span class="token string">"ModifyIndex"</span>:229415<span class="token punctuation">&#125;</span>,<span class="token string">"Service"</span>:<span class="token punctuation">&#123;</span><span class="token string">"ID"</span><span class="token builtin class-name">:</span><span class="token string">"order_1"</span>,<span class="token string">"Service"</span><span class="token builtin class-name">:</span><span class="token string">"order"</span>,<span class="token string">"Tags"</span>:<span class="token punctuation">[</span><span class="token string">"xdp-/core.order"</span><span class="token punctuation">]</span>,<span class="token string">"Address"</span><span class="token builtin class-name">:</span><span class="token string">"192.168.232.201"</span>,<span class="token string">"Meta"</span>:null,<span class="token string">"Port"</span>:18307,<span class="token string">"Weights"</span>:<span class="token punctuation">&#123;</span><span class="token string">"Passing"</span>:1,<span class="token string">"Warning"</span>:1<span class="token punctuation">&#125;</span>,<span class="token string">"EnableTagOverride"</span>:false,<span class="token string">"ProxyDestination"</span><span class="token builtin class-name">:</span><span class="token string">""</span>,<span class="token string">"Proxy"</span>:<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>,<span class="token string">"Connect"</span>:<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>,<span class="token string">"CreateIndex"</span>:229415,<span class="token string">"ModifyIndex"</span>:229415<span class="token punctuation">&#125;</span>,<span class="token string">"Checks"</span>:<span class="token punctuation">[</span><span class="token punctuation">&#123;</span><span class="token string">"Node"</span><span class="token builtin class-name">:</span><span class="token string">"consul1.4.4_client_public_5"</span>,<span class="token string">"CheckID"</span><span class="token builtin class-name">:</span><span class="token string">"serfHealth"</span>,<span class="token string">"Name"</span><span class="token builtin class-name">:</span><span class="token string">"Serf Health Status"</span>,<span class="token string">"Status"</span><span class="token builtin class-name">:</span><span class="token string">"passing"</span>,<span class="token string">"Notes"</span><span class="token builtin class-name">:</span><span class="token string">""</span>,<span class="token string">"Output"</span><span class="token builtin class-name">:</span><span class="token string">"Agent alive and reachable"</span>,<span class="token string">"ServiceID"</span><span class="token builtin class-name">:</span><span class="token string">""</span>,<span class="token string">"ServiceName"</span><span class="token builtin class-name">:</span><span class="token string">""</span>,<span class="token string">"ServiceTags"</span>:<span class="token punctuation">[</span><span class="token punctuation">]</span>,<span class="token string">"Definition"</span>:<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>,<span class="token string">"CreateIndex"</span>:229415,<span class="token string">"ModifyIndex"</span>:229415<span class="token punctuation">&#125;</span>,<span class="token punctuation">&#123;</span><span class="token string">"Node"</span><span class="token builtin class-name">:</span><span class="token string">"consul1.4.4_client_public_5"</span>,<span class="token string">"CheckID"</span><span class="token builtin class-name">:</span><span class="token string">"service:order_1"</span>,<span class="token string">"Name"</span><span class="token builtin class-name">:</span><span class="token string">"order_1.check"</span>,<span class="token string">"Status"</span><span class="token builtin class-name">:</span><span class="token string">"passing"</span>,<span class="token string">"Notes"</span><span class="token builtin class-name">:</span><span class="token string">""</span>,<span class="token string">"Output"</span><span class="token builtin class-name">:</span><span class="token string">"TCP connect 192.168.232.201:18307: Success"</span>,<span class="token string">"ServiceID"</span><span class="token builtin class-name">:</span><span class="token string">"order_1"</span>,<span class="token string">"ServiceName"</span><span class="token builtin class-name">:</span><span class="token string">"order"</span>,<span class="token string">"ServiceTags"</span>:<span class="token punctuation">[</span><span class="token string">"xdp-/core.order"</span><span class="token punctuation">]</span>,<span class="token string">"Definition"</span>:<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>,<span class="token string">"CreateIndex"</span>:229415,<span class="token string">"ModifyIndex"</span>:303563<span class="token punctuation">&#125;</span><span class="token punctuation">]</span><span class="token punctuation">&#125;</span><span class="token punctuation">]</span><span class="token punctuation">[</span>root@204 ~<span class="token punctuation">]</span><span class="token comment">#</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p><strong>查询所有服务</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@204 ~<span class="token punctuation">]</span><span class="token comment"># curl http://192.168.169.99:8500/v1/agent/services</span>
+
+<span class="token punctuation">&#123;</span><span class="token string">"core.product-/192.168.16.170:8001"</span>:<span class="token punctuation">&#123;</span><span class="token string">"ID"</span><span class="token builtin class-name">:</span><span class="token string">"core.product-/192.168.16.170:8001"</span>,<span class="token string">"Service"</span><span class="token builtin class-name">:</span><span class="token string">"core.product"</span>,<span class="token string">"Tags"</span>:<span class="token punctuation">[</span><span class="token string">"xdp-/core.product"</span><span class="token punctuation">]</span>,<span class="token string">"Meta"</span>:<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>,<span class="token string">"Port"</span>:18306,<span class="token string">"Address"</span><span class="token builtin class-name">:</span><span class="token string">"192.168.232.100"</span>,<span class="token string">"Weights"</span>:<span class="token punctuation">&#123;</span><span class="token string">"Passing"</span>:1,<span class="token string">"Warning"</span>:1<span class="token punctuation">&#125;</span>,<span class="token string">"EnableTagOverride"</span>:false<span class="token punctuation">&#125;</span>,<span class="token string">"goods_1"</span>:<span class="token punctuation">&#123;</span><span class="token string">"ID"</span><span class="token builtin class-name">:</span><span class="token string">"goods_1"</span>,<span class="token string">"Service"</span><span class="token builtin class-name">:</span><span class="token string">"goods"</span>,<span class="token string">"Tags"</span>:<span class="token punctuation">[</span><span class="token string">"xdp-/core.product"</span><span class="token punctuation">]</span>,<span class="token string">"Meta"</span>:<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>,<span class="token string">"Port"</span>:18307,<span class="token string">"Address"</span><span class="token builtin class-name">:</span><span class="token string">"192.168.232.200"</span>,<span class="token string">"Weights"</span>:<span class="token punctuation">&#123;</span><span class="token string">"Passing"</span>:1,<span class="token string">"Warning"</span>:1<span class="token punctuation">&#125;</span>,<span class="token string">"EnableTagOverride"</span>:false<span class="token punctuation">&#125;</span>,<span class="token string">"test1"</span>:<span class="token punctuation">&#123;</span><span class="token string">"ID"</span><span class="token builtin class-name">:</span><span class="token string">"test1"</span>,<span class="token string">"Service"</span><span class="token builtin class-name">:</span><span class="token string">"test1name"</span>,<span class="token string">"Tags"</span>:<span class="token punctuation">[</span><span class="token string">"xdp-/core.product"</span><span class="token punctuation">]</span>,<span class="token string">"Meta"</span>:<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>,<span class="token string">"Port"</span>:18306,<span class="token string">"Address"</span><span class="token builtin class-name">:</span><span class="token string">"192.168.232.100"</span>,<span class="token string">"Weights"</span>:<span class="token punctuation">&#123;</span><span class="token string">"Passing"</span>:1,<span class="token string">"Warning"</span>:1<span class="token punctuation">&#125;</span>,<span class="token string">"EnableTagOverride"</span>:false<span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span><span class="token punctuation">[</span>root@204 ~<span class="token punctuation">]</span><span class="token comment">#</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p><strong>注销服务</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@204 ~<span class="token punctuation">]</span><span class="token comment"># curl -X PUT http://192.168.169.99:8500/v1/agent/service/deregister/order_1</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h4 id="key-value配置中心命令行">key/value配置中心命令行</h4>
+<p><strong>查看所有key/value</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@204 ~<span class="token punctuation">]</span><span class="token comment"># curl http://192.168.169.99:8500/v1/kv/?recurse</span>
+<span class="token punctuation">[</span><span class="token punctuation">&#123;</span><span class="token string">"LockIndex"</span>:0,<span class="token string">"Key"</span><span class="token builtin class-name">:</span><span class="token string">"dd"</span>,<span class="token string">"Flags"</span>:0,<span class="token string">"Value"</span><span class="token builtin class-name">:</span><span class="token string">"ewoiYiI6ImEiCn0="</span>,<span class="token string">"CreateIndex"</span>:103396,<span class="token string">"ModifyIndex"</span>:104797<span class="token punctuation">&#125;</span>,<span class="token punctuation">&#123;</span><span class="token string">"LockIndex"</span>:0,<span class="token string">"Key"</span><span class="token builtin class-name">:</span><span class="token string">"dd/dd/ff/uu"</span>,<span class="token string">"Flags"</span>:0,<span class="token string">"Value"</span><span class="token builtin class-name">:</span><span class="token string">"NTU1NQ=="</span>,<span class="token string">"CreateIndex"</span>:104870,<span class="token string">"ModifyIndex"</span>:104927<span class="token punctuation">&#125;</span>,<span class="token punctuation">&#123;</span><span class="token string">"LockIndex"</span>:0,<span class="token string">"Key"</span><span class="token builtin class-name">:</span><span class="token string">"dd/dd/gg"</span>,<span class="token string">"Flags"</span>:0,<span class="token string">"Value"</span>:null,<span class="token string">"CreateIndex"</span>:104868,<span class="token string">"ModifyIndex"</span>:104868<span class="token punctuation">&#125;</span>,<span class="token punctuation">&#123;</span><span class="token string">"LockIndex"</span>:0,<span class="token string">"Key"</span><span class="token builtin class-name">:</span><span class="token string">"dd/ff"</span>,<span class="token string">"Flags"</span>:0,<span class="token string">"Value"</span><span class="token builtin class-name">:</span><span class="token string">"MTIz"</span>,<span class="token string">"CreateIndex"</span>:104864,<span class="token string">"ModifyIndex"</span>:104864<span class="token punctuation">&#125;</span><span class="token punctuation">]</span><span class="token punctuation">[</span>root@204 ~<span class="token punctuation">]</span><span class="token comment">#</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p><strong>查询所有的key/value</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">[root@204 ~]# curl http:&#x2F;&#x2F;192.168.169.99:8500&#x2F;v1&#x2F;kv&#x2F;?recurse
+[&#123;&quot;LockIndex&quot;:0,&quot;Key&quot;:&quot;dd&quot;,&quot;Flags&quot;:0,&quot;Value&quot;:&quot;ewoiYiI6ImEiCn0&#x3D;&quot;,&quot;CreateIndex&quot;:103396,&quot;ModifyIndex&quot;:104797&#125;,&#123;&quot;LockIndex&quot;:0,&quot;Key&quot;:&quot;dd&#x2F;dd&#x2F;ff&#x2F;uu&quot;,&quot;Flags&quot;:0,&quot;Value&quot;:&quot;NTU1NQ&#x3D;&#x3D;&quot;,&quot;CreateIndex&quot;:104870,&quot;ModifyIndex&quot;:104927&#125;,&#123;&quot;LockIndex&quot;:0,&quot;Key&quot;:&quot;dd&#x2F;dd&#x2F;gg&quot;,&quot;Flags&quot;:0,&quot;Value&quot;:null,&quot;CreateIndex&quot;:104868,&quot;ModifyIndex&quot;:104868&#125;,&#123;&quot;LockIndex&quot;:0,&quot;Key&quot;:&quot;dd&#x2F;ff&quot;,&quot;Flags&quot;:0,&quot;Value&quot;:&quot;MTIz&quot;,&quot;CreateIndex&quot;:104864,&quot;ModifyIndex&quot;:104864&#125;]<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p><strong>添加key/value</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@204 ~<span class="token punctuation">]</span><span class="token comment"># curl -X PUT -d 'test' http://192.168.169.99:8500/v1/kv/abc/key1</span>
+<span class="token boolean">true</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>说明</p>
+<p>key： abc/key1</p>
+<p>value：test</p>
+<p><strong>查看单个key/value</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@204 ~<span class="token punctuation">]</span><span class="token comment"># curl http://192.168.169.99:8500/v1/kv/abc/key1</span>
+<span class="token punctuation">[</span><span class="token punctuation">&#123;</span><span class="token string">"LockIndex"</span>:0,<span class="token string">"Key"</span><span class="token builtin class-name">:</span><span class="token string">"abc/key1"</span>,<span class="token string">"Flags"</span>:0,<span class="token string">"Value"</span><span class="token builtin class-name">:</span><span class="token string">"dGVzdA=="</span>,<span class="token string">"CreateIndex"</span>:304012,<span class="token string">"ModifyIndex"</span>:304012<span class="token punctuation">&#125;</span><span class="token punctuation">]</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>说明</p>
+<p>value是test的base64编码（使用base64编码是为了允许非UTF-8的字符）</p>
+<p><strong>修改key/value</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@204 ~<span class="token punctuation">]</span><span class="token comment"># curl -X PUT -d 'test666' http://192.168.169.99:8500/v1/kv/abc/key1</span>
+<span class="token boolean">true</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p><strong>删除key/value</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@204 ~<span class="token punctuation">]</span><span class="token comment"># curl -X DELETE  http://192.168.169.99:8500/v1/kv/abc/key1</span>
+<span class="token boolean">true</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/827300568.html">https://blog.mailjob.net/posts/827300568.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#consul%E4%BB%8B%E7%BB%8D"><span class="toc-text">consul介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85"><span class="toc-text">软件安装</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8"><span class="toc-text">基本使用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4%E4%BB%8B%E7%BB%8D"><span class="toc-text">常用命令介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E7%AE%A1%E7%90%86"><span class="toc-text">服务管理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#key-value%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%91%BD%E4%BB%A4%E8%A1%8C"><span class="toc-text">key&#x2F;value配置中心命令行</span></a></li></ol></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

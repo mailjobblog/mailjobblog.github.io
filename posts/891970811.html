@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Mysql 数据库冷备份 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="前言  本文主要介绍三种冷备份的方式 暴力备份、mysqlsqldump、mydumper 说明 mysqldump 是mysql自身提供的工具，按照基本的命令即可使用，navicat中的导入导出用的就是这个 mydumper 是一个第三方工具，需要下载后安装，其速度是前者的10倍有余，但是会产生锁表问题  相关链接  mydumper官网：https:&#x2F;&#x2F;launchpad.net&#x2F;mydump">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mysql 数据库冷备份">
+<meta property="og:url" content="https://blog.mailjob.net/posts/891970811.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="前言  本文主要介绍三种冷备份的方式 暴力备份、mysqlsqldump、mydumper 说明 mysqldump 是mysql自身提供的工具，按照基本的命令即可使用，navicat中的导入导出用的就是这个 mydumper 是一个第三方工具，需要下载后安装，其速度是前者的10倍有余，但是会产生锁表问题  相关链接  mydumper官网：https:&#x2F;&#x2F;launchpad.net&#x2F;mydump">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-02-17T07:48:11.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.981Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="mysql">
+<meta property="article:tag" content="高可用">
+<meta name="twitter:card" content="summary">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Mysql 数据库冷备份
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/891970811.html" class="article-date">
+	  <time datetime="2021-02-17T07:48:11.000Z" itemprop="datePublished">2021-02-17</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/mysql/">mysql</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/mysql/" rel="tag">mysql</a>, <a class="article-tag-none-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/891970811.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 2.3k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 9(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="前言">前言</h2>
+<blockquote>
+<p>本文主要介绍三种冷备份的方式</p>
+<p>暴力备份、mysqlsqldump、mydumper</p>
+<p><strong>说明</strong></p>
+<p>mysqldump 是mysql自身提供的工具，按照基本的命令即可使用，navicat中的导入导出用的就是这个</p>
+<p>mydumper 是一个第三方工具，需要下载后安装，其速度是前者的10倍有余，但是会产生锁表问题</p>
+</blockquote>
+<h2 id="相关链接">相关链接</h2>
+<blockquote>
+<p>mydumper官网：<a target="_blank" rel="noopener" href="https://launchpad.net/mydumper">https://launchpad.net/mydumper</a></p>
+</blockquote>
+<h2 id="暴力备份">暴力备份</h2>
+<p>暴力备份就是将 <code>mysql</code> 的 <code>data</code> 目录整体备份。</p>
+<p>需要注意的事，在备份和恢复的时候，停止mysql服务。等待完成后，在启动mysql服务，否则会由于 <code>pid</code> 的不一致，产生冲突等问题</p>
+<h2 id="mysqldump-工具">mysqldump  工具</h2>
+<blockquote>
+<p>它的备份原理是通过协议连接到 <code>MySQL</code> 数据库，将需要备份的数据查询出来，将查询出的数据转换成对应的<code>insert</code> 语句，当我们需要还原这些数据时，只要执行这些 <code>insert</code> 语句，即可将对应的数据还原。</p>
+</blockquote>
+<h2 id="备份命令">备份命令</h2>
+<h3 id="1-命令格式">1 命令格式</h3>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysqldump <span class="token punctuation">[</span>选项<span class="token punctuation">]</span> 数据库名 <span class="token punctuation">[</span>表名<span class="token punctuation">]</span> <span class="token operator">></span> 脚本名
+    或
+mysqldump <span class="token punctuation">[</span>选项<span class="token punctuation">]</span> <span class="token comment">--数据库名 [选项 表名] > 脚本名</span>
+    或
+mysqldump <span class="token punctuation">[</span>选项<span class="token punctuation">]</span> <span class="token comment">--all-databases [选项]  > 脚本名</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="2-选项说明">2 选项说明</h3>
+<table>
+<thead>
+<tr>
+<th>参数名</th>
+<th>缩写</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>–host</td>
+<td>-h</td>
+<td>服务器IP地址</td>
+</tr>
+<tr>
+<td>–port</td>
+<td>-P</td>
+<td>服务器端口号</td>
+</tr>
+<tr>
+<td>–user</td>
+<td>-u</td>
+<td>MySQL 用户名</td>
+</tr>
+<tr>
+<td>–pasword</td>
+<td>-p</td>
+<td>MySQL 密码</td>
+</tr>
+<tr>
+<td>–databases</td>
+<td></td>
+<td>指定要备份的数据库</td>
+</tr>
+<tr>
+<td>–all-databases</td>
+<td></td>
+<td>备份mysql服务器上的所有数据库</td>
+</tr>
+<tr>
+<td>–compact</td>
+<td></td>
+<td>压缩模式，产生更少的输出</td>
+</tr>
+<tr>
+<td>–comments</td>
+<td></td>
+<td>添加注释信息</td>
+</tr>
+<tr>
+<td>–complete-insert</td>
+<td></td>
+<td>输出完成的插入语句</td>
+</tr>
+<tr>
+<td>–lock-tables</td>
+<td></td>
+<td>备份前，锁定所有数据库表</td>
+</tr>
+<tr>
+<td>–no-create-db/–no-create-info</td>
+<td></td>
+<td>禁止生成创建数据库语句</td>
+</tr>
+<tr>
+<td>–force</td>
+<td></td>
+<td>当出现错误时仍然继续备份操作</td>
+</tr>
+<tr>
+<td>–default-character-set</td>
+<td></td>
+<td>指定默认字符集</td>
+</tr>
+<tr>
+<td>–add-locks</td>
+<td></td>
+<td>备份数据库表时锁定数据库表</td>
+</tr>
+</tbody>
+</table>
+<h3 id="3-实例">3 实例</h3>
+<p>备份所有数据库：</p>
+<pre class="line-numbers language-java" data-language="java"><code class="language-java">mysqldump <span class="token operator">-</span>uroot <span class="token operator">-</span>p <span class="token operator">--</span>all<span class="token operator">-</span>databases <span class="token operator">></span> <span class="token operator">/</span>backup<span class="token operator">/</span>mysqldump<span class="token operator">/</span>all<span class="token punctuation">.</span>db<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>备份指定数据库：</p>
+<pre class="line-numbers language-java" data-language="java"><code class="language-java">mysqldump <span class="token operator">-</span>uroot <span class="token operator">-</span>p test <span class="token operator">></span> <span class="token operator">/</span>backup<span class="token operator">/</span>mysqldump<span class="token operator">/</span>test<span class="token punctuation">.</span>db<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>备份指定数据库指定表(多个表以空格间隔)</p>
+<pre class="line-numbers language-java" data-language="java"><code class="language-java">mysqldump <span class="token operator">-</span>uroot <span class="token operator">-</span>p  mysql db event <span class="token operator">></span> <span class="token operator">/</span>backup<span class="token operator">/</span>mysqldump<span class="token operator">/</span><span class="token number">2</span>table<span class="token punctuation">.</span>db<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>备份指定数据库排除某些表</p>
+<pre class="line-numbers language-java" data-language="java"><code class="language-java">mysqldump <span class="token operator">-</span>uroot <span class="token operator">-</span>p test <span class="token operator">--</span>ignore<span class="token operator">-</span>table<span class="token operator">=</span>test<span class="token punctuation">.</span>t1 <span class="token operator">--</span>ignore<span class="token operator">-</span>table<span class="token operator">=</span>test<span class="token punctuation">.</span>t2 <span class="token operator">></span> <span class="token operator">/</span>backup<span class="token operator">/</span>mysqldump<span class="token operator">/</span>test2<span class="token punctuation">.</span>db<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="4、还原命令">4、还原命令</h3>
+<h5 id="4-1-系统行命令">4.1 系统行命令</h5>
+<pre class="line-numbers language-java" data-language="java"><code class="language-java">mysqladmin <span class="token operator">-</span>uroot <span class="token operator">-</span>p create db_name 
+mysql <span class="token operator">-</span>uroot <span class="token operator">-</span>p  db_name <span class="token operator">&lt;</span> <span class="token operator">/</span>backup<span class="token operator">/</span>mysqldump<span class="token operator">/</span>db_name<span class="token punctuation">.</span>db
+
+注：在导入备份数据库前，db_name如果没有，是需要创建的； 而且与db_name<span class="token punctuation">.</span>db中数据库名是一样的才可以导入。<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="4-2-soure-方法">4.2 soure 方法</h5>
+<pre class="line-numbers language-java" data-language="java"><code class="language-java">mysql <span class="token operator">></span> use db_name
+mysql <span class="token operator">></span> source <span class="token operator">/</span>backup<span class="token operator">/</span>mysqldump<span class="token operator">/</span>db_name<span class="token punctuation">.</span>db<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<h2 id="mydumper-工具">mydumper 工具</h2>
+<h3 id="1、备份原理">1、备份原理</h3>
+<blockquote>
+<p>1、主线程 FLUSH TABLES WITH READ LOCK, 施加全局只读锁，保证数据的一致性<br>
+2、读取当前时间点的二进制日志文件名和日志写入的位置并记录在metadata文件中，以供即使点恢复使用<br>
+3、N个（线程数可以指定，默认是4）dump线程把事务隔离级别改为可重复读 并开启读一致的事物<br>
+4、dump non-InnoDB tables, 首先导出非事物引擎的表<br>
+5、主线程 UNLOCK TABLES 非事物引擎备份完后，释放全局只读锁<br>
+6、dump InnoDB tables, 基于事物导出InnoDB表<br>
+7、事物结束</p>
+</blockquote>
+<h3 id="2、该工具介绍">2、该工具介绍</h3>
+<blockquote>
+<p>Mydumper是一个针对MySQL和Drizzle的高性能多线程备份和恢复工具。</p>
+<p><strong>Mydumper主要特性</strong>：</p>
+<ul>
+<li>
+<p>轻量级C语言写的</p>
+</li>
+<li>
+<p>多线程备份，备份后会生成多个备份文件</p>
+</li>
+<li>
+<p>事务性和非事务性表一致的快照(适用于0.2.2以上版本)</p>
+</li>
+<li>
+<p>快速的文件压缩</p>
+</li>
+<li>
+<p>支持导出binlog</p>
+</li>
+<li>
+<p>多线程恢复(适用于0.2.1以上版本)</p>
+</li>
+<li>
+<p>以守护进程的工作方式，定时快照和连续二进制日志(适用于0.5.0以上版本)</p>
+</li>
+<li>
+<p>开源 (GNU GPLv3)</p>
+</li>
+</ul>
+</blockquote>
+<h3 id="3、安装步骤">3、安装步骤</h3>
+<blockquote>
+<p>mydumper使用c语言编写，使用glibc库<br>
+mydumper安装所依赖的软件包，glibc, zlib, pcre, pcre-devel, gcc, gcc-c++, cmake, make, mysql客户端库文件</p>
+<p>1、安装依赖软件包，将mysql客户端库文件路径添加至/etc/ld.so.conf, 如/usr/local/mysql/lib<br>
+2、解压软件包进入目录，cmake<br>
+3、make &amp;&amp; make install</p>
+</blockquote>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 安装依赖软件包</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos local<span class="token punctuation">]</span><span class="token comment"># yum -y  install glib2-devel mysql-devel zlib-devel pcre-devel zlib gcc-c++ gcc cmake</span>
+<span class="token comment"># 我选择按照到了此目录</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos local<span class="token punctuation">]</span><span class="token comment"># pwd</span>
+/usr/local
+<span class="token comment"># 下载软件</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos local<span class="token punctuation">]</span><span class="token comment"># wget https://launchpad.net/mydumper/0.9/0.9.1/+download/mydumper-0.9.1.tar.gz</span>
+<span class="token comment"># 解压 tar 包</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos local<span class="token punctuation">]</span><span class="token comment"># tar zxf mydumper-0.9.1.tar.gz</span>
+<span class="token comment"># 进入到解压目录</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos local<span class="token punctuation">]</span><span class="token comment"># cd mydumper-0.9.1/</span>
+<span class="token comment"># 进行cmake编译</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos mydumper-0.9.1<span class="token punctuation">]</span><span class="token comment"># cmake .</span>
+<span class="token comment"># 进行编译和安装</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos mydumper-0.9.1<span class="token punctuation">]</span><span class="token comment"># make &amp;&amp; make install</span>
+<span class="token comment">#安装完成后生成两个二进制文件mydumper和myloader位于/usr/local/bin目录下</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos mydumper-0.9.1<span class="token punctuation">]</span><span class="token comment"># ls /usr/local/bin/</span>
+<span class="token function">composer</span>  <span class="token function">iconv</span>  libmcrypt-config  mcrypt  mdecrypt  mydumper  myloader<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="mydumper-参数解释">mydumper 参数解释</h3>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">-B, <span class="token parameter variable">--database</span>              要备份的数据库，不指定则备份所有库
+-T, --tables-list           需要备份的表，名字用逗号隔开
+-o, <span class="token parameter variable">--outputdir</span>             备份文件输出的目录
+-s, --statement-size        生成的insert语句的字节数，默认1000000
+-r, <span class="token parameter variable">--rows</span>                  将表按行分块时，指定的块行数，指定这个选项会关闭 --chunk-filesize
+-F, --chunk-filesize        将表按大小分块时，指定的块大小，单位是 MB
+-c, <span class="token parameter variable">--compress</span>              压缩输出文件
+-e, --build-empty-files     如果表数据是空，还是产生一个空文件（默认无数据则只有表结构文件）
+-x, <span class="token parameter variable">--regex</span>                 是同正则表达式匹配 <span class="token string">'db.table'</span>
+-i, --ignore-engines        忽略的存储引擎，用都厚分割
+-m, --no-schemas            不备份表结构
+-k, --no-locks              不使用临时共享只读锁，使用这个选项会造成数据不一致
+--less-locking              减少对InnoDB表的锁施加时间（这种模式的机制下文详解）
+-l, --long-query-guard      设定阻塞备份的长查询超时时间，单位是秒，默认是60秒（超时后默认mydumper将会退出）
+--kill-long-queries         杀掉长查询 <span class="token punctuation">(</span>不退出<span class="token punctuation">)</span>
+-b, <span class="token parameter variable">--binlogs</span>               导出binlog
+-D, <span class="token parameter variable">--daemon</span>                启用守护进程模式，守护进程模式以某个间隔不间断对数据库进行备份
+-I, --snapshot-interval     dump快照间隔时间，默认60s，需要在daemon模式下
+-L, <span class="token parameter variable">--logfile</span>               使用的日志文件名<span class="token punctuation">(</span>mydumper所产生的日志<span class="token punctuation">)</span>, 默认使用标准输出
+--tz-utc                    跨时区是使用的选项，不解释了
+--skip-tz-utc               同上
+--use-savepoints            使用savepoints来减少采集metadata所造成的锁时间，需要 SUPER 权限
+--success-on-1146           Not increment error count and Warning instead of Critical <span class="token keyword">in</span> <span class="token keyword">case</span> of table doesn't exist
+-h, <span class="token parameter variable">--host</span>                  连接的主机名
+-u, <span class="token parameter variable">--user</span>                  备份所使用的用户
+-p, <span class="token parameter variable">--password</span>              密码
+-P, <span class="token parameter variable">--port</span>                  端口
+-S, <span class="token parameter variable">--socket</span>                使用socket通信时的socket文件
+-t, <span class="token parameter variable">--threads</span>               开启的备份线程数，默认是4
+-C, --compress-protocol     压缩与mysql通信的数据
+-V, <span class="token parameter variable">--version</span>               显示版本号
+-v, <span class="token parameter variable">--verbose</span>               输出信息模式, <span class="token number">0</span> <span class="token operator">=</span> silent, <span class="token number">1</span> <span class="token operator">=</span> errors, <span class="token number">2</span> <span class="token operator">=</span> warnings, <span class="token number">3</span> <span class="token operator">=</span> info, 默认为 <span class="token number">2</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="myloader-参数解释">myloader 参数解释</h3>
+<pre class="line-numbers language-none"><code class="language-none">-d, --directory                   备份文件的文件夹
+-q, --queries-per-transaction     每次事物执行的查询数量，默认是1000
+-o, --overwrite-tables            如果要恢复的表存在，则先drop掉该表，使用该参数，需要备份时候要备份表结构
+-B, --database                    需要还原的数据库
+-e, --enable-binlog               启用还原数据的二进制日志
+-h, --host                        主机
+-u, --user                        还原的用户
+-p, --password                    密码
+-P, --port                        端口
+-S, --socket                      socket文件
+-t, --threads                     还原所使用的线程数，默认是4
+-C, --compress-protocol           压缩协议
+-V, --version                     显示版本
+-v, --verbose                     输出模式, 0 &#x3D; silent, 1 &#x3D; errors, 2 &#x3D; warnings, 3 &#x3D; info, 默认为2
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="5、使用案例">5、使用案例</h3>
+<h5 id="备份-study-数据库库-到-data-backup-mysql-文件夹中">备份 <code>study</code> 数据库库 到 <code> /data/backup/mysql</code> 文件夹中</h5>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 备份命令</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos mysql<span class="token punctuation">]</span><span class="token comment"># mydumper -u root -p rootroot  -P 3306 -h 127.0.0.1 -B study  -o /data/backup/mysql/</span>
+<span class="token comment"># 查看备份内容</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos mysql<span class="token punctuation">]</span><span class="token comment"># ll</span>
+total <span class="token number">16</span>
+<span class="token comment"># 记录了备份数据库在备份时间点的二进制日志文件名，日志的写入位置</span>
+-rw-r--r-- <span class="token number">1</span> root root <span class="token number">137</span> Feb <span class="token number">17</span> <span class="token number">16</span>:35 metadata 
+<span class="token comment"># 库文件</span>
+-rw-r--r-- <span class="token number">1</span> root root  <span class="token number">67</span> Feb <span class="token number">17</span> <span class="token number">16</span>:35 study-schema-create.sql
+<span class="token comment"># 表结构文件</span>
+-rw-r--r-- <span class="token number">1</span> root root <span class="token number">497</span> Feb <span class="token number">17</span> <span class="token number">16</span>:35 study.user_test-schema.sql
+<span class="token comment"># 表数据文件</span>
+-rw-r--r-- <span class="token number">1</span> root root <span class="token number">244</span> Feb <span class="token number">17</span> <span class="token number">16</span>:35 study.user_test.sql<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>**如果是在从库进行备份，还会记录备份时同步至主库的二进制日志文件及写入位置 **</p>
+<h5 id="恢复-study-数据库">恢复 <code>study</code> 数据库</h5>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 先删除 study 数据库</span>
+mysql<span class="token operator">></span> drop database study<span class="token punctuation">;</span>
+Query OK, <span class="token number">1</span> row affected <span class="token punctuation">(</span><span class="token number">0.09</span> sec<span class="token punctuation">)</span>
+
+<span class="token comment"># 恢复数据库</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos mysql<span class="token punctuation">]</span><span class="token comment"># myloader -u root -p rootroot -h 127.0.0.1 -B study -d /data/backup/mysql/</span>
+
+<span class="token comment"># 恢复成功</span>
+mysql<span class="token operator">></span> show databases<span class="token punctuation">;</span>
++--------------------+
+<span class="token operator">|</span> Database           <span class="token operator">|</span>
++--------------------+
+<span class="token operator">|</span> information_schema <span class="token operator">|</span>
+<span class="token operator">|</span> mysql              <span class="token operator">|</span>
+<span class="token operator">|</span> performance_schema <span class="token operator">|</span>
+<span class="token operator">|</span> study              <span class="token operator">|</span>
+<span class="token operator">|</span> sys                <span class="token operator">|</span>
++--------------------+
+<span class="token number">5</span> rows <span class="token keyword">in</span> <span class="token builtin class-name">set</span> <span class="token punctuation">(</span><span class="token number">0.00</span> sec<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="注意问题">注意问题</h2>
+<p>在使用 mydumper 的时候，由于会产生一个全局锁防止写入，所以会导致备份过程总无法写入。</p>
+<p>所以在使用的时候，要对用户提示一个短暂的维护提示</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/891970811.html">https://blog.mailjob.net/posts/891970811.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E9%93%BE%E6%8E%A5"><span class="toc-text">相关链接</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9A%B4%E5%8A%9B%E5%A4%87%E4%BB%BD"><span class="toc-text">暴力备份</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#mysqldump-%E5%B7%A5%E5%85%B7"><span class="toc-text">mysqldump  工具</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%87%E4%BB%BD%E5%91%BD%E4%BB%A4"><span class="toc-text">备份命令</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%91%BD%E4%BB%A4%E6%A0%BC%E5%BC%8F"><span class="toc-text">1 命令格式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E9%80%89%E9%A1%B9%E8%AF%B4%E6%98%8E"><span class="toc-text">2 选项说明</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E5%AE%9E%E4%BE%8B"><span class="toc-text">3 实例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4%E3%80%81%E8%BF%98%E5%8E%9F%E5%91%BD%E4%BB%A4"><span class="toc-text">4、还原命令</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#4-1-%E7%B3%BB%E7%BB%9F%E8%A1%8C%E5%91%BD%E4%BB%A4"><span class="toc-text">4.1 系统行命令</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#4-2-soure-%E6%96%B9%E6%B3%95"><span class="toc-text">4.2 soure 方法</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#mydumper-%E5%B7%A5%E5%85%B7"><span class="toc-text">mydumper 工具</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81%E5%A4%87%E4%BB%BD%E5%8E%9F%E7%90%86"><span class="toc-text">1、备份原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E8%AF%A5%E5%B7%A5%E5%85%B7%E4%BB%8B%E7%BB%8D"><span class="toc-text">2、该工具介绍</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81%E5%AE%89%E8%A3%85%E6%AD%A5%E9%AA%A4"><span class="toc-text">3、安装步骤</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#mydumper-%E5%8F%82%E6%95%B0%E8%A7%A3%E9%87%8A"><span class="toc-text">mydumper 参数解释</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#myloader-%E5%8F%82%E6%95%B0%E8%A7%A3%E9%87%8A"><span class="toc-text">myloader 参数解释</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5%E3%80%81%E4%BD%BF%E7%94%A8%E6%A1%88%E4%BE%8B"><span class="toc-text">5、使用案例</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%A4%87%E4%BB%BD-study-%E6%95%B0%E6%8D%AE%E5%BA%93%E5%BA%93-%E5%88%B0-data-backup-mysql-%E6%96%87%E4%BB%B6%E5%A4%B9%E4%B8%AD"><span class="toc-text">备份 study 数据库库 到  &#x2F;data&#x2F;backup&#x2F;mysql 文件夹中</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%81%A2%E5%A4%8D-study-%E6%95%B0%E6%8D%AE%E5%BA%93"><span class="toc-text">恢复 study 数据库</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B3%A8%E6%84%8F%E9%97%AE%E9%A2%98"><span class="toc-text">注意问题</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

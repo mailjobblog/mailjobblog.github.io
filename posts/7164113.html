@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Redis布隆过滤器 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="前言 1、原本有10亿个号码，现在又来了10万个号码，要快速准确判断这10万个号码是否在10亿个号码库中？ 办法一：将10亿个号码存入数据库中，进行数据库查询，准确性有了，但是速度会比较慢。 办法二：将10亿号码放入内存中，比如Redis缓存中，这里我们算一下占用内存大小：10亿*8字节&#x3D;8GB，通过内存查询，准确性和速度都有了，但是大约8gb的内存空间，挺浪费内存空间的。 2、接触过爬虫的，应该">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis布隆过滤器">
+<meta property="og:url" content="https://blog.mailjob.net/posts/7164113.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="前言 1、原本有10亿个号码，现在又来了10万个号码，要快速准确判断这10万个号码是否在10亿个号码库中？ 办法一：将10亿个号码存入数据库中，进行数据库查询，准确性有了，但是速度会比较慢。 办法二：将10亿号码放入内存中，比如Redis缓存中，这里我们算一下占用内存大小：10亿*8字节&#x3D;8GB，通过内存查询，准确性和速度都有了，但是大约8gb的内存空间，挺浪费内存空间的。 2、接触过爬虫的，应该">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210308121737.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210308122145.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/img_convert/de0eeaa53ef37bd50158e6331ae2f9ae.png">
+<meta property="article:published_time" content="2021-01-20T13:53:47.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.984Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="redis">
+<meta property="article:tag" content="高可用">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/oss.github/20210308121737.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Redis布隆过滤器
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/7164113.html" class="article-date">
+	  <time datetime="2021-01-20T13:53:47.000Z" itemprop="datePublished">2021-01-20</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/redis/" rel="tag">redis</a>, <a class="article-tag-none-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/7164113.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 2.2k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 8(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="前言">前言</h2>
+<p>1、原本有10亿个号码，现在又来了10万个号码，要快速准确判断这10万个号码是否在10亿个号码库中？<br>
+办法一：将10亿个号码存入数据库中，进行数据库查询，准确性有了，但是速度会比较慢。<br>
+办法二：将10亿号码放入内存中，比如Redis缓存中，这里我们算一下占用内存大小：10亿*8字节=8GB，通过内存查询，准确性和速度都有了，但是大约8gb的内存空间，挺浪费内存空间的。<br>
+2、接触过爬虫的，应该有这么一个需求，需要爬虫的网站千千万万，对于一个新的网站url，我们如何判断这个url我们是否已经爬过了？解决办法还是上面的两种，很显然，都不太好。<br>
+3、同理还有垃圾邮箱的过滤。</p>
+<p>那么对于类似这种，<strong>大数据量集合，如何准确快速的判断某个数据是否在大数据量集合中，并且不占用内存，布隆过滤器应运而生了。</strong></p>
+<h2 id="相关链接">相关链接</h2>
+<p><img src="http://img.github.mailjob.net/oss.github/20210308121737.png" alt="img"></p>
+<h1 id="Bloom-Filter原理">Bloom Filter原理</h1>
+<p>布隆过滤器是一个基于m位的比特向量（b1,b2…,bm），这些比特向量的初始值为0。同时还有一系列的哈希函数（h1,h2…,hk），这些哈希函数运算后的哈希值范围在[1, m]内。</p>
+<p>如下图，就是 x、y、z 三个元素插入到布隆过滤器中，并判断w值是否在集合中的示意图。</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210308122145.png" alt="img"><strong>上图中，m=18，k=3</strong></p>
+<p>h1、h2、h3 是三个哈希函数将输入值分别映射成比特向量上的某个位置上。</p>
+<h3 id="1、数据结构">1、数据结构</h3>
+<p>布隆过滤器：一种数据结构，是由一串很长的二进制向量组成，可以将其看成一个二进制数组。</p>
+<p>既然是二进制，那么里面存放的不是0，就是1，但是初始默认值都是0。</p>
+<p><a target="_blank" rel="noopener" href="https://img2018.cnblogs.com/blog/1023924/201911/1023924-20191111132438523-872391251.png"><img src="https://img-blog.csdnimg.cn/img_convert/de0eeaa53ef37bd50158e6331ae2f9ae.png" alt="image"></a></p>
+<h3 id="2、哈希映射">2、哈希映射</h3>
+<p>1、布隆需要记录见过的数据，这里的记录需要通过<code>hash函数</code>对数据进行<code>hash操作</code>，得到数组下标并存储在<code>BIT 数组</code>里记<code>为1</code>。这样的记录一个数据只占用<code>1BIT空间</code></p>
+<p>2、判断是否存在时：给布隆过滤器一个数据，进行<code>hash得到下标</code>，从<code>BIT数组</code>里取数据如果是<code>1</code> 则说明数据<code>存在</code>，如果是<code>0</code> 说明<code>不存在</code></p>
+<h3 id="3、精确度">3、精确度</h3>
+<p>hash算法存在<code>碰撞</code>的可能，所以不同的数据可能hash为一个下标数据，</p>
+<p>故为了提高精确度就需要 使用多个<code>hash 算法</code>标记一个数据，和增大<code>BIT数组</code>的大小</p>
+<p>假阳子性问题，布隆过滤器判断为<code>数据存在</code>可能<code>数据并不存在</code>，但是如果判断为<code>数据不存在</code>那么数据就<code>一定是不存在</code>的。</p>
+<h3 id="4、不支持删除">4、不支持删除</h3>
+<p>布隆过滤器只能插入数据判断是否存在，不能删除，而且只能保证【不存在】判断绝对准确</p>
+<p>以上不难看出如果给数组的每个BIT位上加一个计数器，插入的时候+1 删除的时候 –1 就可以实现删除。</p>
+<p>但是加计数器的实现是有问题的：</p>
+<p>由于hash碰撞问题，布隆过滤器不能准确判断数据是否存在，就不能随意删除。其次计数器的回绕问题也需要考虑。</p>
+<h3 id="5、布隆过滤器优缺点">5、布隆过滤器优缺点</h3>
+<p><strong>优点</strong>：</p>
+<p>优点很明显，二进制组成的数组，占用内存极少，并且插入和查询速度都足够快。<br>
+<strong>缺点</strong>：</p>
+<p>随着数据的增加，误判率会增加；还有无法判断数据一定存在；另外还有一个重要缺点，无法删除数据。</p>
+<h2 id="问题">问题</h2>
+<h3 id="1、hash碰撞">1、hash碰撞</h3>
+<p><strong>原因</strong>：不同的数据可能hash为一个下标数据</p>
+<p><strong>解决</strong>：</p>
+<p>1.1、使用多个 hash 标记一个key</p>
+<p>1.2、增大 bit 数组的大小</p>
+<h3 id="2、假阳子性问题">2、假阳子性问题</h3>
+<p><strong>原因</strong>：</p>
+<p>如上图所示，使用哈希函数将每个元素映射到一个二进制向量的三个位上。将集合中每个元素对应的三个位记录成1。</p>
+<p>当需要判断一个新的元素w 在不在集合中时，可以先计算出w的三个位，然后只要发现其中存在任何一个位为0， 则可以100%肯定，w不在此集合中。</p>
+<p><strong>解决</strong>：</p>
+<p>2.1、使用多个 hash 标记一个key</p>
+<p>2.2、增大 byte 数组的大小</p>
+<h2 id="布隆过滤器相关扩展">布隆过滤器相关扩展</h2>
+<h4 id="Counting-filters">Counting filters</h4>
+<p>基本的布隆过滤器不支持删除（Deletion）操作，但是 Counting filters 提供了一种可以不用重新构建布隆过滤器但却支持元素删除操作的方法。在Counting filters中原来的位数组中的每一位由 bit 扩展为 n-bit 计数器，实际上，基本的布隆过滤器可以看作是只有一位的计数器的Counting filters。原来的插入操作也被扩展为把 n-bit 的位计数器加1，查找操作即检查位数组非零即可，而删除操作定义为把位数组的相应位减1，但是该方法也有位的算术溢出问题，即某一位在多次删除操作后可能变成负值，所以位数组大小 m 需要充分大。另外一个问题是Counting filters不具备伸缩性，由于Counting filters不能扩展，所以需要保存的最大的元素个数需要提前知道。否则一旦插入的元素个数超过了位数组的容量，false positive的发生概率将会急剧增加。当然也有人提出了一种基于 D-left Hash 方法实现支持删除操作的布隆过滤器，同时空间效率也比Counting filters高。</p>
+<h4 id="Data-synchronization">Data synchronization</h4>
+<p>Byers等人提出了使用布隆过滤器近似数据同步。</p>
+<h4 id="Bloomier-filters">Bloomier filters</h4>
+<p>Chazelle 等人提出了一个通用的布隆过滤器，该布隆过滤器可以将某一值与每个已经插入的元素关联起来，并实现了一个关联数组Map［10］。与普通的布隆过滤器一样，Chazelle实现的布隆过滤器也可以达到较低的空间消耗，但同时也会产生false positive，不过，在Bloomier filter中，某 key 如果不在 map 中，false positive在会返回时会被定义出的。该Map 结构不会返回与 key 相关的在 map 中的错误的值。</p>
+<h2 id="布隆过滤器安装">布隆过滤器安装</h2>
+<h3 id="1、下载：">1、下载：</h3>
+<p>地址：<a target="_blank" rel="noopener" href="https://github.com/RedisBloom/RedisBloom">https://github.com/RedisBloom/RedisBloom</a></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">下载ZIP  文件，上传到linux
+RedisBloom-master.zip<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<h3 id="2、解压编译">2、解压编译</h3>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">命令：
+<span class="token function">unzip</span> RedisBloom-master.zip
+<span class="token builtin class-name">cd</span> RedisBloom-master
+<span class="token function">make</span>
+ 
+扫行完以上命令 后文件夹内生成一个文件名为：redisbloom.so<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="3、启动redis-时加载该模块">3、启动redis 时加载该模块</h3>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">两个办法
+ 
+ 
+第一，直接修改配置文件
+ 
+<span class="token comment"># 进入reids目录 配置在redis.conf中 更加方便</span>
+<span class="token operator">>></span> <span class="token function">vim</span> redis.conf
+ 
+<span class="token comment"># 修改redis配置文件，加入redisboom模块</span>
+<span class="token operator">>></span> loadmodule /path/to/redisbloom.so
+ 
+ 
+ 
+第二，redis启动时加载该模块
+<span class="token comment"># redis-server 加仓布隆过滤器</span>
+<span class="token comment"># 参照文档：https://github.com/RedisBloom/RedisBloom#building-and-loading-redisbloom</span>
+<span class="token operator">>></span> redis-server <span class="token parameter variable">--loadmodule</span> /path/to/redisbloom.so<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="4、redis重新启动">4、redis重新启动</h3>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 杀死redis进程</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos etc<span class="token punctuation">]</span><span class="token comment"># ps aux|grep redis</span>
+root     <span class="token number">16679</span>  <span class="token number">0.0</span>  <span class="token number">0.1</span> <span class="token number">153896</span>  <span class="token number">2440</span> ?        Ssl  <span class="token number">15</span>:10   <span class="token number">0</span>:00 ./redis-server <span class="token number">0.0</span>.0.0:6379
+root     <span class="token number">30971</span>  <span class="token number">0.0</span>  <span class="token number">0.0</span> <span class="token number">112712</span>   <span class="token number">980</span> pts/0    R+   <span class="token number">15</span>:17   <span class="token number">0</span>:00 <span class="token function">grep</span> <span class="token parameter variable">--color</span><span class="token operator">=</span>auto redis
+<span class="token punctuation">[</span>root@VM-0-15-centos etc<span class="token punctuation">]</span><span class="token comment"># kill -9 16679</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos etc<span class="token punctuation">]</span><span class="token comment"># ps aux|grep redis</span>
+root     <span class="token number">31436</span>  <span class="token number">0.0</span>  <span class="token number">0.0</span> <span class="token number">112712</span>   <span class="token number">980</span> pts/0    R+   <span class="token number">15</span>:17   <span class="token number">0</span>:00 <span class="token function">grep</span> <span class="token parameter variable">--color</span><span class="token operator">=</span>auto redis
+ 
+<span class="token comment"># 启动redis服务</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos etc<span class="token punctuation">]</span><span class="token comment"># cd ../bin</span>
+<span class="token comment">## 启动redis服务</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos bin<span class="token punctuation">]</span><span class="token comment"># ./redis-server /usr/local/redis/etc/redis.conf</span>
+<span class="token number">32294</span>:C <span class="token number">22</span> Jan <span class="token number">2021</span> <span class="token number">15</span>:17:40.648 <span class="token comment"># oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo</span>
+<span class="token number">32294</span>:C <span class="token number">22</span> Jan <span class="token number">2021</span> <span class="token number">15</span>:17:40.648 <span class="token comment"># Redis version=5.0.9, bits=64, commit=00000000, modified=0, pid=32294, just started</span>
+<span class="token number">32294</span>:C <span class="token number">22</span> Jan <span class="token number">2021</span> <span class="token number">15</span>:17:40.648 <span class="token comment"># Configuration loaded</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos bin<span class="token punctuation">]</span><span class="token comment"># ps aux|grep redis</span>
+root     <span class="token number">32295</span>  <span class="token number">0.0</span>  <span class="token number">0.1</span> <span class="token number">156020</span>  <span class="token number">2672</span> ?        Ssl  <span class="token number">15</span>:17   <span class="token number">0</span>:00 ./redis-server <span class="token number">0.0</span>.0.0:6379
+root     <span class="token number">32637</span>  <span class="token number">0.0</span>  <span class="token number">0.0</span> <span class="token number">112712</span>   <span class="token number">984</span> pts/0    R+   <span class="token number">15</span>:17   <span class="token number">0</span>:00 <span class="token function">grep</span> <span class="token parameter variable">--color</span><span class="token operator">=</span>auto redis<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="5、测试是否安装成功">5、测试是否安装成功</h3>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> bf.add mym meituan
+<span class="token punctuation">(</span>integer<span class="token punctuation">)</span> <span class="token number">1</span>
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> bf.exists mym meituan
+<span class="token punctuation">(</span>integer<span class="token punctuation">)</span> <span class="token number">1</span>
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> bf.exists mym baidu
+<span class="token punctuation">(</span>integer<span class="token punctuation">)</span> <span class="token number">0</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="基本命令"><strong>基本命令</strong></h2>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">bf.add 添加元素到布隆过滤器，bf.add只能添加一个
+bf.exists 判断元素是否在布隆过滤器
+bf.madd 添加多个元素到布隆过滤器
+bf.mexists 判断多个元素是否在布隆过滤器<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>例子：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token operator">></span> bf.add rurl www.baidu.com
+<span class="token operator">></span> bf.exists rurl www.baidu.com
+<span class="token operator">></span> bf.madd rurl www.sougou.com www.jd.com
+<span class="token operator">></span> bf.mexists rurl www.jd.com www.taobao.com<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/7164113.html">https://blog.mailjob.net/posts/7164113.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E9%93%BE%E6%8E%A5"><span class="toc-text">相关链接</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Bloom-Filter%E5%8E%9F%E7%90%86"><span class="toc-text">Bloom Filter原理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="toc-text">1、数据结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E5%93%88%E5%B8%8C%E6%98%A0%E5%B0%84"><span class="toc-text">2、哈希映射</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81%E7%B2%BE%E7%A1%AE%E5%BA%A6"><span class="toc-text">3、精确度</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4%E3%80%81%E4%B8%8D%E6%94%AF%E6%8C%81%E5%88%A0%E9%99%A4"><span class="toc-text">4、不支持删除</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5%E3%80%81%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="toc-text">5、布隆过滤器优缺点</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98"><span class="toc-text">问题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81hash%E7%A2%B0%E6%92%9E"><span class="toc-text">1、hash碰撞</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E5%81%87%E9%98%B3%E5%AD%90%E6%80%A7%E9%97%AE%E9%A2%98"><span class="toc-text">2、假阳子性问题</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8%E7%9B%B8%E5%85%B3%E6%89%A9%E5%B1%95"><span class="toc-text">布隆过滤器相关扩展</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Counting-filters"><span class="toc-text">Counting filters</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Data-synchronization"><span class="toc-text">Data synchronization</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Bloomier-filters"><span class="toc-text">Bloomier filters</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8%E5%AE%89%E8%A3%85"><span class="toc-text">布隆过滤器安装</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81%E4%B8%8B%E8%BD%BD%EF%BC%9A"><span class="toc-text">1、下载：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E8%A7%A3%E5%8E%8B%E7%BC%96%E8%AF%91"><span class="toc-text">2、解压编译</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81%E5%90%AF%E5%8A%A8redis-%E6%97%B6%E5%8A%A0%E8%BD%BD%E8%AF%A5%E6%A8%A1%E5%9D%97"><span class="toc-text">3、启动redis 时加载该模块</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4%E3%80%81redis%E9%87%8D%E6%96%B0%E5%90%AF%E5%8A%A8"><span class="toc-text">4、redis重新启动</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5%E3%80%81%E6%B5%8B%E8%AF%95%E6%98%AF%E5%90%A6%E5%AE%89%E8%A3%85%E6%88%90%E5%8A%9F"><span class="toc-text">5、测试是否安装成功</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E5%91%BD%E4%BB%A4"><span class="toc-text">基本命令</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

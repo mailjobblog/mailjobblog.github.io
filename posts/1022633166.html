@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Percona Toolkit 工具检查 Mysql | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="前言  Percona Toolkit 简称 pt  工具，PT-Tools 是 Percona 公司开发用于管理MySQL的工具，功能包括检查主从复制的数据一致性、检查重复索引、定位 IO 占用高的表文件、在线 DDL 等，DBA 熟悉掌握后将极大提高工作效率。  参考文献  Percona Toolkit手册：https:&#x2F;&#x2F;www.percona.com&#x2F;doc&#x2F;percona-toolki">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Percona Toolkit 工具检查 Mysql">
+<meta property="og:url" content="https://blog.mailjob.net/posts/1022633166.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="前言  Percona Toolkit 简称 pt  工具，PT-Tools 是 Percona 公司开发用于管理MySQL的工具，功能包括检查主从复制的数据一致性、检查重复索引、定位 IO 占用高的表文件、在线 DDL 等，DBA 熟悉掌握后将极大提高工作效率。  参考文献  Percona Toolkit手册：https:&#x2F;&#x2F;www.percona.com&#x2F;doc&#x2F;percona-toolki">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-02-18T06:14:50.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.982Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="mysql">
+<meta property="article:tag" content="高可用">
+<meta name="twitter:card" content="summary">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Percona Toolkit 工具检查 Mysql
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/1022633166.html" class="article-date">
+	  <time datetime="2021-02-18T06:14:50.000Z" itemprop="datePublished">2021-02-18</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/mysql/">mysql</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/mysql/" rel="tag">mysql</a>, <a class="article-tag-none-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/1022633166.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 5.5k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 24(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="前言">前言</h2>
+<blockquote>
+<p><code>Percona Toolkit</code> 简称 <code>pt </code> 工具，<code>PT-Tools</code> 是 <code>Percona</code> 公司开发用于管理MySQL的工具，功能包括检查主从复制的数据一致性、检查重复索引、定位 <code>IO</code> 占用高的表文件、在线 <code>DDL</code> 等，<code>DBA</code> 熟悉掌握后将极大提高工作效率。</p>
+</blockquote>
+<h2 id="参考文献">参考文献</h2>
+<blockquote>
+<p>Percona Toolkit手册：<a target="_blank" rel="noopener" href="https://www.percona.com/doc/percona-toolkit/LATEST/pt-table-sync.html">https://www.percona.com/doc/percona-toolkit/LATEST/pt-table-sync.html</a></p>
+<p>Percona Toolkit下载：<a target="_blank" rel="noopener" href="https://www.percona.com/downloads/percona-toolkit/LATEST/">https://www.percona.com/downloads/percona-toolkit/LATEST/</a></p>
+<p>Percona Toolkit下载（清华镜像）：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/yangjiahui/p/13704517.html">https://mirrors.cnnic.cn/percona/tools/yum/release/latest/RPMS/x86_64/percona-toolkit-3.2.1-1.el6.x86_64.rpm</a>。</p>
+</blockquote>
+<h2 id="安装步骤">安装步骤</h2>
+<p>使用wget下载到本地</p>
+<pre class="line-numbers language-none"><code class="language-none">wget --no-check-certificate https:&#x2F;&#x2F;mirrors.cnnic.cn&#x2F;percona&#x2F;tools&#x2F;yum&#x2F;release&#x2F;latest&#x2F;RPMS&#x2F;x86_64&#x2F;percona-toolkit-3.2.1-1.el6.x86_64.rpm<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>安装 pt 工具的依赖软件</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum <span class="token function">install</span> perl-IO-Socket-SSL perl-DBD-MySQL perl-Time-HiRes perl perl-DBI <span class="token parameter variable">-y</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>安装 pt 工具</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum <span class="token function">install</span> percona-toolkit-3.2.1-1.el6.x86_64.rpm<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>查看安装情况</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@localhost home<span class="token punctuation">]</span><span class="token comment"># yum list | grep percona-toolkit</span>
+percona-toolkit.x86_64                      <span class="token number">3.2</span>.1-1.el7                @/percona-toolkit-3.2.1-1.el7.x86_64
+<span class="token punctuation">[</span>root@localhost home<span class="token punctuation">]</span><span class="token comment"># pt-table-checksum --help</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>会自动安装perl依赖包和percona-toolkit工具，默认安装路径在<code>/usr/bin/</code>路径，帮助文档路径<code>/usr/share/man/man1/</code>，可以通过<code>man 命名</code>直接获取帮助文档。</p>
+<pre class="line-numbers language-none"><code class="language-none">shell&gt;pt
+pt-align                  pt-fifo-split             pt-kill                   pt-pmp                    pt-slave-restart          pt-variable-advisor
+pt-archiver               pt-find                   pt-mext                   pt-query-digest           pt-stalk                  pt-visual-explain
+ptaskset                  pt-fingerprint            pt-mongodb-query-digest   pt-secure-collect         pt-summary                ptx
+pt-config-diff            pt-fk-error-logger        pt-mongodb-summary        pt-show-grants            pt-table-checksum         
+pt-deadlock-logger        pt-heartbeat              pt-mysql-summary          pt-sift                   pt-table-sync             
+pt-diskstats              pt-index-usage            pt-online-schema-change   pt-slave-delay            pt-table-usage            
+pt-duplicate-key-checker  pt-ioprofile              pt-pg-summary             pt-slave-find             pt-upgrade<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>pt工具主要包含如上命令，今天主要介绍几个DBA必会的pt命令。</p>
+<h2 id="使用介绍">使用介绍</h2>
+<h3 id="pt-archive">pt-archive</h3>
+<blockquote>
+<p>pt-archive是MySQL的在线归档工具，无影响生产，用此命令操作的表<strong>必须有主键</strong>。它实现的功能包括：</p>
+<p>归档历史数据<br>
+在线删除大批量数据<br>
+数据导出和备份<br>
+数据远程归档<br>
+数据清理</p>
+</blockquote>
+<pre class="line-numbers language-none"><code class="language-none">--limit 10000 每次取1000行数据用pt-archive处理
+--txn-size 1000 设置1000行为一个事务提交一次
+--where &#39;id&lt;3000&#39; 设置操作条件
+--progress 5000 每处理5000行输出一次处理信息
+--statistics 输出执行过程及最后的操作统计（只要不加上--quiet，默认情况下pt- archive都会输出执行过程的）
+--charset&#x3D;UTF8 指定字符集为UTF8 这个最好加上不然可能出现乱码。
+--bulk-delete 批量删除source上的旧数据(例如每次1000行的批量删除操作)<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>使用示例：</p>
+<ul>
+<li>归档,不删除原表数据(–no-delete)</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">pt-archiver --source h&#x3D;源ip,P&#x3D;源端口,u&#x3D;用户,p&#x3D;密码,D&#x3D;库名,t&#x3D;表名 --dest h&#x3D;目标IP,P&#x3D;端口,u&#x3D;用户,p&#x3D;密码,D&#x3D;库名,t&#x3D;表名 --no-check-charset --where &#39;ID&lt;100&#39; --progress 5000 --no-delete --limit&#x3D;10000 –statistics<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>归档, 删除原表记录（不用加no-delete）</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">pt-archiver --source h&#x3D;源ip,P&#x3D;源端口,u&#x3D;用户,p&#x3D;密码,D&#x3D;库名,t&#x3D;表名 --dest h&#x3D;目标IP,P&#x3D;端口,u&#x3D;用户,p&#x3D;密码,D&#x3D;库名,t&#x3D;表名 --no-check-charset --where &#39;ID&lt;100&#39; --progress 5000 --limit&#x3D;10000 –statistics<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>加上字符</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">pt-archiver --charset &#39;utf8&#39; --source h&#x3D;源ip,P&#x3D;源端口,u&#x3D;用户,p&#x3D;密码,D&#x3D;库名,t&#x3D;表名 --dest h&#x3D;目标IP,P&#x3D;端口,u&#x3D;用户,p&#x3D;密码,D&#x3D;库名,t&#x3D;表名 --no-check-charset --where &#39;ID&lt;100&#39; --progress 5000 --limit&#x3D;10000 –statistics<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>直接删除，不归档</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">pt-archiver --source h&#x3D;127.0.0.1,P&#x3D;端口,u&#x3D;root,p&#x3D;‘密码&#39;,D&#x3D;源库,t&#x3D;源表 --where &#39;ID&lt;100&#39; --purge --limit&#x3D;5000 --no-check-charset --statistics --progress 5000<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="pt-kill">pt-kill</h3>
+<blockquote>
+<p>pt-kill 是一个优秀的kill MySQL连接的一个工具，是percona toolkit的一部分，这个工具可以kill掉你想Kill的任何语句，特别出现大量的阻塞，死锁，某个有问题的sql导致mysql负载很高的情况。</p>
+</blockquote>
+<pre class="line-numbers language-none"><code class="language-none">--daemonize 放在后台以守护进程的形式运行 
+--interval 多久运行一次，单位可以是s,m,h，d等默认是s –不加这个默认是5秒 
+--victims 默认是oldest,只杀最古老的查询。这是防止被查杀是不是真的长时间运行的查询，他们只是长期等待，这种匹配按时间查询，杀死一个时间最高值 
+--all 杀掉所有满足的线程 
+--kill-query 只杀掉连接执行的语句，但是线程不会被终止 
+--print 打印满足条件的语句 
+--busy-time 批次查询已运行的时间超过这个时间的线程 
+--idle-time 杀掉sleep 空闲了多少时间的连接线程，必须在--match-command sleep时才有效—也就是匹配使用
+----ignore-command 忽略相关的匹配
+-- –match-command 匹配相关的语句 (这两个搭配使用一定是ignore-command在前，match-command在后)
+--match-db cdelzone 匹配哪个库
+match-command：Query，Sleep，Binlog Dump，Connect，Delayed insert，Execute，Fetch，Init DB，Kill，Prepare，Processlist，Quit，Reset stmt，Table Dump
+match-State：Locked，login，copy to tmp table，Copying to tmp table，Copying to tmp table on disk，Creating tmp table，executing，Reading from net，Sending data，Sorting for order，Sorting result，Table lock，Updating<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>使用示例：</p>
+<ul>
+<li>杀掉空闲连接sleep60秒的SQL</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;usr&#x2F;bin&#x2F;pt-kill --host&#x3D;127.0.0.1 --user&#x3D;用户 --password&#x3D;密码 --port&#x3D;端口 --match-command Sleep --idle-time 60 --victim all --interval 5 --kill --daemonize --pid&#x3D;&#x2F;tmp&#x2F;ptkill.pid --print --log&#x3D;&#x2F;tmp&#x2F;pt-kill.log &amp;<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>查询SELECT超过1分钟的SQL</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;usr&#x2F;bin&#x2F;pt-kill --host&#x3D;127.0.0.1 --user&#x3D;用户 --password&#x3D;密码 --port&#x3D;端口 --match-info &quot;SELECT|select&quot; --busy-time 60 --victim all --interval 5 --kill --daemonize --pid&#x3D;&#x2F;tmp&#x2F;ptkill.pid --print --log&#x3D;&#x2F;home&#x2F;pt-kill.log &amp;<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>kill掉state是Locked的SQL</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;usr&#x2F;bin&#x2F;pt-kill --host&#x3D;127.0.0.1 --user&#x3D;用户 --password&#x3D;密码 --port&#x3D;端口 --victims all --match-state&#x3D;&#39;Locked&#39; --interval 5 --kill --daemonize --pid&#x3D;&#x2F;tmp&#x2F;ptkill.pid --print --log&#x3D;&#x2F;home&#x2F;pt-kill.log &amp;<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>指定用户进行kill</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;usr&#x2F;bin&#x2F;pt-kill --host&#x3D;127.0.0.1 --user&#x3D;用户 --password&#x3D;密码 --port&#x3D;端口 --victims all --match-user&#x3D;&#39;root&#39; --interval 5 --kill --daemonize --pid&#x3D;&#x2F;tmp&#x2F;ptkill.pid --print --log&#x3D;&#x2F;home&#x2F;pt-kill.log &amp;<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>指定某个库和host地址进行kill</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;usr&#x2F;bin&#x2F;pt-kill --host&#x3D;127.0.0.1 --user&#x3D;用户 --password&#x3D;密码 --port&#x3D;端口 --victims all --match-db&#x3D;&#39;test&#39; --match-host&#x3D;&#39;10.0.0.51&#39; --interval 10 --kill --daemonize --pid&#x3D;&#x2F;tmp&#x2F;ptkill.pid --print --log&#x3D;&#x2F;home&#x2F;pt-kill.log &amp;<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>将kill掉的SQL插入到表中</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;usr&#x2F;bin&#x2F;pt-kill --host&#x3D;127.0.0.1 --user&#x3D;root --password&#x3D;‘密码&#39; --port&#x3D;3306 --log-dsn D&#x3D;库名,t&#x3D;表名 --create-log-table --busy-time&#x3D;60 --victims all --kill-query --match-info &quot;SELECT|select&quot; --print &amp;<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="pt-online-schema-change">pt-online-schema-change</h3>
+<blockquote>
+<p>pt-online-schema-change简称pt-osc在线更改表结构，可以实现在线加减字段、索引、修改字段属性等功能。pt-osc模仿MySQL内部的改表方式进行改表，但整个改表过程是通过对原始表的拷贝来完成的，即在改表过程中原始表不会被锁定，并不影响对该表的读写操作。<br>
+首先，osc创建与原始表相同的不包含数据的新表（下划线开头）并按照需求进行表结构的修改，然后将原始表中的数据按逐步拷贝到新表中，当拷贝完成后，会自动同时修改原始表和新表的名字并默认将原始表删除。有两个注意点：被操作的表如果有 触发器，或外键用不了。要特别注意（标准规范MySQL是不建议用外键与触发器的）如果有，要把外键与触发器去掉再操作。<br>
+工作原理：</p>
+<ul>
+<li>创建一个和要执行 alter 操作的表一样的新的空表结构(是alter之前的结构)</li>
+<li>在新表执行alter table 语句（速度应该很快）</li>
+<li>在原表中创建触发器3个触发器分别对应insert,update,delete操作</li>
+<li>以一定块大小从原表拷贝数据到临时表，拷贝过程中通过原表上的触发器在原表进行的写操作都会更新到新建的临时表</li>
+<li>Rename 原表到old表中，在把临时表Rename为原表</li>
+<li>如果有参考该表的外键，根据alter-foreign-keys-method参数的值，检测外键相关的表，做相应设置的处理</li>
+<li>默认最后将旧原表删除，如果执行失败了，或手动停止了，需要手动删除下划线开头的表(_表名)及三个触发器</li>
+</ul>
+</blockquote>
+<pre class="line-numbers language-none"><code class="language-none">--max-load 默认为Threads_running&#x3D;25。每个chunk拷贝完后，会检查SHOW GLOBAL STATUS的内容，检查指标是否超过了指定的阈值。如果超过，则先暂停。这里可以用逗号分隔，指定多个条件，每个条件格式： status指标&#x3D;MAX_VALUE或者status指标:MAX_VALUE。如果不指定MAX_VALUE，那么工具会这只其为当前值的120%。 
+--critical-load 默认为Threads_running&#x3D;50。用法基本与--max-load类似，如果不指定MAX_VALUE，那么工具会这只其为当前值的200%。如果超过指定值，则工具直接退出，而不是暂停。
+--user: -u，连接的用户名 
+--password： -p，连接的密码 
+--database： -D，连接的数据库 
+--port -P，连接数据库的端口 
+--host: -h，连接的主机地址 
+--socket: -S，连接的套接字文件 
+--statistics 打印出内部事件的数目，可以看到复制数据插入的数目。 
+--dry-run 创建和修改新表，但不会创建触发器、复制数据、和替换原表。并不真正执行，可以看到生成的执行语句，了解其执行步骤与细节。--dry-run与--execute必须指定一个，二者相互排斥。和--print配合最佳。 
+--execute 确定修改表，则指定该参数。真正执行。--dry-run与--execute必须指定一个，二者相互排斥。 
+--print 打印SQL语句到标准输出。指定此选项可以让你看到该工具所执行的语句，和--dry-run配合最佳。 
+--progress 复制数据的时候打印进度报告，二部分组成：第一部分是百分比，第二部分是时间。 
+--quiet -q，不把信息标准输出。<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>使用示例：</p>
+<ul>
+<li>添加索引</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">pt-online-schema-change --user&#x3D;root --password&#x3D;&#39;密码&#39; --port&#x3D;端口 --host&#x3D;127.0.0.1 --critical-load Threads_running&#x3D;100 --alter &quot;ADD INDEX index_name (column_name)&quot; D&#x3D;库名,t&#x3D;表名 --print --execute<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>添加列</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">pt-online-schema-change --user&#x3D;root --password&#x3D;&#39;密码&#39; --port&#x3D;端口 --host&#x3D;127.0.0.1 --critical-load Threads_running&#x3D;200 --alter &quot;ADD COLUMN column_name int(10)&quot; D&#x3D;库名,t&#x3D;表名 --print –execute<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>删除列</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">pt-online-schema-change --user&#x3D;root --password&#x3D;&#39;密码&#39; --port&#x3D;端口 --host&#x3D;127.0.0.1 --critical-load Threads_running&#x3D;200 --alter &quot;drop column column_name&quot; D&#x3D;库名,t&#x3D;表名 --print –execute<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>列与索引同时添加操作</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">pt-online-schema-change --user&#x3D;root --password&#x3D;&#39;密码&#39; --port&#x3D;6006 --host&#x3D;127.0.0.1 --critical-load Threads_running&#x3D;200 --alter &quot;ADD COLUMN column_name int(10)&quot; --alter &quot;ADD INDEX index_name (column_name)&quot; D&#x3D;库名,t&#x3D;表名 --print --execute<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="pt-query-digest">pt-query-digest</h3>
+<blockquote>
+<p>pt-query-digest，用来进行慢查询Log的分析</p>
+</blockquote>
+<pre class="line-numbers language-none"><code class="language-none">--create-review-table 当使用--review参数把分析结果输出到表中时，如果没有表就自动创建
+--create-history-table 当使用--history参数把分析结果输出到表中时，如果没有表就自动创建
+--filter 对输入的慢查询按指定的字符串进行匹配过滤后再进行分析 
+--limit限制输出结果百分比或数量，默认值是20,即将最慢的20条语句输出，如果是50%则按总响应时间占比从大到小排序，输出到总和达到50%位置截止
+--host mysql服务器地址
+--host mysql服务器地址 
+--user mysql用户名 
+--password mysql用户密码 
+--history 将分析结果保存到表中，分析结果比较详细，下次再使用--history时，如果存在相同的语句，且查询所在的时间区间和历史表中的不同，则会记录到数据表中，可以通过查询同一CHECKSUM来比较某类型查询的历史变化
+--review 将分析结果保存到表中，这个分析只是对查询条件进行参数化，一个类型的查询一条记录，比较简单。当下次使用--review时，如果存在相同的语句分析，就不会记录到数据表中 
+--output 分析结果输出类型，值可以是report(标准分析报告)、slowlog(Mysql slow log)、json、json-anon，一般使用report，以便于阅读。 
+--since 从什么时间开始分析，值为字符串，可以是指定的某个”yyyy-mm-dd [hh:mm:ss]”格式的时间点，也可以是简单的一个时间值：s(秒)、h(小时)、m(分钟)、d(天)，如12h就表示从12小时前开始统计 
+--until 截止时间，配合—since可以分析一段时间内的慢查询<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>使用示例：</p>
+<ul>
+<li>指定时间段的慢查询</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">pt-query-digest &#x2F;home&#x2F;mysql&#x2F;log&#x2F;slow.log --since &#39;yyyy-mm-dd [hh:mm:ss]&#39; --until &#39;yyyy-mm-dd [hh:mm:ss]&#39;<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>把查询保存到query_review表</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">pt-query-digest --user&#x3D;root –password&#x3D;密码 --review h&#x3D;localhost,D&#x3D;test,t&#x3D;query_review--create-review-table slow.log<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>分析指含有select语句的慢查询</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">pt-query-digest --filter &#39;$event-&gt;&#123;fingerprint&#125; &#x3D;~ m&#x2F;^select&#x2F;i&#39; &#x2F;home&#x2F;mysql&#x2F;log&#x2F;slow.log &gt; slow_report.log<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>针对某个用户的慢查询</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">pt-query-digest --filter &#39;($event-&gt;&#123;user&#125; || &quot;&quot;) &#x3D;~ m&#x2F;^root&#x2F;i&#39; &#x2F;home&#x2F;mysql&#x2F;log&#x2F;slow.log &gt; slow_report.log<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="pt-table-checksum-pt-table-sync">pt-table-checksum &amp; pt-table-sync</h3>
+<blockquote>
+<p>pt-table-checksum &amp; pt-table-sync,检查主从是否一致性,检查主从不一致之后用这个工具进行处理,这两个一搬是搭配使用。</p>
+</blockquote>
+<pre class="line-numbers language-none"><code class="language-none">replicate&#x3D;test.checksum：主从不一致的结果放到哪一张表中，一般我放在一个既有的数据库中，这个checksum表由pt-table-checksum工具自行建立
+databases&#x3D;testdb：我们要检测的数据库有哪些，这里是testdb数据库，如果想检测所有数据库那么就不要写这个参数了，如果有多个数据库，我们用逗号连接就可以了
+host&#x3D;&#39;127.0.0.1&#39;：主库的IP地址或者主机名
+user&#x3D;dba ：主机用户名(确定此用户可以访问主从数据库)
+port&#x3D;6006：主库端口号
+recursion-method&#x3D;hosts ：主库探测从库的方式
+empty-replicate-table：清理上一次的检测结果后开始新的检测
+no-check-bin-log-format：不检查二进制日志格式，鉴于目前大多数生产数据库都将二进制日志设置为“ROW”格式，而我们的pt-table-checksum会话会自行设定使用“STATEMENT”格式，所以这个选项请务必加上<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>使用示例：</p>
+<pre class="line-numbers language-none"><code class="language-none">pt-table-checksum --nocheck-replication-filters --no-check-binlog-format --replicate&#x3D;test.checksums --recursion-method&#x3D;hosts --databases&#x3D;log_manage h&#x3D;localhost,u&#x3D;用户,p&#x3D;密码,P&#x3D;端口<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>检测DIFF有异常时，立刻到从库去看，通过在从库中查询replicate参数指定的test.checksum表得出：</p>
+<pre class="line-numbers language-none"><code class="language-none">SELECT db, tbl, SUM(this_cnt) AS total_rows, COUNT(*) AS chunks FROM test.checksums WHERE ( master_cnt &lt;&gt; this_cnt OR master_crc &lt;&gt; this_crc OR ISNULL(master_crc) &lt;&gt; ISNULL(this_crc)) GROUP BY db, tbl;<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>检测有差异之后到从库上执行一下修复，前提是此表必须要有主键或唯一索引：</p>
+<pre class="line-numbers language-none"><code class="language-none">pt-table-sync --sync-to-master --replicate&#x3D;test.checksums h&#x3D;127.0.0.1,u&#x3D;用户,P&#x3D;端口,p&#x3D;密码 --print<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="pt-find">pt-find</h3>
+<blockquote>
+<p>pt-find，找出几天之前建立的表，使用示例：</p>
+</blockquote>
+<ul>
+<li>找出大于10G的表</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;usr&#x2F;bin&#x2F;pt-find --socket&#x3D;&#x2F;tmp&#x2F;mysqld.sock --user&#x3D;root --password&#x3D;密码 --port&#x3D;端口 --tablesize +10G<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>30分钟之修改过的表</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;usr&#x2F;bin&#x2F;pt-find --socket&#x3D;&#x2F;tmp&#x2F;mysqld.sock --user&#x3D;root --password&#x3D;密码 --port&#x3D;端口 --mmin -25<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>没有数据的表</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;usr&#x2F;bin&#x2F;pt-find --socket&#x3D;&#x2F;tmp&#x2F;mysqld.sock --user&#x3D;root --password&#x3D;密码 --port&#x3D;端口 --empty<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>找出1天以前的表，存储引擎是MyISAM</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;usr&#x2F;bin&#x2F;pt-find --socket&#x3D;&#x2F;tmp&#x2F;mysqld.sock --user&#x3D;root --password&#x3D;密码 --port&#x3D;端口--ctime +1 --engine MyISAM<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>找出存储引擎为MyISAM的表修改为InnoDB</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;usr&#x2F;bin&#x2F;pt-find --socket&#x3D;&#x2F;tmp&#x2F;mysqld.sock --user&#x3D;root --password&#x3D;密码 --port&#x3D;端口 --engine MyISAM --exec &quot;ALTER TABLE %D.%N ENGINE&#x3D;InnoDB&quot;<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>找出test1，test2库里的空表并删除</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;usr&#x2F;bin&#x2F;pt-find --socket&#x3D;&#x2F;tmp&#x2F;mysqld.sock --user&#x3D;root --password&#x3D;密码 --port&#x3D;端口 --empty test1 test2 --exec-plus &quot;DROP TABLE %s&quot;<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>找到所有的表，根据数据和索引总大小，从大到小排序</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;usr&#x2F;bin&#x2F;pt-find --socket&#x3D;&#x2F;tmp&#x2F;mysqld.sock --user&#x3D;root --password&#x3D;密码 --port&#x3D;端口 --printf &quot;%T\t%D.%N\n&quot; | sort -rn<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="pt-mysql-summary">pt-mysql-summary</h3>
+<blockquote>
+<p>pt-mysql-summary，打印出来MySQL的描述信息，包括：版本信息，数据目录，命令的统计，用户，数据库以及复制等信息还包括各个变量（status、variables）信息和各个变量的比例信息，还有配置文件等信息。</p>
+</blockquote>
+<pre class="line-numbers language-none"><code class="language-none">pt-mysql-summary --user&#x3D;root --password&#x3D;密码 --host&#x3D;127.0.0.1 --port&#x3D;端口<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="Pt-summary">Pt-summary</h3>
+<blockquote>
+<p>Pt-summary，打印出来的信息包括：CPU、内存、硬盘、网卡等信息，还包括文件系统、磁盘调度和队列大小、LVM、RAID、网络链接信息、netstat 的统计，以及前10的负载占用信息和vmstat信息。</p>
+</blockquote>
+<h3 id="pt-align">pt-align</h3>
+<p>pt-align常用于列格式化输出，功能单一，但是实用性极强。<br>
+示例文件如下：</p>
+<pre class="line-numbers language-none"><code class="language-none">DATABASE TABLE   ROWS
+foo      bar      100
+long_db_name table  1
+another  long_name 500<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>经过pt-align处理</p>
+<pre class="line-numbers language-none"><code class="language-none">DATABASE     TABLE     ROWS
+foo          bar        100
+long_db_name table        1
+another      long_name  500<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="pt-config-diff">pt-config-diff</h3>
+<p>pt-config-diff，比较MySQL配置文件的不同<br>
+参数说明：</p>
+<pre class="line-numbers language-none"><code class="language-none">h:数据库主机
+P:端口号
+u:用户名
+p:密码<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>使用示例：</p>
+<ul>
+<li>比较host1和host2配置文件不同</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">pt-config-diff h&#x3D;host1 h&#x3D;host2<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>比较[mysqld]标签和host1不同</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">pt-config-diff &#x2F;etc&#x2F;my.cnf h&#x3D;host1<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>输出结果如下：</p>
+<pre class="line-numbers language-none"><code class="language-none">pt-config-diff &#x2F;etc&#x2F;my-small.cnf &#x2F;etc&#x2F;my-large.cnf
+2 config differences
+Variable                  my.master.cnf   my.slave.cnf
+&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D; &#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D; &#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;
+datadir                   &#x2F;tmp&#x2F;12345&#x2F;data &#x2F;tmp&#x2F;12346&#x2F;data
+port                      12345           12346<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="pt-deadlock-logger">pt-deadlock-logger</h3>
+<p>pt-deadlock-logger可以记录MySQL中的死锁信息到指定的地方，便于集中分析。<br>
+使用示例：<br>
+将host1主机产生的死锁信息保存在host2主机test库下面的deadlocks表中，–create-dest-table表示</p>
+<pre class="line-numbers language-none"><code class="language-none">pt-deadlock-logger h&#x3D;host1,P&#x3D;端口,u&#x3D;用户,p&#x3D;密码 --dest h&#x3D;host2,P&#x3D;端口,u&#x3D;用户,p&#x3D;密码,D&#x3D;test,t&#x3D;deadlocks --create-dest-table --log&#x3D;&#x2F;home&#x2F;mysql&#x2F;deadlock.log --daemonize --interval 5 --run-time 2m --iterations 4<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="pt-heartbeat">pt-heartbeat</h3>
+<p>pt-heartbeat是监控mysql主从复制延迟的。<br>
+pt-heartbeat的工作原理通过使用时间戳方式在主库上更新特定表，然后在从库上读取被更新的时间戳然后与本地系统时间对比来得出其延迟</p>
+<p><strong>格式</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">pt-heartbeat [OPTIONS] [DSN] --update|--monitor|--check|--stop<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>参数</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">注意：需要指定的参数至少有 --stop，--update，--monitor，--check。
+其中--update，--monitor和--check是互斥的，--daemonize和--check也是互斥。
+--ask-pass     隐式输入MySQL密码
+--charset     字符集设置
+--check      检查从的延迟，检查一次就退出，除非指定了--recurse会递归的检查所有的从服务器。
+--check-read-only    如果从服务器开启了只读模式，该工具会跳过任何插入。
+--create-table    在主上创建心跳监控的表，如果该表不存在，可以自己手动建立，建议存储引擎改成memory。通过更新该表知道主从延迟的差距。
+CREATE TABLE heartbeat (
+  ts                    varchar(26) NOT NULL,
+  server_id             int unsigned NOT NULL PRIMARY KEY,
+  file                  varchar(255) DEFAULT NULL,
+  position              bigint unsigned DEFAULT NULL,
+  relay_master_log_file varchar(255) DEFAULT NULL,
+  exec_master_log_pos   bigint unsigned DEFAULT NULL
+);
+heratbeat   表一直在更改ts和position,而ts是我们检查复制延迟的关键。
+--daemonize   执行时，放入到后台执行
+--user&#x3D;-u，   连接数据库的帐号
+--database&#x3D;-D，    连接数据库的名称
+--host&#x3D;-h，     连接的数据库地址
+--password&#x3D;-p，     连接数据库的密码
+--port&#x3D;-P，     连接数据库的端口
+--socket&#x3D;-S，    连接数据库的套接字文件
+--file 【--file&#x3D;output.txt】   打印--monitor最新的记录到指定的文件，很好的防止满屏幕都是数据的烦恼。
+--frames 【--frames&#x3D;1m,2m,3m】  在--monitor里输出的[]里的记录段，默认是1m,5m,15m。可以指定1个，如：--frames&#x3D;1s，多个用逗号隔开。可用单位有秒（s）、分钟（m）、小时（h）、天（d）。
+--interval   检查、更新的间隔时间。默认是见是1s。最小的单位是0.01s，最大精度为小数点后两位，因此0.015将调整至0.02。
+--log    开启daemonized模式的所有日志将会被打印到制定的文件中。
+--monitor    持续监控从的延迟情况。通过--interval指定的间隔时间，打印出从的延迟信息，通过--file则可以把这些信息打印到指定的文件。
+--master-server-id    指定主的server_id，若没有指定则该工具会连到主上查找其server_id。
+--print-master-server-id    在--monitor和--check 模式下，指定该参数则打印出主的server_id。
+--recurse    多级复制的检查深度。模式M-S-S...不是最后的一个从都需要开启log_slave_updates，这样才能检查到。
+--recursion-method     指定复制检查的方式,默认为processlist,hosts。
+--update    更新主上的心跳表。
+--replace     使用--replace代替--update模式更新心跳表里的时间字段，这样的好处是不用管表里是否有行。
+--stop    停止运行该工具（--daemonize），在&#x2F;tmp&#x2F;目录下创建一个“pt-heartbeat-sentinel” 文件。后面想重新开启则需要把该临时文件删除，才能开启（--daemonize）。
+--table   指定心跳表名，默认heartbeat。<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/1022633166.html">https://blog.mailjob.net/posts/1022633166.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E6%AD%A5%E9%AA%A4"><span class="toc-text">安装步骤</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E4%BB%8B%E7%BB%8D"><span class="toc-text">使用介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#pt-archive"><span class="toc-text">pt-archive</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#pt-kill"><span class="toc-text">pt-kill</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#pt-online-schema-change"><span class="toc-text">pt-online-schema-change</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#pt-query-digest"><span class="toc-text">pt-query-digest</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#pt-table-checksum-pt-table-sync"><span class="toc-text">pt-table-checksum &amp; pt-table-sync</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#pt-find"><span class="toc-text">pt-find</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#pt-mysql-summary"><span class="toc-text">pt-mysql-summary</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Pt-summary"><span class="toc-text">Pt-summary</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#pt-align"><span class="toc-text">pt-align</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#pt-config-diff"><span class="toc-text">pt-config-diff</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#pt-deadlock-logger"><span class="toc-text">pt-deadlock-logger</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#pt-heartbeat"><span class="toc-text">pt-heartbeat</span></a></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

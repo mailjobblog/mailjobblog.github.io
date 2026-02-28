@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Opcache加速PHP | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="参考文献 PHP opcache 中文手册：http:&#x2F;&#x2F;php.net&#x2F;manual&#x2F;zh&#x2F;book.opcache.php OPcache 配置选项：http:&#x2F;&#x2F;php.net&#x2F;manual&#x2F;zh&#x2F;opcache.configuration.php Opcache优化原理 概述 在理解 OPCache 功能之前，我们有必要先理解PHP-FPM + Nginx 的工作机制，以及PHP脚本解释执">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Opcache加速PHP">
+<meta property="og:url" content="https://blog.mailjob.net/posts/1827798542.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="参考文献 PHP opcache 中文手册：http:&#x2F;&#x2F;php.net&#x2F;manual&#x2F;zh&#x2F;book.opcache.php OPcache 配置选项：http:&#x2F;&#x2F;php.net&#x2F;manual&#x2F;zh&#x2F;opcache.configuration.php Opcache优化原理 概述 在理解 OPCache 功能之前，我们有必要先理解PHP-FPM + Nginx 的工作机制，以及PHP脚本解释执">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210319133619.png">
+<meta property="article:published_time" content="2021-03-19T05:29:18.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.984Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="php">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/oss.github/20210319133619.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Opcache加速PHP
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/1827798542.html" class="article-date">
+	  <time datetime="2021-03-19T05:29:18.000Z" itemprop="datePublished">2021-03-19</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/php/">php</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/php/" rel="tag">php</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/1827798542.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 2.9k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 11(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="参考文献">参考文献</h2>
+<p>PHP opcache 中文手册：<a target="_blank" rel="noopener" href="http://php.net/manual/zh/book.opcache.php">http://php.net/manual/zh/book.opcache.php</a><br>
+OPcache 配置选项：<a target="_blank" rel="noopener" href="http://php.net/manual/zh/opcache.configuration.php">http://php.net/manual/zh/opcache.configuration.php</a></p>
+<h2 id="Opcache优化原理">Opcache优化原理</h2>
+<h3 id="概述">概述</h3>
+<p>在理解 OPCache 功能之前，我们有必要先理解PHP-FPM + Nginx 的工作机制，以及PHP脚本解释执行的机制。</p>
+<p><strong>1.1 PHP-FPM + Nginx 的工作机制</strong></p>
+<p>请求从Web浏览器到Nginx，再到PHP处理完成，一共要经历如下五个步骤：</p>
+<p>第一步：启动服务</p>
+<ul>
+<li>启动PHP-FPM。PHP-FPM 支持两种通信模式：TCP socket和Unix socket；</li>
+<li>PHP-FPM 会启动两种类型的进程：Master 进程 和 Worker 进程，前者负责监控端口、分配任务、管理Worker进程；后者就是PHP的cgi程序，负责解释编译执行PHP脚本。</li>
+<li>启动Nginx。首先会载入 ngx_http_fastcgi_module 模块，初始化FastCGI执行环境，实现FastCGI协议请求代理</li>
+<li>这里要注意：fastcgi的worker进程(cgi进程)，是由PHP-FPM来管理，不是Nginx。Nginx只是代理</li>
+</ul>
+<p>第二步：Request =&gt; Nginx</p>
+<ul>
+<li>Nginx 接收请求，并基于location配置，选择一个合适handler</li>
+<li>这里就是代理PHP的 handler</li>
+</ul>
+<p>第三步：Nginx =&gt; PHP-FPM</p>
+<ul>
+<li>Nginx 把请求翻译成fastcgi请求</li>
+<li>通过TCP socket/Unix Socket 发送给PHP-FPM 的master进程</li>
+</ul>
+<p>第四步：PHP-FPM Master =&gt; Worker</p>
+<ul>
+<li>PHP-FPM master 进程接收到请求</li>
+<li>分配Worker进程执行PHP脚本，如果没有空闲的Worker，返回502错误</li>
+<li>Worker(php-cgi)进程执行PHP脚本，如果超时，返回504错误</li>
+<li>处理结束，返回结果</li>
+</ul>
+<p>第五步：PHP-FPM Worker =&gt; Master =&gt; Nginx</p>
+<ul>
+<li>PHP-FPM Worker 进程返回处理结果，并关闭连接，等待下一个请求</li>
+<li>PHP-FPM Master 进程通过Socket 返回处理结果</li>
+<li>Nginx Handler顺序将每一个响应buffer发送给第一个filter → 第二个 → 以此类推 → 最终响应发送给客户端</li>
+</ul>
+<p><strong>1.2 PHP脚本解释执行的机制</strong></p>
+<p>了解了PHP + Nginx 整体的处理流程后，我们接下来看一下PHP脚本具体执行流程，首先我们看一个实例：</p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token keyword">empty</span><span class="token punctuation">(</span><span class="token variable">$_POST</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">echo</span> <span class="token string double-quoted-string">"Response Body POST: "</span><span class="token punctuation">,</span> <span class="token function">json_encode</span><span class="token punctuation">(</span><span class="token variable">$_POST</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string double-quoted-string">"\n"</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token keyword">empty</span><span class="token punctuation">(</span><span class="token variable">$_GET</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">echo</span> <span class="token string double-quoted-string">"Response Body GET: "</span><span class="token punctuation">,</span> <span class="token function">json_encode</span><span class="token punctuation">(</span><span class="token variable">$_GET</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string double-quoted-string">"\n"</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>我们分析一下执行过程</strong>：</p>
+<p>1.php初始化执行环节，启动Zend引擎，加载注册的扩展模块</p>
+<p>2.初始化后读取脚本文件，Zend引擎对脚本文件进行词法分析(lex)，语法分析(bison)，生成语法树</p>
+<p>3.Zend 引擎编译语法树，生成opcode，</p>
+<p>4.Zend 引擎执行opcode，返回执行结果</p>
+<p>在PHP cli模式下，每次执行PHP脚本，四个步骤都会依次执行一遍；</p>
+<p>在PHP-FPM模式下，步骤1)在PHP-FPM启动时执行一次，后续的请求中不再执行；步骤2)~4)每个请求都要执行一遍；</p>
+<p>其实步骤2)、3)生成的语法树和opcode，同一个PHP脚本每次运行的结果都是一样的，</p>
+<p>在PHP-FPM模式下，每次请求都要处理一遍，是对系统资源极大的浪费，那么有没有办法优化呢？</p>
+<p>当然有，如：</p>
+<ul>
+<li>OPCache：前身是Zend Optimizer+ ，是 Zend Server 的一个开源组件；官方出品，强力推荐</li>
+<li>APC：Alternative PHP Cache 是一个开放自由的 PHP opcode 缓存组件，用于缓存、优化 PHP 中间代码；已经不更新了不推荐</li>
+<li>APCu：是APC的一个分支，共享内存，缓存用户数据，不能缓存opcode，可以配合Opcache 使用</li>
+<li>eAccelerate：同样是不更新了，不推荐</li>
+<li>xCache：不再推荐使用了</li>
+</ul>
+<h3 id="OPCache介绍与原理">OPCache介绍与原理</h3>
+<h4 id="OPCache-介绍">OPCache 介绍</h4>
+<p>OPCache 是Zend官方出品的，开放自由的 opcode 缓存扩展，还具有代码优化功能，省去了每次加载和解析 PHP 脚本的开销。</p>
+<p>PHP 5.5.0 及后续版本中已经绑定了 OPcache 扩展。</p>
+<p>缓存两类内容:</p>
+<ul>
+<li>OPCode</li>
+<li>Interned String，如注释、变量名等</li>
+</ul>
+<h4 id="OPCache-原理">OPCache 原理</h4>
+<p>OPCache缓存的机制主要是：将编译好的操作码放入共享内存，提供给其他进程访问。</p>
+<p>这里就涉及到内存共享机制，另外所有内存资源操作都有锁的问题，我们一一解读。</p>
+<p><strong>3.1 共享内存</strong></p>
+<p>UNIX/Linux 系统提供很多种进程间内存共享的方式：</p>
+<p>1.System-V shm API: System V共享内存,</p>
+<ul>
+<li>sysv shm是持久化的，除非被一个进程明确的删除，否则它始终存在于内存里，直到系统关机；</li>
+</ul>
+<p>2.mmap API：</p>
+<ul>
+<li>mmap映射的内存在不是持久化的，如果进程关闭，映射随即失效，除非事先已经映射到了一个文件上</li>
+<li>内存映射机制mmap是POSIX标准的系统调用，有匿名映射和文件映射两种</li>
+<li>mmap的一大优点是把文件映射到进程的地址空间</li>
+<li>避免了数据从用户缓冲区到内核page cache缓冲区的复制过程；</li>
+<li>当然还有一个优点就是不需要频繁的read/write系统调用</li>
+</ul>
+<p>3.POSIX API：System V 的共享内存是过时的, POSIX共享内存提供了使用更简单、设计更合理的API.</p>
+<p>4.Unix socket API</p>
+<p>OPCache 使用了前三个共享内存机制，根据配置或者默认mmap 内存共享模式。</p>
+<p>依据PHP字节码缓存的场景，OPCache的内存管理设计非常简单，快速读写，不释放内存，过期数据置为Wasted。</p>
+<p>当Wasted内存大于设定值时，自动重启OPCache机制，清空并重新生成缓存。</p>
+<p><strong>3.2 互斥锁</strong></p>
+<p>任何内存资源的操作，都涉及到锁的机制。</p>
+<p>共享内存：一个单位时间内，只允许一个进程执行写操作，允许多个进程执行读操作；</p>
+<p>写操作同时，不阻止读操作，以至于很少有锁死的情况。</p>
+<p>这就引发另外一个问题：新代码、大流量场景，进程排队执行缓存opcode操作；重复写入，导致资源浪费。</p>
+<p><strong>4. OPCache 缓存解读</strong></p>
+<p>OPCache 是官方的Opcode 缓存解决方案，在PHP5.5版本之后，已经打包到PHP源码中一起发布。</p>
+<p>它将PHP编译产生的字节码以及数据缓存到共享内存中, 在每次请求，从缓存中直接读取编译后的opcode，进行执行。</p>
+<p>通过节省脚本的编译过程，提高PHP的运行效率。</p>
+<p>如果正在使用APC扩展，做同样的工作，现在强烈推荐OPCache来代替，尤其是PHP7中。</p>
+<p><strong>4.1 OPCode 缓存</strong></p>
+<p>Opcache 会缓存OPCode以及如下内容：</p>
+<ul>
+<li>PHP脚本涉及到的函数</li>
+<li>PHP脚本中定义的Class</li>
+<li>PHP脚本文件路径</li>
+<li>PHP脚本OPArray</li>
+<li>PHP脚本自身结构/内容</li>
+</ul>
+<p><strong>4.2 Interned String 缓存</strong></p>
+<p>首先我们需要理解，什么是 Interned String？</p>
+<p>在PHP5.4的时候, 引入了Interned String机制, 用于优化PHP对字符串的存储和处理。尤其是处理大块的字符串，比如PHP doces时，Interned String 可以优化内存。</p>
+<p>Interned String 缓存的内容包括：变量名称、类名、方法名、字符串、注释等。</p>
+<p>在PHP-FPM模式中，Interned String 缓存字符，仅限于Worker 进程内部。而缓存到OPCache中，那么Worker进程之间可以使用 Interned String 缓存的字符串，节省内存。</p>
+<p>我们需要注意一个事情，在PHP开发中，一般会有大段的注释，也会被缓存到OPCache中。可以通过php.ini的配置，关闭注释的缓存。</p>
+<p>但是，像Zend Framework等框架中，会引用注释，所以，是否关闭注释的缓存，需要区别对待。</p>
+<p><strong>5. OPCache 更新策略</strong></p>
+<p>是缓存，都存在过期，以及更新策略等。而OPCache的更新策略非常简单，到期数据置为Wasted，达到设定值，清空缓存，重建缓存。</p>
+<p>这里需要注意：在高流量的场景下，重建缓存是一件非常耗费资源的事儿。OPCache 在创建缓存时并不会阻止其他进程读取。这会导致大量进程反复新建缓存。所以，不要设置OPCache过期时间</p>
+<p>每次发布新代码时，都会出现反复新建缓存的情况。如何避免呢？</p>
+<ul>
+<li>不要在高峰期发布代码，这是任何情况下都要遵守的规则</li>
+<li>代码预热，比如使用脚本批量调PHP 访问URL，或者使用OPCache 暴露的API 如opcache_compile_file() 进行编译缓存</li>
+</ul>
+<p><strong>6. OPCache 的配置</strong></p>
+<p><strong>6.1 内存配置</strong></p>
+<ul>
+<li>opcache.preferred_memory_model=“mmap” OPcache 首选的内存模块。如果留空，OPcache 会选择适用的模块， 通常情况下，自动选择就可以满足需求。可选值包括：mmap，shm, posix 以及 win32。</li>
+<li>opcache.memory_consumption=64 OPcache 的共享内存大小，以兆字节为单位，默认64M</li>
+<li>opcache.interned_strings_buffer=4 用来存储临时字符串的内存大小，以兆字节为单位，默认4M</li>
+<li>opcache.max_wasted_percentage=5 浪费内存的上限，以百分比计。如果达到此上限，那么 OPcache 将产生重新启动续发事件。默认5</li>
+</ul>
+<p><strong>6.2 允许缓存的文件数量以及大小</strong></p>
+<ul>
+<li>opcache.max_accelerated_files=2000 OPcache 哈希表中可存储的脚本文件数量上限。真实的取值是在质数集合 { 223, 463, 983, 1979, 3907, 7963, 16229, 32531, 65407, 130987 } 中找到的第一个大于等于设置值的质数。设置值取值范围最小值是 200，最大值在 PHP 5.5.6 之前是 100000，PHP 5.5.6 及之后是 1000000。默认值2000</li>
+<li>opcache.max_file_size=0 以字节为单位的缓存的文件大小上限。设置为 0 表示缓存全部文件。默认值0</li>
+</ul>
+<p><strong>6.3 注释相关的缓存</strong></p>
+<ul>
+<li>opcache.load_commentsboolean 如果禁用，则即使文件中包含注释，也不会加载这些注释内容。本选项可以和 opcache.save_comments 一起使用，以实现按需加载注释内容。</li>
+<li>opcache.fast_shutdown boolean 如果启用，则会使用快速停止续发事件。所谓快速停止续发事件是指依赖 Zend 引擎的内存管理模块 一次释放全部请求变量的内存，而不是依次释放每一个已分配的内存块。</li>
+</ul>
+<p><strong>6.4 二级缓存的配置</strong></p>
+<ul>
+<li>opcache.file_cache 配置二级缓存目录并启用二级缓存。启用二级缓存可以在 SHM 内存满了、服务器重启或者重置 SHM 的时候提高性能。默认值为空字符串 “”，表示禁用基于文件的缓存。</li>
+<li>opcache.file_cache_onlyboolean 启用或禁用在共享内存中的 opcode 缓存。</li>
+<li>opcache.file_cache_consistency_checksboolean 当从文件缓存中加载脚本的时候，是否对文件的校验和进行验证。</li>
+<li>opcache.file_cache_fallbackboolean 在 Windows 平台上，当一个进程无法附加到共享内存的时候， 使用基于文件的缓存，也即：opcache.file_cache_only=1。需要显示的启用文件缓存。</li>
+</ul>
+<h2 id="Opcache配置">Opcache配置</h2>
+<p>PHP 5.5+版本以上的，可以使用PHP自带的opcache开启性能加速（默认是关闭的）,PHP5.5之后opcache可以直接 <code>--enable-opcache</code> 。</p>
+<p>对于PHP 5.5以下版本的，需要使用APC来进行缓存，</p>
+<p><strong>1. 打开php.ini文件</strong></p>
+<p><strong>2. 找到</strong>：<code>[opcache]</code><strong>，设置为</strong>：</p>
+<pre class="line-numbers language-ini" data-language="ini"><code class="language-ini"><span class="token section"><span class="token punctuation">[</span><span class="token section-name selector">opcache</span><span class="token punctuation">]</span></span>
+<span class="token comment">; 开关打开</span>
+<span class="token key attr-name">opcache.enable</span><span class="token punctuation">=</span><span class="token value attr-value">1</span>
+<span class="token comment">; 设置共享内存大小, 单位为：Mb</span>
+<span class="token key attr-name">opcache.memory_consumption</span><span class="token punctuation">=</span><span class="token value attr-value">128</span>
+<span class="token comment">; 如果启用，那么 OPcache 会每隔 opcache.revalidate_freq 设定的秒数 检查脚本是否更新。 如果禁用此选项，你必须使用 opcache_reset() 或者 opcache_invalidate() 函数来手动重置 OPcache，也可以 通过重启 Web 服务器来使文件系统更改生效。</span>
+<span class="token key attr-name">opcache.validate_timestamps</span><span class="token punctuation">=</span><span class="token value attr-value">60</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>3. <a target="_blank" rel="noopener" href="http://xn--opcache-rk1l864r.so">添加opcache.so</a></strong></p>
+<p>在php.ini最后一行添加<code>opcache.so</code> 主要作用是用来引用opcache</p>
+<pre class="line-numbers language-ini" data-language="ini"><code class="language-ini"><span class="token key attr-name">zend_extension</span><span class="token punctuation">=</span><span class="token value attr-value">"<span class="token inner-value">opcache.so</span>"</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>4. 重启Nginx和php</strong></p>
+<p><strong>5. 测试</strong></p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210319133619.png" alt="image_1b90q2jn0fga1mak1ccm1l5b16m39.png-42.4kB"></p>
+<p>我们除了可以在 <code>phpinfo</code> 上查看，还可以在 <code>php-fpm -m</code> 命令进行查看</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@abcdocker ~<span class="token punctuation">]</span>$ php <span class="token parameter variable">-m</span>
+
+<span class="token punctuation">[</span>PHP Modules<span class="token punctuation">]</span>
+<span class="token punctuation">..</span><span class="token punctuation">..</span>
+<span class="token punctuation">[</span>Zend Modules<span class="token punctuation">]</span>
+Zend OPcache<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/1827798542.html">https://blog.mailjob.net/posts/1827798542.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Opcache%E4%BC%98%E5%8C%96%E5%8E%9F%E7%90%86"><span class="toc-text">Opcache优化原理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-text">概述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#OPCache%E4%BB%8B%E7%BB%8D%E4%B8%8E%E5%8E%9F%E7%90%86"><span class="toc-text">OPCache介绍与原理</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#OPCache-%E4%BB%8B%E7%BB%8D"><span class="toc-text">OPCache 介绍</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#OPCache-%E5%8E%9F%E7%90%86"><span class="toc-text">OPCache 原理</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Opcache%E9%85%8D%E7%BD%AE"><span class="toc-text">Opcache配置</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

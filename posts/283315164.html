@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Redis日志showlog和管道pileline | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="Redis日志 slowlog-log-slower-than：指定执行时间超过多少微秒(1秒等于1000000微秒) 的命令请求会被记录到日志上 slowlog-max-len：指定服务器最多保存多少条慢查询操作 设置slowlog有两种方式：  方式一：通过配置redis.conf文件进行配置  # 执行时间大于多少微秒(microsecond，1秒 &#x3D; 1,000,000 微秒)的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis日志showlog和管道pileline">
+<meta property="og:url" content="https://blog.mailjob.net/posts/283315164.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="Redis日志 slowlog-log-slower-than：指定执行时间超过多少微秒(1秒等于1000000微秒) 的命令请求会被记录到日志上 slowlog-max-len：指定服务器最多保存多少条慢查询操作 设置slowlog有两种方式：  方式一：通过配置redis.conf文件进行配置  # 执行时间大于多少微秒(microsecond，1秒 &#x3D; 1,000,000 微秒)的">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/img_convert/c4e5184361b82081b57a9bb33fb7543f.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210111123719829.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xpYmluZW1haWw=,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210111123735979.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xpYmluZW1haWw=,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20181122105544269.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3cxbGd5,size_16,color_FFFFFF,t_70">
+<meta property="article:published_time" content="2021-01-20T13:55:55.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.986Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="redis">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/img_convert/c4e5184361b82081b57a9bb33fb7543f.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Redis日志showlog和管道pileline
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/283315164.html" class="article-date">
+	  <time datetime="2021-01-20T13:55:55.000Z" itemprop="datePublished">2021-01-20</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/redis/" rel="tag">redis</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/283315164.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 841(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 3(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h1 id="Redis日志">Redis日志</h1>
+<p>slowlog-log-slower-than：指定执行时间超过多少微秒(1秒等于1000000微秒) 的命令请求会被记录到日志上</p>
+<p>slowlog-max-len：指定服务器最多保存多少条慢查询操作</p>
+<p>设置slowlog有两种方式：</p>
+<ul>
+<li>方式一：通过配置redis.conf文件进行配置</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none"># 执行时间大于多少微秒(microsecond，1秒 &#x3D; 1,000,000 微秒)的查询进行记录。
+slowlog-log-lower-than 1000
+ 
+#最多能保存多少条日志
+slowlog-max-len 200<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>方式二：通过CONFIG命令进行配置</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none"># 配置查询时间超过1毫秒的， 第一个参数单位是微秒
+&gt; CONFIG  SET  slowlog-log-slower-than 1000
+#  保存 100 条慢查记录
+&gt; config set slowlog-max-len 100<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<pre class="line-numbers language-none"><code class="language-none">127.0.0.1:6379 &gt; slowlog get<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>以windows为例查看记录如下</p>
+<p><img src="https://img-blog.csdnimg.cn/img_convert/c4e5184361b82081b57a9bb33fb7543f.png" alt="img"></p>
+<p>为了方便解说，我设置超时时间为0毫秒，日志记录为1条</p>
+<p>那么记录的中的1）2）3）4）分别表示什么呢？</p>
+<p>1）表示日志唯一标识符uid</p>
+<p>2）命令执行时系统的时间戳</p>
+<p>3）命令执行的时长，以微妙来计算</p>
+<p>4）命令和命令的参数</p>
+<p>做日志查询的时候，可以通过3）来查看是具体的命令运行时间（注意：再强调一次，时间的单位是微妙，但对于一个插入操作来说，10000微妙，也就是10毫秒即0.01秒已经可以算是慢操作了）</p>
+<p>需要去查看redis生成的持久型日志，这需要额外去配置一些内容，其中涉及到了集群和分布式，</p>
+</blockquote>
+<h1 id="redis-管道-pileline">redis 管道 pileline</h1>
+<h3 id="1、未使用pipeline执行N条命令">1、未使用pipeline执行N条命令</h3>
+<p><img src="https://img-blog.csdnimg.cn/20210111123719829.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xpYmluZW1haWw=,size_16,color_FFFFFF,t_70" alt="img"></p>
+<h3 id="2、使用了pipeline执行N条命令">2、使用了pipeline执行N条命令</h3>
+<p><img src="https://img-blog.csdnimg.cn/20210111123735979.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xpYmluZW1haWw=,size_16,color_FFFFFF,t_70" alt="img"></p>
+<h3 id="3、两者性能对比">3、两者性能对比</h3>
+<p><img src="https://img-blog.csdnimg.cn/20181122105544269.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3cxbGd5,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<h2 id="三、原生批命令-mset-mget-与Pipeline对比">三、原生批命令(mset, mget)与Pipeline对比</h2>
+<p><strong>1、原生批命令是原子性，pipeline是非原子性</strong></p>
+<p>(原子性概念:一个事务是一个不可分割的最小工作单位,要么都成功要么都失败。原子操作是指你的一个业务逻辑必须是不可拆分的. 处理一件事情要么都成功，要么都失败，原子不可拆分)</p>
+<p>2、原生批命令一命令多个key, 但pipeline支持多命令（存在事务），非原子性</p>
+<p>3、原生批命令是服务端实现，而pipeline需要服务端与客户端共同完成</p>
+<p>4、<strong>使用pipeline组装的命令个数不能太多，不然数据量过大，增加客户端的等待时间，还可能造成网络阻塞，可以将大量命令的拆分多个小的pipeline命令完成</strong></p>
+<p>5、redis提供了mset、mget方法，但没有提供mdel方法，如果想实现，可以借助pipeline实现。</p>
+<h3 id="贴上代码">贴上代码</h3>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token variable">$stime</span><span class="token operator">=</span><span class="token function">microtime</span><span class="token punctuation">(</span><span class="token constant boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//获取程序开始执行的时间</span>
+<span class="token keyword">echo</span> <span class="token string single-quoted-string">'开始内存：'</span><span class="token operator">.</span><span class="token function">memory_get_usage</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string single-quoted-string">''</span><span class="token punctuation">;</span> <span class="token keyword">echo</span> <span class="token constant">PHP_EOL</span><span class="token punctuation">;</span>
+<span class="token variable">$redis</span> <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name class-name-fully-qualified"><span class="token punctuation">\</span>Redis</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+ 
+<span class="token variable">$redis</span><span class="token operator">-></span><span class="token function">connect</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'192.168.29.108'</span><span class="token punctuation">,</span><span class="token number">6379</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token variable">$redis</span><span class="token operator">-></span><span class="token function">auth</span><span class="token punctuation">(</span><span class="token string double-quoted-string">"root"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+ 
+ 
+<span class="token comment">//$pipe=$redis->multi($redis::PIPELINE);//将多个操作当成一个事务执行</span>
+<span class="token variable">$pipe</span><span class="token operator">=</span><span class="token variable">$redis</span><span class="token operator">-></span><span class="token function">pipeline</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token comment">//（多条）执行命令简单的，更加快速的发送给服务器，但是没有任何原子性的保证</span>
+ 
+<span class="token keyword">for</span><span class="token punctuation">(</span><span class="token variable">$i</span><span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token variable">$i</span><span class="token operator">&lt;</span><span class="token number">10000</span> <span class="token punctuation">;</span> <span class="token variable">$i</span><span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+ 
+    <span class="token variable">$pipe</span><span class="token operator">-></span><span class="token function">set</span><span class="token punctuation">(</span><span class="token string double-quoted-string">"key::<span class="token interpolation"><span class="token variable">$i</span></span>"</span><span class="token punctuation">,</span><span class="token function">str_pad</span><span class="token punctuation">(</span><span class="token variable">$i</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token string single-quoted-string">'0'</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+ 
+    <span class="token variable">$pipe</span><span class="token operator">-></span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string double-quoted-string">"key::<span class="token interpolation"><span class="token variable">$i</span></span>"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+ 
+<span class="token punctuation">&#125;</span>
+ 
+<span class="token variable">$replies</span><span class="token operator">=</span><span class="token variable">$pipe</span><span class="token operator">-></span><span class="token function">exec</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+ 
+<span class="token variable">$etime</span><span class="token operator">=</span><span class="token function">microtime</span><span class="token punctuation">(</span><span class="token constant boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token comment">//获取程序执行结束的时间</span>
+ 
+<span class="token variable">$total</span><span class="token operator">=</span><span class="token punctuation">(</span><span class="token variable">$etime</span><span class="token operator">-</span><span class="token variable">$stime</span><span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">//计算差值</span>
+ 
+ 
+<span class="token keyword">echo</span> <span class="token string double-quoted-string">"[页面执行时间：<span class="token interpolation"><span class="token punctuation">&#123;</span><span class="token variable">$total</span><span class="token punctuation">&#125;</span></span> ]s"</span><span class="token punctuation">;</span> <span class="token keyword">echo</span> <span class="token constant">PHP_EOL</span><span class="token punctuation">;</span>
+<span class="token keyword">echo</span> <span class="token string single-quoted-string">'运行后内存：'</span><span class="token operator">.</span><span class="token function">memory_get_usage</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string single-quoted-string">''</span><span class="token punctuation">;</span> <span class="token keyword">echo</span> <span class="token constant">PHP_EOL</span><span class="token punctuation">;</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/283315164.html">https://blog.mailjob.net/posts/283315164.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Redis%E6%97%A5%E5%BF%97"><span class="toc-text">Redis日志</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#redis-%E7%AE%A1%E9%81%93-pileline"><span class="toc-text">redis 管道 pileline</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81%E6%9C%AA%E4%BD%BF%E7%94%A8pipeline%E6%89%A7%E8%A1%8CN%E6%9D%A1%E5%91%BD%E4%BB%A4"><span class="toc-text">1、未使用pipeline执行N条命令</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E4%BD%BF%E7%94%A8%E4%BA%86pipeline%E6%89%A7%E8%A1%8CN%E6%9D%A1%E5%91%BD%E4%BB%A4"><span class="toc-text">2、使用了pipeline执行N条命令</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81%E4%B8%A4%E8%80%85%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94"><span class="toc-text">3、两者性能对比</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E5%8E%9F%E7%94%9F%E6%89%B9%E5%91%BD%E4%BB%A4-mset-mget-%E4%B8%8EPipeline%E5%AF%B9%E6%AF%94"><span class="toc-text">三、原生批命令(mset, mget)与Pipeline对比</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%B4%B4%E4%B8%8A%E4%BB%A3%E7%A0%81"><span class="toc-text">贴上代码</span></a></li></ol></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

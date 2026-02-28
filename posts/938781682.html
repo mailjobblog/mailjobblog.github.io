@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>RabbitMQ 基础概念 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="引言 消息服务擅长于解决多系统、异构系统间的数据交换（消息通知&#x2F;通讯）问题，你也可以把它用于系统间服务的相互调用（RPC）。本文将要介绍的RabbitMQ就是当前最主流的消息中间件之一。 参考文献 主流消息中间件：https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_42367527&#x2F;article&#x2F;details&#x2F;108219802 RabbitMQ简介 AMQP，即Advanced Mes">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RabbitMQ 基础概念">
+<meta property="og:url" content="https://blog.mailjob.net/posts/938781682.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="引言 消息服务擅长于解决多系统、异构系统间的数据交换（消息通知&#x2F;通讯）问题，你也可以把它用于系统间服务的相互调用（RPC）。本文将要介绍的RabbitMQ就是当前最主流的消息中间件之一。 参考文献 主流消息中间件：https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_42367527&#x2F;article&#x2F;details&#x2F;108219802 RabbitMQ简介 AMQP，即Advanced Mes">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210308170620.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210308170625.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210308171146.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210308171805.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210308171800.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210308171754.png">
+<meta property="article:published_time" content="2021-03-08T08:58:08.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.981Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="middle">
+<meta property="article:tag" content="rabbitmq">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/oss.github/20210308170620.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            RabbitMQ 基础概念
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/938781682.html" class="article-date">
+	  <time datetime="2021-03-08T08:58:08.000Z" itemprop="datePublished">2021-03-08</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/rabbitmq/">rabbitmq</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/middle/" rel="tag">middle</a>, <a class="article-tag-none-link" href="/tags/rabbitmq/" rel="tag">rabbitmq</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/938781682.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.5k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 5(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="引言">引言</h2>
+<p>消息服务擅长于解决多系统、异构系统间的数据交换（消息通知/通讯）问题，你也可以把它用于系统间服务的相互调用（RPC）。本文将要介绍的RabbitMQ就是当前最主流的消息中间件之一。</p>
+<h2 id="参考文献">参考文献</h2>
+<p>主流消息中间件：<a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_42367527/article/details/108219802">https://blog.csdn.net/weixin_42367527/article/details/108219802</a></p>
+<h2 id="RabbitMQ简介">RabbitMQ简介</h2>
+<p>AMQP，即Advanced Message Queuing Protocol，高级消息队列协议，是应用层协议的一个开放标准，为面向消息的中间件设计。消息中间件主要用于组件之间的解耦，消息的发送者无需知道消息使用者的存在，反之亦然。<br>
+AMQP的主要特征是面向消息、队列、路由（包括点对点和发布/订阅）、可靠性、安全。<br>
+RabbitMQ是一个开源的AMQP实现，服务器端用Erlang语言编写，支持多种客户端，如：Python、Ruby、.NET、Java、JMS、C、PHP、ActionScript、XMPP、STOMP等，支持AJAX。用于在分布式系统中存储转发消息，在易用性、扩展性、高可用性等方面表现不俗。</p>
+<h2 id="术语理解">术语理解</h2>
+<h3 id="ConnectionFactory、Connection、Channel">ConnectionFactory、Connection、Channel</h3>
+<p>ConnectionFactory、Connection、Channel都是RabbitMQ对外提供的API中最基本的对象。</p>
+<p>Connection是RabbitMQ的socket链接，它封装了socket协议相关部分逻辑。ConnectionFactory为Connection的制造工厂。</p>
+<p>Channel是我们与RabbitMQ打交道的最重要的一个接口，我们大部分的业务操作是在Channel这个接口中完成的，包括定义Queue、定义Exchange、绑定Queue与Exchange、发布消息等。</p>
+<h3 id="Queue">Queue</h3>
+<p>Queue（队列）是RabbitMQ的内部对象，用于存储消息，用下图表示。<br>
+<img src="http://img.github.mailjob.net/oss.github/20210308170620.png" alt="img"></p>
+<p>RabbitMQ中的消息都只能存储在Queue中，生产者（下图中的P）生产消息并最终投递到Queue中，消费者可以从Queue中获取消息并消费。</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210308170625.png" alt="img"></p>
+<p>多个消费者可以订阅同一个Queue，这时Queue中的消息会被平均分摊给多个消费者进行处理，而不是每个消费者都收到所有的消息并处理。</p>
+<h3 id="Message-acknowledgment（ack机制）">Message acknowledgment（ack机制）</h3>
+<p>在实际应用中，可能会发生消费者收到Queue中的消息，但没有处理完成就宕机（或出现其他意外）的情况，这种情况下就可能会导致消息丢失。为了避免这种情况发生，我们可以要求消费者在消费完消息后发送一个回执给RabbitMQ，RabbitMQ收到消息回执（Message acknowledgment）后才将该消息从Queue中移除；如果RabbitMQ没有收到回执并检测到消费者的RabbitMQ连接断开，则RabbitMQ会将该消息发送给其他消费者（如果存在多个消费者）进行处理。</p>
+<p>这里不存在timeout概念，一个消费者处理消息时间再长也不会导致该消息被发送给其他消费者，除非它的RabbitMQ连接断开。</p>
+<p>这里会产生另外一个问题，如果我们的开发人员在处理完业务逻辑后，忘记发送回执给RabbitMQ，这将会导致严重的bug——Queue中堆积的消息会越来越多；消费者重启后会重复消费这些消息并重复执行业务逻辑…</p>
+<h3 id="Message-durability">Message durability</h3>
+<p>如果我们希望即使在RabbitMQ服务重启的情况下，也不会丢失消息，我们可以将Queue与Message都设置为可持久化的（durable），这样可以保证绝大部分情况下我们的RabbitMQ消息不会丢失。</p>
+<p>但依然解决不了小概率丢失事件的发生（比如RabbitMQ服务器已经接收到生产者的消息，但还没来得及持久化该消息时RabbitMQ服务器就断电了），如果我们需要对这种小概率事件也要管理起来，那么我们要用到事务。</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210308171146.png" alt="img"></p>
+<h3 id="Prefetch-count">Prefetch count</h3>
+<p>前面我们讲到如果有多个消费者同时订阅同一个Queue中的消息，Queue中的消息会被平摊给多个消费者。这时如果每个消息的处理时间不同，就有可能会导致某些消费者一直在忙，而另外一些消费者很快就处理完手头工作并一直空闲的情况。我们可以通过设置prefetchCount来限制Queue每次发送给每个消费者的消息数，比如我们设置prefetchCount=1，则Queue每次给每个消费者发送一条消息；消费者处理完这条消息后Queue会再给该消费者发送一条消息。</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210308171805.png" alt="img"></p>
+<h3 id="Exchange">Exchange</h3>
+<p>在上一节我们看到生产者将消息投递到Queue中，实际上这在RabbitMQ中这种事情永远都不会发生。实际的情况是，生产者将消息发送到Exchange（交换器，下图中的X），由Exchange将消息路由到一个或多个Queue中（或者丢弃）。</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210308171800.png" alt="img"></p>
+<p>Exchange是按照什么逻辑将消息路由到Queue的？这个将在Binding一节介绍。</p>
+<h3 id="routing-key">routing key</h3>
+<p>生产者在将消息发送给<code>Exchange</code>的时候，一般会指定一个<code>routing key</code>，来指定这个消息的路由规则，而这个<code>routing key</code>需要与<code>Exchange Type</code>及<code>binding key</code>联合使用才能最终生效。<br>
+在<code>Exchange Type</code>与<code>binding key</code>固定的情况下（在正常使用时一般这些内容都是固定配置好的），我们的生产者就可以在发送消息给<code>Exchange</code>时，通过指定<code>routing key</code>来决定消息流向哪里。<br>
+RabbitMQ为<code>routing key</code>设定的长度限制为<code>255 bytes</code>。</p>
+<h3 id="Binding">Binding</h3>
+<p>RabbitMQ中通过<code>Binding</code>将<code>Exchange</code>与<code>Queue</code>关联起来，这样RabbitMQ就知道如何正确地将消息路由到指定的Queue了。<br>
+<img src="http://img.github.mailjob.net/oss.github/20210308171754.png" alt="img"></p>
+<h3 id="Binding-key">Binding key</h3>
+<p>在绑定（Binding）<code>Exchange</code>与<code>Queue</code>的同时，一般会指定一个<code>binding key</code>；消费者将消息发送给<code>Exchange</code>时，一般会指定一个<code>routing key</code>；当<code>binding key</code>与<code>routing key</code>相匹配时，消息将会被路由到对应的<code>Queue</code>中。<br>
+在绑定多个<code>Queue</code>到同一个<code>Exchange</code>的时候，这些<code>Binding</code>允许使用相同的<code>binding key</code>。<br>
+<code>binding key </code>并不是在所有情况下都生效，它依赖于<code>Exchange Type</code>，比如<code>fanout</code>类型的<code>Exchange</code>就会无视<code>binding key</code>，而是将消息路由到所有绑定到该<code>Exchange</code>的<code>Queue</code>。</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/938781682.html">https://blog.mailjob.net/posts/938781682.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%95%E8%A8%80"><span class="toc-text">引言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RabbitMQ%E7%AE%80%E4%BB%8B"><span class="toc-text">RabbitMQ简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%AF%E8%AF%AD%E7%90%86%E8%A7%A3"><span class="toc-text">术语理解</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ConnectionFactory%E3%80%81Connection%E3%80%81Channel"><span class="toc-text">ConnectionFactory、Connection、Channel</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Queue"><span class="toc-text">Queue</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Message-acknowledgment%EF%BC%88ack%E6%9C%BA%E5%88%B6%EF%BC%89"><span class="toc-text">Message acknowledgment（ack机制）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Message-durability"><span class="toc-text">Message durability</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Prefetch-count"><span class="toc-text">Prefetch count</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Exchange"><span class="toc-text">Exchange</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#routing-key"><span class="toc-text">routing key</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Binding"><span class="toc-text">Binding</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Binding-key"><span class="toc-text">Binding key</span></a></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

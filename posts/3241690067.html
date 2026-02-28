@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>TCP、HTTP、Socket、Socket连接池 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="前言 作为一名开发人员我们经常会听到HTTP协议、TCP&#x2F;IP协议、UDP协议、Socket、Socket长连接、Socket连接池等字眼，然而它们之间的关系、区别及原理并不是所有人都能理解清楚，这篇文章就从网络协议基础开始到Socket连接池，一步一步解释他们之间的关系。 参考文献 网络大致基本框架：https:&#x2F;&#x2F;blog.csdn.net&#x2F;xuzhangze&#x2F;article&#x2F;details&#x2F;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="TCP、HTTP、Socket、Socket连接池">
+<meta property="og:url" content="https://blog.mailjob.net/posts/3241690067.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="前言 作为一名开发人员我们经常会听到HTTP协议、TCP&#x2F;IP协议、UDP协议、Socket、Socket长连接、Socket连接池等字眼，然而它们之间的关系、区别及原理并不是所有人都能理解清楚，这篇文章就从网络协议基础开始到Socket连接池，一步一步解释他们之间的关系。 参考文献 网络大致基本框架：https:&#x2F;&#x2F;blog.csdn.net&#x2F;xuzhangze&#x2F;article&#x2F;details&#x2F;">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210226124422.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210226124428.jpeg">
+<meta property="article:published_time" content="2021-02-26T04:43:16.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.980Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="linux">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/oss.github/20210226124422.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            TCP、HTTP、Socket、Socket连接池
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3241690067.html" class="article-date">
+	  <time datetime="2021-02-26T04:43:16.000Z" itemprop="datePublished">2021-02-26</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/linux/">linux</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/linux/" rel="tag">linux</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/3241690067.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 9.9k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 44(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="前言">前言</h2>
+<p>作为一名开发人员我们经常会听到<code>HTTP协议、TCP/IP协议、UDP协议、Socket、Socket长连接、Socket连接池</code>等字眼，然而它们之间的关系、区别及原理并不是所有人都能理解清楚，这篇文章就从网络协议基础开始到Socket连接池，一步一步解释他们之间的关系。</p>
+<h2 id="参考文献">参考文献</h2>
+<p>网络大致基本框架：<a target="_blank" rel="noopener" href="https://blog.csdn.net/xuzhangze/article/details/80778775">https://blog.csdn.net/xuzhangze/article/details/80778775</a></p>
+<h2 id="七层网络模型">七层网络模型</h2>
+<p>首先从网络通信的分层模型讲起：七层模型，亦称<code>OSI(Open System Interconnection)</code>模型。自下往上分为：物理层、数据链路层、网络层、传输层、会话层、表示层和应用层。所有有关通信的都离不开它，下面这张图片介绍了各层所对应的一些协议和硬件</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210226124422.png" alt="图片描述"></p>
+<p>通过上图，我知道IP协议对应于网络层，TCP、UDP协议对应于传输层，而HTTP协议对应于应用层，OSI并没有Socket，那什么是Socket，后面我们将结合代码具体详细介绍。</p>
+<h2 id="TCP和UDP连接">TCP和UDP连接</h2>
+<p>关于传输层TCP、UDP协议可能我们平时遇见的会比较多，有人说TCP是安全的，UDP是不安全的，UDP传输比TCP快，那为什么呢，我们先从TCP的连接建立的过程开始分析，然后解释UDP和TCP的区别。</p>
+<h4 id="TCP的三次握手和四次分手">TCP的三次握手和四次分手</h4>
+<p>我们知道TCP建立连接需要经过三次握手，而断开连接需要经过四次分手，那三次握手和四次分手分别做了什么和如何进行的。</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210226124428.jpeg" alt="图片描述"></p>
+<p><strong>第一次握手</strong>：建立连接。客户端发送连接请求报文段，将SYN位置为1，Sequence Number为x；然后，客户端进入<code>SYN_SEND</code>状态，等待服务器的确认；<br>
+<strong>第二次握手</strong>：服务器收到客户端的SYN报文段，需要对这个SYN报文段进行确认，设置Acknowledgment Number为x+1(Sequence Number+1)；同时，自己自己还要发送SYN请求信息，将SYN位置为1，Sequence Number为y；服务器端将上述所有信息放到一个报文段（即SYN+ACK报文段）中，一并发送给客户端，此时服务器进入<code>SYN_RECV</code>状态；<br>
+<strong>第三次握手</strong>：客户端收到服务器的<code>SYN+ACK</code>报文段。然后将Acknowledgment Number设置为y+1，向服务器发送ACK报文段，这个报文段发送完毕以后，客户端和服务器端都进入<code>ESTABLISHED</code>状态，完成TCP三次握手。</p>
+<p>完成了三次握手，客户端和服务器端就可以开始传送数据。以上就是TCP三次握手的总体介绍。通信结束客户端和服务端就断开连接，需要经过四次分手确认。</p>
+<p><strong>第一次分手</strong>：主机1（可以使客户端，也可以是服务器端），设置Sequence Number和Acknowledgment Number，向主机2发送一个FIN报文段；此时，主机1进入<code>FIN_WAIT_1</code>状态；这表示主机1没有数据要发送给主机2了；<br>
+<strong>第二次分手</strong>：主机2收到了主机1发送的FIN报文段，向主机1回一个ACK报文段，Acknowledgment Number为Sequence Number加1；主机1进入<code>FIN_WAIT_2</code>状态；主机2告诉主机1，我“同意”你的关闭请求；<br>
+<strong>第三次分手</strong>：主机2向主机1发送FIN报文段，请求关闭连接，同时主机2进入<code>LAST_ACK</code>状态；<br>
+<strong>第四次分手</strong>：主机1收到主机2发送的FIN报文段，向主机2发送ACK报文段，然后主机1进入<code>TIME_WAIT</code>状态；主机2收到主机1的ACK报文段以后，就关闭连接；此时，主机1等待2MSL后依然没有收到回复，则证明Server端已正常关闭，那好，主机1也可以关闭连接了。</p>
+<p>可以看到一次tcp请求的建立及关闭至少进行7次通信，这还不包过数据的通信，而UDP不需3次握手和4次分手。</p>
+<h4 id="TCP和UDP的区别">TCP和UDP的区别</h4>
+<p>1、TCP是面向链接的，虽然说网络的不安全不稳定特性决定了多少次握手都不能保证连接的可靠性，但TCP的三次握手在最低限度上(实际上也很大程度上保证了)保证了连接的可靠性;而UDP不是面向连接的，UDP传送数据前并不与对方建立连接，对接收到的数据也不发送确认信号，发送端不知道数据是否会正确接收，当然也不用重发，所以说UDP是无连接的、不可靠的一种数据传输协议。　<br>
+　2、也正由于1所说的特点，使得UDP的开销更小数据传输速率更高，因为不必进行收发数据的确认，所以UDP的实时性更好。知道了TCP和UDP的区别，就不难理解为何采用TCP传输协议的MSN比采用UDP的QQ传输文件慢了，但并不能说QQ的通信是不安全的，因为程序员可以手动对UDP的数据收发进行验证，比如发送方对每个数据包进行编号然后由接收方进行验证啊什么的，即使是这样，UDP因为在底层协议的封装上没有采用类似TCP的“三次握手”而实现了TCP所无法达到的传输效率。</p>
+<h4 id="问题">问题</h4>
+<p>关于传输层我们会经常听到一些问题</p>
+<p>1．TCP服务器最大并发连接数是多少？</p>
+<p>关于TCP服务器最大并发连接数有一种误解就是“因为端口号上限为65535,所以TCP服务器理论上的可承载的最大并发连接数也是65535”。首先需要理解一条TCP连接的组成部分**：客户端IP、客户端端口、服务端IP、服务端端口**。所以对于TCP服务端进程来说，他可以同时连接的客户端数量并不受限于可用端口号，理论上一个服务器的一个端口能建立的连接数是<code>全球的IP数*每台机器的端口数</code>。实际并发连接数受限于linux可打开文件数，这个数是可以配置的，可以非常大，所以实际上受限于系统性能。通过<code>#ulimit -n</code> 查看服务的最大文件句柄数，通过<code>ulimit -n xxx</code> 修改 xxx是你想要能打开的数量。也可以通过修改系统参数：</p>
+<pre class="line-numbers language-none"><code class="language-none">#vi &#x2F;etc&#x2F;security&#x2F;limits.conf
+*　　soft　　nofile　　65536
+*　　hard　　nofile　　65536<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>2．为什么<code>TIME_WAIT</code>状态还需要等<code>2MSL</code>后才能返回到<code>CLOSED</code>状态？</p>
+<p>这是因为虽然双方都同意关闭连接了，而且握手的4个报文也都协调和发送完毕，按理可以直接回到CLOSED状态（就好比从<code>SYN_SEND</code>状态到<code>ESTABLISH</code>状态那样）；但是因为我们必须要假想网络是不可靠的，你无法保证你最后发送的ACK报文会一定被对方收到，因此对方处于<code>LAST_ACK</code>状态下的<code>Socket</code>可能会因为超时未收到<code>ACK</code>报文，而重发<code>FIN</code>报文，所以这个<code>TIME_WAIT</code>状态的作用就是用来重发可能丢失的<code>ACK</code>报文。</p>
+<p>3．TIME_WAIT状态还需要等2MSL后才能返回到CLOSED状态会产生什么问题</p>
+<p>通信双方建立TCP连接后，主动关闭连接的一方就会进入<code>TIME_WAIT</code>状态，<code>TIME_WAIT</code>状态维持时间是两个MSL时间长度，也就是在1-4分钟，Windows操作系统就是4分钟。进入<code>TIME_WAIT</code>状态的一般情况下是客户端，一个<code>TIME_WAIT</code>状态的连接就占用了一个本地端口。一台机器上端口号数量的上限是65536个，如果在同一台机器上进行压力测试模拟上万的客户请求，并且循环与服务端进行短连接通信，那么这台机器将产生4000个左右的<code>TIME_WAIT</code> Socket，后续的短连接就会产生<code>address already in use : connect</code>的异常，如果使用<code>Nginx</code>作为方向代理也需要考虑<code>TIME_WAIT</code>状态，发现系统存在大量<code>TIME_WAIT</code>状态的连接，通过调整内核参数解决。</p>
+<pre class="line-numbers language-none"><code class="language-none">vi &#x2F;etc&#x2F;sysctl.conf<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>编辑文件，加入以下内容：</p>
+<pre class="line-numbers language-none"><code class="language-none">net.ipv4.tcp_syncookies &#x3D; 1
+net.ipv4.tcp_tw_reuse &#x3D; 1
+net.ipv4.tcp_tw_recycle &#x3D; 1
+net.ipv4.tcp_fin_timeout &#x3D; 30<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>然后执行 <code>/sbin/sysctl -p</code> 让参数生效。</p>
+<p>net.ipv4.tcp_syncookies = 1 表示开启SYN Cookies。当出现SYN等待队列溢出时，启用cookies来处理，可防范少量SYN攻击，默认为0，表示关闭；<br>
+net.ipv4.tcp_tw_reuse = 1 表示开启重用。允许将TIME-WAIT sockets重新用于新的TCP连接，默认为0，表示关闭；<br>
+net.ipv4.tcp_tw_recycle = 1 表示开启TCP连接中TIME-WAIT sockets的快速回收，默认为0，表示关闭。<br>
+net.ipv4.tcp_fin_timeout 修改系統默认的<code>TIMEOUT</code>时间</p>
+<h2 id="HTTP协议">HTTP协议</h2>
+<p>关于TCP/IP和HTTP协议的关系，网络有一段比较容易理解的介绍：“我们在传输数据时，可以只使用(传输层)TCP/IP协议，但是那样的话，如果没有应用层，便无法识别数据内容。如果想要使传输的数据有意义，则必须使用到应用层协议。应用层协议有很多，比如HTTP、FTP、TELNET等，也可以自己定义应用层协议。<br>
+HTTP协议即超文本传送协议(Hypertext Transfer Protocol )，是Web联网的基础，也是手机联网常用的协议之一，WEB使用HTTP协议作应用层协议，以封装HTTP文本信息，然后使用TCP/IP做传输层协议将它发到网络上。<br>
+由于HTTP在每次请求结束后都会主动释放连接，因此HTTP连接是一种“短连接”，要保持客户端程序的在线状态，需要不断地向服务器发起连接请求。通常 的做法是即时不需要获得任何数据，客户端也保持每隔一段固定的时间向服务器发送一次“保持连接”的请求，服务器在收到该请求后对客户端进行回复，表明知道 客户端“在线”。若服务器长时间无法收到客户端的请求，则认为客户端“下线”，若客户端长时间无法收到服务器的回复，则认为网络已经断开。<br>
+下面是一个简单的HTTP Post application/json数据内容的请求：</p>
+<pre class="line-numbers language-none"><code class="language-none">POST  HTTP&#x2F;1.1
+Host: 127.0.0.1:9017
+Content-Type: application&#x2F;json
+Cache-Control: no-cache
+
+&#123;&quot;a&quot;:&quot;a&quot;&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="关于Socket（套接字）">关于Socket（套接字）</h2>
+<p>现在我们了解到TCP/IP只是一个协议栈，就像操作系统的运行机制一样，必须要具体实现，同时还要提供对外的操作接口。就像操作系统会提供标准的编程接口，比如Win32编程接口一样，TCP/IP也必须对外提供编程接口，这就是Socket。现在我们知道，Socket跟TCP/IP并没有必然的联系。Socket编程接口在设计的时候，就希望也能适应其他的网络协议。所以，Socket的出现只是可以更方便的使用TCP/IP协议栈而已，其对TCP/IP进行了抽象，形成了几个最基本的函数接口。比如create，listen，accept，connect，read和write等等。<br>
+不同语言都有对应的建立Socket服务端和客户端的库，下面举例Nodejs如何创建服务端和客户端：<br>
+<strong>服务端</strong>：</p>
+<pre class="line-numbers language-none"><code class="language-none">const net &#x3D; require(&#39;net&#39;);
+const server &#x3D; net.createServer();
+server.on(&#39;connection&#39;, (client) &#x3D;&gt; &#123;
+  client.write(&#39;Hi!\n&#39;); &#x2F;&#x2F; 服务端向客户端输出信息，使用 write() 方法
+  client.write(&#39;Bye!\n&#39;);
+  &#x2F;&#x2F;client.end(); &#x2F;&#x2F; 服务端结束该次会话
+&#125;);
+server.listen(9000);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>服务监听9000端口<br>
+下面使用命令行发送http请求和telnet</p>
+<pre class="line-numbers language-none"><code class="language-none">$ curl http:&#x2F;&#x2F;127.0.0.1:9000
+Bye!
+
+$telnet 127.0.0.1 9000
+Trying 192.168.1.21...
+Connected to 192.168.1.21.
+Escape character is &#39;^]&#39;.
+Hi!
+Bye!
+Connection closed by foreign host.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>注意到curl只处理了一次报文。<br>
+<strong>客户端</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">const client &#x3D; new net.Socket();
+client.connect(9000, &#39;127.0.0.1&#39;, function () &#123;
+&#125;);
+client.on(&#39;data&#39;, (chunk) &#x3D;&gt; &#123;
+  console.log(&#39;data&#39;, chunk.toString())
+  &#x2F;&#x2F;data Hi!
+  &#x2F;&#x2F;Bye!
+&#125;);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="Socket长连接">Socket长连接</h4>
+<p>所谓长连接，指在一个TCP连接上可以连续发送多个数据包，在TCP连接保持期间，如果没有数据包发送，需要双方发检测包以维持此连接(心跳包)，一般需要自己做在线维持。 短连接是指通信双方有数据交互时，就建立一个TCP连接，数据发送完成后，则断开此TCP连接。比如Http的，只是连接、请求、关闭，过程时间较短,服务器若是一段时间内没有收到请求即可关闭连接。其实长连接是相对于通常的短连接而说的，也就是长时间保持客户端与服务端的连接状态。<br>
+通常的短连接操作步骤是：<br>
+连接→数据传输→关闭连接；</p>
+<p>而长连接通常就是：<br>
+连接→数据传输→保持连接(心跳)→数据传输→保持连接(心跳)→……→关闭连接；</p>
+<p>什么时候用长连接，短连接？<br>
+长连接多用于操作频繁，点对点的通讯，而且连接数不能太多情况，。每个TCP连接都需要三步握手，这需要时间，如果每个操作都是先连接，再操作的话那么处理 速度会降低很多，所以每个操作完后都不断开，次处理时直接发送数据包就OK了，不用建立TCP连接。例如：数据库的连接用长连接， 如果用短连接频繁的通信会造成Socket错误，而且频繁的Socket创建也是对资源的浪费。</p>
+<p><strong>什么是心跳包为什么需要</strong>：<br>
+心跳包就是在客户端和服务端间定时通知对方自己状态的一个自己定义的命令字，按照一定的时间间隔发送，类似于心跳，所以叫做心跳包。网络中的接收和发送数据都是使用Socket进行实现。但是如果此套接字已经断开（比如一方断网了），那发送数据和接收数据的时候就一定会有问题。可是如何判断这个套接字是否还可以使用呢？这个就需要在系统中创建心跳机制。其实TCP中已经为我们实现了一个叫做心跳的机制。如果你设置了心跳，那TCP就会在一定的时间（比如你设置的是3秒钟）内发送你设置的次数的心跳（比如说2次），并且此信息不会影响你自己定义的协议。也可以自己定义，所谓“心跳”就是定时发送一个自定义的结构体（心跳包或心跳帧），让对方知道自己“在线”,以确保链接的有效性。<br>
+<strong>实现</strong>：<br>
+服务端：</p>
+<pre class="line-numbers language-none"><code class="language-none">const net &#x3D; require(&#39;net&#39;);
+
+let clientList &#x3D; [];
+const heartbeat &#x3D; &#39;HEARTBEAT&#39;; &#x2F;&#x2F; 定义心跳包内容确保和平时发送的数据不会冲突
+
+const server &#x3D; net.createServer();
+server.on(&#39;connection&#39;, (client) &#x3D;&gt; &#123;
+  console.log(&#39;客户端建立连接:&#39;, client.remoteAddress + &#39;:&#39; + client.remotePort);
+  clientList.push(client);
+  client.on(&#39;data&#39;, (chunk) &#x3D;&gt; &#123;
+    let content &#x3D; chunk.toString();
+    if (content &#x3D;&#x3D;&#x3D; heartbeat) &#123;
+      console.log(&#39;收到客户端发过来的一个心跳包&#39;);
+    &#125; else &#123;
+      console.log(&#39;收到客户端发过来的数据:&#39;, content);
+      client.write(&#39;服务端的数据:&#39; + content);
+    &#125;
+  &#125;);
+  client.on(&#39;end&#39;, () &#x3D;&gt; &#123;
+    console.log(&#39;收到客户端end&#39;);
+    clientList.splice(clientList.indexOf(client), 1);
+  &#125;);
+  client.on(&#39;error&#39;, () &#x3D;&gt; &#123;
+    clientList.splice(clientList.indexOf(client), 1);
+  &#125;)
+&#125;);
+server.listen(9000);
+setInterval(broadcast, 10000); &#x2F;&#x2F; 定时发送心跳包
+function broadcast() &#123;
+  console.log(&#39;broadcast heartbeat&#39;, clientList.length);
+  let cleanup &#x3D; []
+  for (let i&#x3D;0;i&lt;clientList.length;i+&#x3D;1) &#123;
+    if (clientList[i].writable) &#123; &#x2F;&#x2F; 先检查 sockets 是否可写
+      clientList[i].write(heartbeat);
+    &#125; else &#123;
+      console.log(&#39;一个无效的客户端&#39;);
+      cleanup.push(clientList[i]); &#x2F;&#x2F; 如果不可写，收集起来销毁。销毁之前要 Socket.destroy() 用 API 的方法销毁。
+      clientList[i].destroy();
+    &#125;
+  &#125;
+  &#x2F;&#x2F;Remove dead Nodes out of write loop to avoid trashing loop index
+  for (let i&#x3D;0; i&lt;cleanup.length; i+&#x3D;1) &#123;
+    console.log(&#39;删除无效的客户端:&#39;, cleanup[i].name);
+    clientList.splice(clientList.indexOf(cleanup[i]), 1);
+  &#125;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>服务端输出结果：</p>
+<pre class="line-numbers language-none"><code class="language-none">客户端建立连接: ::ffff:127.0.0.1:57125
+broadcast heartbeat 1
+收到客户端发过来的数据: Thu, 29 Mar 2018 03:45:15 GMT
+收到客户端发过来的一个心跳包
+收到客户端发过来的数据: Thu, 29 Mar 2018 03:45:20 GMT
+broadcast heartbeat 1
+收到客户端发过来的数据: Thu, 29 Mar 2018 03:45:25 GMT
+收到客户端发过来的一个心跳包
+客户端建立连接: ::ffff:127.0.0.1:57129
+收到客户端发过来的一个心跳包
+收到客户端发过来的数据: Thu, 29 Mar 2018 03:46:00 GMT
+收到客户端发过来的数据: Thu, 29 Mar 2018 03:46:04 GMT
+broadcast heartbeat 2
+收到客户端发过来的数据: Thu, 29 Mar 2018 03:46:05 GMT
+收到客户端发过来的一个心跳包<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>客户端代码：</p>
+<pre class="line-numbers language-none"><code class="language-none">const net &#x3D; require(&#39;net&#39;);
+
+const heartbeat &#x3D; &#39;HEARTBEAT&#39;; 
+const client &#x3D; new net.Socket();
+client.connect(9000, &#39;127.0.0.1&#39;, () &#x3D;&gt; &#123;&#125;);
+client.on(&#39;data&#39;, (chunk) &#x3D;&gt; &#123;
+  let content &#x3D; chunk.toString();
+  if (content &#x3D;&#x3D;&#x3D; heartbeat) &#123;
+    console.log(&#39;收到心跳包：&#39;, content);
+  &#125; else &#123;
+    console.log(&#39;收到数据：&#39;, content);
+  &#125;
+&#125;);
+
+&#x2F;&#x2F; 定时发送数据
+setInterval(() &#x3D;&gt; &#123;
+  console.log(&#39;发送数据&#39;, new Date().toUTCString());
+  client.write(new Date().toUTCString());
+&#125;, 5000);
+
+&#x2F;&#x2F; 定时发送心跳包
+setInterval(function () &#123;
+  client.write(heartbeat);
+&#125;, 10000);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>客户端输出结果：</p>
+<pre class="line-numbers language-none"><code class="language-none">发送数据 Thu, 29 Mar 2018 03:46:04 GMT
+收到数据： 服务端的数据:Thu, 29 Mar 2018 03:46:04 GMT
+收到心跳包： HEARTBEAT
+发送数据 Thu, 29 Mar 2018 03:46:09 GMT
+收到数据： 服务端的数据:Thu, 29 Mar 2018 03:46:09 GMT
+发送数据 Thu, 29 Mar 2018 03:46:14 GMT
+收到数据： 服务端的数据:Thu, 29 Mar 2018 03:46:14 GMT
+收到心跳包： HEARTBEAT
+发送数据 Thu, 29 Mar 2018 03:46:19 GMT
+收到数据： 服务端的数据:Thu, 29 Mar 2018 03:46:19 GMT
+发送数据 Thu, 29 Mar 2018 03:46:24 GMT
+收到数据： 服务端的数据:Thu, 29 Mar 2018 03:46:24 GMT
+收到心跳包： HEARTBEAT<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="定义自己的协议">定义自己的协议</h4>
+<p>如果想要使传输的数据有意义，则必须使用到应用层协议比如Http、Mqtt、Dubbo等。基于TCP协议上自定义自己的应用层的协议需要解决的几个问题：</p>
+<ol>
+<li>心跳包格式的定义及处理</li>
+<li>报文头的定义，就是你发送数据的时候需要先发送报文头，报文里面能解析出你将要发送的数据长度</li>
+<li>你发送数据包的格式，是json的还是其他序列化的方式</li>
+</ol>
+<p>下面我们就一起来定义自己的协议，并编写服务的和客户端进行调用：<br>
+定义报文头格式： <code>length:000000000xxxx</code>; xxxx代表数据的长度，总长度20,举例子不严谨。<br>
+数据表的格式: Json<br>
+服务端:</p>
+<pre class="line-numbers language-none"><code class="language-none">const net &#x3D; require(&#39;net&#39;);
+const server &#x3D; net.createServer();
+let clientList &#x3D; [];
+const heartBeat &#x3D; &#39;HeartBeat&#39;; &#x2F;&#x2F; 定义心跳包内容确保和平时发送的数据不会冲突
+const getHeader &#x3D; (num) &#x3D;&gt; &#123;
+  return &#39;length:&#39; + (Array(13).join(0) + num).slice(-13);
+&#125;
+server.on(&#39;connection&#39;, (client) &#x3D;&gt; &#123;
+  client.name &#x3D; client.remoteAddress + &#39;:&#39; + client.remotePort
+  &#x2F;&#x2F; client.write(&#39;Hi &#39; + client.name + &#39;!\n&#39;);
+  console.log(&#39;客户端建立连接&#39;, client.name);
+
+  clientList.push(client)
+  let chunks &#x3D; [];
+  let length &#x3D; 0;
+  client.on(&#39;data&#39;, (chunk) &#x3D;&gt; &#123;
+    let content &#x3D; chunk.toString();
+    console.log(&quot;content:&quot;, content, content.length);
+    if (content &#x3D;&#x3D;&#x3D; heartBeat) &#123;
+      console.log(&#39;收到客户端发过来的一个心跳包&#39;);
+    &#125; else &#123;
+      if (content.indexOf(&#39;length:&#39;) &#x3D;&#x3D;&#x3D; 0)&#123;
+        length &#x3D; parseInt(content.substring(7,20));
+        console.log(&#39;length&#39;, length);
+        chunks &#x3D;[chunk.slice(20, chunk.length)];
+      &#125; else &#123;
+        chunks.push(chunk);
+      &#125;
+      let heap &#x3D; Buffer.concat(chunks);
+      console.log(&#39;heap.length&#39;, heap.length)
+      if (heap.length &gt;&#x3D; length) &#123;
+        try &#123;
+          console.log(&#39;收到数据&#39;, JSON.parse(heap.toString()));
+          let data &#x3D; &#39;服务端的数据数据:&#39; + heap.toString();;
+          let dataBuff &#x3D;  Buffer.from(JSON.stringify(data));
+          let header &#x3D; getHeader(dataBuff.length)
+          client.write(header);
+          client.write(dataBuff);
+        &#125; catch (err) &#123;
+          console.log(&#39;数据解析失败&#39;);
+        &#125;
+      &#125;
+    &#125;
+  &#125;)
+
+  client.on(&#39;end&#39;, () &#x3D;&gt; &#123;
+    console.log(&#39;收到客户端end&#39;);
+    clientList.splice(clientList.indexOf(client), 1);
+  &#125;);
+  client.on(&#39;error&#39;, () &#x3D;&gt; &#123;
+    clientList.splice(clientList.indexOf(client), 1);
+  &#125;)
+&#125;);
+server.listen(9000);
+setInterval(broadcast, 10000); &#x2F;&#x2F; 定时检查客户端 并发送心跳包
+function broadcast() &#123;
+  console.log(&#39;broadcast heartbeat&#39;, clientList.length);
+  let cleanup &#x3D; []
+  for(var i&#x3D;0;i&lt;clientList.length;i+&#x3D;1) &#123;
+    if(clientList[i].writable) &#123; &#x2F;&#x2F; 先检查 sockets 是否可写
+      &#x2F;&#x2F; clientList[i].write(heartBeat); &#x2F;&#x2F; 发送心跳数据
+    &#125; else &#123;
+      console.log(&#39;一个无效的客户端&#39;)
+      cleanup.push(clientList[i]) &#x2F;&#x2F; 如果不可写，收集起来销毁。销毁之前要 Socket.destroy() 用 API 的方法销毁。
+      clientList[i].destroy();
+    &#125;
+  &#125;
+  &#x2F;&#x2F; 删除无效的客户端
+  for(i&#x3D;0; i&lt;cleanup.length; i+&#x3D;1) &#123;
+    console.log(&#39;删除无效的客户端:&#39;, cleanup[i].name);
+    clientList.splice(clientList.indexOf(cleanup[i]), 1)
+  &#125;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>日志打印：</p>
+<pre class="line-numbers language-none"><code class="language-none">客户端建立连接 ::ffff:127.0.0.1:50178
+content: length:0000000000031 20
+length 31
+heap.length 0
+content: &quot;Tue, 03 Apr 2018 06:12:37 GMT&quot; 31
+heap.length 31
+收到数据 Tue, 03 Apr 2018 06:12:37 GMT
+broadcast heartbeat 1
+content: HeartBeat 9
+收到客户端发过来的一个心跳包
+content: length:0000000000031&quot;Tue, 03 Apr 2018 06:12:42 GMT&quot; 51
+length 31
+heap.length 31
+收到数据 Tue, 03 Apr 2018 06:12:42 GMT<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>客户端</p>
+<pre class="line-numbers language-none"><code class="language-none">const net &#x3D; require(&#39;net&#39;);
+const client &#x3D; new net.Socket();
+const heartBeat &#x3D; &#39;HeartBeat&#39;; &#x2F;&#x2F; 定义心跳包内容确保和平时发送的数据不会冲突
+const getHeader &#x3D; (num) &#x3D;&gt; &#123;
+  return &#39;length:&#39; + (Array(13).join(0) + num).slice(-13);
+&#125;
+client.connect(9000, &#39;127.0.0.1&#39;, function () &#123;&#125;);
+let chunks &#x3D; [];
+let length &#x3D; 0;
+client.on(&#39;data&#39;, (chunk) &#x3D;&gt; &#123;
+  let content &#x3D; chunk.toString();
+  console.log(&quot;content:&quot;, content, content.length);
+  if (content &#x3D;&#x3D;&#x3D; heartBeat) &#123;
+    console.log(&#39;收到服务端发过来的一个心跳包&#39;);
+  &#125; else &#123;
+    if (content.indexOf(&#39;length:&#39;) &#x3D;&#x3D;&#x3D; 0)&#123;
+      length &#x3D; parseInt(content.substring(7,20));
+      console.log(&#39;length&#39;, length);
+      chunks &#x3D;[chunk.slice(20, chunk.length)];
+    &#125; else &#123;
+      chunks.push(chunk);
+    &#125;
+    let heap &#x3D; Buffer.concat(chunks);
+    console.log(&#39;heap.length&#39;, heap.length)
+    if (heap.length &gt;&#x3D; length) &#123;
+      try &#123;
+        console.log(&#39;收到数据&#39;, JSON.parse(heap.toString()));
+      &#125; catch (err) &#123;
+        console.log(&#39;数据解析失败&#39;);
+      &#125;
+    &#125;
+  &#125;
+&#125;);
+&#x2F;&#x2F; 定时发送数据
+setInterval(function () &#123;
+  let data &#x3D; new Date().toUTCString();
+  let dataBuff &#x3D;  Buffer.from(JSON.stringify(data));
+  let header &#x3D;getHeader(dataBuff.length);
+  client.write(header);
+  client.write(dataBuff);
+&#125;, 5000);
+&#x2F;&#x2F; 定时发送心跳包
+setInterval(function () &#123;
+  client.write(heartBeat);
+&#125;, 10000);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>日志打印：</p>
+<pre class="line-numbers language-none"><code class="language-none">content: length:0000000000060 20
+length 60
+heap.length 0
+content: &quot;服务端的数据数据:\&quot;Tue, 03 Apr 2018 06:12:37 GMT\&quot;&quot; 44
+heap.length 60
+收到数据 服务端的数据数据:&quot;Tue, 03 Apr 2018 06:12:37 GMT&quot;
+content: length:0000000000060&quot;服务端的数据数据:\&quot;Tue, 03 Apr 2018 06:12:42 GMT\&quot;&quot; 64
+length 60
+heap.length 60
+收到数据 服务端的数据数据:&quot;Tue, 03 Apr 2018 06:12:42 GMT&quot;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>客户端定时发送自定义协议数据到服务端，先发送头数据，在发送内容数据，另外一个定时器发送心跳数据，服务端判断是心跳数据，再判断是不是头数据，再是内容数据，然后解析后再发送数据给客户端。从日志的打印可以看出客户端先后<code>write</code> <code>header</code>和<code>data</code>数据，服务端可能在一个<code>data</code>事件里面接收到。<br>
+这里可以看到一个客户端在同一个时间内处理一个请求可以很好的工作，但是想象这么一个场景，如果同一时间内让同一个客户端去多次调用服务端请求，发送多次头数据和内容数据，服务端的data事件收到的数据就很难区别哪些数据是哪次请求的，比如两次头数据同时到达服务端，服务端就会忽略其中一次，而后面的内容数据也不一定就对应于这个头的。所以想复用长连接并能很好的高并发处理服务端请求，就需要连接池这种方式了。</p>
+<h2 id="Socket连接池">Socket连接池</h2>
+<p>什么是Socket连接池,池的概念可以联想到是一种资源的集合，所以Socket连接池，就是维护着一定数量Socket长连接的集合。它能自动检测Socket长连接的有效性，剔除无效的连接，补充连接池的长连接的数量。从代码层次上其实是人为实现这种功能的类，一般一个连接池包含下面几个属性：</p>
+<ol>
+<li>空闲可使用的长连接队列</li>
+<li>正在运行的通信的长连接队列</li>
+<li>等待去获取一个空闲长连接的请求的队列</li>
+<li>无效长连接的剔除功能</li>
+<li>长连接资源池的数量配置</li>
+<li>长连接资源的新建功能</li>
+</ol>
+<p>场景： 一个请求过来，首先去资源池要求获取一个长连接资源，如果空闲队列里面有长连接，就获取到这个长连接Socket,并把这个Socket移到正在运行的长连接队列。如果空闲队列里面没有，且正在运行的队列长度小于配置的连接池资源的数量，就新建一个长连接到正在运行的队列去，如果正在运行的不下于配置的资源池长度，则这个请求进入到等待队列去。当一个正在运行的Socket完成了请求，就从正在运行的队列移到空闲的队列，并触发等待请求队列去获取空闲资源，如果有等待的情况。</p>
+<p>这里简单介绍Nodejs的Socket连接池<a target="_blank" rel="noopener" href="https://github.com/coopernurse/node-pool">generic-pool</a>模块的源码。<br>
+<strong>主要文件目录结构</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">.
+|————lib  ------------------------- 代码库
+| |————DefaultEvictor.js ---------- 
+| |————Deferred.js ---------------- 
+| |————Deque.js ------------------- 
+| |————DequeIterator.js ----------- 
+| |————DoublyLinkedList.js -------- 
+| |————DoublyLinkedListIterator.js- 
+| |————factoryValidator.js -------- 
+| |————Pool.js -------------------- 连接池主要代码
+| |————PoolDefaults.js ------------ 
+| |————PooledResource.js ---------- 
+| |————Queue.js ------------------- 队列
+| |————ResourceLoan.js ------------ 
+| |————ResourceRequest.js --------- 
+| |————utils.js ------------------- 工具
+|————test ------------------------- 测试目录
+|————README.md  ------------------- 项目描述文件
+|————.eslintrc  ------------------- eslint静态检查配置文件
+|————.eslintignore  --------------- eslint静态检查忽略的文件
+|————package.json ----------------- npm包依赖配置<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>下面介绍库的使用：</p>
+<h4 id="初始化连接池">初始化连接池</h4>
+<pre class="line-numbers language-none"><code class="language-none">&#39;use strict&#39;;
+const net &#x3D; require(&#39;net&#39;);
+const genericPool &#x3D; require(&#39;generic-pool&#39;);
+
+function createPool(conifg) &#123;
+  let options &#x3D; Object.assign(&#123;
+    fifo: true,                             &#x2F;&#x2F; 是否优先使用老的资源
+    priorityRange: 1,                       &#x2F;&#x2F; 优先级
+    testOnBorrow: true,                     &#x2F;&#x2F; 是否开启获取验证
+    &#x2F;&#x2F; acquireTimeoutMillis: 10 * 1000,     &#x2F;&#x2F; 获取的超时时间
+    autostart: true,                        &#x2F;&#x2F; 自动初始化和释放调度启用
+    min: 10,                                &#x2F;&#x2F; 初始化连接池保持的长连接最小数量
+    max: 0,                                 &#x2F;&#x2F; 最大连接池保持的长连接数量
+    evictionRunIntervalMillis: 0,           &#x2F;&#x2F; 资源释放检验间隔检查 设置了下面几个参数才起效果
+    numTestsPerEvictionRun: 3,              &#x2F;&#x2F; 每次释放资源数量
+    softIdleTimeoutMillis: -1,              &#x2F;&#x2F; 可用的超过了最小的min 且空闲时间时间 达到释放
+    idleTimeoutMillis: 30000                &#x2F;&#x2F; 强制释放
+    &#x2F;&#x2F; maxWaitingClients: 50                &#x2F;&#x2F; 最大等待
+  &#125;, conifg.options);
+  const factory &#x3D; &#123;
+
+    create: function () &#123;
+      return new Promise((resolve, reject) &#x3D;&gt; &#123;
+        let socket &#x3D; new net.Socket();
+        socket.setKeepAlive(true);
+        socket.connect(conifg.port, conifg.host);
+        &#x2F;&#x2F; TODO 心跳包的处理逻辑
+        socket.on(&#39;connect&#39;, () &#x3D;&gt; &#123;
+          console.log(&#39;socket_pool&#39;, conifg.host, conifg.port, &#39;connect&#39; );
+          resolve(socket);
+        &#125;);
+        socket.on(&#39;close&#39;, (err) &#x3D;&gt; &#123; &#x2F;&#x2F; 先end 事件再close事件
+          console.log(&#39;socket_pool&#39;, conifg.host, conifg.port, &#39;close&#39;, err);
+        &#125;);
+        socket.on(&#39;error&#39;, (err) &#x3D;&gt; &#123;
+          console.log(&#39;socket_pool&#39;, conifg.host, conifg.port, &#39;error&#39;, err);
+          reject(err);
+        &#125;);
+      &#125;);
+    &#125;,
+    &#x2F;&#x2F;销毁连接
+    destroy: function (socket) &#123;
+      return new Promise((resolve) &#x3D;&gt; &#123;
+        socket.destroy(); &#x2F;&#x2F; 不会触发end 事件 第一次会触发发close事件 如果有message会触发error事件
+        resolve();
+      &#125;);
+    &#125;,
+    validate: function (socket) &#123; &#x2F;&#x2F;获取资源池校验资源有效性
+      return new Promise((resolve) &#x3D;&gt; &#123;
+        &#x2F;&#x2F; console.log(&#39;socket.destroyed:&#39;, socket.destroyed, &#39;socket.readable:&#39;, socket.readable, &#39;socket.writable:&#39;, socket.writable);
+        if (socket.destroyed || !socket.readable || !socket.writable) &#123;
+          return resolve(false);
+        &#125; else &#123;
+          return resolve(true);
+        &#125;
+      &#125;);
+    &#125;
+  &#125;;
+  const pool &#x3D; genericPool.createPool(factory, options);
+  pool.on(&#39;factoryCreateError&#39;, (err) &#x3D;&gt; &#123; &#x2F;&#x2F; 监听新建长连接出错 让请求直接返回错误
+    const clientResourceRequest &#x3D; pool._waitingClientsQueue.dequeue();
+    if (clientResourceRequest) &#123;
+      clientResourceRequest.reject(err);
+    &#125;
+  &#125;);
+  return pool;
+&#125;;
+
+let pool &#x3D; createPool(&#123;
+  port: 9000,
+  host: &#39;127.0.0.1&#39;,
+  options: &#123;min: 0, max: 10&#125;
+&#125;);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="使用连接池">使用连接池</h4>
+<p>下面连接池的使用，使用的协议是我们之前自定义的协议。</p>
+<pre class="line-numbers language-none"><code class="language-none">let pool &#x3D; createPool(&#123;
+  port: 9000,
+  host: &#39;127.0.0.1&#39;,
+  options: &#123;min: 0, max: 10&#125;
+&#125;);
+const getHeader &#x3D; (num) &#x3D;&gt; &#123;
+  return &#39;length:&#39; + (Array(13).join(0) + num).slice(-13);
+&#125;
+const request &#x3D; async (requestDataBuff) &#x3D;&gt; &#123;
+  let client;
+  try &#123;
+    client &#x3D; await pool.acquire();
+  &#125; catch (e) &#123;
+    console.log(&#39;acquire socket client failed: &#39;, e);
+    throw e;
+  &#125;
+  let timeout &#x3D; 10000;
+  return new Promise((resolve, reject) &#x3D;&gt; &#123;
+    let chunks &#x3D; [];
+    let length &#x3D; 0;
+    client.setTimeout(timeout);
+    client.removeAllListeners(&#39;error&#39;);
+    client.on(&#39;error&#39;, (err) &#x3D;&gt; &#123;
+      client.removeAllListeners(&#39;error&#39;);
+      client.removeAllListeners(&#39;data&#39;);
+      client.removeAllListeners(&#39;timeout&#39;);
+      pool.destroyed(client);
+      reject(err);
+    &#125;);
+    client.on(&#39;timeout&#39;, () &#x3D;&gt; &#123;
+      client.removeAllListeners(&#39;error&#39;);
+      client.removeAllListeners(&#39;data&#39;);
+      client.removeAllListeners(&#39;timeout&#39;);
+      &#x2F;&#x2F; 应该销毁以防下一个req的data事件监听才返回数据
+      pool.destroy(client);
+      &#x2F;&#x2F; pool.release(client);
+      reject(&#96;socket connect timeout set $&#123;timeout&#125;&#96;);
+    &#125;);
+    let header &#x3D; getHeader(requestDataBuff.length);
+    client.write(header);
+    client.write(requestDataBuff);
+    client.on(&#39;data&#39;, (chunk) &#x3D;&gt; &#123;
+      let content &#x3D; chunk.toString();
+      console.log(&#39;content&#39;, content, content.length);
+      &#x2F;&#x2F; TODO 过滤心跳包
+      if (content.indexOf(&#39;length:&#39;) &#x3D;&#x3D;&#x3D; 0)&#123;
+        length &#x3D; parseInt(content.substring(7,20));
+        console.log(&#39;length&#39;, length);
+        chunks &#x3D;[chunk.slice(20, chunk.length)];
+      &#125; else &#123;
+        chunks.push(chunk);
+      &#125;
+      let heap &#x3D; Buffer.concat(chunks);
+      console.log(&#39;heap.length&#39;, heap.length);
+      if (heap.length &gt;&#x3D; length) &#123;
+        pool.release(client);
+        client.removeAllListeners(&#39;error&#39;);
+        client.removeAllListeners(&#39;data&#39;);
+        client.removeAllListeners(&#39;timeout&#39;);
+        try &#123;
+          &#x2F;&#x2F; console.log(&#39;收到数据&#39;, JSON.parse(heap.toString()));
+          resolve(JSON.parse(heap.toString()));
+        &#125; catch (err) &#123;
+          reject(err);
+          console.log(&#39;数据解析失败&#39;);
+        &#125;
+      &#125;
+    &#125;);
+  &#125;);
+&#125;
+request(Buffer.from(JSON.stringify(&#123;a: &#39;a&#39;&#125;)))
+  .then((data) &#x3D;&gt; &#123;
+    console.log(&#39;收到服务的数据&#39;,data)
+  &#125;).catch(err &#x3D;&gt; &#123;
+    console.log(err);
+  &#125;);
+
+request(Buffer.from(JSON.stringify(&#123;b: &#39;b&#39;&#125;)))
+  .then((data) &#x3D;&gt; &#123;
+    console.log(&#39;收到服务的数据&#39;,data)
+  &#125;).catch(err &#x3D;&gt; &#123;
+    console.log(err);
+  &#125;);
+
+setTimeout(function () &#123; &#x2F;&#x2F;查看是否会复用Socket 有没有建立新的连接
+  request(Buffer.from(JSON.stringify(&#123;c: &#39;c&#39;&#125;)))
+    .then((data) &#x3D;&gt; &#123;
+      console.log(&#39;收到服务的数据&#39;,data)
+    &#125;).catch(err &#x3D;&gt; &#123;
+    console.log(err);
+  &#125;);
+
+  request(Buffer.from(JSON.stringify(&#123;d: &#39;d&#39;&#125;)))
+    .then((data) &#x3D;&gt; &#123;
+      console.log(&#39;收到服务的数据&#39;,data)
+    &#125;).catch(err &#x3D;&gt; &#123;
+    console.log(err);
+  &#125;);
+&#125;, 1000)<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>日志打印：</p>
+<pre class="line-numbers language-none"><code class="language-none">socket_pool 127.0.0.1 9000 connect
+socket_pool 127.0.0.1 9000 connect
+content length:0000000000040&quot;服务端的数据数据:&#123;\&quot;a\&quot;:\&quot;a\&quot;&#125;&quot; 44
+length 40
+heap.length 40
+收到服务的数据 服务端的数据数据:&#123;&quot;a&quot;:&quot;a&quot;&#125;
+content length:0000000000040&quot;服务端的数据数据:&#123;\&quot;b\&quot;:\&quot;b\&quot;&#125;&quot; 44
+length 40
+heap.length 40
+收到服务的数据 服务端的数据数据:&#123;&quot;b&quot;:&quot;b&quot;&#125;
+content length:0000000000040 20
+length 40
+heap.length 0
+content &quot;服务端的数据数据:&#123;\&quot;c\&quot;:\&quot;c\&quot;&#125;&quot; 24
+heap.length 40
+收到服务的数据 服务端的数据数据:&#123;&quot;c&quot;:&quot;c&quot;&#125;
+content length:0000000000040&quot;服务端的数据数据:&#123;\&quot;d\&quot;:\&quot;d\&quot;&#125;&quot; 44
+length 40
+heap.length 40
+收到服务的数据 服务端的数据数据:&#123;&quot;d&quot;:&quot;d&quot;&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里看到前面两个请求都建立了新的Socket连接<code> socket_pool 127.0.0.1 9000 connect</code>，定时器结束后重新发起两个请求就没有建立新的Socket连接了，直接从连接池里面获取Socket连接资源。</p>
+<h4 id="源码分析">源码分析</h4>
+<p>发现主要的代码就位于lib文件夹中的Pool.js<br>
+构造函数：<br>
+<code>lib/Pool.js</code></p>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;**
+ * Generate an Object pool with a specified &#96;factory&#96; and &#96;config&#96;.
+ *
+ * @param &#123;typeof DefaultEvictor&#125; Evictor
+ * @param &#123;typeof Deque&#125; Deque
+ * @param &#123;typeof PriorityQueue&#125; PriorityQueue
+ * @param &#123;Object&#125; factory
+ *   Factory to be used for generating and destroying the items.
+ * @param &#123;Function&#125; factory.create
+ *   Should create the item to be acquired,
+ *   and call it&#39;s first callback argument with the generated item as it&#39;s argument.
+ * @param &#123;Function&#125; factory.destroy
+ *   Should gently close any resources that the item is using.
+ *   Called before the items is destroyed.
+ * @param &#123;Function&#125; factory.validate
+ *   Test if a resource is still valid .Should return a promise that resolves to a boolean, true if resource is still valid and false
+ *   If it should be removed from pool.
+ * @param &#123;Object&#125; options
+ *&#x2F;
+constructor(Evictor, Deque, PriorityQueue, factory, options) &#123;
+  super();
+  factoryValidator(factory); &#x2F;&#x2F; 检验我们定义的factory的有效性包含create destroy validate
+  this._config &#x3D; new PoolOptions(options); &#x2F;&#x2F; 连接池配置
+  &#x2F;&#x2F; TODO: fix up this ugly glue-ing
+  this._Promise &#x3D; this._config.Promise;
+
+  this._factory &#x3D; factory;
+  this._draining &#x3D; false;
+  this._started &#x3D; false;
+  &#x2F;**
+   * Holds waiting clients
+   * @type &#123;PriorityQueue&#125;
+   *&#x2F;
+  this._waitingClientsQueue &#x3D; new PriorityQueue(this._config.priorityRange); &#x2F;&#x2F; 请求的对象管管理队列queue 初始化queue的size 1 &#123; _size: 1, _slots: [ Queue &#123; _list: [Object] &#125; ] &#125;
+  &#x2F;**
+   * Collection of promises for resource creation calls made by the pool to factory.create
+   * @type &#123;Set&#125;
+   *&#x2F;
+  this._factoryCreateOperations &#x3D; new Set(); &#x2F;&#x2F; 正在创建的长连接
+
+  &#x2F;**
+   * Collection of promises for resource destruction calls made by the pool to factory.destroy
+   * @type &#123;Set&#125;
+   *&#x2F;
+  this._factoryDestroyOperations &#x3D; new Set(); &#x2F;&#x2F; 正在销毁的长连接
+
+  &#x2F;**
+   * A queue&#x2F;stack of pooledResources awaiting acquisition
+   * TODO: replace with LinkedList backed array
+   * @type &#123;Deque&#125;
+   *&#x2F;
+  this._availableObjects &#x3D; new Deque(); &#x2F;&#x2F; 空闲的资源长连接
+
+  &#x2F;**
+   * Collection of references for any resource that are undergoing validation before being acquired
+   * @type &#123;Set&#125;
+   *&#x2F;
+  this._testOnBorrowResources &#x3D; new Set(); &#x2F;&#x2F; 正在检验有效性的资源
+
+  &#x2F;**
+   * Collection of references for any resource that are undergoing validation before being returned
+   * @type &#123;Set&#125;
+   *&#x2F;
+  this._testOnReturnResources &#x3D; new Set();
+
+  &#x2F;**
+   * Collection of promises for any validations currently in process
+   * @type &#123;Set&#125;
+   *&#x2F;
+  this._validationOperations &#x3D; new Set();&#x2F;&#x2F; 正在校验的中间temp
+
+  &#x2F;**
+   * All objects associated with this pool in any state (except destroyed)
+   * @type &#123;Set&#125;
+   *&#x2F;
+  this._allObjects &#x3D; new Set(); &#x2F;&#x2F; 所有的链接资源 是一个 PooledResource对象
+
+  &#x2F;**
+   * Loans keyed by the borrowed resource
+   * @type &#123;Map&#125;
+   *&#x2F;
+  this._resourceLoans &#x3D; new Map(); &#x2F;&#x2F; 被借用的对象的map release的时候用到
+
+  &#x2F;**
+   * Infinitely looping iterator over available object
+   * @type &#123;DequeIterator&#125;
+   *&#x2F;
+  this._evictionIterator &#x3D; this._availableObjects.iterator(); &#x2F;&#x2F; 一个迭代器
+
+  this._evictor &#x3D; new Evictor();
+
+  &#x2F;**
+   * handle for setTimeout for next eviction run
+   * @type &#123;(number|null)&#125;
+   *&#x2F;
+  this._scheduledEviction &#x3D; null;
+
+  &#x2F;&#x2F; create initial resources (if factory.min &gt; 0)
+  if (this._config.autostart &#x3D;&#x3D;&#x3D; true) &#123; &#x2F;&#x2F; 初始化最小的连接数量
+    this.start();
+  &#125;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>可以看到包含之前说的空闲的资源队列，正在请求的资源队列，正在等待的请求队列等。<br>
+下面查看 Pool.acquire 方法<br>
+<code>lib/Pool.js</code></p>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;**
+   * Request a new resource. The callback will be called,
+   * when a new resource is available, passing the resource to the callback.
+   * TODO: should we add a seperate &quot;acquireWithPriority&quot; function
+   *
+   * @param &#123;Number&#125; [priority&#x3D;0]
+   *   Optional.  Integer between 0 and (priorityRange - 1).  Specifies the priority
+   *   of the caller if there are no available resources.  Lower numbers mean higher
+   *   priority.
+   *
+   * @returns &#123;Promise&#125;
+   *&#x2F;
+  acquire(priority) &#123; &#x2F;&#x2F; 空闲资源队列资源是有优先等级的 
+    if (this._started &#x3D;&#x3D;&#x3D; false &amp;&amp; this._config.autostart &#x3D;&#x3D;&#x3D; false) &#123;
+      this.start(); &#x2F;&#x2F; 会在this._allObjects 添加min的连接对象数
+    &#125;
+    if (this._draining) &#123; &#x2F;&#x2F; 如果是在资源释放阶段就不能再请求资源了
+      return this._Promise.reject(
+        new Error(&quot;pool is draining and cannot accept work&quot;)
+      );
+    &#125;
+    &#x2F;&#x2F; 如果要设置了等待队列的长度且要等待 如果超过了就返回资源不可获取
+    &#x2F;&#x2F; TODO: should we defer this check till after this event loop incase &quot;the situation&quot; changes in the meantime
+    if (
+      this._config.maxWaitingClients !&#x3D;&#x3D; undefined &amp;&amp;
+      this._waitingClientsQueue.length &gt;&#x3D; this._config.maxWaitingClients
+    ) &#123;
+      return this._Promise.reject(
+        new Error(&quot;max waitingClients count exceeded&quot;)
+      );
+    &#125;
+
+    const resourceRequest &#x3D; new ResourceRequest(
+      this._config.acquireTimeoutMillis, &#x2F;&#x2F; 对象里面的超时配置 表示等待时间 会启动一个定时 超时了就触发resourceRequest.promise 的reject触发
+      this._Promise
+    );
+    &#x2F;&#x2F; console.log(resourceRequest)
+    this._waitingClientsQueue.enqueue(resourceRequest, priority); &#x2F;&#x2F; 请求进入等待请求队列
+    this._dispense(); &#x2F;&#x2F; 进行资源分发 最终会触发resourceRequest.promise的resolve(client) 
+
+    return resourceRequest.promise; &#x2F;&#x2F; 返回的是一个promise对象resolve却是在其他地方触发
+  &#125;
+  &#x2F;**
+   * Attempt to resolve an outstanding resource request using an available resource from
+   * the pool, or creating new ones
+   *
+   * @private
+   *&#x2F;
+  _dispense() &#123;
+    &#x2F;**
+     * Local variables for ease of reading&#x2F;writing
+     * these don&#39;t (shouldn&#39;t) change across the execution of this fn
+     *&#x2F;
+    const numWaitingClients &#x3D; this._waitingClientsQueue.length; &#x2F;&#x2F; 正在等待的请求的队列长度 各个优先级的总和
+    console.log(&#39;numWaitingClients&#39;, numWaitingClients)  &#x2F;&#x2F; 1
+
+    &#x2F;&#x2F; If there aren&#39;t any waiting requests then there is nothing to do
+    &#x2F;&#x2F; so lets short-circuit
+    if (numWaitingClients &lt; 1) &#123;
+      return;
+    &#125;
+    &#x2F;&#x2F;  max: 10, min: 4
+    console.log(&#39;_potentiallyAllocableResourceCount&#39;, this._potentiallyAllocableResourceCount) &#x2F;&#x2F; 目前潜在空闲可用的连接数量
+    const resourceShortfall &#x3D;
+      numWaitingClients - this._potentiallyAllocableResourceCount; &#x2F;&#x2F; 还差几个可用的 小于零表示不需要 大于0表示需要新建长连接的数量
+    console.log(&#39;spareResourceCapacity&#39;, this.spareResourceCapacity) &#x2F;&#x2F; 距离max数量的还有几个没有创建
+    const actualNumberOfResourcesToCreate &#x3D; Math.min(
+      this.spareResourceCapacity, &#x2F;&#x2F; -6
+      resourceShortfall &#x2F;&#x2F; 这个是 -3
+    ); &#x2F;&#x2F; 如果resourceShortfall&gt;0 表示需要新建但是这新建的数量不能超过spareResourceCapacity最多可创建的
+    console.log(&#39;actualNumberOfResourcesToCreate&#39;, actualNumberOfResourcesToCreate) &#x2F;&#x2F; 如果actualNumberOfResourcesToCreate &gt;0 表示需要创建连接
+    for (let i &#x3D; 0; actualNumberOfResourcesToCreate &gt; i; i++) &#123;
+      this._createResource(); &#x2F;&#x2F; 新增新的长连接
+    &#125;
+
+    &#x2F;&#x2F; If we are doing test-on-borrow see how many more resources need to be moved into test
+    &#x2F;&#x2F; to help satisfy waitingClients
+    if (this._config.testOnBorrow &#x3D;&#x3D;&#x3D; true) &#123; &#x2F;&#x2F; 如果开启了使用前校验资源的有效性
+      &#x2F;&#x2F; how many available resources do we need to shift into test
+      const desiredNumberOfResourcesToMoveIntoTest &#x3D;
+        numWaitingClients - this._testOnBorrowResources.size;&#x2F;&#x2F; 1
+      const actualNumberOfResourcesToMoveIntoTest &#x3D; Math.min(
+        this._availableObjects.length, &#x2F;&#x2F; 3
+        desiredNumberOfResourcesToMoveIntoTest &#x2F;&#x2F; 1
+      );
+      for (let i &#x3D; 0; actualNumberOfResourcesToMoveIntoTest &gt; i; i++) &#123; &#x2F;&#x2F; 需要有效性校验的数量 至少满足最小的waiting clinet
+        this._testOnBorrow(); &#x2F;&#x2F; 资源有效校验后再分发
+      &#125;
+    &#125;
+
+    &#x2F;&#x2F; if we aren&#39;t testing-on-borrow then lets try to allocate what we can
+    if (this._config.testOnBorrow &#x3D;&#x3D;&#x3D; false) &#123; &#x2F;&#x2F; 如果没有开启有效性校验 就开启有效资源的分发
+      const actualNumberOfResourcesToDispatch &#x3D; Math.min(
+        this._availableObjects.length,
+        numWaitingClients
+      );
+      for (let i &#x3D; 0; actualNumberOfResourcesToDispatch &gt; i; i++) &#123; &#x2F;&#x2F; 开始分发资源
+        this._dispatchResource();
+      &#125;
+    &#125;
+  &#125;
+  &#x2F;**
+   * Attempt to move an available resource to a waiting client
+   * @return &#123;Boolean&#125; [description]
+   *&#x2F;
+  _dispatchResource() &#123;
+    if (this._availableObjects.length &lt; 1) &#123;
+      return false;
+    &#125;
+
+    const pooledResource &#x3D; this._availableObjects.shift(); &#x2F;&#x2F; 从可以资源池里面取出一个
+    this._dispatchPooledResourceToNextWaitingClient(pooledResource); &#x2F;&#x2F; 分发
+    return false;
+  &#125;
+  &#x2F;**
+   * Dispatches a pooledResource to the next waiting client (if any) else
+   * puts the PooledResource back on the available list
+   * @param  &#123;PooledResource&#125; pooledResource [description]
+   * @return &#123;Boolean&#125;                [description]
+   *&#x2F;
+  _dispatchPooledResourceToNextWaitingClient(pooledResource) &#123;
+    const clientResourceRequest &#x3D; this._waitingClientsQueue.dequeue(); &#x2F;&#x2F; 可能是undefined 取出一个等待的quene
+    console.log(&#39;clientResourceRequest.state&#39;, clientResourceRequest.state);
+    if (clientResourceRequest &#x3D;&#x3D;&#x3D; undefined ||
+      clientResourceRequest.state !&#x3D;&#x3D; Deferred.PENDING) &#123;
+      console.log(&#39;没有等待的&#39;)
+      &#x2F;&#x2F; While we were away either all the waiting clients timed out
+      &#x2F;&#x2F; or were somehow fulfilled. put our pooledResource back.
+      this._addPooledResourceToAvailableObjects(pooledResource); &#x2F;&#x2F; 在可用的资源里面添加一个
+      &#x2F;&#x2F; TODO: do need to trigger anything before we leave?
+      return false;
+    &#125;
+    &#x2F;&#x2F; TODO clientResourceRequest 的state是否需要判断 如果已经是resolve的状态 已经超时回去了 这个是否有问题
+    const loan &#x3D; new ResourceLoan(pooledResource, this._Promise); 
+    this._resourceLoans.set(pooledResource.obj, loan); &#x2F;&#x2F; _resourceLoans 是个map k&#x3D;&gt;value  pooledResource.obj 就是socket本身
+    pooledResource.allocate(); &#x2F;&#x2F; 标识资源的状态是正在被使用
+    clientResourceRequest.resolve(pooledResource.obj); &#x2F;&#x2F;  acquire方法返回的promise对象的resolve在这里执行的
+    return true;
+  &#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>上面的代码就按种情况一直走下到最终获取到长连接的资源，其他更多代码大家可以自己去深入了解。</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/3241690067.html">https://blog.mailjob.net/posts/3241690067.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%83%E5%B1%82%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B"><span class="toc-text">七层网络模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#TCP%E5%92%8CUDP%E8%BF%9E%E6%8E%A5"><span class="toc-text">TCP和UDP连接</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#TCP%E7%9A%84%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B%E5%92%8C%E5%9B%9B%E6%AC%A1%E5%88%86%E6%89%8B"><span class="toc-text">TCP的三次握手和四次分手</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#TCP%E5%92%8CUDP%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-text">TCP和UDP的区别</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%97%AE%E9%A2%98"><span class="toc-text">问题</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#HTTP%E5%8D%8F%E8%AE%AE"><span class="toc-text">HTTP协议</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B3%E4%BA%8ESocket%EF%BC%88%E5%A5%97%E6%8E%A5%E5%AD%97%EF%BC%89"><span class="toc-text">关于Socket（套接字）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Socket%E9%95%BF%E8%BF%9E%E6%8E%A5"><span class="toc-text">Socket长连接</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%9A%E4%B9%89%E8%87%AA%E5%B7%B1%E7%9A%84%E5%8D%8F%E8%AE%AE"><span class="toc-text">定义自己的协议</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Socket%E8%BF%9E%E6%8E%A5%E6%B1%A0"><span class="toc-text">Socket连接池</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96%E8%BF%9E%E6%8E%A5%E6%B1%A0"><span class="toc-text">初始化连接池</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E8%BF%9E%E6%8E%A5%E6%B1%A0"><span class="toc-text">使用连接池</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90"><span class="toc-text">源码分析</span></a></li></ol></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

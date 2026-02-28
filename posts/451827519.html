@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Redis集群实现步骤与原理 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="相关链接 集群实现源码：https:&#x2F;&#x2F;github.com&#x2F;redis&#x2F;redis&#x2F;blob&#x2F;6.0&#x2F;src&#x2F;cluster.h 官网集群文档：https:&#x2F;&#x2F;redis.io&#x2F;topics&#x2F;cluster-tutorial Redis集群smart jedis：https:&#x2F;&#x2F;kdocs.cn&#x2F;l&#x2F;soEOUpbcjY2q Redis哈希槽概念：https:&#x2F;&#x2F;blog.mailjob.net">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis集群实现步骤与原理">
+<meta property="og:url" content="https://blog.mailjob.net/posts/451827519.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="相关链接 集群实现源码：https:&#x2F;&#x2F;github.com&#x2F;redis&#x2F;redis&#x2F;blob&#x2F;6.0&#x2F;src&#x2F;cluster.h 官网集群文档：https:&#x2F;&#x2F;redis.io&#x2F;topics&#x2F;cluster-tutorial Redis集群smart jedis：https:&#x2F;&#x2F;kdocs.cn&#x2F;l&#x2F;soEOUpbcjY2q Redis哈希槽概念：https:&#x2F;&#x2F;blog.mailjob.net">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210209105444.png">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210209105513.png">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210209105308.png">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210209110150.jpeg">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210209110159.jpeg">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210209110155.jpeg">
+<meta property="article:published_time" content="2021-02-08T14:43:21.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.987Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="redis">
+<meta property="article:tag" content="高可用">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210209105444.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Redis集群实现步骤与原理
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/451827519.html" class="article-date">
+	  <time datetime="2021-02-08T14:43:21.000Z" itemprop="datePublished">2021-02-08</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/redis/" rel="tag">redis</a>, <a class="article-tag-none-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/451827519.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 2.4k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 8(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="相关链接">相关链接</h2>
+<p>集群实现源码：<a target="_blank" rel="noopener" href="https://github.com/redis/redis/blob/6.0/src/cluster.h">https://github.com/redis/redis/blob/6.0/src/cluster.h</a></p>
+<p>官网集群文档：<a target="_blank" rel="noopener" href="https://redis.io/topics/cluster-tutorial">https://redis.io/topics/cluster-tutorial</a></p>
+<p>Redis集群smart jedis：<a target="_blank" rel="noopener" href="https://kdocs.cn/l/soEOUpbcjY2q">https://kdocs.cn/l/soEOUpbcjY2q</a></p>
+<p>Redis哈希槽概念：<a href="https://blog.mailjob.net/posts/2893278639.html">https://blog.mailjob.net/posts/2893278639.html</a></p>
+<h1 id="前言">前言</h1>
+<p>本博客针对 <code>redis5</code> 以后的集群搭建进行讲解。</p>
+<blockquote>
+<p>redis3 到 redis5 开始支持集群，用的是 <code>ruby</code> 写的一个脚本，所以你需要先安装 ruby。然后根据官方提供了一个工具：redis-trib.rb(/redis-3.2.1/src/redis-trib.rb) 进行敲命令，一个个安装集群扩展。</p>
+<p>redis5以后的开发者们比较幸福了，redis直接支持了命令集群，在redis的 <code>redis-cli</code> 客户端直接配置集群</p>
+</blockquote>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210209105444.png" alt="在这里插入图片描述"></p>
+<h1 id="节点间的内部通信机制">节点间的内部通信机制</h1>
+<h5 id="1、基础通信原理">1、基础通信原理</h5>
+<ul>
+<li>
+<p>redis cluster节点间采取gossip协议进行通信</p>
+<ul>
+<li>跟集中式不同，不是将集群元数据（节点信息，故障，等等）集中存储在某个节点上，而是互相之间不断通信，保持整个集群所有节点的数据是完整的</li>
+<li>集中式：好处在于，元数据的更新和读取，时效性非常好，一旦元数据出现了变更，立即就更新到集中式的存储中，其他节点读取的时候立即就可以感知到; 不好在于，所有的元数据的跟新压力全部集中在一个地方，可能会导致元数据的存储有压力</li>
+<li>gossip：好处在于，元数据的更新比较分散，不是集中在一个地方，更新请求会陆陆续续，打到所有节点上去更新，有一定的延时，降低了压力; 缺点，元数据更新有延时，可能导致集群的一些操作会有一些滞后</li>
+</ul>
+</li>
+<li>
+<p>10000端口</p>
+<ul>
+<li>每个节点都有一个专门用于节点间通信的端口，就是自己提供服务的端口号+10000，比如7001，那么用于节点间通信的就是17001端口</li>
+<li>每隔节点每隔一段时间都会往另外几个节点发送ping消息，同时其他几点接收到ping之后返回pong</li>
+</ul>
+</li>
+<li>
+<p>交换的信息</p>
+<ul>
+<li>故障信息，节点的增加和移除，hash slot信息，等等</li>
+</ul>
+</li>
+</ul>
+<h5 id="2、gossip协议">2、gossip协议</h5>
+<p>gossip协议包含多种消息，包括ping，pong，meet，fail，等等</p>
+<p>meet: 某个节点发送meet给新加入的节点，让新节点加入集群中，然后新节点就会开始与其他节点进行通信</p>
+<p>redis-trib.rb add-node</p>
+<p>其实内部就是发送了一个gossip meet消息，给新加入的节点，通知那个节点去加入我们的集群</p>
+<p>ping: 每个节点都会频繁给其他节点发送ping，其中包含自己的状态还有自己维护的集群元数据，互相通过ping交换元数据</p>
+<p>每个节点每秒都会频繁发送ping给其他的集群，ping，频繁的互相之间交换数据，互相进行元数据的更新</p>
+<p>pong: 返回ping和meet，包含自己的状态和其他信息，也可以用于信息广播和更新</p>
+<p>fail: 某个节点判断另一个节点fail之后，就发送fail给其他节点，通知其他节点，指定的节点宕机了</p>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210209105513.png" alt="在这里插入图片描述"></p>
+<h5 id="3、ping消息深入">3、ping消息深入</h5>
+<p>ping很频繁，而且要携带一些元数据，所以可能会加重网络负担</p>
+<p>每个节点每秒会执行10次ping，每次会选择5个最久没有通信的其他节点</p>
+<p>当然如果发现某个节点通信延时达到了cluster_node_timeout / 2，那么立即发送ping，避免数据交换延时过长，落后的时间太长了</p>
+<p>比如说，两个节点之间都10分钟没有交换数据了，那么整个集群处于严重的元数据不一致的情况，就会有问题</p>
+<p>所以cluster_node_timeout可以调节，如果调节比较大，那么会降低发送的频率</p>
+<p>每次ping，一个是带上自己节点的信息，还有就是带上1/10其他节点的信息，发送出去，进行数据交换</p>
+<p>至少包含3个其他节点的信息，最多包含总节点-2个其他节点的信息</p>
+<h5 id="smart-jedis">smart jedis</h5>
+<p>（1）什么是smart jedis</p>
+<p>基于重定向的客户端，很消耗网络IO，因为大部分情况下，可能都会出现一次请求重定向，才能找到正确的节点</p>
+<p>所以大部分的客户端，比如java redis客户端，就是jedis，都是smart的</p>
+<p>本地维护一份hashslot -&gt; node的映射表，缓存，大部分情况下，直接走本地缓存就可以找到hashslot -&gt; node，不需要通过节点进行moved重定向</p>
+<p>（2）JedisCluster的工作原理</p>
+<p>在JedisCluster初始化的时候，就会随机选择一个node，初始化hashslot -&gt; node映射表，同时为每个节点创建一个JedisPool连接池</p>
+<p>每次基于JedisCluster执行操作，首先JedisCluster都会在本地计算key的hashslot，然后在本地映射表找到对应的节点</p>
+<p>如果那个node正好还是持有那个hashslot，那么就ok; 如果说进行了reshard这样的操作，可能hashslot已经不在那个node上了，就会返回moved</p>
+<p>如果JedisCluter API发现对应的节点返回moved，那么利用该节点的元数据，更新本地的hashslot -&gt; node映射表缓存</p>
+<p>重复上面几个步骤，直到找到对应的节点，如果重试超过5次，那么就报错，JedisClusterMaxRedirectionException</p>
+<p>jedis老版本，可能会出现在集群某个节点故障还没完成自动切换恢复时，频繁更新hash slot，频繁ping节点检查活跃，导致大量网络IO开销</p>
+<p>jedis最新版本，对于这些过度的hash slot更新和ping，都进行了优化，避免了类似问题</p>
+<p>（3）hashslot迁移和ask重定向</p>
+<p>如果hash slot正在迁移，那么会返回ask重定向给jedis</p>
+<p>jedis接收到ask重定向之后，会重新定位到目标节点去执行，但是因为ask发生在hash slot迁移过程中，所以JedisCluster API收到ask是不会更新hashslot本地缓存</p>
+<p>已经可以确定说，hashslot已经迁移完了，moved是会更新本地hashslot-&gt;node映射表缓存的</p>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210209105308.png" alt="image-20210209105306668"></p>
+<h4 id="故障转移：">故障转移：</h4>
+<p>redis集群实现了高可用，当集群内少量节点出现故障时，通过故障转移可以保证集群正常对外提供服务。</p>
+<p>当集群里某个节点出现了问题，redis集群内的节点通过ping pong消息发现节点是否健康，是否有故障，其实主要环节也包括了 主观下线和客观下线；</p>
+<p>主观下线：指某个节点认为另一个节点不可用，即下线状态，当然这个状态不是最终的故障判定，只能代表这个节点自身的意见，也有可能存在误判；</p>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210209110150.jpeg" alt="img"></p>
+<p><strong>下线流程</strong>：</p>
+<ol>
+<li>节点a发送ping消息给节点b ,如果通信正常将接收到pong消息，节点a更新最近一次与节点b的通信时间；</li>
+<li>如果节点a与节点b通信出现问题则断开连接，下次会进行重连，如果一直通信失败，则它们的最后通信时间将无法更新；</li>
+<li>节点a内的定时任务检测到与节点b最后通信时间超过cluster_note-timeout时，更新本地对节点b的状态为主观下线（pfail）</li>
+</ol>
+<h4 id="客观下线：">客观下线：</h4>
+<p>指真正的下线，集群内多个节点都认为该节点不可用，达成共识，将它下线，如果下线的节点为主节点，还要对它进行故障转移</p>
+<p>假如节点a标记节点b为主观下线，一段时间后节点a通过消息把节点b的状态发到其它节点，当节点c接受到消息并解析出消息体时，会发现节点b的pfail状态时，会触发客观下线流程；</p>
+<p>当下线为主节点时，此时redis集群为统计持有槽的主节点投票数是否达到一半，当下线报告统计数大于一半时，被标记为客观下线状态。</p>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210209110159.jpeg" alt="img"></p>
+<h4 id="故障恢复：">故障恢复：</h4>
+<p>故障主节点下线后，如果下线节点的是主节点，则需要在它的从节点中选一个替换它，保证集群的高可用；转移过程如下：</p>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210209110155.jpeg" alt="img"></p>
+<ol>
+<li>资格检查：检查该从节点是否有资格替换故障主节点，如果此从节点与主节点断开过通信，那么当前从节点不具体故障转移；</li>
+<li>准备选举时间：当从节点符合故障转移资格后，更新触发故障选举时间，只有到达该时间后才能执行后续流程；</li>
+<li>发起选举：当到达故障选举时间时，进行选举；</li>
+<li>选举投票：只有持有槽的主节点才有票，会处理故障选举消息，投票过程其实是一个领导者选举（选举从节点为领导者）的过程，每个主节点只能投一张票给从节点，</li>
+</ol>
+<p>当从节点收集到足够的选票（大于N/2+1）后，触发替换主节点操作，撤销原故障主节点的槽，委派给自己，并广播自己的委派消息，通知集群内所有节点</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/451827519.html">https://blog.mailjob.net/posts/451827519.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E9%93%BE%E6%8E%A5"><span class="toc-text">相关链接</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%8A%82%E7%82%B9%E9%97%B4%E7%9A%84%E5%86%85%E9%83%A8%E9%80%9A%E4%BF%A1%E6%9C%BA%E5%88%B6"><span class="toc-text">节点间的内部通信机制</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#1%E3%80%81%E5%9F%BA%E7%A1%80%E9%80%9A%E4%BF%A1%E5%8E%9F%E7%90%86"><span class="toc-text">1、基础通信原理</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2%E3%80%81gossip%E5%8D%8F%E8%AE%AE"><span class="toc-text">2、gossip协议</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3%E3%80%81ping%E6%B6%88%E6%81%AF%E6%B7%B1%E5%85%A5"><span class="toc-text">3、ping消息深入</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#smart-jedis"><span class="toc-text">smart jedis</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%95%85%E9%9A%9C%E8%BD%AC%E7%A7%BB%EF%BC%9A"><span class="toc-text">故障转移：</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%A2%E8%A7%82%E4%B8%8B%E7%BA%BF%EF%BC%9A"><span class="toc-text">客观下线：</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%95%85%E9%9A%9C%E6%81%A2%E5%A4%8D%EF%BC%9A"><span class="toc-text">故障恢复：</span></a></li></ol></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

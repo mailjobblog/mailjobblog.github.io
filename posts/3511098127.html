@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Go 标准库Context | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="前言 在 Go 1.7 版本之前，context 还是非编制的，它存在于 golang.org&#x2F;x&#x2F;net&#x2F;context 包中。 后来，Golang 团队发现 context 还挺好用的，就把 context 收编了，在 Go 1.7 版本正式纳入了标准库。 为什么需要Context 当一个协程（goroutine）开启后，我们是无法强制关闭它的。 常见的关闭协程的原因有如下几种：  gorou">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go 标准库Context">
+<meta property="og:url" content="https://blog.mailjob.net/posts/3511098127.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="前言 在 Go 1.7 版本之前，context 还是非编制的，它存在于 golang.org&#x2F;x&#x2F;net&#x2F;context 包中。 后来，Golang 团队发现 context 还挺好用的，就把 context 收编了，在 Go 1.7 版本正式纳入了标准库。 为什么需要Context 当一个协程（goroutine）开启后，我们是无法强制关闭它的。 常见的关闭协程的原因有如下几种：  gorou">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-11-19T02:40:59.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.980Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="go">
+<meta name="twitter:card" content="summary">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Go 标准库Context
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3511098127.html" class="article-date">
+	  <time datetime="2021-11-19T02:40:59.000Z" itemprop="datePublished">2021-11-19</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/go/">go</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/go/" rel="tag">go</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/3511098127.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 3k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 12(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="前言">前言</h2>
+<p>在 <code>Go 1.7</code> 版本之前，<a target="_blank" rel="noopener" href="https://studygolang.com/static/pkgdoc/pkg/context.htm">context</a> 还是非编制的，它存在于 <code>golang.org/x/net/context</code> 包中。<br>
+后来，Golang 团队发现 context 还挺好用的，就把 context 收编了，在 Go 1.7 版本正式纳入了标准库。</p>
+<h2 id="为什么需要Context">为什么需要Context</h2>
+<p>当一个协程（goroutine）开启后，我们是无法强制关闭它的。<br>
+常见的关闭协程的原因有如下几种：</p>
+<ol>
+<li>goroutine 自己跑完结束退出（正常关闭，本文不讨论）。</li>
+<li>主进程 crash 退出，goroutine 被迫退出（属异常关闭，应优化代码）。</li>
+<li>通过通道发送信号，引导协程的关闭（属于开发者手动控制协程的方法）。</li>
+</ol>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token comment">// 定义通知 goroutine 停止的 chanel</span>
+	stopSingal <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">chan</span> <span class="token builtin">bool</span><span class="token punctuation">)</span>
+
+	<span class="token comment">// 创建 5 个 goroutine</span>
+	<span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">1</span><span class="token punctuation">;</span> i <span class="token operator">&lt;=</span> <span class="token number">5</span><span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">go</span> <span class="token function">monitor</span><span class="token punctuation">(</span>stopSingal<span class="token punctuation">,</span> i<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token comment">// 等待时间</span>
+	time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span><span class="token number">1</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+
+	<span class="token comment">// 关闭所有 goroutine</span>
+	<span class="token function">close</span><span class="token punctuation">(</span>stopSingal<span class="token punctuation">)</span>
+
+	<span class="token comment">// 等待5s，若此时屏幕没有输出 &lt;正在监控中> 就说明所有的goroutine都已经关闭</span>
+	time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span><span class="token number">5</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+
+	fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"主程序退出！！"</span><span class="token punctuation">)</span>
+
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">monitor</span><span class="token punctuation">(</span>ch <span class="token keyword">chan</span> <span class="token builtin">bool</span><span class="token punctuation">,</span> number <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">select</span> <span class="token punctuation">&#123;</span>
+			<span class="token keyword">case</span> v <span class="token operator">:=</span> <span class="token operator">&lt;-</span>ch<span class="token punctuation">:</span>
+				<span class="token comment">// 仅当 ch 通道被 close，或者有数据发过来(无论是true还是false)才会走到这个分支</span>
+				fmt<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"监控器%v，接收到通道值为：%v，监控结束。\n"</span><span class="token punctuation">,</span> number<span class="token punctuation">,</span> v<span class="token punctuation">)</span>
+				<span class="token keyword">return</span>
+			<span class="token keyword">default</span><span class="token punctuation">:</span>
+				fmt<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"监控器%v，正在监控中...\n"</span><span class="token punctuation">,</span> number<span class="token punctuation">)</span>
+				time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span><span class="token number">2</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+		<span class="token punctuation">&#125;</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">监控器1，正在监控中<span class="token punctuation">..</span>.
+监控器5，正在监控中<span class="token punctuation">..</span>.
+监控器4，正在监控中<span class="token punctuation">..</span>.
+监控器2，正在监控中<span class="token punctuation">..</span>.
+监控器3，正在监控中<span class="token punctuation">..</span>.
+监控器2，接收到通道值为：false，监控结束。
+监控器1，接收到通道值为：false，监控结束。
+监控器3，接收到通道值为：false，监控结束。
+监控器5，接收到通道值为：false，监控结束。
+监控器4，接收到通道值为：false，监控结束。
+主程序退出！！<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>上面的例子，在我们定义一个无缓冲通道时，要实现对所有的 goroutine 进行关闭，可以使用 close 关闭通道，然后在所有的 goroutine 里不断检查通道是否关闭*（前提你得约定好，该通道你只会进行 close 而不会发送其他数据，否则发送一次数据就会关闭一个goroutine，这样会不符合咱们的预期，所以最好你对这个通道再做一层封装做个限制）*来决定是否结束 goroutine。</p>
+<p>所以你看到这里，我做为初学者还是没有找到使用 Context 的必然理由，我只能说 Context 是个很好用的东西，使用它方便了我们在处理并发时候的一些问题，但是它并不是不可或缺的。</p>
+<p><strong>换句话说，它解决的并不是 <code>能不能</code> 的问题，而是解决 <code>更好用</code> 的问题。</strong></p>
+<h2 id="简单使用Context">简单使用Context</h2>
+<p>此处的代码，我们先实现一个简单的 Context Demo（我使用 Context 对上面的例子进行了一番改造），然后详细分析其中的代码意义。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    ctx<span class="token punctuation">,</span> cancel <span class="token operator">:=</span> context<span class="token punctuation">.</span><span class="token function">WithCancel</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">for</span> i <span class="token operator">:=</span><span class="token number">1</span> <span class="token punctuation">;</span> i <span class="token operator">&lt;=</span> <span class="token number">5</span><span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">go</span> <span class="token function">monitor</span><span class="token punctuation">(</span>ctx<span class="token punctuation">,</span> i<span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+
+    time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span> <span class="token number">1</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+    <span class="token comment">// 关闭所有 goroutine</span>
+    <span class="token function">cancel</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token comment">// 等待5s，若此时屏幕没有输出 &lt;正在监控中> 就说明所有的goroutine都已经关闭</span>
+    time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span> <span class="token number">5</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+
+    fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"主程序退出！！"</span><span class="token punctuation">)</span>
+
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">monitor</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> number <span class="token builtin">int</span><span class="token punctuation">)</span>  <span class="token punctuation">&#123;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">select</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">// 其实可以写成 case &lt;- ctx.Done()</span>
+        <span class="token comment">// 这里仅是为了让你看到 Done 返回的内容</span>
+        <span class="token keyword">case</span> v <span class="token operator">:=</span><span class="token operator">&lt;-</span> ctx<span class="token punctuation">.</span><span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            fmt<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"监控器%v，接收到通道值为：%v，监控结束。\n"</span><span class="token punctuation">,</span> number<span class="token punctuation">,</span>v<span class="token punctuation">)</span>
+            <span class="token keyword">return</span>
+        <span class="token keyword">default</span><span class="token punctuation">:</span>
+            fmt<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"监控器%v，正在监控中...\n"</span><span class="token punctuation">,</span> number<span class="token punctuation">)</span>
+            time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span><span class="token number">2</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="代码分析">代码分析</h3>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">ctx<span class="token punctuation">,</span> cancel <span class="token operator">:=</span> context<span class="token punctuation">.</span><span class="token function">WithCancel</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>以 context.Background() 为 parent context 定义一个可取消的 context</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">case</span> <span class="token operator">&lt;-</span> ctx<span class="token punctuation">.</span><span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>然后你可以在所有的goroutine 里利用 for + select 搭配来不断检查 ctx.Done() 是否可读，可读就说明该 context 已经取消，你可以清理 goroutine 并退出了。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token function">cancel</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>当你想到取消 context 的时候，只要调用一下 cancel 方法即可。这个 cancel 就是我们在创建 ctx 的时候返回的第二个值。</p>
+<p><strong>该程序的运行结果如下</strong>：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">监控器<span class="token number">3</span>，正在监控中<span class="token operator">...</span>
+监控器<span class="token number">4</span>，正在监控中<span class="token operator">...</span>
+监控器<span class="token number">1</span>，正在监控中<span class="token operator">...</span>
+监控器<span class="token number">2</span>，正在监控中<span class="token operator">...</span>
+监控器<span class="token number">2</span>，接收到通道值为：<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>，监控结束。
+监控器<span class="token number">5</span>，接收到通道值为：<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>，监控结束。
+监控器<span class="token number">4</span>，接收到通道值为：<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>，监控结束。
+监控器<span class="token number">1</span>，接收到通道值为：<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>，监控结束。
+监控器<span class="token number">3</span>，接收到通道值为：<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>，监控结束。
+主程序退出！！<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="根Context-是什么？">根Context 是什么？</h3>
+<p>创建 Context 必须要指定一个 父 Context，当我们要创建第一个Context时该怎么办呢？<br>
+不用担心，Go 已经帮我们实现了2个，我们代码中最开始都是以这两个内置context作为最顶层的parent context，衍生出更多的子Context。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">var</span> <span class="token punctuation">(</span>
+    background <span class="token operator">=</span> <span class="token function">new</span><span class="token punctuation">(</span>emptyCtx<span class="token punctuation">)</span>
+    todo       <span class="token operator">=</span> <span class="token function">new</span><span class="token punctuation">(</span>emptyCtx<span class="token punctuation">)</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Context <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> background
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">TODO</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Context <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> todo
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>Background</strong>：主要用于main函数、初始化以及测试代码中，作为Context这个树结构的最顶层的Context，也就是根Context，它不能被取消。<br>
+<strong>TODO</strong>：如果我们不知道该使用什么Context的时候，可以使用这个，但是实际应用中，暂时还没有使用过这个TODO。<br>
+他们两个本质上都是emptyCtx结构体类型，是一个不可取消，没有设置截止时间，没有携带任何值的Context。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> emptyCtx <span class="token builtin">int</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span><span class="token operator">*</span>emptyCtx<span class="token punctuation">)</span> <span class="token function">Deadline</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>deadline time<span class="token punctuation">.</span>Time<span class="token punctuation">,</span> ok <span class="token builtin">bool</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span><span class="token operator">*</span>emptyCtx<span class="token punctuation">)</span> <span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;-</span><span class="token keyword">chan</span> <span class="token keyword">struct</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span><span class="token operator">*</span>emptyCtx<span class="token punctuation">)</span> <span class="token function">Err</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span><span class="token operator">*</span>emptyCtx<span class="token punctuation">)</span> <span class="token function">Value</span><span class="token punctuation">(</span>key <span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span> <span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="Context-的继承衍生">Context 的继承衍生</h3>
+<p>上面在定义我们自己的 Context 时，我们使用的是 <code>WithCancel</code> 这个方法。除它之外，context 包还有其他几个 With 系列的函数.</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">WithCancel</span><span class="token punctuation">(</span>parent Context<span class="token punctuation">)</span> <span class="token punctuation">(</span>ctx Context<span class="token punctuation">,</span> cancel CancelFunc<span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token function">WithDeadline</span><span class="token punctuation">(</span>parent Context<span class="token punctuation">,</span> deadline time<span class="token punctuation">.</span>Time<span class="token punctuation">)</span> <span class="token punctuation">(</span>Context<span class="token punctuation">,</span> CancelFunc<span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token function">WithTimeout</span><span class="token punctuation">(</span>parent Context<span class="token punctuation">,</span> timeout time<span class="token punctuation">.</span>Duration<span class="token punctuation">)</span> <span class="token punctuation">(</span>Context<span class="token punctuation">,</span> CancelFunc<span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token function">WithValue</span><span class="token punctuation">(</span>parent Context<span class="token punctuation">,</span> key<span class="token punctuation">,</span> val <span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span> Context<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这四个函数有一个共同的特点，就是第一个参数，都是接收一个 父context。</p>
+<h4 id="WithCancel">WithCancel</h4>
+<p>WithCancel 返回带有新Done通道的父节点的副本。当调用返回的cancel函数或当关闭父上下文的Done通道时，将关闭返回上下文的Done通道，无论先发生什么情况。</p>
+<p>取消此上下文将释放与其关联的资源，因此代码应该在此上下文中运行的操作完成后立即调用cancel。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	ctx<span class="token punctuation">,</span> cancel <span class="token operator">:=</span> context<span class="token punctuation">.</span><span class="token function">WithCancel</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+	<span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">1</span><span class="token punctuation">;</span> i <span class="token operator">&lt;=</span> <span class="token number">5</span><span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">go</span> <span class="token function">job1</span><span class="token punctuation">(</span>ctx<span class="token punctuation">,</span> i<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span><span class="token number">1</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+
+	<span class="token comment">// 关闭所有 goroutine</span>
+	<span class="token function">cancel</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	<span class="token comment">// 等待5s，若此时屏幕没有输出 &lt;正在监控中> 就说明所有的goroutine都已经关闭</span>
+	time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span><span class="token number">5</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+
+	fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"主程序退出！！"</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">job1</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> number <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">select</span> <span class="token punctuation">&#123;</span>
+			<span class="token comment">// 其实可以写成 case &lt;- ctx.Done()</span>
+			<span class="token comment">// 这里仅是为了让你看到 Done 返回的内容</span>
+			<span class="token keyword">case</span> v <span class="token operator">:=</span> <span class="token operator">&lt;-</span>ctx<span class="token punctuation">.</span><span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+				fmt<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"监控器%v，接收到通道值为：%v，监控结束。\n"</span><span class="token punctuation">,</span> number<span class="token punctuation">,</span> v<span class="token punctuation">)</span>
+				<span class="token keyword">return</span>
+			<span class="token keyword">default</span><span class="token punctuation">:</span>
+				fmt<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"监控器%v，正在监控中...\n"</span><span class="token punctuation">,</span> number<span class="token punctuation">)</span>
+				time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span><span class="token number">2</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+		<span class="token punctuation">&#125;</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">监控器<span class="token number">5</span>，正在监控中<span class="token operator">...</span>
+监控器<span class="token number">2</span>，正在监控中<span class="token operator">...</span>
+监控器<span class="token number">3</span>，正在监控中<span class="token operator">...</span>
+监控器<span class="token number">4</span>，正在监控中<span class="token operator">...</span>
+监控器<span class="token number">1</span>，正在监控中<span class="token operator">...</span>
+监控器<span class="token number">2</span>，接收到通道值为：<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>，监控结束。
+监控器<span class="token number">4</span>，接收到通道值为：<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>，监控结束。
+监控器<span class="token number">5</span>，接收到通道值为：<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>，监控结束。
+监控器<span class="token number">1</span>，接收到通道值为：<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>，监控结束。
+监控器<span class="token number">3</span>，接收到通道值为：<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>，监控结束。
+主程序退出！！<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="WithDeadline">WithDeadline</h4>
+<p>WithDeadline 返回父上下文的副本，并将deadline调整为不迟于d。如果父上下文的deadline已经早于d，则WithDeadline(parent, d)在语义上等同于父上下文。当截止日过期时，当调用返回的cancel函数时，或者当父上下文的Done通道关闭时，返回上下文的Done通道将被关闭，以最先发生的情况为准。</p>
+<p>取消此上下文将释放与其关联的资源，因此代码应该在此上下文中运行的操作完成后立即调用cancel。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	ctx01<span class="token punctuation">,</span> cancel <span class="token operator">:=</span> context<span class="token punctuation">.</span><span class="token function">WithCancel</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+	ctx02<span class="token punctuation">,</span> cancel <span class="token operator">:=</span> context<span class="token punctuation">.</span><span class="token function">WithDeadline</span><span class="token punctuation">(</span>ctx01<span class="token punctuation">,</span> time<span class="token punctuation">.</span><span class="token function">Now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Add</span><span class="token punctuation">(</span><span class="token number">1</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+	<span class="token keyword">defer</span> <span class="token function">cancel</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	<span class="token keyword">for</span> i <span class="token operator">:=</span><span class="token number">1</span> <span class="token punctuation">;</span> i <span class="token operator">&lt;=</span> <span class="token number">5</span><span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">go</span> <span class="token function">job2</span><span class="token punctuation">(</span>ctx02<span class="token punctuation">,</span> i<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span><span class="token number">5</span>  <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+	<span class="token keyword">if</span> ctx02<span class="token punctuation">.</span><span class="token function">Err</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"监控器取消的原因: "</span><span class="token punctuation">,</span> ctx02<span class="token punctuation">.</span><span class="token function">Err</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"主程序退出！！"</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">job2</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> number <span class="token builtin">int</span><span class="token punctuation">)</span>  <span class="token punctuation">&#123;</span>
+	<span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">select</span> <span class="token punctuation">&#123;</span>
+			<span class="token keyword">case</span> <span class="token operator">&lt;-</span> ctx<span class="token punctuation">.</span><span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+				fmt<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"监控器%v，监控结束。\n"</span><span class="token punctuation">,</span> number<span class="token punctuation">)</span>
+				<span class="token keyword">return</span>
+			<span class="token keyword">default</span><span class="token punctuation">:</span>
+				fmt<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"监控器%v，正在监控中...\n"</span><span class="token punctuation">,</span> number<span class="token punctuation">)</span>
+				time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span><span class="token number">2</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+		<span class="token punctuation">&#125;</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">监控器<span class="token number">5</span>，正在监控中<span class="token operator">...</span>
+监控器<span class="token number">3</span>，正在监控中<span class="token operator">...</span>
+监控器<span class="token number">4</span>，正在监控中<span class="token operator">...</span>
+监控器<span class="token number">2</span>，正在监控中<span class="token operator">...</span>
+监控器<span class="token number">1</span>，正在监控中<span class="token operator">...</span>
+监控器<span class="token number">1</span>，监控结束。
+监控器<span class="token number">3</span>，监控结束。
+监控器<span class="token number">2</span>，监控结束。
+监控器<span class="token number">4</span>，监控结束。
+监控器<span class="token number">5</span>，监控结束。
+监控器取消的原因<span class="token punctuation">:</span>  context deadline exceeded
+主程序退出！！<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="WithTimeout">WithTimeout</h4>
+<p>WithTimeout 返回<code>WithDeadline(parent, time.Now().Add(timeout))</code>。</p>
+<p>取消此上下文将释放与其相关的资源，因此代码应该在此上下文中运行的操作完成后立即调用cancel，通常用于数据库或者网络连接的超时控制。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	ctx01<span class="token punctuation">,</span> cancel <span class="token operator">:=</span> context<span class="token punctuation">.</span><span class="token function">WithCancel</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+	<span class="token comment">// 此处定义1秒</span>
+	ctx02<span class="token punctuation">,</span> cancel <span class="token operator">:=</span> context<span class="token punctuation">.</span><span class="token function">WithTimeout</span><span class="token punctuation">(</span>ctx01<span class="token punctuation">,</span> <span class="token number">1</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+
+	<span class="token keyword">defer</span> <span class="token function">cancel</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	<span class="token keyword">for</span> i <span class="token operator">:=</span><span class="token number">1</span> <span class="token punctuation">;</span> i <span class="token operator">&lt;=</span> <span class="token number">5</span><span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">go</span> <span class="token function">job3</span><span class="token punctuation">(</span>ctx02<span class="token punctuation">,</span> i<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span><span class="token number">5</span>  <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+	<span class="token keyword">if</span> ctx02<span class="token punctuation">.</span><span class="token function">Err</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"监控器取消的原因: "</span><span class="token punctuation">,</span> ctx02<span class="token punctuation">.</span><span class="token function">Err</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"主程序退出！！"</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">job3</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> number <span class="token builtin">int</span><span class="token punctuation">)</span>  <span class="token punctuation">&#123;</span>
+	<span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">select</span> <span class="token punctuation">&#123;</span>
+			<span class="token keyword">case</span> <span class="token operator">&lt;-</span> ctx<span class="token punctuation">.</span><span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+				fmt<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"监控器%v，监控结束。\n"</span><span class="token punctuation">,</span> number<span class="token punctuation">)</span>
+				<span class="token keyword">return</span>
+			<span class="token keyword">default</span><span class="token punctuation">:</span>
+				fmt<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"监控器%v，正在监控中...\n"</span><span class="token punctuation">,</span> number<span class="token punctuation">)</span>
+				time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span><span class="token number">2</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+		<span class="token punctuation">&#125;</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">监控器<span class="token number">5</span>，正在监控中<span class="token operator">...</span>
+监控器<span class="token number">4</span>，正在监控中<span class="token operator">...</span>
+监控器<span class="token number">2</span>，正在监控中<span class="token operator">...</span>
+监控器<span class="token number">3</span>，正在监控中<span class="token operator">...</span>
+监控器<span class="token number">1</span>，正在监控中<span class="token operator">...</span>
+监控器<span class="token number">4</span>，监控结束。
+监控器<span class="token number">1</span>，监控结束。
+监控器<span class="token number">2</span>，监控结束。
+监控器<span class="token number">5</span>，监控结束。
+监控器<span class="token number">3</span>，监控结束。
+监控器取消的原因<span class="token punctuation">:</span>  context deadline exceeded
+主程序退出！！<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="WithValue">WithValue</h4>
+<p>WithValue 返回父节点的副本，其中与key关联的值为val。</p>
+<p>仅对API和进程间传递请求域的数据使用上下文值，而不是使用它来传递可选参数给函数。</p>
+<p>所提供的键必须是可比较的，并且不应该是<code>string</code>类型或任何其他内置类型，以避免使用上下文在包之间发生冲突。<code>WithValue</code>的用户应该为键定义自己的类型。为了避免在分配给interface{}时进行分配，上下文键通常具有具体类型<code>struct&#123;&#125;</code>。或者，导出的上下文关键变量的静态类型应该是指针或接口。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	ctx01<span class="token punctuation">,</span> cancel <span class="token operator">:=</span> context<span class="token punctuation">.</span><span class="token function">WithCancel</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+	ctx02<span class="token punctuation">,</span> cancel <span class="token operator">:=</span> context<span class="token punctuation">.</span><span class="token function">WithTimeout</span><span class="token punctuation">(</span>ctx01<span class="token punctuation">,</span> <span class="token number">1</span><span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+	ctx03 <span class="token operator">:=</span> context<span class="token punctuation">.</span><span class="token function">WithValue</span><span class="token punctuation">(</span>ctx02<span class="token punctuation">,</span> <span class="token string">"item"</span><span class="token punctuation">,</span> <span class="token string">"CPU"</span><span class="token punctuation">)</span>
+
+	<span class="token keyword">defer</span> <span class="token function">cancel</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	<span class="token keyword">for</span> i <span class="token operator">:=</span><span class="token number">1</span> <span class="token punctuation">;</span> i <span class="token operator">&lt;=</span> <span class="token number">5</span><span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">go</span> <span class="token function">job4</span><span class="token punctuation">(</span>ctx03<span class="token punctuation">,</span> i<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span><span class="token number">5</span>  <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+	<span class="token keyword">if</span> ctx02<span class="token punctuation">.</span><span class="token function">Err</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"监控器取消的原因: "</span><span class="token punctuation">,</span> ctx02<span class="token punctuation">.</span><span class="token function">Err</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"主程序退出！！"</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">job4</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> number <span class="token builtin">int</span><span class="token punctuation">)</span>  <span class="token punctuation">&#123;</span>
+	<span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">select</span> <span class="token punctuation">&#123;</span>
+			<span class="token keyword">case</span> <span class="token operator">&lt;-</span> ctx<span class="token punctuation">.</span><span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+				fmt<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"监控器%v，监控结束。\n"</span><span class="token punctuation">,</span> number<span class="token punctuation">)</span>
+				<span class="token keyword">return</span>
+			<span class="token keyword">default</span><span class="token punctuation">:</span>
+				<span class="token comment">// 获取 item 的值</span>
+				value <span class="token operator">:=</span> ctx<span class="token punctuation">.</span><span class="token function">Value</span><span class="token punctuation">(</span><span class="token string">"item"</span><span class="token punctuation">)</span>
+				fmt<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"监控器%v，正在监控 %v \n"</span><span class="token punctuation">,</span> number<span class="token punctuation">,</span> value<span class="token punctuation">)</span>
+				time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span><span class="token number">2</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+		<span class="token punctuation">&#125;</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">监控器<span class="token number">5</span>，正在监控 CPU 
+监控器<span class="token number">1</span>，正在监控 CPU 
+监控器<span class="token number">4</span>，正在监控 CPU 
+监控器<span class="token number">3</span>，正在监控 CPU 
+监控器<span class="token number">2</span>，正在监控 CPU 
+监控器<span class="token number">3</span>，监控结束。
+监控器<span class="token number">1</span>，监控结束。
+监控器<span class="token number">5</span>，监控结束。
+监控器<span class="token number">4</span>，监控结束。
+监控器<span class="token number">2</span>，监控结束。
+监控器取消的原因<span class="token punctuation">:</span>  context deadline exceeded
+主程序退出！！<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/3511098127.html">https://blog.mailjob.net/posts/3511098127.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81Context"><span class="toc-text">为什么需要Context</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E5%8D%95%E4%BD%BF%E7%94%A8Context"><span class="toc-text">简单使用Context</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E5%88%86%E6%9E%90"><span class="toc-text">代码分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B9Context-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="toc-text">根Context 是什么？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Context-%E7%9A%84%E7%BB%A7%E6%89%BF%E8%A1%8D%E7%94%9F"><span class="toc-text">Context 的继承衍生</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#WithCancel"><span class="toc-text">WithCancel</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#WithDeadline"><span class="toc-text">WithDeadline</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#WithTimeout"><span class="toc-text">WithTimeout</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#WithValue"><span class="toc-text">WithValue</span></a></li></ol></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

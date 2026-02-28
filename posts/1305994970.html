@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>think-swoole 和 laravels 的简单使用 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="参考文献 think-swoole ThinkPHP 6.0 开发文档：https:&#x2F;&#x2F;www.kancloud.cn&#x2F;manual&#x2F;thinkphp6_0&#x2F;1037479 Think-swoole 文档：https:&#x2F;&#x2F;www.kancloud.cn&#x2F;manual&#x2F;thinkphp6_0&#x2F;1359700 socket.io 客户端Api：https:&#x2F;&#x2F;www.w3cschool.cn&#x2F;sock">
+<meta property="og:type" content="article">
+<meta property="og:title" content="think-swoole 和 laravels 的简单使用">
+<meta property="og:url" content="https://blog.mailjob.net/posts/1305994970.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="参考文献 think-swoole ThinkPHP 6.0 开发文档：https:&#x2F;&#x2F;www.kancloud.cn&#x2F;manual&#x2F;thinkphp6_0&#x2F;1037479 Think-swoole 文档：https:&#x2F;&#x2F;www.kancloud.cn&#x2F;manual&#x2F;thinkphp6_0&#x2F;1359700 socket.io 客户端Api：https:&#x2F;&#x2F;www.w3cschool.cn&#x2F;sock">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-05-28T03:50:50.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.984Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="swoole">
+<meta name="twitter:card" content="summary">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            think-swoole 和 laravels 的简单使用
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/1305994970.html" class="article-date">
+	  <time datetime="2021-05-28T03:50:50.000Z" itemprop="datePublished">2021-05-28</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/php/">php</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/swoole/" rel="tag">swoole</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/1305994970.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 411(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 1(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="参考文献">参考文献</h2>
+<h3 id="think-swoole">think-swoole</h3>
+<p>ThinkPHP 6.0 开发文档：<a target="_blank" rel="noopener" href="https://www.kancloud.cn/manual/thinkphp6_0/1037479">https://www.kancloud.cn/manual/thinkphp6_0/1037479</a></p>
+<p>Think-swoole 文档：<a target="_blank" rel="noopener" href="https://www.kancloud.cn/manual/thinkphp6_0/1359700">https://www.kancloud.cn/manual/thinkphp6_0/1359700</a></p>
+<p><a target="_blank" rel="noopener" href="http://socket.io">socket.io</a> 客户端Api：<a target="_blank" rel="noopener" href="https://www.w3cschool.cn/socket/socket-k49j2eia.html">https://www.w3cschool.cn/socket/socket-k49j2eia.html</a></p>
+<p>代码下载：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/dev_swoole/tree/master/210529_think-swoole">https://github.com/mailjobblog/dev_swoole/tree/master/210529_think-swoole</a></p>
+<h3 id="laravels">laravels</h3>
+<p>Laravel 开发文档：<a target="_blank" rel="noopener" href="https://learnku.com/docs/laravel/8.x/installation/9354">https://learnku.com/docs/laravel/8.x/installation/9354</a></p>
+<p>laravels 中文文档：<a target="_blank" rel="noopener" href="https://github.com/hhxsv5/laravel-s/blob/master/README-CN.md">https://github.com/hhxsv5/laravel-s/blob/master/README-CN.md</a></p>
+<p>代码下载：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/dev_swoole/tree/master/210601_laravels">https://github.com/mailjobblog/dev_swoole/tree/master/210601_laravels</a></p>
+<p>inotify修改代码后自动Reload：<a target="_blank" rel="noopener" href="https://github.com/hhxsv5/laravel-s/blob/master/README-CN.md#%E4%BF%AE%E6%94%B9%E4%BB%A3%E7%A0%81%E5%90%8E%E8%87%AA%E5%8A%A8reload">https://github.com/hhxsv5/laravel-s/blob/master/README-CN.md#修改代码后自动reload</a></p>
+<p>supervisorctl使用详解：<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/0b9054b33db3">https://www.jianshu.com/p/0b9054b33db3</a></p>
+<h2 id="常见问题">常见问题</h2>
+<p><strong>think-swoole的通信协议问题</strong></p>
+<p>think-swoole 中的websocket协议聊天，使用的是 <a target="_blank" rel="noopener" href="http://socket.io">socket.io</a> 协议，开发的时候要注意规范。</p>
+<p>举个例子，比如 websocket 客户端可以使用 send 向服务端发送消息，但是 <a target="_blank" rel="noopener" href="http://socket.io">socket.io</a> 使用的是 emit 发送消息。</p>
+<p>还有事件的绑定，客户端绑定的事件名称要和服务端监听的事件名称一致。</p>
+<p><strong>swoole是长驻内存，修改代码后需要重启服务吗</strong></p>
+<p>由于swoole服务启动后会把 php-fpm 加载到服务里面，所以php每次访问的时候直接访问服务而省去了服务启动步骤。但是这样做的时候，新加入程序代码由于是在服务器启动后加入的，没有被加入到服务中，导致修改的代码不生效。</p>
+<p>所以针对这个问题，有如下的解决方案：</p>
+<ul>
+<li>采用swoole提供的 <code>reload</code> 重载方法，<a target="_blank" rel="noopener" href="https://wiki.swoole.com/#/server/methods?id=reload">点击链接</a> 阅读</li>
+<li>采用第三方软件<code>inotify</code>实现自动重栽，参考上文中的链接</li>
+</ul>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/1305994970.html">https://blog.mailjob.net/posts/1305994970.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#think-swoole"><span class="toc-text">think-swoole</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#laravels"><span class="toc-text">laravels</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98"><span class="toc-text">常见问题</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

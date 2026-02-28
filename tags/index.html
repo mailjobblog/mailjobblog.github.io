@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>标签 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="编程知识分享，让学习与工作变得更简单。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="标签">
+<meta property="og:url" content="https://blog.mailjob.net/tags/index.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="编程知识分享，让学习与工作变得更简单。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-02-28T10:56:06.989Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.989Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端">
+<meta name="twitter:card" content="summary">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            <h1 itemprop="title">tag</h1>
+            <p class="text-gray-600">共 21 个标签</p>
+        </header>
+        <div class="article-body">
+            
+    <div class="widget">
+        
+        <div class="widget-body tagcloud">
+            <a href="/tags/blog/" style="font-size: 13.46px;">blog</a> <a href="/tags/design/" style="font-size: 13.23px;">design</a> <a href="/tags/docker/" style="font-size: 13.23px;">docker</a> <a href="/tags/es/" style="font-size: 13.15px;">es</a> <a href="/tags/etcd/" style="font-size: 13px;">etcd</a> <a href="/tags/go/" style="font-size: 13.77px;">go</a> <a href="/tags/haproxy/" style="font-size: 13.08px;">haproxy</a> <a href="/tags/keepalived/" style="font-size: 13px;">keepalived</a> <a href="/tags/linux/" style="font-size: 13.38px;">linux</a> <a href="/tags/middle/" style="font-size: 13.31px;">middle</a> <a href="/tags/mongodb/" style="font-size: 13px;">mongodb</a> <a href="/tags/mycat/" style="font-size: 13px;">mycat</a> <a href="/tags/mysql/" style="font-size: 14px;">mysql</a> <a href="/tags/nginx/" style="font-size: 13.08px;">nginx</a> <a href="/tags/openresty/" style="font-size: 13px;">openresty</a> <a href="/tags/php/" style="font-size: 13.85px;">php</a> <a href="/tags/rabbitmq/" style="font-size: 13.08px;">rabbitmq</a> <a href="/tags/redis/" style="font-size: 13.92px;">redis</a> <a href="/tags/swoole/" style="font-size: 13.69px;">swoole</a> <a href="/tags/%E7%AE%97%E6%B3%95/" style="font-size: 13.54px;">算法</a> <a href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" style="font-size: 13.62px;">高可用</a>
+        </div>
+    </div>
+
+
+            
+            <section class="year-archive">
+    <header>
+        <h1><a href="/tags/%E7%AE%97%E6%B3%95/" >算法</a></h1>
+    </header>
+    <div class="archive-content">
+        
+            <a href="/posts/328609408.html" class="post-item">
+                <div class="post-time">2021-02-02</div>
+                <div class="post-title">二叉树算法</div>
+            </a>
+        
+            <a href="/posts/1443742517.html" class="post-item">
+                <div class="post-time">2021-02-01</div>
+                <div class="post-title">冒泡排序算法</div>
+            </a>
+        
+            <a href="/posts/1609405799.html" class="post-item">
+                <div class="post-time">2021-02-01</div>
+                <div class="post-title">插入排序算法</div>
+            </a>
+        
+            <a href="/posts/3723429316.html" class="post-item">
+                <div class="post-time">2021-03-21</div>
+                <div class="post-title">算法：求数列中的最大连续数列</div>
+            </a>
+        
+            <a href="/posts/4172544170.html" class="post-item">
+                <div class="post-time">2021-03-20</div>
+                <div class="post-title">算法：求数组中不存在的值</div>
+            </a>
+        
+            <a href="/posts/2477822459.html" class="post-item">
+                <div class="post-time">2021-02-01</div>
+                <div class="post-title">选择排序算法</div>
+            </a>
+        
+            <a href="/posts/973118456.html" class="post-item">
+                <div class="post-time">2021-03-19</div>
+                <div class="post-title">代数表达式计算</div>
+            </a>
+        
+            <a href="/posts/1258387680.html" class="post-item">
+                <div class="post-time">2021-03-19</div>
+                <div class="post-title">数据结构与算法</div>
+            </a>
+        
+            <a href="/posts/434391789.html" class="post-item">
+                <div class="post-time">2021-03-19</div>
+                <div class="post-title">算法的时间复杂度</div>
+            </a>
+        
+            <a href="/posts/2137486220.html" class="post-item">
+                <div class="post-time">2021-03-19</div>
+                <div class="post-title">算法的特性</div>
+            </a>
+        
+            <a href="/posts/783699447.html" class="post-item">
+                <div class="post-time">2021-03-19</div>
+                <div class="post-title">算法的空间复杂度</div>
+            </a>
+        
+            <a href="/posts/1510537755.html" class="post-item">
+                <div class="post-time">2021-03-19</div>
+                <div class="post-title">算法的设计和实现原则</div>
+            </a>
+        
+            <a href="/posts/349792798.html" class="post-item">
+                <div class="post-time">2021-10-18</div>
+                <div class="post-title">计算机中的程序调用栈</div>
+            </a>
+        
+            <a href="/posts/1602934053.html" class="post-item">
+                <div class="post-time">2021-03-08</div>
+                <div class="post-title">计算机进制运算</div>
+            </a>
+        
+    </div>
+</section>
+
+
+            
+            <section class="year-archive">
+    <header>
+        <h1><a href="/tags/docker/" >docker</a></h1>
+    </header>
+    <div class="archive-content">
+        
+            <a href="/posts/3366347541.html" class="post-item">
+                <div class="post-time">2021-04-16</div>
+                <div class="post-title">Dockerfile定制LNMP环境</div>
+            </a>
+        
+            <a href="/posts/3712804477.html" class="post-item">
+                <div class="post-time">2021-05-19</div>
+                <div class="post-title">Docker安装php扩展常见的几种方式总结</div>
+            </a>
+        
+            <a href="/posts/2968099460.html" class="post-item">
+                <div class="post-time">2021-03-12</div>
+                <div class="post-title">Docker发布node-hexo镜像</div>
+            </a>
+        
+            <a href="/posts/2177748022.html" class="post-item">
+                <div class="post-time">2021-03-20</div>
+                <div class="post-title">docker 整体架构</div>
+            </a>
+        
+            <a href="/posts/865867745.html" class="post-item">
+                <div class="post-time">2021-09-14</div>
+                <div class="post-title">Dnmp中使用Supervisor监控php进程状态</div>
+            </a>
+        
+    </div>
+</section>
+
+
+            
+            <section class="year-archive">
+    <header>
+        <h1><a href="/tags/php/" >php</a></h1>
+    </header>
+    <div class="archive-content">
+        
+            <a href="/posts/3366347541.html" class="post-item">
+                <div class="post-time">2021-04-16</div>
+                <div class="post-title">Dockerfile定制LNMP环境</div>
+            </a>
+        
+            <a href="/posts/3712804477.html" class="post-item">
+                <div class="post-time">2021-05-19</div>
+                <div class="post-title">Docker安装php扩展常见的几种方式总结</div>
+            </a>
+        
+            <a href="/posts/2084750826.html" class="post-item">
+                <div class="post-time">2024-10-09</div>
+                <div class="post-title">解决项目部署CORS跨域问题</div>
+            </a>
+        
+            <a href="/posts/1634640555.html" class="post-item">
+                <div class="post-time">2021-04-03</div>
+                <div class="post-title">雪花算法Snowflake实践</div>
+            </a>
+        
+            <a href="/posts/44686976.html" class="post-item">
+                <div class="post-time">2021-03-06</div>
+                <div class="post-title">PHP之DI依赖注入</div>
+            </a>
+        
+            <a href="/posts/4100310017.html" class="post-item">
+                <div class="post-time">2023-07-28</div>
+                <div class="post-title">Laravel全局处理数据库异常回滚</div>
+            </a>
+        
+            <a href="/posts/561728179.html" class="post-item">
+                <div class="post-time">2021-03-06</div>
+                <div class="post-title">PHP之IOC容器基础概念</div>
+            </a>
+        
+            <a href="/posts/791002179.html" class="post-item">
+                <div class="post-time">2021-03-06</div>
+                <div class="post-title">PHP之IOC容器控制反转</div>
+            </a>
+        
+            <a href="/posts/1827798542.html" class="post-item">
+                <div class="post-time">2021-03-19</div>
+                <div class="post-title">Opcache加速PHP</div>
+            </a>
+        
+            <a href="/posts/1257496367.html" class="post-item">
+                <div class="post-time">2021-03-06</div>
+                <div class="post-title">laravel8 IOC容器的基本使用</div>
+            </a>
+        
+            <a href="/posts/1844886816.html" class="post-item">
+                <div class="post-time">2023-07-05</div>
+                <div class="post-title">Laravel数据查询优化最佳实践</div>
+            </a>
+        
+            <a href="/posts/194135748.html" class="post-item">
+                <div class="post-time">2023-07-05</div>
+                <div class="post-title">Laravel项目Exception优化最佳实践</div>
+            </a>
+        
+            <a href="/posts/1457787139.html" class="post-item">
+                <div class="post-time">2021-02-09</div>
+                <div class="post-title">PHP 中 Trait 的使用</div>
+            </a>
+        
+            <a href="/posts/2090888404.html" class="post-item">
+                <div class="post-time">2021-03-19</div>
+                <div class="post-title">PHP添加新的扩展</div>
+            </a>
+        
+            <a href="/posts/3069224484.html" class="post-item">
+                <div class="post-time">2023-06-29</div>
+                <div class="post-title">shell检查php项目是否存在语法错误</div>
+            </a>
+        
+            <a href="/posts/1641127480.html" class="post-item">
+                <div class="post-time">2021-03-21</div>
+                <div class="post-title">大数据分页优化</div>
+            </a>
+        
+            <a href="/posts/3400454965.html" class="post-item">
+                <div class="post-time">2021-03-19</div>
+                <div class="post-title">PHP的错误与异常处理</div>
+            </a>
+        
+            <a href="/posts/3227764495.html" class="post-item">
+                <div class="post-time">2021-03-19</div>
+                <div class="post-title">PHP魔术方法</div>
+            </a>
+        
+            <a href="/posts/1280406180.html" class="post-item">
+                <div class="post-time">2021-05-19</div>
+                <div class="post-title">PHP中event扩展简单使用</div>
+            </a>
+        
+            <a href="/posts/877067227.html" class="post-item">
+                <div class="post-time">2021-05-08</div>
+                <div class="post-title">PHP中 event 事件扩展安装</div>
+            </a>
+        
+            <a href="/posts/3605085039.html" class="post-item">
+                <div class="post-time">2021-05-19</div>
+                <div class="post-title">PHP实现IO异步模型(asynchronous)</div>
+            </a>
+        
+            <a href="/posts/3520988043.html" class="post-item">
+                <div class="post-time">2021-04-01</div>
+                <div class="post-title">PHP实现IO阻塞模型(blocking)</div>
+            </a>
+        
+            <a href="/posts/3624417909.html" class="post-item">
+                <div class="post-time">2021-05-08</div>
+                <div class="post-title">PHP实现一个简单的事件逻辑</div>
+            </a>
+        
+            <a href="/posts/236519737.html" class="post-item">
+                <div class="post-time">2021-05-20</div>
+                <div class="post-title">PHP简单实现Reactor模型</div>
+            </a>
+        
+    </div>
+</section>
+
+
+            
+            <section class="year-archive">
+    <header>
+        <h1><a href="/tags/design/" >design</a></h1>
+    </header>
+    <div class="archive-content">
+        
+            <a href="/posts/305120434.html" class="post-item">
+                <div class="post-time">2021-04-28</div>
+                <div class="post-title">UML类图</div>
+            </a>
+        
+            <a href="/posts/44686976.html" class="post-item">
+                <div class="post-time">2021-03-06</div>
+                <div class="post-title">PHP之DI依赖注入</div>
+            </a>
+        
+            <a href="/posts/561728179.html" class="post-item">
+                <div class="post-time">2021-03-06</div>
+                <div class="post-title">PHP之IOC容器基础概念</div>
+            </a>
+        
+            <a href="/posts/791002179.html" class="post-item">
+                <div class="post-time">2021-03-06</div>
+                <div class="post-title">PHP之IOC容器控制反转</div>
+            </a>
+        
+            <a href="/posts/1257496367.html" class="post-item">
+                <div class="post-time">2021-03-06</div>
+                <div class="post-title">laravel8 IOC容器的基本使用</div>
+            </a>
+        
+    </div>
+</section>
+
+
+            
+            <section class="year-archive">
+    <header>
+        <h1><a href="/tags/es/" >es</a></h1>
+    </header>
+    <div class="archive-content">
+        
+            <a href="/posts/851714611.html" class="post-item">
+                <div class="post-time">2021-02-21</div>
+                <div class="post-title">Elasticsearch 可视化工具的安装</div>
+            </a>
+        
+            <a href="/posts/729016645.html" class="post-item">
+                <div class="post-time">2021-02-22</div>
+                <div class="post-title">Elasticsearch 基本概念</div>
+            </a>
+        
+            <a href="/posts/1687587448.html" class="post-item">
+                <div class="post-time">2021-02-22</div>
+                <div class="post-title">Elasticsearch 基础使用</div>
+            </a>
+        
+            <a href="/posts/3881742560.html" class="post-item">
+                <div class="post-time">2021-02-21</div>
+                <div class="post-title">Elasticsearch 的安装</div>
+            </a>
+        
+    </div>
+</section>
+
+
+            
+            <section class="year-archive">
+    <header>
+        <h1><a href="/tags/middle/" >middle</a></h1>
+    </header>
+    <div class="archive-content">
+        
+            <a href="/posts/851714611.html" class="post-item">
+                <div class="post-time">2021-02-21</div>
+                <div class="post-title">Elasticsearch 可视化工具的安装</div>
+            </a>
+        
+            <a href="/posts/729016645.html" class="post-item">
+                <div class="post-time">2021-02-22</div>
+                <div class="post-title">Elasticsearch 基本概念</div>
+            </a>
+        
+            <a href="/posts/1687587448.html" class="post-item">
+                <div class="post-time">2021-02-22</div>
+                <div class="post-title">Elasticsearch 基础使用</div>
+            </a>
+        
+            <a href="/posts/3881742560.html" class="post-item">
+                <div class="post-time">2021-02-21</div>
+                <div class="post-title">Elasticsearch 的安装</div>
+            </a>
+        
+            <a href="/posts/938781682.html" class="post-item">
+                <div class="post-time">2021-03-08</div>
+                <div class="post-title">RabbitMQ 基础概念</div>
+            </a>
+        
+            <a href="/posts/49598093.html" class="post-item">
+                <div class="post-time">2021-03-08</div>
+                <div class="post-title">RabbitMQ 的常见工作模式</div>
+            </a>
+        
+    </div>
+</section>
+
+
+            
+            <section class="year-archive">
+    <header>
+        <h1><a href="/tags/go/" >go</a></h1>
+    </header>
+    <div class="archive-content">
+        
+            <a href="/posts/1949210776.html" class="post-item">
+                <div class="post-time">2021-09-14</div>
+                <div class="post-title">Go中的指针</div>
+            </a>
+        
+            <a href="/posts/3190342588.html" class="post-item">
+                <div class="post-time">2022-01-13</div>
+                <div class="post-title">Go原生方法实现RPC</div>
+            </a>
+        
+            <a href="/posts/1433951833.html" class="post-item">
+                <div class="post-time">2022-01-16</div>
+                <div class="post-title">Go实现gRPC</div>
+            </a>
+        
+            <a href="/posts/1304110700.html" class="post-item">
+                <div class="post-time">2022-08-01</div>
+                <div class="post-title">Go项目多阶段构建Docker镜像</div>
+            </a>
+        
+            <a href="/posts/2809645964.html" class="post-item">
+                <div class="post-time">2022-05-15</div>
+                <div class="post-title">Go Interface 合法验证</div>
+            </a>
+        
+            <a href="/posts/705227109.html" class="post-item">
+                <div class="post-time">2021-11-02</div>
+                <div class="post-title">Go flag开发命令行工具</div>
+            </a>
+        
+            <a href="/posts/603905715.html" class="post-item">
+                <div class="post-time">2021-11-02</div>
+                <div class="post-title">Go pprof性能调优</div>
+            </a>
+        
+            <a href="/posts/3307624659.html" class="post-item">
+                <div class="post-time">2023-07-26</div>
+                <div class="post-title">使用go-redis/redismock做Redis单元测试</div>
+            </a>
+        
+            <a href="/posts/3002692221.html" class="post-item">
+                <div class="post-time">2021-10-19</div>
+                <div class="post-title">Go切片导致的内存泄露</div>
+            </a>
+        
+            <a href="/posts/1859125472.html" class="post-item">
+                <div class="post-time">2021-11-16</div>
+                <div class="post-title">Go实现常见的数据结构</div>
+            </a>
+        
+            <a href="/posts/2723567567.html" class="post-item">
+                <div class="post-time">2022-06-22</div>
+                <div class="post-title">Go 环境搭建</div>
+            </a>
+        
+            <a href="/posts/1797831078.html" class="post-item">
+                <div class="post-time">2021-11-15</div>
+                <div class="post-title">用Go写出面向对象风格的代码</div>
+            </a>
+        
+            <a href="/posts/1765858488.html" class="post-item">
+                <div class="post-time">2022-01-06</div>
+                <div class="post-title">etcd介绍与安装</div>
+            </a>
+        
+            <a href="/posts/485460363.html" class="post-item">
+                <div class="post-time">2021-12-23</div>
+                <div class="post-title">Go工程化:函数式选项模式</div>
+            </a>
+        
+            <a href="/posts/1692897008.html" class="post-item">
+                <div class="post-time">2022-05-11</div>
+                <div class="post-title">Go安装可执行工具</div>
+            </a>
+        
+            <a href="/posts/200966482.html" class="post-item">
+                <div class="post-time">2021-11-18</div>
+                <div class="post-title">Go逃逸分析详解</div>
+            </a>
+        
+            <a href="/posts/3441264596.html" class="post-item">
+                <div class="post-time">2021-11-15</div>
+                <div class="post-title">Go图解内存分配器</div>
+            </a>
+        
+            <a href="/posts/1913058821.html" class="post-item">
+                <div class="post-time">2021-11-18</div>
+                <div class="post-title">Go垃圾回收机制</div>
+            </a>
+        
+            <a href="/posts/4277305350.html" class="post-item">
+                <div class="post-time">2021-11-17</div>
+                <div class="post-title">Go深入理解Map</div>
+            </a>
+        
+            <a href="/posts/3511098127.html" class="post-item">
+                <div class="post-time">2021-11-19</div>
+                <div class="post-title">Go 标准库Context</div>
+            </a>
+        
+            <a href="/posts/3472441059.html" class="post-item">
+                <div class="post-time">2021-11-02</div>
+                <div class="post-title">Go 单元测试</div>
+            </a>
+        
+            <a href="/posts/1696354643.html" class="post-item">
+                <div class="post-time">2023-02-22</div>
+                <div class="post-title">如何用go实现一个ORM</div>
+            </a>
+        
+    </div>
+</section>
+
+
+            
+            <section class="year-archive">
+    <header>
+        <h1><a href="/tags/redis/" >redis</a></h1>
+    </header>
+    <div class="archive-content">
+        
+            <a href="/posts/3307624659.html" class="post-item">
+                <div class="post-time">2023-07-26</div>
+                <div class="post-title">使用go-redis/redismock做Redis单元测试</div>
+            </a>
+        
+            <a href="/posts/506822510.html" class="post-item">
+                <div class="post-time">2021-03-08</div>
+                <div class="post-title">计算机存储单位之间关系</div>
+            </a>
+        
+            <a href="/posts/7164113.html" class="post-item">
+                <div class="post-time">2021-01-20</div>
+                <div class="post-title">Redis布隆过滤器</div>
+            </a>
+        
+            <a href="/posts/4139171783.html" class="post-item">
+                <div class="post-time">2021-01-24</div>
+                <div class="post-title">OpenResty多级缓存策略</div>
+            </a>
+        
+            <a href="/posts/4012986220.html" class="post-item">
+                <div class="post-time">2021-01-19</div>
+                <div class="post-title">Redis-lua脚本</div>
+            </a>
+        
+            <a href="/posts/1298018908.html" class="post-item">
+                <div class="post-time">2021-01-20</div>
+                <div class="post-title">Redis事务</div>
+            </a>
+        
+            <a href="/posts/2661519066.html" class="post-item">
+                <div class="post-time">2021-01-24</div>
+                <div class="post-title">redis内存淘汰策略</div>
+            </a>
+        
+            <a href="/posts/403285957.html" class="post-item">
+                <div class="post-time">2021-01-20</div>
+                <div class="post-title">Redis击穿-穿透-雪崩</div>
+            </a>
+        
+            <a href="/posts/184426363.html" class="post-item">
+                <div class="post-time">2021-01-30</div>
+                <div class="post-title">redis持久化之 RDB 和 AOF</div>
+            </a>
+        
+            <a href="/posts/283315164.html" class="post-item">
+                <div class="post-time">2021-01-20</div>
+                <div class="post-title">Redis日志showlog和管道pileline</div>
+            </a>
+        
+            <a href="/posts/2416487960.html" class="post-item">
+                <div class="post-time">2021-01-19</div>
+                <div class="post-title">Redis发布订阅（广播）</div>
+            </a>
+        
+            <a href="/posts/554541226.html" class="post-item">
+                <div class="post-time">2021-01-19</div>
+                <div class="post-title">Redis数据类型Hash</div>
+            </a>
+        
+            <a href="/posts/3028105738.html" class="post-item">
+                <div class="post-time">2021-01-19</div>
+                <div class="post-title">Redis数据类型List</div>
+            </a>
+        
+            <a href="/posts/2444915141.html" class="post-item">
+                <div class="post-time">2021-01-19</div>
+                <div class="post-title">Redis数据类型Set（集合）</div>
+            </a>
+        
+            <a href="/posts/4252474854.html" class="post-item">
+                <div class="post-time">2021-01-19</div>
+                <div class="post-title">Redis数据类型Stream</div>
+            </a>
+        
+            <a href="/posts/2468385107.html" class="post-item">
+                <div class="post-time">2021-01-19</div>
+                <div class="post-title">Redis数据类型String</div>
+            </a>
+        
+            <a href="/posts/1639138749.html" class="post-item">
+                <div class="post-time">2021-01-19</div>
+                <div class="post-title">Redis数据类型Zset（有序集合）</div>
+            </a>
+        
+            <a href="/posts/3302527039.html" class="post-item">
+                <div class="post-time">2021-02-06</div>
+                <div class="post-title">Redis主从复制-增量同步</div>
+            </a>
+        
+            <a href="/posts/1586519326.html" class="post-item">
+                <div class="post-time">2021-02-03</div>
+                <div class="post-title">Redis主从复制 - 实战搭建</div>
+            </a>
+        
+            <a href="/posts/707463622.html" class="post-item">
+                <div class="post-time">2021-02-03</div>
+                <div class="post-title">Redis主从复制 - 实现原理</div>
+            </a>
+        
+            <a href="/posts/3529675595.html" class="post-item">
+                <div class="post-time">2021-02-04</div>
+                <div class="post-title">Redis哨兵 - 实战搭建</div>
+            </a>
+        
+            <a href="/posts/2778025183.html" class="post-item">
+                <div class="post-time">2021-02-04</div>
+                <div class="post-title">Redis哨兵 - 故障自动转移</div>
+            </a>
+        
+            <a href="/posts/1396323676.html" class="post-item">
+                <div class="post-time">2021-02-06</div>
+                <div class="post-title">Redis哨兵选举算法Raft</div>
+            </a>
+        
+            <a href="/posts/2893278639.html" class="post-item">
+                <div class="post-time">2021-02-08</div>
+                <div class="post-title">Redis集群哈希槽数据分片</div>
+            </a>
+        
+            <a href="/posts/2057957110.html" class="post-item">
+                <div class="post-time">2021-02-08</div>
+                <div class="post-title">Redis集群实战搭建</div>
+            </a>
+        
+            <a href="/posts/451827519.html" class="post-item">
+                <div class="post-time">2021-02-08</div>
+                <div class="post-title">Redis集群实现步骤与原理</div>
+            </a>
+        
+            <a href="/posts/3807265096.html" class="post-item">
+                <div class="post-time">2021-01-24</div>
+                <div class="post-title">Redis分布式锁的坑</div>
+            </a>
+        
+    </div>
+</section>
+
+
+            
+            <section class="year-archive">
+    <header>
+        <h1><a href="/tags/linux/" >linux</a></h1>
+    </header>
+    <div class="archive-content">
+        
+            <a href="/posts/3565199751.html" class="post-item">
+                <div class="post-time">2021-03-08</div>
+                <div class="post-title">Linux五大网络IO模型图解</div>
+            </a>
+        
+            <a href="/posts/1765858488.html" class="post-item">
+                <div class="post-time">2022-01-06</div>
+                <div class="post-title">etcd介绍与安装</div>
+            </a>
+        
+            <a href="/posts/353228769.html" class="post-item">
+                <div class="post-time">2021-02-07</div>
+                <div class="post-title">Linux CentOS 系统 防火墙管理</div>
+            </a>
+        
+            <a href="/posts/1118827110.html" class="post-item">
+                <div class="post-time">2021-01-26</div>
+                <div class="post-title">linux 服务器导入用户密钥登陆配置</div>
+            </a>
+        
+            <a href="/posts/2084750826.html" class="post-item">
+                <div class="post-time">2024-10-09</div>
+                <div class="post-title">解决项目部署CORS跨域问题</div>
+            </a>
+        
+            <a href="/posts/506822510.html" class="post-item">
+                <div class="post-time">2021-03-08</div>
+                <div class="post-title">计算机存储单位之间关系</div>
+            </a>
+        
+            <a href="/posts/4139171783.html" class="post-item">
+                <div class="post-time">2021-01-24</div>
+                <div class="post-title">OpenResty多级缓存策略</div>
+            </a>
+        
+            <a href="/posts/3241690067.html" class="post-item">
+                <div class="post-time">2021-02-26</div>
+                <div class="post-title">TCP、HTTP、Socket、Socket连接池</div>
+            </a>
+        
+            <a href="/posts/31352437.html" class="post-item">
+                <div class="post-time">2022-05-01</div>
+                <div class="post-title">Nginx基础知识总结</div>
+            </a>
+        
+    </div>
+</section>
+
+
+            
+            <section class="year-archive">
+    <header>
+        <h1><a href="/tags/swoole/" >swoole</a></h1>
+    </header>
+    <div class="archive-content">
+        
+            <a href="/posts/3565199751.html" class="post-item">
+                <div class="post-time">2021-03-08</div>
+                <div class="post-title">Linux五大网络IO模型图解</div>
+            </a>
+        
+            <a href="/posts/1280406180.html" class="post-item">
+                <div class="post-time">2021-05-19</div>
+                <div class="post-title">PHP中event扩展简单使用</div>
+            </a>
+        
+            <a href="/posts/1073733062.html" class="post-item">
+                <div class="post-time">2021-04-26</div>
+                <div class="post-title">PHP实现IO复用模型(multiplexing)</div>
+            </a>
+        
+            <a href="/posts/877067227.html" class="post-item">
+                <div class="post-time">2021-05-08</div>
+                <div class="post-title">PHP中 event 事件扩展安装</div>
+            </a>
+        
+            <a href="/posts/3605085039.html" class="post-item">
+                <div class="post-time">2021-05-19</div>
+                <div class="post-title">PHP实现IO异步模型(asynchronous)</div>
+            </a>
+        
+            <a href="/posts/3520988043.html" class="post-item">
+                <div class="post-time">2021-04-01</div>
+                <div class="post-title">PHP实现IO阻塞模型(blocking)</div>
+            </a>
+        
+            <a href="/posts/724269720.html" class="post-item">
+                <div class="post-time">2021-04-25</div>
+                <div class="post-title">PHP实现IO非阻塞模型(no-blocking)</div>
+            </a>
+        
+            <a href="/posts/3624417909.html" class="post-item">
+                <div class="post-time">2021-05-08</div>
+                <div class="post-title">PHP实现一个简单的事件逻辑</div>
+            </a>
+        
+            <a href="/posts/92825410.html" class="post-item">
+                <div class="post-time">2021-05-07</div>
+                <div class="post-title">PHP实现信号驱动IO(Signal)</div>
+            </a>
+        
+            <a href="/posts/1057148844.html" class="post-item">
+                <div class="post-time">2021-04-26</div>
+                <div class="post-title">PHP实现异步IO模型(asynchronous)</div>
+            </a>
+        
+            <a href="/posts/236519737.html" class="post-item">
+                <div class="post-time">2021-05-20</div>
+                <div class="post-title">PHP简单实现Reactor模型</div>
+            </a>
+        
+            <a href="/posts/3050366645.html" class="post-item">
+                <div class="post-time">2021-05-25</div>
+                <div class="post-title">Swoole协程的多种实现方式</div>
+            </a>
+        
+            <a href="/posts/1911473056.html" class="post-item">
+                <div class="post-time">2021-05-25</div>
+                <div class="post-title">Swoole多进程普通实现(Process)</div>
+            </a>
+        
+            <a href="/posts/1102334855.html" class="post-item">
+                <div class="post-time">2021-05-27</div>
+                <div class="post-title">Swoole异步任务Task实现</div>
+            </a>
+        
+            <a href="/posts/144623936.html" class="post-item">
+                <div class="post-time">2021-03-27</div>
+                <div class="post-title">swoole健康检查</div>
+            </a>
+        
+            <a href="/posts/827300568.html" class="post-item">
+                <div class="post-time">2021-08-06</div>
+                <div class="post-title">consul介绍与安装</div>
+            </a>
+        
+            <a href="/posts/1459446780.html" class="post-item">
+                <div class="post-time">2021-05-26</div>
+                <div class="post-title">swoole协程之channel</div>
+            </a>
+        
+            <a href="/posts/1773018433.html" class="post-item">
+                <div class="post-time">2021-05-24</div>
+                <div class="post-title">swoole进程结构</div>
+            </a>
+        
+            <a href="/posts/1504081872.html" class="post-item">
+                <div class="post-time">2021-03-27</div>
+                <div class="post-title">tcp粘包问题解决</div>
+            </a>
+        
+            <a href="/posts/1305994970.html" class="post-item">
+                <div class="post-time">2021-05-28</div>
+                <div class="post-title">think-swoole 和 laravels 的简单使用</div>
+            </a>
+        
+            <a href="/posts/1438856121.html" class="post-item">
+                <div class="post-time">2021-04-27</div>
+                <div class="post-title">swoole 端口监听，关闭tcp服务</div>
+            </a>
+        
+    </div>
+</section>
+
+
+            
+            <section class="year-archive">
+    <header>
+        <h1><a href="/tags/etcd/" >etcd</a></h1>
+    </header>
+    <div class="archive-content">
+        
+            <a href="/posts/1765858488.html" class="post-item">
+                <div class="post-time">2022-01-06</div>
+                <div class="post-title">etcd介绍与安装</div>
+            </a>
+        
+    </div>
+</section>
+
+
+            
+            <section class="year-archive">
+    <header>
+        <h1><a href="/tags/rabbitmq/" >rabbitmq</a></h1>
+    </header>
+    <div class="archive-content">
+        
+            <a href="/posts/938781682.html" class="post-item">
+                <div class="post-time">2021-03-08</div>
+                <div class="post-title">RabbitMQ 基础概念</div>
+            </a>
+        
+            <a href="/posts/49598093.html" class="post-item">
+                <div class="post-time">2021-03-08</div>
+                <div class="post-title">RabbitMQ 的常见工作模式</div>
+            </a>
+        
+    </div>
+</section>
+
+
+            
+            <section class="year-archive">
+    <header>
+        <h1><a href="/tags/mysql/" >mysql</a></h1>
+    </header>
+    <div class="archive-content">
+        
+            <a href="/posts/506822510.html" class="post-item">
+                <div class="post-time">2021-03-08</div>
+                <div class="post-title">计算机存储单位之间关系</div>
+            </a>
+        
+            <a href="/posts/1916117752.html" class="post-item">
+                <div class="post-time">2021-02-20</div>
+                <div class="post-title">Mycat安装与使用</div>
+            </a>
+        
+            <a href="/posts/2674700618.html" class="post-item">
+                <div class="post-time">2023-06-28</div>
+                <div class="post-title">千万级记录数据表结构如何实现平滑变更</div>
+            </a>
+        
+            <a href="/posts/1634640555.html" class="post-item">
+                <div class="post-time">2021-04-03</div>
+                <div class="post-title">雪花算法Snowflake实践</div>
+            </a>
+        
+            <a href="/posts/1141007192.html" class="post-item">
+                <div class="post-time">2021-03-08</div>
+                <div class="post-title">常见的Mysql优化方案</div>
+            </a>
+        
+            <a href="/posts/1641127480.html" class="post-item">
+                <div class="post-time">2021-03-21</div>
+                <div class="post-title">大数据分页优化</div>
+            </a>
+        
+            <a href="/posts/1388878838.html" class="post-item">
+                <div class="post-time">2021-01-25</div>
+                <div class="post-title">常见的网站压测工具介绍与使用</div>
+            </a>
+        
+            <a href="/posts/891970811.html" class="post-item">
+                <div class="post-time">2021-02-17</div>
+                <div class="post-title">Mysql 数据库冷备份</div>
+            </a>
+        
+            <a href="/posts/3196783166.html" class="post-item">
+                <div class="post-time">2021-01-17</div>
+                <div class="post-title">InnoDB执行流程</div>
+            </a>
+        
+            <a href="/posts/2656561906.html" class="post-item">
+                <div class="post-time">2021-02-01</div>
+                <div class="post-title">innodb和myisam索引实现以及回表问题</div>
+            </a>
+        
+            <a href="/posts/2327774433.html" class="post-item">
+                <div class="post-time">2021-02-16</div>
+                <div class="post-title">MVCC 多版本并发控制机制详解</div>
+            </a>
+        
+            <a href="/posts/772494015.html" class="post-item">
+                <div class="post-time">2021-02-01</div>
+                <div class="post-title">mysql的BTree和B+Tree的区别</div>
+            </a>
+        
+            <a href="/posts/183747545.html" class="post-item">
+                <div class="post-time">2021-02-01</div>
+                <div class="post-title">Mysql Explain 详解</div>
+            </a>
+        
+            <a href="/posts/3275127377.html" class="post-item">
+                <div class="post-time">2021-02-15</div>
+                <div class="post-title">Mysql中的各种锁详解</div>
+            </a>
+        
+            <a href="/posts/1845596403.html" class="post-item">
+                <div class="post-time">2021-03-04</div>
+                <div class="post-title">Mysql 的 Checkpoint 机制</div>
+            </a>
+        
+            <a href="/posts/694055385.html" class="post-item">
+                <div class="post-time">2021-02-16</div>
+                <div class="post-title">Mysql的IO执行流程</div>
+            </a>
+        
+            <a href="/posts/3501359074.html" class="post-item">
+                <div class="post-time">2021-02-11</div>
+                <div class="post-title">Mysql索引介绍以及选择原则</div>
+            </a>
+        
+            <a href="/posts/3043506726.html" class="post-item">
+                <div class="post-time">2021-02-16</div>
+                <div class="post-title">Mysql事务4大特性（ACID）</div>
+            </a>
+        
+            <a href="/posts/607672036.html" class="post-item">
+                <div class="post-time">2021-02-16</div>
+                <div class="post-title">Mysql事务的隔离级别</div>
+            </a>
+        
+            <a href="/posts/2151902749.html" class="post-item">
+                <div class="post-time">2021-02-17</div>
+                <div class="post-title">数据库设计三范式</div>
+            </a>
+        
+            <a href="/posts/1867559540.html" class="post-item">
+                <div class="post-time">2021-02-18</div>
+                <div class="post-title">PT 工具解决 Mysql 主从复制一致性问题</div>
+            </a>
+        
+            <a href="/posts/3006260634.html" class="post-item">
+                <div class="post-time">2021-02-17</div>
+                <div class="post-title">Mysql 主从复制原理</div>
+            </a>
+        
+            <a href="/posts/2638475365.html" class="post-item">
+                <div class="post-time">2021-02-19</div>
+                <div class="post-title">Mysql Haproxy 实现高可用</div>
+            </a>
+        
+            <a href="/posts/3939687293.html" class="post-item">
+                <div class="post-time">2021-02-17</div>
+                <div class="post-title">Mysql 主从复制搭建</div>
+            </a>
+        
+            <a href="/posts/2867048371.html" class="post-item">
+                <div class="post-time">2021-02-19</div>
+                <div class="post-title">Mysql 用 Keepalived 和 Haproxy 实现高可用</div>
+            </a>
+        
+            <a href="/posts/3523564565.html" class="post-item">
+                <div class="post-time">2021-02-17</div>
+                <div class="post-title">Mysql 数据库热备份工具 Xtrabackup</div>
+            </a>
+        
+            <a href="/posts/1198915737.html" class="post-item">
+                <div class="post-time">2021-04-03</div>
+                <div class="post-title">mysql视图(View)</div>
+            </a>
+        
+            <a href="/posts/2162225682.html" class="post-item">
+                <div class="post-time">2021-02-17</div>
+                <div class="post-title">Mysql优化器追踪分析sql语句</div>
+            </a>
+        
+            <a href="/posts/3395218937.html" class="post-item">
+                <div class="post-time">2021-01-18</div>
+                <div class="post-title">Mysql 的6种日志类型</div>
+            </a>
+        
+            <a href="/posts/1022633166.html" class="post-item">
+                <div class="post-time">2021-02-18</div>
+                <div class="post-title">Percona Toolkit 工具检查 Mysql</div>
+            </a>
+        
+    </div>
+</section>
+
+
+            
+            <section class="year-archive">
+    <header>
+        <h1><a href="/tags/mycat/" >mycat</a></h1>
+    </header>
+    <div class="archive-content">
+        
+            <a href="/posts/1916117752.html" class="post-item">
+                <div class="post-time">2021-02-20</div>
+                <div class="post-title">Mycat安装与使用</div>
+            </a>
+        
+    </div>
+</section>
+
+
+            
+            <section class="year-archive">
+    <header>
+        <h1><a href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" >高可用</a></h1>
+    </header>
+    <div class="archive-content">
+        
+            <a href="/posts/7164113.html" class="post-item">
+                <div class="post-time">2021-01-20</div>
+                <div class="post-title">Redis布隆过滤器</div>
+            </a>
+        
+            <a href="/posts/4139171783.html" class="post-item">
+                <div class="post-time">2021-01-24</div>
+                <div class="post-title">OpenResty多级缓存策略</div>
+            </a>
+        
+            <a href="/posts/891970811.html" class="post-item">
+                <div class="post-time">2021-02-17</div>
+                <div class="post-title">Mysql 数据库冷备份</div>
+            </a>
+        
+            <a href="/posts/1867559540.html" class="post-item">
+                <div class="post-time">2021-02-18</div>
+                <div class="post-title">PT 工具解决 Mysql 主从复制一致性问题</div>
+            </a>
+        
+            <a href="/posts/3006260634.html" class="post-item">
+                <div class="post-time">2021-02-17</div>
+                <div class="post-title">Mysql 主从复制原理</div>
+            </a>
+        
+            <a href="/posts/2638475365.html" class="post-item">
+                <div class="post-time">2021-02-19</div>
+                <div class="post-title">Mysql Haproxy 实现高可用</div>
+            </a>
+        
+            <a href="/posts/3939687293.html" class="post-item">
+                <div class="post-time">2021-02-17</div>
+                <div class="post-title">Mysql 主从复制搭建</div>
+            </a>
+        
+            <a href="/posts/2867048371.html" class="post-item">
+                <div class="post-time">2021-02-19</div>
+                <div class="post-title">Mysql 用 Keepalived 和 Haproxy 实现高可用</div>
+            </a>
+        
+            <a href="/posts/3302527039.html" class="post-item">
+                <div class="post-time">2021-02-06</div>
+                <div class="post-title">Redis主从复制-增量同步</div>
+            </a>
+        
+            <a href="/posts/1586519326.html" class="post-item">
+                <div class="post-time">2021-02-03</div>
+                <div class="post-title">Redis主从复制 - 实战搭建</div>
+            </a>
+        
+            <a href="/posts/707463622.html" class="post-item">
+                <div class="post-time">2021-02-03</div>
+                <div class="post-title">Redis主从复制 - 实现原理</div>
+            </a>
+        
+            <a href="/posts/3529675595.html" class="post-item">
+                <div class="post-time">2021-02-04</div>
+                <div class="post-title">Redis哨兵 - 实战搭建</div>
+            </a>
+        
+            <a href="/posts/2778025183.html" class="post-item">
+                <div class="post-time">2021-02-04</div>
+                <div class="post-title">Redis哨兵 - 故障自动转移</div>
+            </a>
+        
+            <a href="/posts/1396323676.html" class="post-item">
+                <div class="post-time">2021-02-06</div>
+                <div class="post-title">Redis哨兵选举算法Raft</div>
+            </a>
+        
+            <a href="/posts/2893278639.html" class="post-item">
+                <div class="post-time">2021-02-08</div>
+                <div class="post-title">Redis集群哈希槽数据分片</div>
+            </a>
+        
+            <a href="/posts/2057957110.html" class="post-item">
+                <div class="post-time">2021-02-08</div>
+                <div class="post-title">Redis集群实战搭建</div>
+            </a>
+        
+            <a href="/posts/451827519.html" class="post-item">
+                <div class="post-time">2021-02-08</div>
+                <div class="post-title">Redis集群实现步骤与原理</div>
+            </a>
+        
+            <a href="/posts/3523564565.html" class="post-item">
+                <div class="post-time">2021-02-17</div>
+                <div class="post-title">Mysql 数据库热备份工具 Xtrabackup</div>
+            </a>
+        
+            <a href="/posts/1022633166.html" class="post-item">
+                <div class="post-time">2021-02-18</div>
+                <div class="post-title">Percona Toolkit 工具检查 Mysql</div>
+            </a>
+        
+    </div>
+</section>
+
+
+            
+            <section class="year-archive">
+    <header>
+        <h1><a href="/tags/openresty/" >openresty</a></h1>
+    </header>
+    <div class="archive-content">
+        
+            <a href="/posts/4139171783.html" class="post-item">
+                <div class="post-time">2021-01-24</div>
+                <div class="post-title">OpenResty多级缓存策略</div>
+            </a>
+        
+    </div>
+</section>
+
+
+            
+            <section class="year-archive">
+    <header>
+        <h1><a href="/tags/nginx/" >nginx</a></h1>
+    </header>
+    <div class="archive-content">
+        
+            <a href="/posts/4139171783.html" class="post-item">
+                <div class="post-time">2021-01-24</div>
+                <div class="post-title">OpenResty多级缓存策略</div>
+            </a>
+        
+            <a href="/posts/1388878838.html" class="post-item">
+                <div class="post-time">2021-01-25</div>
+                <div class="post-title">常见的网站压测工具介绍与使用</div>
+            </a>
+        
+    </div>
+</section>
+
+
+            
+            <section class="year-archive">
+    <header>
+        <h1><a href="/tags/blog/" >blog</a></h1>
+    </header>
+    <div class="archive-content">
+        
+            <a href="/posts/3196436062.html" class="post-item">
+                <div class="post-time">2022-03-25</div>
+                <div class="post-title">Jetbrains激活到2099年</div>
+            </a>
+        
+            <a href="/posts/2414163873.html" class="post-item">
+                <div class="post-time">2021-01-18</div>
+                <div class="post-title">Jetbrains 产品无限重置方法</div>
+            </a>
+        
+            <a href="/posts/4108183257.html" class="post-item">
+                <div class="post-time">2021-01-23</div>
+                <div class="post-title">Namesilo域名以及配置</div>
+            </a>
+        
+            <a href="/posts/1482114423.html" class="post-item">
+                <div class="post-time">2021-04-12</div>
+                <div class="post-title">解决Github访问慢的问题</div>
+            </a>
+        
+            <a href="/posts/1225229196.html" class="post-item">
+                <div class="post-time">2021-01-01</div>
+                <div class="post-title">twikoo 评论系统</div>
+            </a>
+        
+            <a href="/posts/960166209.html" class="post-item">
+                <div class="post-time">2025-12-25</div>
+                <div class="post-title">后台权限设计方案</div>
+            </a>
+        
+            <a href="/posts/450219870.html" class="post-item">
+                <div class="post-time">2021-02-01</div>
+                <div class="post-title">GitCommit规范</div>
+            </a>
+        
+            <a href="/posts/2588791119.html" class="post-item">
+                <div class="post-time">2021-02-01</div>
+                <div class="post-title">GitFlow工作流</div>
+            </a>
+        
+            <a href="/posts/3596683176.html" class="post-item">
+                <div class="post-time">2021-12-07</div>
+                <div class="post-title">免费使用mongodb数据库</div>
+            </a>
+        
+            <a href="/posts/1388878838.html" class="post-item">
+                <div class="post-time">2021-01-25</div>
+                <div class="post-title">常见的网站压测工具介绍与使用</div>
+            </a>
+        
+            <a href="/posts/3240214809.html" class="post-item">
+                <div class="post-time">2021-12-07</div>
+                <div class="post-title">腾讯云serverless开发流程</div>
+            </a>
+        
+    </div>
+</section>
+
+
+            
+            <section class="year-archive">
+    <header>
+        <h1><a href="/tags/mongodb/" >mongodb</a></h1>
+    </header>
+    <div class="archive-content">
+        
+            <a href="/posts/3596683176.html" class="post-item">
+                <div class="post-time">2021-12-07</div>
+                <div class="post-title">免费使用mongodb数据库</div>
+            </a>
+        
+    </div>
+</section>
+
+
+            
+            <section class="year-archive">
+    <header>
+        <h1><a href="/tags/haproxy/" >haproxy</a></h1>
+    </header>
+    <div class="archive-content">
+        
+            <a href="/posts/2638475365.html" class="post-item">
+                <div class="post-time">2021-02-19</div>
+                <div class="post-title">Mysql Haproxy 实现高可用</div>
+            </a>
+        
+            <a href="/posts/2867048371.html" class="post-item">
+                <div class="post-time">2021-02-19</div>
+                <div class="post-title">Mysql 用 Keepalived 和 Haproxy 实现高可用</div>
+            </a>
+        
+    </div>
+</section>
+
+
+            
+            <section class="year-archive">
+    <header>
+        <h1><a href="/tags/keepalived/" >keepalived</a></h1>
+    </header>
+    <div class="archive-content">
+        
+            <a href="/posts/2867048371.html" class="post-item">
+                <div class="post-time">2021-02-19</div>
+                <div class="post-title">Mysql 用 Keepalived 和 Haproxy 实现高可用</div>
+            </a>
+        
+    </div>
+</section>
+
+
+            
+        </div>
+    </article>
+    
+
+</main>
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="widgets">
+        
+            <!-- <div class="widget"> -->
+<!--     <h3 class="widget-title">公告</h3> -->
+<!--     <div class="widget-body"> -->
+<!--         微信公众号：汀风说后端<br> -->
+<!--         <img src="https://img.github.mailjob.net/logo/wechat.mp.tingfeng.jpg" alt="汀风说后端"> -->
+<!--         公众号日常更新：技术干货、工作方案实践、学习资料分享（电子书、视频）、经典面试题解析。<br> -->
+<!--         微信：jefferyjob -->
+<!--     </div> -->
+<!-- </div> -->
+        
+            
+    <div class="widget">
+        <h3 class="widget-title">分类</h3>
+        <div class="widget-body">
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/blog/">blog</a><span class="category-list-count">22</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/design/">design</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/docker/">docker</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/es/">es</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/go/">go</a><span class="category-list-count">21</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/mysql/">mysql</a><span class="category-list-count">27</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/php/">php</a><span class="category-list-count">34</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/rabbitmq/">rabbitmq</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/redis/">redis</a><span class="category-list-count">25</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%AE%97%E6%B3%95/">算法</a><span class="category-list-count">14</span></li></ul>
+        </div>
+    </div>
+
+
+        
+            
+    <div class="widget">
+        
+        <h3 class="widget-title">标签云</h3>
+        
+        <div class="widget-body tagcloud">
+            <a href="/tags/blog/" style="font-size: 13.46px;">blog</a> <a href="/tags/design/" style="font-size: 13.23px;">design</a> <a href="/tags/docker/" style="font-size: 13.23px;">docker</a> <a href="/tags/es/" style="font-size: 13.15px;">es</a> <a href="/tags/etcd/" style="font-size: 13px;">etcd</a> <a href="/tags/go/" style="font-size: 13.77px;">go</a> <a href="/tags/haproxy/" style="font-size: 13.08px;">haproxy</a> <a href="/tags/keepalived/" style="font-size: 13px;">keepalived</a> <a href="/tags/linux/" style="font-size: 13.38px;">linux</a> <a href="/tags/middle/" style="font-size: 13.31px;">middle</a> <a href="/tags/mongodb/" style="font-size: 13px;">mongodb</a> <a href="/tags/mycat/" style="font-size: 13px;">mycat</a> <a href="/tags/mysql/" style="font-size: 14px;">mysql</a> <a href="/tags/nginx/" style="font-size: 13.08px;">nginx</a> <a href="/tags/openresty/" style="font-size: 13px;">openresty</a> <a href="/tags/php/" style="font-size: 13.85px;">php</a> <a href="/tags/rabbitmq/" style="font-size: 13.08px;">rabbitmq</a> <a href="/tags/redis/" style="font-size: 13.92px;">redis</a> <a href="/tags/swoole/" style="font-size: 13.69px;">swoole</a> <a href="/tags/%E7%AE%97%E6%B3%95/" style="font-size: 13.54px;">算法</a> <a href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" style="font-size: 13.62px;">高可用</a>
+        </div>
+    </div>
+
+
+        
+            
+<div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+        <ul class="recent-post-list list-unstyled">
+            
+                <li>
+                    <div class="recent-post">
+<!--                        <p class="item-category">-->
+<!--                            <a class="category-link" href="/categories/blog/">blog</a>-->
+<!--                        </p>-->
+<!--                        <p class="item-title">-->
+<!--                            <a href="/posts/960166209.html" class="title">后台权限设计方案</a>-->
+<!--                        </p>-->
+<!--                        <p class="item-date">-->
+<!--                            <time datetime="2025-12-25T03:37:39.000Z" itemprop="datePublished">2025-12-25</time>-->
+<!--                        </p>-->
+                            <p class="item-title">
+                                <a href="/posts/960166209.html" class="title">后台权限设计方案</a>
+                            </p>
+                    </div>
+                </li>
+            
+                <li>
+                    <div class="recent-post">
+<!--                        <p class="item-category">-->
+<!--                            <a class="category-link" href="/categories/linux/">linux</a>-->
+<!--                        </p>-->
+<!--                        <p class="item-title">-->
+<!--                            <a href="/posts/2084750826.html" class="title">解决项目部署CORS跨域问题</a>-->
+<!--                        </p>-->
+<!--                        <p class="item-date">-->
+<!--                            <time datetime="2024-10-09T09:17:57.000Z" itemprop="datePublished">2024-10-09</time>-->
+<!--                        </p>-->
+                            <p class="item-title">
+                                <a href="/posts/2084750826.html" class="title">解决项目部署CORS跨域问题</a>
+                            </p>
+                    </div>
+                </li>
+            
+                <li>
+                    <div class="recent-post">
+<!--                        <p class="item-category">-->
+<!--                            <a class="category-link" href="/categories/php/">php</a>-->
+<!--                        </p>-->
+<!--                        <p class="item-title">-->
+<!--                            <a href="/posts/4100310017.html" class="title">Laravel全局处理数据库异常回滚</a>-->
+<!--                        </p>-->
+<!--                        <p class="item-date">-->
+<!--                            <time datetime="2023-07-28T10:51:47.000Z" itemprop="datePublished">2023-07-28</time>-->
+<!--                        </p>-->
+                            <p class="item-title">
+                                <a href="/posts/4100310017.html" class="title">Laravel全局处理数据库异常回滚</a>
+                            </p>
+                    </div>
+                </li>
+            
+                <li>
+                    <div class="recent-post">
+<!--                        <p class="item-category">-->
+<!--                            <a class="category-link" href="/categories/go/">go</a>-->
+<!--                        </p>-->
+<!--                        <p class="item-title">-->
+<!--                            <a href="/posts/3307624659.html" class="title">使用go-redis/redismock做Redis单元测试</a>-->
+<!--                        </p>-->
+<!--                        <p class="item-date">-->
+<!--                            <time datetime="2023-07-26T01:17:50.000Z" itemprop="datePublished">2023-07-26</time>-->
+<!--                        </p>-->
+                            <p class="item-title">
+                                <a href="/posts/3307624659.html" class="title">使用go-redis/redismock做Redis单元测试</a>
+                            </p>
+                    </div>
+                </li>
+            
+                <li>
+                    <div class="recent-post">
+<!--                        <p class="item-category">-->
+<!--                            <a class="category-link" href="/categories/php/">php</a>-->
+<!--                        </p>-->
+<!--                        <p class="item-title">-->
+<!--                            <a href="/posts/194135748.html" class="title">Laravel项目Exception优化最佳实践</a>-->
+<!--                        </p>-->
+<!--                        <p class="item-date">-->
+<!--                            <time datetime="2023-07-05T05:16:04.000Z" itemprop="datePublished">2023-07-05</time>-->
+<!--                        </p>-->
+                            <p class="item-title">
+                                <a href="/posts/194135748.html" class="title">Laravel项目Exception优化最佳实践</a>
+                            </p>
+                    </div>
+                </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+        
+            
+    <div class="widget">
+        <h3 class="widget-title">归档</h3>
+        <div class="widget-body">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/12/">十二月 2025</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/10/">十月 2024</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">七月 2023</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/06/">六月 2023</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">二月 2023</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/06/">六月 2022</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/05/">五月 2022</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/03/">三月 2022</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/01/">一月 2022</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a><span class="archive-list-count">10</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/09/">九月 2021</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">13</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/04/">四月 2021</a><span class="archive-list-count">10</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/03/">三月 2021</a><span class="archive-list-count">28</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/02/">二月 2021</a><span class="archive-list-count">42</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">33</span></li></ul>
+        </div>
+    </div>
+
+
+        
+    </div>
+</aside>
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

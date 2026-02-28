@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Go垃圾回收机制 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="今天我们来聊聊golang是如何进行垃圾回收的。我们知道，目前各语言进行垃圾回收的方法有很多，如引用计数、标记清除、分代回收、三色标记等，各种方式都有其特点，GO语言在发展过程中， 其GC算法也是不断改进的。 GO的GC里程碑 v1.3以前：STW golang的垃圾回收算法都非常简陋，其性能也广被诟病：go runtime在一定条件下（内存超过阈值或定期如2min），暂停所有任务的执行，进行ma">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go垃圾回收机制">
+<meta property="og:url" content="https://blog.mailjob.net/posts/1913058821.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="今天我们来聊聊golang是如何进行垃圾回收的。我们知道，目前各语言进行垃圾回收的方法有很多，如引用计数、标记清除、分代回收、三色标记等，各种方式都有其特点，GO语言在发展过程中， 其GC算法也是不断改进的。 GO的GC里程碑 v1.3以前：STW golang的垃圾回收算法都非常简陋，其性能也广被诟病：go runtime在一定条件下（内存超过阈值或定期如2min），暂停所有任务的执行，进行ma">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/20211125125616.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211125125622.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211125125628.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211125125634.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211125125642.gif">
+<meta property="og:image" content="http://img.github.mailjob.net/20211125125649.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211125125654.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211125125659.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211125125707.png">
+<meta property="article:published_time" content="2021-11-18T04:48:50.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.980Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="go">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/20211125125616.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Go垃圾回收机制
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/1913058821.html" class="article-date">
+	  <time datetime="2021-11-18T04:48:50.000Z" itemprop="datePublished">2021-11-18</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/go/">go</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/go/" rel="tag">go</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/1913058821.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 3.4k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 12(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <p>今天我们来聊聊golang是如何进行垃圾回收的。我们知道，目前各语言进行垃圾回收的方法有很多，如引用计数、标记清除、分代回收、三色标记等，各种方式都有其特点，GO语言在发展过程中， 其GC算法也是不断改进的。</p>
+<h2 id="GO的GC里程碑">GO的GC里程碑</h2>
+<h3 id="v1-3以前：STW">v1.3以前：STW</h3>
+<p>golang的垃圾回收算法都非常简陋，其性能也广被诟病：go runtime在一定条件下（内存超过阈值或定期如2min），暂停所有任务的执行，进行mark&amp;sweep操作，操作完成后启动所有任务的执行。在内存使用较多的场景下，go程序在进行垃圾回收时会发生非常明显的卡顿现象（Stop The World）。在对响应速度要求较高的后台服务进程中，这种延迟简直是不能忍受的！这个时期国内外很多在生产环境实践go语言的团队都或多或少踩过gc的坑。当时解决这个问题比较常用的方法是尽快控制自动分配内存的内存数量以减少gc负荷，同时采用手动管理内存的方法处理需要大量及高频分配内存的场景。</p>
+<h3 id="v1-3：Mark-STW-Sweep">v1.3：Mark STW &amp; Sweep</h3>
+<p>1.3版本中，go runtime分离了mark和sweep操作，和以前一样，也是先暂停所有任务执行并启动mark，mark完成后马上就重新启动被暂停的任务了，而是让sweep任务和普通协程任务一样并行的和其他任务一起执行。如果运行在多核处理器上，go会试图将gc任务放到单独的核心上运行而尽量不影响业务代码的执行。go team自己的说法是减少了50%-70%的暂停时间。</p>
+<h3 id="v1-5：三色标记">v1.5：三色标记</h3>
+<p>go 1.5正在实现的垃圾回收器“非分代的、非移动的、并发的、三色的标记清除垃圾收集器”。这种方法的mark操作是可以渐进执行的而不需每次都扫描整个内存空间，可以减少stop the world的时间。 由此可以看到，一路走来直到1.5版本，go的垃圾回收性能也是一直在提升。</p>
+<h3 id="v1-8：混合写屏障（hybrid-write-barrier）">v1.8：混合写屏障（hybrid write barrier）</h3>
+<p>由于标记操作和用户逻辑是并发执行的，用户逻辑会时常生成对象或者改变对象的引用。例如把⼀个对象标记为白色准备回收时，用户逻辑突然引用了它，或者又创建了新的对象。由于对象初始时都看为白色，会被 GC 回收掉，为了解决这个问题，引入了写屏障机制。</p>
+<p>GC 对扫描过后的对象使⽤操作系统写屏障功能来监控这段内存。如果这段内存发⽣引⽤改变，写屏障会给垃圾回收期发送⼀个信号，垃圾回收器捕获到信号后就知道这个对象发⽣改变，然后重新扫描这个对象，看看它的引⽤或者被引⽤是否改变。利⽤状态的重置实现当对象状态发⽣改变的时候，依然可以再次其引用的对象。</p>
+<h2 id="GO的GC">GO的GC</h2>
+<h3 id="三色标记">三色标记</h3>
+<p>传统的标记清除算法中，垃圾收集器从垃圾收集的根对象出发，递归遍历这些对象指向的子对象并将所有可达的对象标记成存活；标记阶段结束后，垃圾收集器会依次遍历堆中的对象并清除其中的垃圾，整个过程需要标记对象的存活状态，用户程序在垃圾收集的过程中也不能执行，我们需要用到更复杂的机制来解决 STW 的问题，这就出现了三色标记法。</p>
+<p>三色标记算法将程序中的对象分成白色、黑色和灰色三类：</p>
+<ul>
+<li>白色对象：潜在的垃圾，其内存可能会被垃圾收集器回收；</li>
+<li>黑色对象：活跃的对象，包括不存在任何引用外部指针的对象以及从根对象可达的对象；</li>
+<li>灰色对象：活跃的对象，因为存在指向白色对象的外部指针，垃圾收集器会扫描这些对象的子对象；</li>
+</ul>
+<p><img src="http://img.github.mailjob.net/20211125125616.png" alt="image"></p>
+<p>在垃圾收集器开始工作时，程序中不存在任何的黑色对象，垃圾收集的根对象会被标记成灰色，垃圾收集器只会从灰色对象集合中取出对象开始扫描，当灰色集合中不存在任何对象时，标记阶段就会结束。</p>
+<p><img src="http://img.github.mailjob.net/20211125125622.png" alt="image"></p>
+<p>三色标记垃圾收集器的工作原理很简单，我们可以将其归纳成以下几个步骤：</p>
+<ul>
+<li>从灰色对象的集合中选择一个灰色对象并将其标记成黑色；</li>
+<li>将黑色对象指向的所有对象都标记成灰色，保证该对象和被该对象引用的对象都不会被回收；</li>
+<li>重复上述两个步骤直到对象图中不存在灰色对象。</li>
+</ul>
+<p>当三色的标记清除的标记阶段结束之后，应用程序的堆中就不存在任何的灰色对象，我们只能看到黑色的存活对象以及白色的垃圾对象，垃圾收集器可以回收这些白色的垃圾，下面是使用三色标记垃圾收集器执行标记后的堆内存，堆中只有对象 D 为待回收的垃圾：</p>
+<p><img src="http://img.github.mailjob.net/20211125125628.png" alt="image"></p>
+<p>因为用户程序可能在标记执行的过程中修改对象的指针，所以三色标记清除算法本身是不可以并发或者增量执行的，它仍然需要 STW，在如下所示的三色标记过程中，用户程序建立了从 A 对象到 D 对象的引用，但是因为程序中已经不存在灰色对象了，所以 D 对象会被垃圾收集器错误地回收。</p>
+<p><img src="http://img.github.mailjob.net/20211125125634.png" alt="image"></p>
+<p>本来不应该被回收的对象却被回收了，这在内存管理中是非常严重的错误，我们将这种错误称为悬挂指针，即指针没有指向特定类型的合法对象，影响了内存的安全性，想要并发或者增量地标记对象还是需要使用屏障技术。</p>
+<p>整个流程如下：</p>
+<p><img src="http://img.github.mailjob.net/20211125125642.gif" alt="image"></p>
+<h3 id="混合写屏障">混合写屏障</h3>
+<p>想要在并发或者增量的标记算法中保证正确性，我们需要达成以下两种三色不变性（Tri-color invariant）中的一种：</p>
+<ul>
+<li>强三色不变性：黑色对象不会指向白色对象，只会指向灰色对象或者黑色对象；</li>
+<li>弱三色不变性：黑色对象指向的白色对象必须包含一条从灰色对象经由多个白色对象的可达路径。</li>
+</ul>
+<p><img src="http://img.github.mailjob.net/20211125125649.png" alt="image"></p>
+<p>上图分别展示了遵循强三色不变性和弱三色不变性的堆内存，遵循上述两个不变性中的任意一个，我们都能保证垃圾收集算法的正确性，而屏障技术就是在并发或者增量标记过程中保证三色不变性的重要技术。</p>
+<p>垃圾收集中的屏障技术更像是一个钩子方法，它是在用户程序读取对象、创建新对象以及更新对象指针时执行的一段代码，根据操作类型的不同，我们可以将它们分成读屏障（Read barrier）和写屏障（Write barrier）两种，因为读屏障需要在读操作中加入代码片段，对用户程序的性能影响很大，所以编程语言往往都会采用写屏障保证三色不变性。</p>
+<p>Go 语言在 v1.8 组合 Dijkstra 插入写屏障和 Yuasa 删除写屏障构成混合写屏障，该写屏障会将被覆盖的对象标记成灰色并在当前栈没有扫描时将新对象也标记成灰色。</p>
+<p>为了移除栈的重扫描过程，除了引入混合写屏障之外，在垃圾收集的标记阶段，我们还需要将创建的所有新对象都标记成黑色，防止新分配的栈内存和堆内存中的对象被错误地回收，因为栈内存在标记阶段最终都会变为黑色，所以不再需要重新扫描栈空间。</p>
+<h3 id="增量和并发">增量和并发</h3>
+<p>传统的垃圾收集算法会在垃圾收集的执行期间暂停应用程序，一旦触发垃圾收集，垃圾收集器会抢占 CPU 的使用权占据大量的计算资源以完成标记和清除工作，然而很多追求实时的应用程序无法接受长时间的 STW。</p>
+<p>为了减少应用程序暂停的最长时间和垃圾收集的总暂停时间，我们会使用下面的策略优化现代的垃圾收集器：</p>
+<ul>
+<li>增量垃圾收集：增量地标记和清除垃圾，降低应用程序暂停的最长时间；</li>
+<li>并发垃圾收集：利用多核的计算资源，在用户程序执行时并发标记和清除垃圾；</li>
+</ul>
+<p>因为增量和并发两种方式都可以与用户程序交替运行，所以我们需要使用屏障技术保证垃圾收集的正确性；与此同时，应用程序也不能等到内存溢出时触发垃圾收集，因为当内存不足时，应用程序已经无法分配内存，这与直接暂停程序没有什么区别，增量和并发的垃圾收集需要提前触发并在内存不足前完成整个循环，避免程序的长时间暂停。</p>
+<h3 id="增量收集">增量收集</h3>
+<p>增量式（Incremental）的垃圾收集是减少程序最长暂停时间的一种方案，它可以将原本时间较长的暂停时间切分成多个更小的 GC 时间片，虽然从垃圾收集开始到结束的时间更长了，但是这也减少了应用程序暂停的最大时间：</p>
+<p><img src="http://img.github.mailjob.net/20211125125654.png" alt="image"></p>
+<p>需要注意的是，增量式的垃圾收集需要与三色标记法一起使用，为了保证垃圾收集的正确性，我们需要在垃圾收集开始前打开写屏障，这样用户程序修改内存都会先经过写屏障的处理，保证了堆内存中对象关系的强三色不变性或者弱三色不变性。虽然增量式的垃圾收集能够减少最大的程序暂停时间，但是增量式收集也会增加一次 GC 循环的总时间，在垃圾收集期间，因为写屏障的影响用户程序也需要承担额外的计算开销，所以增量式的垃圾收集也不是只带来好处的，但是总体来说还是利大于弊。</p>
+<h3 id="并发收集">并发收集</h3>
+<p>并发（Concurrent）的垃圾收集不仅能够减少程序的最长暂停时间，还能减少整个垃圾收集阶段的时间，通过开启读写屏障、利用多核优势与用户程序并行执行，并发垃圾收集器确实能够减少垃圾收集对应用程序的影响：</p>
+<p><img src="http://img.github.mailjob.net/20211125125659.png" alt="image"></p>
+<p>虽然并发收集器能够与用户程序一起运行，但是并不是所有阶段都可以与用户程序一起运行，部分阶段还是需要暂停用户程序的，不过与传统的算法相比，并发的垃圾收集可以将能够并发执行的工作尽量并发执行；当然，因为读写屏障的引入，并发的垃圾收集器也一定会带来额外开销，不仅会增加垃圾收集的总时间，还会影响用户程序，这是我们在设计垃圾收集策略时必须要注意的。</p>
+<h3 id="GC的时机">GC的时机</h3>
+<p>运行时会通过如下所示的 runtime.gcTrigger.test 方法决定是否需要触发垃圾收集，当满足触发垃圾收集的基本条件时 — 允许垃圾收集、程序没有崩溃并且没有处于垃圾收集循环，该方法会根据三种不同方式触发进行不同的检查：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>t gcTrigger<span class="token punctuation">)</span> <span class="token function">test</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">bool</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">if</span> <span class="token operator">!</span>memstats<span class="token punctuation">.</span>enablegc <span class="token operator">||</span> panicking <span class="token operator">!=</span> <span class="token number">0</span> <span class="token operator">||</span> gcphase <span class="token operator">!=</span> _GCoff <span class="token punctuation">&#123;</span>
+		<span class="token keyword">return</span> <span class="token boolean">false</span>
+	<span class="token punctuation">&#125;</span>
+	<span class="token keyword">switch</span> t<span class="token punctuation">.</span>kind <span class="token punctuation">&#123;</span>
+	<span class="token keyword">case</span> gcTriggerHeap<span class="token punctuation">:</span>
+		<span class="token keyword">return</span> memstats<span class="token punctuation">.</span>heap_live <span class="token operator">>=</span> memstats<span class="token punctuation">.</span>gc_trigger
+	<span class="token keyword">case</span> gcTriggerTime<span class="token punctuation">:</span>
+		<span class="token keyword">if</span> gcpercent <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+			<span class="token keyword">return</span> <span class="token boolean">false</span>
+		<span class="token punctuation">&#125;</span>
+		lastgc <span class="token operator">:=</span> <span class="token function">int64</span><span class="token punctuation">(</span>atomic<span class="token punctuation">.</span><span class="token function">Load64</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>memstats<span class="token punctuation">.</span>last_gc_nanotime<span class="token punctuation">)</span><span class="token punctuation">)</span>
+		<span class="token keyword">return</span> lastgc <span class="token operator">!=</span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> t<span class="token punctuation">.</span>now<span class="token operator">-</span>lastgc <span class="token operator">></span> forcegcperiod
+	<span class="token keyword">case</span> gcTriggerCycle<span class="token punctuation">:</span>
+		<span class="token keyword">return</span> <span class="token function">int32</span><span class="token punctuation">(</span>t<span class="token punctuation">.</span>n<span class="token operator">-</span>work<span class="token punctuation">.</span>cycles<span class="token punctuation">)</span> <span class="token operator">></span> <span class="token number">0</span>
+	<span class="token punctuation">&#125;</span>
+	<span class="token keyword">return</span> <span class="token boolean">true</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>1、gcTriggerHeap ：堆内存的分配达到达控制器计算的触发堆大小；<br><br>
+2、gcTriggerTime ：如果一定时间内没有触发，就会触发新的循环，该出发条件由 runtime.forcegcperiod 变量控制，默认为 2 分钟；<br><br>
+3、gcTriggerCycle：如果当前没有开启垃圾收集，则触发新的循环；<br><br>
+4、runtime.gcpercent 是触发垃圾收集的内存增长百分比，默认情况下为 100，即堆内存相比上次垃圾收集增长 100% 时应该触发 GC，并行的垃圾收集器会在到达该目标前完成垃圾收集。<br></p>
+<p>用于开启垃圾收集的方法 runtime.gcStart 会接收一个 runtime.gcTrigger 类型的结构，所有出现 runtime.gcTrigger 结构体的位置都是触发垃圾收集的代码：</p>
+<ul>
+<li>runtime.sysmon 和 runtime.forcegchelper ：后台运行定时检查和垃圾收集；</li>
+<li>runtime.GC ：用户程序手动触发垃圾收集；</li>
+<li>runtime.mallocgc ：申请内存时根据堆大小触发垃圾收集。</li>
+</ul>
+<p><img src="http://img.github.mailjob.net/20211125125707.png" alt="image"></p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/1913058821.html">https://blog.mailjob.net/posts/1913058821.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#GO%E7%9A%84GC%E9%87%8C%E7%A8%8B%E7%A2%91"><span class="toc-text">GO的GC里程碑</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#v1-3%E4%BB%A5%E5%89%8D%EF%BC%9ASTW"><span class="toc-text">v1.3以前：STW</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#v1-3%EF%BC%9AMark-STW-Sweep"><span class="toc-text">v1.3：Mark STW &amp; Sweep</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#v1-5%EF%BC%9A%E4%B8%89%E8%89%B2%E6%A0%87%E8%AE%B0"><span class="toc-text">v1.5：三色标记</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#v1-8%EF%BC%9A%E6%B7%B7%E5%90%88%E5%86%99%E5%B1%8F%E9%9A%9C%EF%BC%88hybrid-write-barrier%EF%BC%89"><span class="toc-text">v1.8：混合写屏障（hybrid write barrier）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GO%E7%9A%84GC"><span class="toc-text">GO的GC</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89%E8%89%B2%E6%A0%87%E8%AE%B0"><span class="toc-text">三色标记</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B7%B7%E5%90%88%E5%86%99%E5%B1%8F%E9%9A%9C"><span class="toc-text">混合写屏障</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A2%9E%E9%87%8F%E5%92%8C%E5%B9%B6%E5%8F%91"><span class="toc-text">增量和并发</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A2%9E%E9%87%8F%E6%94%B6%E9%9B%86"><span class="toc-text">增量收集</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B9%B6%E5%8F%91%E6%94%B6%E9%9B%86"><span class="toc-text">并发收集</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#GC%E7%9A%84%E6%97%B6%E6%9C%BA"><span class="toc-text">GC的时机</span></a></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

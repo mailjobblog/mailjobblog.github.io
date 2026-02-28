@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Redis数据类型Set（集合） | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="相关链接  Redis 常用命令，思维导图：https:&#x2F;&#x2F;www.kdocs.cn&#x2F;view&#x2F;l&#x2F;ss49IFenIOSm  Redis 的 Set 是 String 类型的无序集合。集合成员是唯一的，这就意味着集合中不能出现重复的数据。 Redis 中集合是通过哈希表实现的，所以添加，删除，查找的复杂度都是 O(1) Set 数据类型的特点：  数据不重复 元素没有下标  redis的set类">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis数据类型Set（集合）">
+<meta property="og:url" content="https://blog.mailjob.net/posts/2444915141.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="相关链接  Redis 常用命令，思维导图：https:&#x2F;&#x2F;www.kdocs.cn&#x2F;view&#x2F;l&#x2F;ss49IFenIOSm  Redis 的 Set 是 String 类型的无序集合。集合成员是唯一的，这就意味着集合中不能出现重复的数据。 Redis 中集合是通过哈希表实现的，所以添加，删除，查找的复杂度都是 O(1) Set 数据类型的特点：  数据不重复 元素没有下标  redis的set类">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210111114722482.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xpYmluZW1haWw=,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/img_convert/c64f62005a1aac60d0ea15a08d93a314.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/img_convert/3b5b07eeb5706271c8887475f4c19441.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/img_convert/d7309c35d2c958623c64085819ad1491.png">
+<meta property="article:published_time" content="2021-01-19T13:55:27.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.986Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="redis">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/20210111114722482.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xpYmluZW1haWw=,size_16,color_FFFFFF,t_70">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Redis数据类型Set（集合）
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/2444915141.html" class="article-date">
+	  <time datetime="2021-01-19T13:55:27.000Z" itemprop="datePublished">2021-01-19</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/redis/" rel="tag">redis</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/2444915141.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 789(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 3(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h1 id="相关链接">相关链接</h1>
+<blockquote>
+<p>Redis 常用命令，思维导图：<a target="_blank" rel="noopener" href="https://www.kdocs.cn/view/l/ss49IFenIOSm">https://www.kdocs.cn/view/l/ss49IFenIOSm</a></p>
+</blockquote>
+<p>Redis 的 Set 是 String 类型的无序集合。<strong>集合成员是唯一的</strong>，这就意味着集合中不能出现重复的数据。</p>
+<p>Redis 中集合是通过哈希表实现的，所以添加，删除，查找的复杂度都是 O(1)</p>
+<p><strong>Set 数据类型的特点</strong>：</p>
+<ol>
+<li>数据不重复</li>
+<li>元素没有下标</li>
+</ol>
+<p>redis的set类型是使用哈希表构造的，因此复杂度是O(1)，它支持集合内的增删改查，并且支持多个集合间的交集、并集、差集操作。可以利用这些集合操作，解决程序开发过程当中很多数据集合间的问题。</p>
+<p><strong>Set数据类型的内部编码有两种</strong>：</p>
+<p>Intset（整数集合）：当集合元素个数小于set-max-ziplist-entries配置(默认512个),redis会使用intset作为集合的内部实现来减少内存的使用</p>
+<p>Hashtable（哈希表）:当集合类型无法满足intset的条件时,redis会使用hashtable作为集合的内部实现</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><strong>≤512</strong></th>
+<th><strong>&gt;512</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>整数</strong></td>
+<td>inset</td>
+<td>hashTable</td>
+</tr>
+<tr>
+<td><strong>字符串</strong></td>
+<td>hashTable</td>
+<td>hashTable</td>
+</tr>
+</tbody>
+</table>
+<h1 id="交集，并集，差集">交集，并集，差集</h1>
+<p><img src="https://img-blog.csdnimg.cn/20210111114722482.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xpYmluZW1haWw=,size_16,color_FFFFFF,t_70" alt="img"></p>
+<h1 id="底层实现">底层实现</h1>
+<p><strong>（1）intset编码</strong></p>
+<p>intset编码的集合对象底层实现是整数集合，所有元素都保存在整数集合中。</p>
+<p><img src="https://img-blog.csdnimg.cn/img_convert/c64f62005a1aac60d0ea15a08d93a314.png" alt="img"></p>
+<p><strong>（2）hashtable编码</strong></p>
+<p>hashtable编码的集合对象底层实现是字典，字典的每个键都是一个字符串对象，保存一个集合元素，不同的是字典的值都是NULL；可以参考java中的hashset结构。</p>
+<p><img src="https://img-blog.csdnimg.cn/img_convert/3b5b07eeb5706271c8887475f4c19441.png" alt="img"></p>
+<h1 id="应用场景">应用场景</h1>
+<p>用于存储好友/关注/粉丝/感兴趣的人集合，集合中的元素数量可能很多</p>
+<h1 id="常用命令">常用命令</h1>
+<p><img src="https://img-blog.csdnimg.cn/img_convert/d7309c35d2c958623c64085819ad1491.png" alt="img"></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>.sadd<span class="token punctuation">(</span>name,values<span class="token punctuation">)</span>
+ 
+<span class="token comment"># name对应的集合中添加元素</span>
+<span class="token number">2</span>.scard<span class="token punctuation">(</span>name<span class="token punctuation">)</span>
+ 
+<span class="token comment"># 获取name对应的集合中元素个数</span>
+<span class="token number">3</span>.sdiff<span class="token punctuation">(</span>keys, *args<span class="token punctuation">)</span>
+ 
+<span class="token comment"># 在第一个name对应的集合中且不在其他name对应的集合的元素集合</span>
+<span class="token number">4</span>.sdiffstore<span class="token punctuation">(</span>dest, keys, *args<span class="token punctuation">)</span>
+ 
+<span class="token comment"># 获取第一个name对应的集合中且不在其他name对应的集合，再将其新加入到dest对应的集合中</span>
+<span class="token number">5</span>.sinter<span class="token punctuation">(</span>keys, *args<span class="token punctuation">)</span>
+ 
+<span class="token comment"># 获取多一个name对应集合的并集</span>
+<span class="token number">6</span>.sinterstore<span class="token punctuation">(</span>dest, keys, *args<span class="token punctuation">)</span>
+ 
+<span class="token comment"># 获取多一个name对应集合的并集，再讲其加入到dest对应的集合中</span>
+<span class="token number">7</span>.sismember<span class="token punctuation">(</span>name, value<span class="token punctuation">)</span>
+ 
+<span class="token comment"># 检查value是否是name对应的集合的成员</span>
+<span class="token number">8</span>.smembers<span class="token punctuation">(</span>name<span class="token punctuation">)</span>
+ 
+<span class="token comment"># 获取name对应的集合的所有成员</span>
+<span class="token number">9</span>.smove<span class="token punctuation">(</span>src, dst, value<span class="token punctuation">)</span>
+ 
+<span class="token comment"># 将某个成员从一个集合中移动到另外一个集合</span>
+<span class="token number">10</span>.spop<span class="token punctuation">(</span>name<span class="token punctuation">)</span>
+ 
+<span class="token comment"># 从集合的右侧（尾部）移除一个成员，并将其返回</span>
+<span class="token number">11</span>.srandmember<span class="token punctuation">(</span>name, numbers<span class="token punctuation">)</span>
+ 
+<span class="token comment"># 从name对应的集合中随机获取 numbers 个元素</span>
+<span class="token number">12</span>.srem<span class="token punctuation">(</span>name, values<span class="token punctuation">)</span>
+ 
+<span class="token comment"># 在name对应的集合中删除某些值</span>
+<span class="token number">13</span>.sunion<span class="token punctuation">(</span>keys, *args<span class="token punctuation">)</span>
+ 
+<span class="token comment"># 获取多一个name对应的集合的并集</span>
+<span class="token number">14</span>.sunionstore<span class="token punctuation">(</span>dest,keys, *args<span class="token punctuation">)</span>
+ 
+<span class="token comment"># 获取多一个name对应的集合的并集，并将结果保存到dest对应的集合中</span>
+sscan<span class="token punctuation">(</span>name, <span class="token assign-left variable">cursor</span><span class="token operator">=</span><span class="token number">0</span>, <span class="token assign-left variable">match</span><span class="token operator">=</span>None, <span class="token assign-left variable">count</span><span class="token operator">=</span>None<span class="token punctuation">)</span>
+sscan_iter<span class="token punctuation">(</span>name, <span class="token assign-left variable">match</span><span class="token operator">=</span>None, <span class="token assign-left variable">count</span><span class="token operator">=</span>None<span class="token punctuation">)</span>
+ 
+<span class="token comment"># 同字符串的操作，用于增量迭代分批获取元素，避免内存消耗太大</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/2444915141.html">https://blog.mailjob.net/posts/2444915141.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E9%93%BE%E6%8E%A5"><span class="toc-text">相关链接</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%A4%E9%9B%86%EF%BC%8C%E5%B9%B6%E9%9B%86%EF%BC%8C%E5%B7%AE%E9%9B%86"><span class="toc-text">交集，并集，差集</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0"><span class="toc-text">底层实现</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">应用场景</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-text">常用命令</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

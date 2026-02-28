@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Redis主从复制-增量同步 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="部分复制是为了解决全量复制开销过大的一种优化措施，当从节点复制主节点数据过程中，如果出现网络中断或者命令丢失等异常情况，此时从节点可以向主节点要求补发丢失的命令数据，如果主节点的复制缓冲区中刚好存在这一部分数据，那就直接发送给从节点以此来保证主从一致性，在了解部分复制之前我们需要先知道三个概念： runid runid就是主节点的运行id，是redis启动时随机分配的一个40位的十六进制字符串，运">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis主从复制-增量同步">
+<meta property="og:url" content="https://blog.mailjob.net/posts/3302527039.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="部分复制是为了解决全量复制开销过大的一种优化措施，当从节点复制主节点数据过程中，如果出现网络中断或者命令丢失等异常情况，此时从节点可以向主节点要求补发丢失的命令数据，如果主节点的复制缓冲区中刚好存在这一部分数据，那就直接发送给从节点以此来保证主从一致性，在了解部分复制之前我们需要先知道三个概念： runid runid就是主节点的运行id，是redis启动时随机分配的一个40位的十六进制字符串，运">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img2020.cnblogs.com/blog/2159277/202101/2159277-20210109222719903-1992613363.png">
+<meta property="og:image" content="https://img2020.cnblogs.com/blog/2159277/202101/2159277-20210109222731236-669102669.png">
+<meta property="og:image" content="https://img2020.cnblogs.com/blog/2159277/202101/2159277-20210109222743240-1788531005.png">
+<meta property="article:published_time" content="2021-02-06T05:47:38.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.986Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="redis">
+<meta property="article:tag" content="高可用">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img2020.cnblogs.com/blog/2159277/202101/2159277-20210109222719903-1992613363.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Redis主从复制-增量同步
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3302527039.html" class="article-date">
+	  <time datetime="2021-02-06T05:47:38.000Z" itemprop="datePublished">2021-02-06</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/redis/" rel="tag">redis</a>, <a class="article-tag-none-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/3302527039.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.7k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 6(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <p>部分复制是为了解决全量复制开销过大的一种优化措施，当从节点复制主节点数据过程中，如果出现网络中断或者命令丢失等异常情况，此时从节点可以向主节点要求补发丢失的命令数据，如果主节点的复制缓冲区中刚好存在这一部分数据，那就直接发送给从节点以此来保证主从一致性，在了解部分复制之前我们需要先知道三个概念：</p>
+<h3 id="runid">runid</h3>
+<p>runid就是主节点的运行id，是redis启动时随机分配的一个40位的十六进制字符串，运行id用来唯一识别redis节点，从节点保存主节点的runid从而知道自己需要从哪个节点来复制数据。</p>
+<p>之所以使用runid而不是使用host+port的方式是因为一旦aof或者rdb文件发生改变并重启了redis服务，那么从节点再基于偏移量（offset）去复制数据是不安全的。</p>
+<p>那么已经构建的主从架构，如果要主节点出现故障需要重启怎么办呢？可以使用<code>slaveof no one</code>先将从节点升级为主节点，待真正的主节点重启完成后再使用slaveof重新创建主从，当然这是一种很low的做法，高级的一点做法可以使用哨兵或者集群等高可用方案。</p>
+<h3 id="offset">offset</h3>
+<p>offset是复制偏移量，表示主节点向从节点传递的字节数，主节点每次向从节点传递N个字节数据时，主节点的复制偏移量增加N，从节点从主节点接收N个字节数据时，从节点的复制偏移量增加N。</p>
+<p>复制偏移量可以用来判断主从节点的一致性，如果两者复制偏移量相同，那么就是主从一致，如果主节点偏移量大于从节点偏移量，且远远大于，那么此时可能出现了网络延迟或者命令阻塞，主节点的偏移量比从节点偏移量大的部分就存在于复制缓冲区中，当从节点请求部分复制时就从复制缓冲区中获取到对应偏移量的数据传递给从节点。</p>
+<h3 id="复制缓冲区">复制缓冲区</h3>
+<p>顾名思义，复制缓冲区就是一个缓冲区，它是保存在主节点上一个固定长度、先进先出的队列，默认大小时1M，当主节点存在从节点时，不管是几个从节点，主节点都会将写命令发送给从节点的同时缓存到复制缓冲区中，当缓冲区占满时就会将最先进入缓冲区的数据挤出缓冲区。</p>
+<p>当主从节点断开重连时，从节点带着offset请求复制，主节点判断从节点的offset是否存在于缓冲区中，如果存在，那么就进行部分复制，将缓冲区中的数据直接返回给从节点，如果从节点传递的offset已经超过缓冲区中的offset的值，那么就需要开启全量复制。基于此，要根据具体的业务需求调整复制缓冲区的大小，尽可能地使用部分复制。</p>
+<h3 id="部分复制实例">部分复制实例</h3>
+<p>我在两台机器上分别安装了一个redis，其中一个作为另外一个的从节点，从节点：<br>
+<a target="_blank" rel="noopener" href="https://img2020.cnblogs.com/blog/2159277/202101/2159277-20210109222719903-1992613363.png"><img src="https://img2020.cnblogs.com/blog/2159277/202101/2159277-20210109222719903-1992613363.png" alt="img"></a><br>
+主节点：<br>
+<a target="_blank" rel="noopener" href="https://img2020.cnblogs.com/blog/2159277/202101/2159277-20210109222731236-669102669.png"><img src="https://img2020.cnblogs.com/blog/2159277/202101/2159277-20210109222731236-669102669.png" alt="img"></a><br>
+为了验证部分复制，现在将两台机器之间的网络断开（简单粗暴的办法，拔网线），经过一会儿之后查看主从节点的日志，可以看到各自都出现了lost，如下所示：</p>
+<pre class="line-numbers language-none"><code class="language-none"># 主节点日志
+# Connection with slave 10.18.30.178:6379 lost.
+
+# 从节点日志
+1:S # MASTER timeout: no data nor PING received...
+1:S # Connection with master lost.
+1:S * Caching the disconnected master state.
+1:S * Connecting to MASTER 10.18.30.34:6379
+1:S * MASTER &lt;-&gt; REPLICA sync started
+1:S # Error condition on socket for SYNC: No route to host
+1:S * Connecting to MASTER 10.18.30.34:6379<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在主从节点各自丢失对方的连接时，在主节点上执行写操作（随便写入一些数据），如下所示：<br>
+<a target="_blank" rel="noopener" href="https://img2020.cnblogs.com/blog/2159277/202101/2159277-20210109222743240-1788531005.png"><img src="https://img2020.cnblogs.com/blog/2159277/202101/2159277-20210109222743240-1788531005.png" alt="img"></a><br>
+经过一段时间以后，重新连通主从节点之间的网络，此时，在从节点的日志中可以看到如下所示的内容：</p>
+<pre class="line-numbers language-none"><code class="language-none">1:S * Connecting to MASTER 10.18.30.34:6379   # 连接上了主节点
+1:S * MASTER &lt;-&gt; REPLICA sync started # 主从节点开始同步
+1:S * Non blocking connect for SYNC fired the event.
+1:S * Master replied to PING, replication can continue... # 主节点回复了ping，主从可以继续
+1:S * Trying a partial resynchronization (request eb32e34c84e7123e7ddb6ae1fab5e348bc58af31:1234). # 开始部分复制，offset是1234
+1:S * Successful partial resynchronization with master. # 部分复制成功<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>从上面的日志可以看出来，从节点连接上主节点之后开始尝试部分复制，并且最后部分复制成功。我们再看一下此时主节点的日志：</p>
+<pre class="line-numbers language-none"><code class="language-none">* Slave 10.18.30.178:6379 asks for synchronization # 从节点请求同步
+* Partial resynchronization request from 10.18.30.178:6379 accepted. Sending 444 bytes of backlog starting from offset 1234. # 接受从节点的部分复制请求，从1234的offset位置发送444bytes的数据<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>也就是主节点此时判断这次的同步请求符合部分复制，那么就从对应的offset位置发送数据给从节点，<strong>如果此时offset不在复制缓冲区的范围内，那么开启的就是全量复制，而不是部分复制了。</strong></p>
+<p>另外，如果部分复制完成后aof文件达到了<code>auto-aof-rewrite-min-size</code>以及<code>auto-aof-rewrite-percentage</code>的要求，那么此时就会触发aof的重写。</p>
+<h4 id="总结一下重写的过程，就是如下几个步骤：">总结一下重写的过程，就是如下几个步骤：</h4>
+<ul>
+<li>主从节点网络中断，超过<code>repl-timeout</code>时间后，主节点认为从节点故障，打印lost日志；</li>
+<li>主从断开期间，主节点继续响应请求，会将写命令缓存到大小为1M的复制缓冲区；</li>
+<li>主从网络恢复后，从节点会再次连接上主节点，打印主从可以继续的日志；</li>
+<li>主从恢复后，从节点使用psync请求，带着保存好的主节点运行id以及自身已经复制的偏移量去请求进行复制；</li>
+<li>主节点接收到从节点的psync请求后，首先判断runID是否一直，不一致的话表示之前复制的不是当前主节点，需要重新开始全量复制，一致的话再查找请求offset是否存在于复制缓冲区中，不存在的话同样要开启全量复制；</li>
+<li>runID和offset都符合部分复制的要求后，主节点会把复制缓冲区中相应的数据发送给从节点，保证主从进入正常复制；</li>
+</ul>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/3302527039.html">https://blog.mailjob.net/posts/3302527039.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#runid"><span class="toc-text">runid</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#offset"><span class="toc-text">offset</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%8D%E5%88%B6%E7%BC%93%E5%86%B2%E5%8C%BA"><span class="toc-text">复制缓冲区</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%83%A8%E5%88%86%E5%A4%8D%E5%88%B6%E5%AE%9E%E4%BE%8B"><span class="toc-text">部分复制实例</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%80%BB%E7%BB%93%E4%B8%80%E4%B8%8B%E9%87%8D%E5%86%99%E7%9A%84%E8%BF%87%E7%A8%8B%EF%BC%8C%E5%B0%B1%E6%98%AF%E5%A6%82%E4%B8%8B%E5%87%A0%E4%B8%AA%E6%AD%A5%E9%AA%A4%EF%BC%9A"><span class="toc-text">总结一下重写的过程，就是如下几个步骤：</span></a></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

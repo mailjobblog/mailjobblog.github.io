@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>swoole进程结构 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="参考文献 进程结构官方文档：https:&#x2F;&#x2F;wiki.swoole.com&#x2F;#&#x2F;learn?id&#x3D;diff-process 进程结构图：https:&#x2F;&#x2F;wiki.swoole.com&#x2F;#&#x2F;server&#x2F;init?id&#x3D;进程线程结构图 图例：https:&#x2F;&#x2F;www.kdocs.cn&#x2F;view&#x2F;l&#x2F;sfUsBSd2K1f2 图例：https:&#x2F;&#x2F;www.kdocs.cn&#x2F;view&#x2F;l&#x2F;snjd2FtK">
+<meta property="og:type" content="article">
+<meta property="og:title" content="swoole进程结构">
+<meta property="og:url" content="https://blog.mailjob.net/posts/1773018433.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="参考文献 进程结构官方文档：https:&#x2F;&#x2F;wiki.swoole.com&#x2F;#&#x2F;learn?id&#x3D;diff-process 进程结构图：https:&#x2F;&#x2F;wiki.swoole.com&#x2F;#&#x2F;server&#x2F;init?id&#x3D;进程线程结构图 图例：https:&#x2F;&#x2F;www.kdocs.cn&#x2F;view&#x2F;l&#x2F;sfUsBSd2K1f2 图例：https:&#x2F;&#x2F;www.kdocs.cn&#x2F;view&#x2F;l&#x2F;snjd2FtK">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/20210524132302.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20210524133824.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20210524134627.png">
+<meta property="article:published_time" content="2021-05-24T02:27:24.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.984Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="swoole">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/20210524132302.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            swoole进程结构
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/1773018433.html" class="article-date">
+	  <time datetime="2021-05-24T02:27:24.000Z" itemprop="datePublished">2021-05-24</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/php/">php</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/swoole/" rel="tag">swoole</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/1773018433.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 4(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="参考文献">参考文献</h2>
+<p>进程结构官方文档：<a target="_blank" rel="noopener" href="https://wiki.swoole.com/#/learn?id=diff-process">https://wiki.swoole.com/#/learn?id=diff-process</a></p>
+<p>进程结构图：<a target="_blank" rel="noopener" href="https://wiki.swoole.com/#/server/init?id=%e8%bf%9b%e7%a8%8b%e7%ba%bf%e7%a8%8b%e7%bb%93%e6%9e%84%e5%9b%be">https://wiki.swoole.com/#/server/init?id=进程线程结构图</a></p>
+<p>图例：<a target="_blank" rel="noopener" href="https://www.kdocs.cn/view/l/sfUsBSd2K1f2">https://www.kdocs.cn/view/l/sfUsBSd2K1f2</a></p>
+<p>图例：<a target="_blank" rel="noopener" href="https://www.kdocs.cn/view/l/snjd2FtKwsew">https://www.kdocs.cn/view/l/snjd2FtKwsew</a></p>
+<h2 id="Swoole进程结构">Swoole进程结构</h2>
+<ul>
+<li>Master 进程 （主进程）</li>
+<li>Manager 进程 （管理进程）</li>
+<li>Worker 进程 （工作进程）</li>
+<li>task 进程 （异步任务工作进程）</li>
+</ul>
+<p><img src="http://img.github.mailjob.net/20210524132302.png" alt="image-20210524132300439"></p>
+<h3 id="client与server的交互">client与server的交互</h3>
+<p>1、<code>client</code> 请求到达<code>main reactor</code>,与<code>master</code>进程中的某个<code>reactor</code>线程连接</p>
+<p>2、<code>main reactor</code>将请求注册给对应的<code>reactor</code></p>
+<p>3、客户端有变化时<code>reactor</code>将数据交给<code>worker</code>处理</p>
+<p>4、<code>worker</code>处理完毕,通过进程间通信,发给对应的<code>reactor</code></p>
+<p>5、<code>reactor</code>将响应结果发给相应的连接请求处理完成</p>
+<p>6、<code>Manager</code> 负责 （创建/回收）<code>worker/task</code> 进程</p>
+<h2 id="主要进程说明">主要进程说明</h2>
+<h3 id="Master进程">Master进程</h3>
+<p>Master进程主要用来保证Swoole框架机制的运行。它会创建几个功能性的线程：</p>
+<ul>
+<li>Reactor线程:就是真正处理TCP连接，收发数据的线程。swoole的主线程在Accept新的连接后，会将这个连接分配给一个固定的Reactor线程，并由这个线程负责监听此socket。在socket可读时读取数据，并进行协议解析，将请求投递到Worker进程。在socket可写时将数据发送给TCP客户端。</li>
+<li>Master线程(主线程）: 负责：Accept新的连接、UNIX PROXI信号处理、定时器任务。</li>
+<li>心跳包检测线程：（略）</li>
+<li>UDP收包线程：（略）</li>
+</ul>
+<h3 id="Manager进程">Manager进程</h3>
+<p>swoole中Worker/Task进程都是由Manager进程Fork并管理的。</p>
+<ul>
+<li>子进程结束运行时，manager进程负责回收此子进程，避免成为僵尸进程。并创建新的子进程</li>
+<li>服务器关闭时，manager进程将发送信号给所有子进程，通知子进程关闭服务</li>
+<li>服务器reload时，manager进程会逐个关闭/重启子进程</li>
+</ul>
+<blockquote>
+<p>为什么不是Master进程呢，主要原因是Master进程是多线程的，不能安全的执行fork操作。</p>
+</blockquote>
+<h3 id="Worker进程">Worker进程</h3>
+<ul>
+<li>接受由Reactor线程投递的请求数据包，并执行PHP回调函数处理数据</li>
+<li>生成响应数据并发给Reactor线程，由Reactor线程发送给TCP客户端</li>
+<li>可以是异步非阻塞模式，也可以是同步阻塞模式</li>
+<li>Worker以多进程的方式运行</li>
+</ul>
+<blockquote>
+<p>Swoole提供了完善的进程管理机制，当Worker进程异常退出，如发生PHP的致命错误、被其他程序误杀，或达到max_request次数之后正常退出。主进程会重新拉起新的Worker进程。 Worker进程内可以像普通的apache+php或者php-fpm中写代码。不需要像Node.js那样写异步回调的代码。</p>
+</blockquote>
+<h3 id="Task进程">Task进程</h3>
+<ul>
+<li>接受由Worker进程通过<code>swoole_server-&gt;task/taskwait</code>方法投递的任务</li>
+<li>处理任务，并将结果数据返回给Worker进程</li>
+<li>完全是同步阻塞模式</li>
+<li>Task以多进程的方式运行</li>
+</ul>
+<p>Task进程的全称是<code>task_worker</code>进程，是一种特殊的<code>worker</code>进程。所以<code>onWorkerStart</code>在task进程中也会被调用。</p>
+<p>当<code>$worker_id &gt;= $serv-&gt;setting['worker_num']</code>时表示这个进程是<code>task_worker</code>，否则，代表此进程是worker进程。</p>
+<h2 id="进程与事件回调的对应关系">进程与事件回调的对应关系</h2>
+<h3 id="Master进程内的回调函数">Master进程内的回调函数</h3>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">onStart
+onShutdown
+onMasterConnect
+onMasterClose
+onTimer<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="Worker进程内的回调函数">Worker进程内的回调函数</h3>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">onWorkerStart
+onWorkerStop
+onConnect
+onClose
+onReceive
+onTimer
+onFinish<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="Task进程内的回调函数">Task进程内的回调函数</h3>
+<pre class="line-numbers language-none"><code class="language-none">onTask
+onWorkerStart<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<h3 id="Manager进程内的回调函数">Manager进程内的回调函数</h3>
+<pre class="line-numbers language-none"><code class="language-none">onManagerStart
+onManagerStop<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<h2 id="通俗比喻">通俗比喻</h2>
+<p>假设<code>Server</code>就是一个工厂，那<code>Reactor</code>就是销售，接受客户订单。而<code>Worker</code>就是工人，当销售接到订单后，<code>Worker</code>去工作生产出客户要的东西。而<code>TaskWorker</code>可以理解为行政人员，可以帮助<code>Worker</code>干些杂事，让<code>Worker</code>专心工作。 <code>Manager</code> 相当于HR，负责招聘员工（<code>Worker</code>），或者把不干活的员工(<code>Worker</code>)开除。</p>
+<p><img src="http://img.github.mailjob.net/20210524133824.png" alt="image-20210524133823196"></p>
+<h2 id="Swoole进程测试">Swoole进程测试</h2>
+<h3 id="测试代码">测试代码</h3>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token variable">$server</span> <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name class-name-fully-qualified">Swoole<span class="token punctuation">\</span>Server</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'127.0.0.1'</span><span class="token punctuation">,</span> <span class="token number">9503</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">on</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'connect'</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token variable">$server</span><span class="token punctuation">,</span> <span class="token variable">$fd</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+  <span class="token keyword">echo</span> <span class="token string double-quoted-string">"connection open: <span class="token interpolation"><span class="token punctuation">&#123;</span><span class="token variable">$fd</span><span class="token punctuation">&#125;</span></span>\n"</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">on</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'receive'</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token variable">$server</span><span class="token punctuation">,</span> <span class="token variable">$fd</span><span class="token punctuation">,</span> <span class="token variable">$reactor_id</span><span class="token punctuation">,</span> <span class="token variable">$data</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  <span class="token variable">$server</span><span class="token operator">-></span><span class="token function">send</span><span class="token punctuation">(</span><span class="token variable">$fd</span><span class="token punctuation">,</span> <span class="token string double-quoted-string">"Swoole: <span class="token interpolation"><span class="token punctuation">&#123;</span><span class="token variable">$data</span><span class="token punctuation">&#125;</span></span>"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token variable">$server</span><span class="token operator">-></span><span class="token function">close</span><span class="token punctuation">(</span><span class="token variable">$fd</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">on</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'close'</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token variable">$server</span><span class="token punctuation">,</span> <span class="token variable">$fd</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  <span class="token keyword">echo</span> <span class="token string double-quoted-string">"connection close: <span class="token interpolation"><span class="token punctuation">&#123;</span><span class="token variable">$fd</span><span class="token punctuation">&#125;</span></span>\n"</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="进程查看">进程查看</h3>
+<p><img src="http://img.github.mailjob.net/20210524134627.png" alt="image-20210524134625911"></p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/1773018433.html">https://blog.mailjob.net/posts/1773018433.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Swoole%E8%BF%9B%E7%A8%8B%E7%BB%93%E6%9E%84"><span class="toc-text">Swoole进程结构</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#client%E4%B8%8Eserver%E7%9A%84%E4%BA%A4%E4%BA%92"><span class="toc-text">client与server的交互</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E8%BF%9B%E7%A8%8B%E8%AF%B4%E6%98%8E"><span class="toc-text">主要进程说明</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Master%E8%BF%9B%E7%A8%8B"><span class="toc-text">Master进程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Manager%E8%BF%9B%E7%A8%8B"><span class="toc-text">Manager进程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Worker%E8%BF%9B%E7%A8%8B"><span class="toc-text">Worker进程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Task%E8%BF%9B%E7%A8%8B"><span class="toc-text">Task进程</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%9B%E7%A8%8B%E4%B8%8E%E4%BA%8B%E4%BB%B6%E5%9B%9E%E8%B0%83%E7%9A%84%E5%AF%B9%E5%BA%94%E5%85%B3%E7%B3%BB"><span class="toc-text">进程与事件回调的对应关系</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Master%E8%BF%9B%E7%A8%8B%E5%86%85%E7%9A%84%E5%9B%9E%E8%B0%83%E5%87%BD%E6%95%B0"><span class="toc-text">Master进程内的回调函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Worker%E8%BF%9B%E7%A8%8B%E5%86%85%E7%9A%84%E5%9B%9E%E8%B0%83%E5%87%BD%E6%95%B0"><span class="toc-text">Worker进程内的回调函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Task%E8%BF%9B%E7%A8%8B%E5%86%85%E7%9A%84%E5%9B%9E%E8%B0%83%E5%87%BD%E6%95%B0"><span class="toc-text">Task进程内的回调函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Manager%E8%BF%9B%E7%A8%8B%E5%86%85%E7%9A%84%E5%9B%9E%E8%B0%83%E5%87%BD%E6%95%B0"><span class="toc-text">Manager进程内的回调函数</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%9A%E4%BF%97%E6%AF%94%E5%96%BB"><span class="toc-text">通俗比喻</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Swoole%E8%BF%9B%E7%A8%8B%E6%B5%8B%E8%AF%95"><span class="toc-text">Swoole进程测试</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E4%BB%A3%E7%A0%81"><span class="toc-text">测试代码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%9B%E7%A8%8B%E6%9F%A5%E7%9C%8B"><span class="toc-text">进程查看</span></a></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

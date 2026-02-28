@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>用Go写出面向对象风格的代码 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="前言 面向对象程序设计是一种计算机编程架构，英文全称：Object Oriented Programming，简称OOP。OOP的一条基本原则是计算机程序由单个能够起到子程序作用的单元或对象组合而成，OOP达到了软件工程的三个主要目标：重用性、灵活性和扩展性。OOP&#x3D;对象+类+继承+多态+消息，其中核心概念就是类和对象。 这一段话在网上介绍什么是面向对象编程时经常出现，大多数学习Go语言的朋友应该">
+<meta property="og:type" content="article">
+<meta property="og:title" content="用Go写出面向对象风格的代码">
+<meta property="og:url" content="https://blog.mailjob.net/posts/1797831078.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="前言 面向对象程序设计是一种计算机编程架构，英文全称：Object Oriented Programming，简称OOP。OOP的一条基本原则是计算机程序由单个能够起到子程序作用的单元或对象组合而成，OOP达到了软件工程的三个主要目标：重用性、灵活性和扩展性。OOP&#x3D;对象+类+继承+多态+消息，其中核心概念就是类和对象。 这一段话在网上介绍什么是面向对象编程时经常出现，大多数学习Go语言的朋友应该">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-11-15T02:32:25.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.980Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="go">
+<meta name="twitter:card" content="summary">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            用Go写出面向对象风格的代码
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/1797831078.html" class="article-date">
+	  <time datetime="2021-11-15T02:32:25.000Z" itemprop="datePublished">2021-11-15</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/go/">go</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/go/" rel="tag">go</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/1797831078.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.7k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 7(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="前言">前言</h2>
+<p>面向对象程序设计是一种计算机编程架构，英文全称：Object Oriented Programming，简称OOP。OOP的一条基本原则是计算机程序由单个能够起到子程序作用的单元或对象组合而成，OOP达到了软件工程的三个主要目标：重用性、灵活性和扩展性。OOP=对象+类+继承+多态+消息，其中核心概念就是类和对象。</p>
+<p>这一段话在网上介绍什么是面向对象编程时经常出现，大多数学习<code>Go</code>语言的朋友应该也都是从<code>C++</code>、<code>python</code>、<code>java</code>转过来的，所以对面向对象编程的理解应该很深了，所以本文就没必要介绍概念了，重点来看一下如何使用<code>Go</code>语言来实现面向对象编程的编程风格。</p>
+<h2 id="类">类</h2>
+<p><code>Go</code>语言本身就不是一个面向对象的编程语言，所以<code>Go</code>语言中没有类的概念，但是他是支持类型的，因此我们可以使用<code>struct</code>类型来提供类似于<code>java</code>中的类的服务，可以定义属性、方法、还能定义构造器。来看个例子：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> Hero <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+ Name <span class="token builtin">string</span>
+ Age <span class="token builtin">uint64</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">NewHero</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">*</span>Hero <span class="token punctuation">&#123;</span>
+ <span class="token keyword">return</span> <span class="token operator">&amp;</span>Hero<span class="token punctuation">&#123;</span>
+  Name<span class="token punctuation">:</span> <span class="token string">"盖伦"</span><span class="token punctuation">,</span>
+  Age<span class="token punctuation">:</span> <span class="token number">18</span><span class="token punctuation">,</span>
+ <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>h <span class="token operator">*</span>Hero<span class="token punctuation">)</span> <span class="token function">GetName</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">&#123;</span>
+ <span class="token keyword">return</span> h<span class="token punctuation">.</span>Name
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>h <span class="token operator">*</span>Hero<span class="token punctuation">)</span> <span class="token function">GetAge</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">uint64</span> <span class="token punctuation">&#123;</span>
+ <span class="token keyword">return</span> h<span class="token punctuation">.</span>Age
+<span class="token punctuation">&#125;</span>
+
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token punctuation">&#123;</span>
+ h <span class="token operator">:=</span> <span class="token function">NewHero</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+ <span class="token function">print</span><span class="token punctuation">(</span>h<span class="token punctuation">.</span><span class="token function">GetName</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+ <span class="token function">print</span><span class="token punctuation">(</span>h<span class="token punctuation">.</span><span class="token function">GetAge</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这就一个简单的 &quot;类&quot;的使用，这个类名就是<code>Hero</code>，其中<code>Name</code>、<code>Age</code>就是我们定义的属性，<code>GetName</code>、<code>GetAge</code>这两个就是我们定义的类的方法，<code>NewHero</code>就是定义的构造器。因为<code>Go</code>语言的特性问题，构造器只能够依靠我们手动来实现。</p>
+<p>这里方法的实现是依赖于结构体的值接收者、指针接收者的特性来实现的。</p>
+<h2 id="封装">封装</h2>
+<p>封装是把一个对象的属性私有化，同时提供一些可以被外界访问的属性和方法，如果不想被外界访问，我们大可不必提供方法给外界访问。在<code>Go</code>语言中实现封装我们可以采用两种方式：</p>
+<ul>
+<li><code>Go</code>语言支持包级别的封装，小写字母开头的名称只能在该包内程序中可见，所以我们如果不想暴露一些方法，可以通过这种方式私有包中的内容，这个理解比较简单，就不举例子了。</li>
+<li><code>Go</code>语言可以通过 <code>type</code> 关键字创建新的类型，所以我们为了不暴露一些属性和方法，可以采用创建一个新类型的方式，自己手写构造器的方式实现封装，举个例子：</li>
+</ul>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> IdCard <span class="token builtin">string</span>
+
+<span class="token keyword">func</span> <span class="token function">NewIdCard</span><span class="token punctuation">(</span>card <span class="token builtin">string</span><span class="token punctuation">)</span> IdCard <span class="token punctuation">&#123;</span>
+ <span class="token keyword">return</span> <span class="token function">IdCard</span><span class="token punctuation">(</span>card<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>i IdCard<span class="token punctuation">)</span> <span class="token function">GetPlaceOfBirth</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">&#123;</span>
+ <span class="token keyword">return</span> <span class="token function">string</span><span class="token punctuation">(</span>i<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">6</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>i IdCard<span class="token punctuation">)</span> <span class="token function">GetBirthDay</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">&#123;</span>
+ <span class="token keyword">return</span> <span class="token function">string</span><span class="token punctuation">(</span>i<span class="token punctuation">[</span><span class="token number">6</span><span class="token punctuation">:</span><span class="token number">14</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>声明一个新类型<code>IdCard</code>，本质是一个<code>string</code>类型，<code>NewIdCard</code>用来构造对象，</p>
+<p><code>GetPlaceOfBirth</code>、<code>GetBirthDay</code>就是封装的方法。</p>
+<h2 id="继承">继承</h2>
+<p><code>Go</code>并没有原生级别的继承支持，不过我们可以使用组合的方式来实现继承，通过结构体内嵌类型的方式实现继承，典型的应用是内嵌匿名结构体类型和内嵌匿名接口类型，这两种方式还有点细微差别：</p>
+<ul>
+<li>内嵌匿名结构体类型：将父结构体嵌入到子结构体中，子结构体拥有父结构体的属性和方法，但是这种方式不能支持参数多态。</li>
+<li>内嵌匿名接口类型：将接口类型嵌入到结构体中，该结构体默认实现了该接口的所有方法，该结构体也可以对这些方法进行重写，这种方式可以支持参数多态，这里要注意一个点是如果嵌入类型没有实现所有接口方法，会引起编译时未被发现的运行错误。</li>
+</ul>
+<h3 id="内嵌匿名结构体类型实现继承的例子">内嵌匿名结构体类型实现继承的例子</h3>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> Base <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+ Value <span class="token builtin">string</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>b <span class="token operator">*</span>Base<span class="token punctuation">)</span> <span class="token function">GetMsg</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">&#123;</span>
+ <span class="token keyword">return</span> b<span class="token punctuation">.</span>Value
+<span class="token punctuation">&#125;</span>
+
+
+<span class="token keyword">type</span> Person <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+ Base
+ Name <span class="token builtin">string</span>
+ Age <span class="token builtin">uint64</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>p <span class="token operator">*</span>Person<span class="token punctuation">)</span> <span class="token function">GetName</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">&#123;</span>
+ <span class="token keyword">return</span> p<span class="token punctuation">.</span>Name
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>p <span class="token operator">*</span>Person<span class="token punctuation">)</span> <span class="token function">GetAge</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">uint64</span> <span class="token punctuation">&#123;</span>
+ <span class="token keyword">return</span> p<span class="token punctuation">.</span>Age
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">check</span><span class="token punctuation">(</span>b <span class="token operator">*</span>Base<span class="token punctuation">)</span>  <span class="token punctuation">&#123;</span>
+ b<span class="token punctuation">.</span><span class="token function">GetMsg</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token punctuation">&#123;</span>
+ m <span class="token operator">:=</span> Base<span class="token punctuation">&#123;</span>Value<span class="token punctuation">:</span> <span class="token string">"I Love You"</span><span class="token punctuation">&#125;</span>
+ p <span class="token operator">:=</span> <span class="token operator">&amp;</span>Person<span class="token punctuation">&#123;</span>
+  Base<span class="token punctuation">:</span> m<span class="token punctuation">,</span>
+  Name<span class="token punctuation">:</span> <span class="token string">"asong"</span><span class="token punctuation">,</span>
+  Age<span class="token punctuation">:</span> <span class="token number">18</span><span class="token punctuation">,</span>
+ <span class="token punctuation">&#125;</span>
+ fmt<span class="token punctuation">.</span><span class="token function">Print</span><span class="token punctuation">(</span>p<span class="token punctuation">.</span><span class="token function">GetName</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">"  "</span><span class="token punctuation">,</span> p<span class="token punctuation">.</span><span class="token function">GetAge</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">" and say "</span><span class="token punctuation">,</span>p<span class="token punctuation">.</span><span class="token function">GetMsg</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+ <span class="token comment">//check(p)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>上面注释掉的方法就证明了不能进行参数多态。</p>
+<h3 id="内嵌匿名接口类型实现继承的例子">内嵌匿名接口类型实现继承的例子</h3>
+<p>直接拿一个业务场景举例子，假设现在我们现在要给用户发一个通知，<code>web</code>、<code>app</code>端发送的通知内容都是一样的，但是点击后的动作是不一样的，所以我们可以进行抽象一个接口<code>OrderChangeNotificationHandler</code>来声明出三个公共方法：<code>GenerateMessage</code>、<code>GeneratePhotos</code>、<code>generateUrl</code>，所有类都会实现这三个方法，因为<code>web</code>、<code>app</code>端发送的内容是一样的，所以我们可以抽相出一个父类<code>OrderChangeNotificationHandlerImpl</code>来实现一个默认的方法，然后在写两个子类<code>WebOrderChangeNotificationHandler</code>、<code>AppOrderChangeNotificationHandler</code>去继承父类重写<code>generateUrl</code>方法即可，后面如果不同端的内容有做修改，直接重写父类方法就可以了，来看例子：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> Photos <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+ width <span class="token builtin">uint64</span>
+ height <span class="token builtin">uint64</span>
+ value <span class="token builtin">string</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">type</span> OrderChangeNotificationHandler <span class="token keyword">interface</span> <span class="token punctuation">&#123;</span>
+ <span class="token function">GenerateMessage</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span>
+ <span class="token function">GeneratePhotos</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Photos
+ <span class="token function">generateUrl</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span>
+<span class="token punctuation">&#125;</span>
+
+
+<span class="token keyword">type</span> OrderChangeNotificationHandlerImpl <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+ url <span class="token builtin">string</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">NewOrderChangeNotificationHandlerImpl</span><span class="token punctuation">(</span><span class="token punctuation">)</span> OrderChangeNotificationHandler <span class="token punctuation">&#123;</span>
+ <span class="token keyword">return</span> OrderChangeNotificationHandlerImpl<span class="token punctuation">&#123;</span>
+  url<span class="token punctuation">:</span> <span class="token string">"https://base.test.com"</span><span class="token punctuation">,</span>
+ <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>o OrderChangeNotificationHandlerImpl<span class="token punctuation">)</span> <span class="token function">GenerateMessage</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">&#123;</span>
+ <span class="token keyword">return</span> <span class="token string">"OrderChangeNotificationHandlerImpl GenerateMessage"</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>o OrderChangeNotificationHandlerImpl<span class="token punctuation">)</span> <span class="token function">GeneratePhotos</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Photos <span class="token punctuation">&#123;</span>
+ <span class="token keyword">return</span> Photos<span class="token punctuation">&#123;</span>
+  width<span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+  height<span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+  value<span class="token punctuation">:</span> <span class="token string">"https://www.baidu.com"</span><span class="token punctuation">,</span>
+ <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>w OrderChangeNotificationHandlerImpl<span class="token punctuation">)</span> <span class="token function">generateUrl</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">&#123;</span>
+ <span class="token keyword">return</span> w<span class="token punctuation">.</span>url
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">type</span> WebOrderChangeNotificationHandler <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+ OrderChangeNotificationHandler
+ url <span class="token builtin">string</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>w WebOrderChangeNotificationHandler<span class="token punctuation">)</span> <span class="token function">generateUrl</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">&#123;</span>
+ <span class="token keyword">return</span> w<span class="token punctuation">.</span>url
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">type</span> AppOrderChangeNotificationHandler <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+ OrderChangeNotificationHandler
+ url <span class="token builtin">string</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>a AppOrderChangeNotificationHandler<span class="token punctuation">)</span> <span class="token function">generateUrl</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">&#123;</span>
+ <span class="token keyword">return</span> a<span class="token punctuation">.</span>url
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">check</span><span class="token punctuation">(</span>handler OrderChangeNotificationHandler<span class="token punctuation">)</span>  <span class="token punctuation">&#123;</span>
+ fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>handler<span class="token punctuation">.</span><span class="token function">GenerateMessage</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token punctuation">&#123;</span>
+ base <span class="token operator">:=</span> <span class="token function">NewOrderChangeNotificationHandlerImpl</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+ web <span class="token operator">:=</span> WebOrderChangeNotificationHandler<span class="token punctuation">&#123;</span>
+  OrderChangeNotificationHandler<span class="token punctuation">:</span> base<span class="token punctuation">,</span>
+  url<span class="token punctuation">:</span> <span class="token string">"http://web.test.com"</span><span class="token punctuation">,</span>
+ <span class="token punctuation">&#125;</span>
+ fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>web<span class="token punctuation">.</span><span class="token function">GenerateMessage</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+ fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>web<span class="token punctuation">.</span><span class="token function">generateUrl</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+ <span class="token function">check</span><span class="token punctuation">(</span>web<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>因为所有组合都实现了<code>OrderChangeNotificationHandler</code>类型，所以可以处理任何特定类型以及是该特定类型的派生类的通配符。</p>
+<h2 id="多态">多态</h2>
+<p>多态是面向对象编程的本质，多态是支代码可以根据类型的具体实现采取不同行为的能力，在<code>Go</code>语言中任何用户定义的类型都可以实现任何接口，所以通过不同实体类型对接口值方法的调用就是多态，举个例子：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> SendEmail <span class="token keyword">interface</span> <span class="token punctuation">&#123;</span>
+ <span class="token function">send</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">Send</span><span class="token punctuation">(</span>s SendEmail<span class="token punctuation">)</span>  <span class="token punctuation">&#123;</span>
+ s<span class="token punctuation">.</span><span class="token function">send</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">type</span> user <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+ name <span class="token builtin">string</span>
+ email <span class="token builtin">string</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>u <span class="token operator">*</span>user<span class="token punctuation">)</span> <span class="token function">send</span><span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token punctuation">&#123;</span>
+ fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>u<span class="token punctuation">.</span>name <span class="token operator">+</span> <span class="token string">" email is "</span> <span class="token operator">+</span> u<span class="token punctuation">.</span>email <span class="token operator">+</span> <span class="token string">"already send"</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">type</span> admin <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+ name <span class="token builtin">string</span>
+ email <span class="token builtin">string</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>a <span class="token operator">*</span>admin<span class="token punctuation">)</span> <span class="token function">send</span><span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token punctuation">&#123;</span>
+ fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>a<span class="token punctuation">.</span>name <span class="token operator">+</span> <span class="token string">" email is "</span> <span class="token operator">+</span> a<span class="token punctuation">.</span>email <span class="token operator">+</span> <span class="token string">"already send"</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token punctuation">&#123;</span>
+ u <span class="token operator">:=</span> <span class="token operator">&amp;</span>user<span class="token punctuation">&#123;</span>
+  name<span class="token punctuation">:</span> <span class="token string">"asong"</span><span class="token punctuation">,</span>
+  email<span class="token punctuation">:</span> <span class="token string">"你猜"</span><span class="token punctuation">,</span>
+ <span class="token punctuation">&#125;</span>
+ a <span class="token operator">:=</span> <span class="token operator">&amp;</span>admin<span class="token punctuation">&#123;</span>
+  name<span class="token punctuation">:</span> <span class="token string">"asong1"</span><span class="token punctuation">,</span>
+  email<span class="token punctuation">:</span> <span class="token string">"就不告诉你"</span><span class="token punctuation">,</span>
+ <span class="token punctuation">&#125;</span>
+ <span class="token function">Send</span><span class="token punctuation">(</span>u<span class="token punctuation">)</span>
+ <span class="token function">Send</span><span class="token punctuation">(</span>a<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/1797831078.html">https://blog.mailjob.net/posts/1797831078.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%B1%BB"><span class="toc-text">类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%81%E8%A3%85"><span class="toc-text">封装</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%A7%E6%89%BF"><span class="toc-text">继承</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E5%B5%8C%E5%8C%BF%E5%90%8D%E7%BB%93%E6%9E%84%E4%BD%93%E7%B1%BB%E5%9E%8B%E5%AE%9E%E7%8E%B0%E7%BB%A7%E6%89%BF%E7%9A%84%E4%BE%8B%E5%AD%90"><span class="toc-text">内嵌匿名结构体类型实现继承的例子</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E5%B5%8C%E5%8C%BF%E5%90%8D%E6%8E%A5%E5%8F%A3%E7%B1%BB%E5%9E%8B%E5%AE%9E%E7%8E%B0%E7%BB%A7%E6%89%BF%E7%9A%84%E4%BE%8B%E5%AD%90"><span class="toc-text">内嵌匿名接口类型实现继承的例子</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E6%80%81"><span class="toc-text">多态</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

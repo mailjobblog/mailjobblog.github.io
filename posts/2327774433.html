@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>MVCC 多版本并发控制机制详解 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="带着问题来学习 MVCC是为了解决哪些问题 ？ 并发访问（读或写）数据库时，对正在事务内处理的数据做多版本的管理。我们知道锁机制可以用来控制并发操作，但是其系统开销较大。而MVCC可以在大多数情况下代替行级锁，使用MVCC可以降低系统开销。 MVCC是如何实现的 ？ MVCC通过保存数据在某个时间点的快照来实现。不同存储引擎的MVCC实现是不同的。当我们创建表之后，mysql会自动为每个表添加数据">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MVCC 多版本并发控制机制详解">
+<meta property="og:url" content="https://blog.mailjob.net/posts/2327774433.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="带着问题来学习 MVCC是为了解决哪些问题 ？ 并发访问（读或写）数据库时，对正在事务内处理的数据做多版本的管理。我们知道锁机制可以用来控制并发操作，但是其系统开销较大。而MVCC可以在大多数情况下代替行级锁，使用MVCC可以降低系统开销。 MVCC是如何实现的 ？ MVCC通过保存数据在某个时间点的快照来实现。不同存储引擎的MVCC实现是不同的。当我们创建表之后，mysql会自动为每个表添加数据">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210216204355.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210216204322.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210216211939.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210304172808.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210304172842.png">
+<meta property="article:published_time" content="2021-02-16T09:46:33.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.982Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="mysql">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/oss.github/20210216204355.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            MVCC 多版本并发控制机制详解
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/2327774433.html" class="article-date">
+	  <time datetime="2021-02-16T09:46:33.000Z" itemprop="datePublished">2021-02-16</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/mysql/">mysql</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/mysql/" rel="tag">mysql</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/2327774433.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 2.6k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 9(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="带着问题来学习">带着问题来学习</h2>
+<h4 id="MVCC是为了解决哪些问题-？">MVCC是为了解决哪些问题 ？</h4>
+<p>并发访问（读或写）数据库时，对正在事务内处理的数据做多版本的管理。我们知道锁机制可以用来控制并发操作，但是其系统开销较大。而MVCC可以在大多数情况下代替行级锁，使用MVCC可以降低系统开销。</p>
+<h4 id="MVCC是如何实现的-？">MVCC是如何实现的 ？</h4>
+<p>MVCC通过保存数据在某个时间点的快照来实现。不同存储引擎的MVCC实现是不同的。当我们创建表之后，mysql会自动为每个表添加数据版本号（最后更新数据的事务id）和删除版本号（数据删除的事务id），事务id由mysql数据库自动生成，且递增。</p>
+<h4 id="在哪些隔离级别下实现了mvcc-？">在哪些隔离级别下实现了mvcc ？</h4>
+<p><code>RR</code> 和 <code>RC</code> 隔离级别都实现了 MVCC 来满足读写并行。<br>
+<strong>两者相同点</strong>：<br>
+它们读取的都是快照数据，并不会被写操作阻塞，所以这种读操作称为 快照读（Snapshot Read）。<br>
+<strong>两者不同点</strong>：<br>
+RC每次读取数据前都生成一个ReadView。RR在第一次读取数据时生成一个ReadView。所以，RC 总是读取记录的最新版本，如果该记录被锁住，则读取该记录最新的一次快照，而 RR 是读取该记录事务开始时的那个版本。</p>
+<h4 id="在RU和Serializable为什么没有mvcc-？">在RU和Serializable为什么没有mvcc ？</h4>
+<p>在 <code>RU</code> 隔离级别下，每次都是读取最新版本的数据行，所以不能用 MVCC 的多版本，而 <code>Serializable</code> 隔离级别每次读取操作都会为记录加上读锁，也和 MVCC 不兼容，所以只有 RC 和 RR 这两个隔离级别才有 MVCC。</p>
+<h2 id="参考文献">参考文献</h2>
+<blockquote>
+<p>mvcc思维导图： <a target="_blank" rel="noopener" href="https://kdocs.cn/l/sd1gXtGXheTz">https://kdocs.cn/l/sd1gXtGXheTz</a><br>
+mvcc 多事务执行excel：<a target="_blank" rel="noopener" href="https://kdocs.cn/l/se4n2ocRoaU1">https://kdocs.cn/l/se4n2ocRoaU1</a><br>
+mvcc 多事务执行版本链：<a target="_blank" rel="noopener" href="https://kdocs.cn/l/sb2gsOmOQwP8">https://kdocs.cn/l/sb2gsOmOQwP8</a><br>
+优秀博文：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/117476959">https://zhuanlan.zhihu.com/p/117476959</a></p>
+</blockquote>
+<h2 id="基本概念">基本概念</h2>
+<h3 id="当前读-Current-Read">当前读(Current Read)</h3>
+<p>像<code>select lock in share mode(共享锁)</code>,  <code>select for update ; update, insert ,delete(排他锁)</code> 这些操作都是一种当前读，为什么叫当前读？就是它读取的是记录的最新版本，读取时还要保证其他并发事务不能修改当前记录，会对读取的记录进行加锁。</p>
+<h3 id="快照读-Snapshot-Read">快照读(Snapshot Read)</h3>
+<p>像不加锁的select操作就是快照读，即不加锁的非阻塞读；快照读的实现是基于多版本并发控制(mvcc)。可以认为MVCC是行锁的一个变种，但它在很多情况下，避免了加锁操作，降低了开销；既然是基于多版本，即快照读可能读到的并不一定是数据的最新版本，而有可能是之前的历史版本。</p>
+<h3 id="MVCC数据修改过程：">MVCC数据修改过程：</h3>
+<p>每行数据都存在一个版本，每次数据更新时都更新该版本。<br>
+修改时Copy出当前版本随意修改，个事务之间无干扰。<br>
+保存时比较版本号，如果成功（commit），则覆盖原记录；失败则放弃copy（rollback）。</p>
+<h3 id="MVCC数据修改和悲观锁数据修改对比">MVCC数据修改和悲观锁数据修改对比</h3>
+<blockquote>
+<p>InnoDB的悲观锁数据修改过程是：事务以排他锁的形式修改原始数据，把修改前的数据存放于undo log，通过回滚指针与主数据关联，修改成功（commit）啥都不做，失败则恢复undo log中的数据（rollback）。</p>
+</blockquote>
+<p>总上来看，二者最本质的区别是，当修改数据时是否要排他锁定，如果锁定了还算不算是MVCC呢？<br>
+Innodb的实现真算不上MVCC，因为并没有实现核心的多版本共存，undo log中的内容只是串行化的结果，记录了多个事务的过程，不属于多版本共存。但理想的MVCC是难以实现的，当事务仅修改一行记录使用理想的MVCC模式是没有问题的，可以通过比较版本号进行回滚；但当事务影响到多行数据时，理想的MVCC据无能为力了。</p>
+<p><em>比如，如果 T1 执行理想的MVCC，修改Row1成功，而修改Row2失败，此时需要回滚Row1，但因为Row1没有被锁定，其数据可能又被 T2 所修改，如果此时回滚Row1的内容，则会破坏 T2 的修改结果，导致 T2 违反ACID。</em><br>
+<em>理想MVCC难以实现的根本原因在于企图通过乐观锁代替二段提交。修改两行数据，但为了保证其一致性，与修改两个分布式系统中的数据并无区别，而二提交是目前这种场景保证一致性的唯一手段。二段提交的本质是锁定，乐观锁的本质是消除锁定，二者矛盾，故理想的MVCC难以真正在实际中被应用，Innodb只是借了MVCC这个名字，提供了读的非阻塞而已。</em></p>
+<h2 id="事务视图-ReadView-详解">事务视图(ReadView)详解</h2>
+<h3 id="ReadView上的几个参数：">ReadView上的几个参数：</h3>
+<ul>
+<li><strong>m_ids</strong>：表示在生成<code>ReadView</code>时当前系统中活跃的读写事务的<code>事务id</code>列表。</li>
+<li><strong>min_trx_id</strong>：表示在生成<code>ReadView</code>时当前系统中活跃的读写事务中最小的<code>事务id</code>，也就是<code>m_ids</code>中的最小值。</li>
+<li><strong>max_trx_id</strong>：表示生成<code>ReadView</code>时系统中应该分配给下一个事务的<code>id</code>值。</li>
+<li><strong>creator_trx_id</strong>：表示生成该<code>ReadView</code>的事务的<code>事务id</code>。</li>
+</ul>
+<blockquote>
+<p>小贴士1： 注意max_trx_id并不是m_ids中的最大值，事务id是递增分配的。比方说现在有id为1，2，3这三个事务，之后id为3的事务提交了。那么一个新的读事务在生成ReadView时，m_ids就包括1和2，min_trx_id的值就是1，max_trx_id的值就是4。</p>
+<p>小贴士2： 我们前边说过，只有在对表中的记录做改动时（执行INSERT、DELETE、UPDATE这些语句时）才会为事务分配事务id，否则在一个只读事务中的事务id值都默认为0。</p>
+</blockquote>
+<h3 id="根据ReadView判断可见性：">根据ReadView判断可见性：</h3>
+<ul>
+<li>如果被访问版本的<code>trx_id</code>属性值与<code>ReadView</code>中的<code>creator_trx_id</code>值相同，意味着当前事务在访问它自己修改过的记录，所以该版本可以被当前事务访问。</li>
+<li>如果被访问版本的<code>trx_id</code>属性值小于<code>ReadView</code>中的<code>min_trx_id</code>值，表明生成该版本的事务在当前事务生成<code>ReadView</code>前已经提交，所以该版本可以被当前事务访问。</li>
+<li>如果被访问版本的<code>trx_id</code>属性值大于或等于<code>ReadView</code>中的<code>max_trx_id</code>值，表明生成该版本的事务在当前事务生成<code>ReadView</code>后才开启，所以该版本不可以被当前事务访问。</li>
+<li>如果被访问版本的<code>trx_id</code>属性值在<code>ReadView</code>的<code>min_trx_id</code>和<code>max_trx_id</code>之间，那就需要判断一下<code>trx_id</code>属性值是不是在<code>m_ids</code>列表中，如果在，说明创建<code>ReadView</code>时生成该版本的事务还是活跃的，该版本不可以被访问；如果不在，说明创建<code>ReadView</code>时生成该版本的事务已经被提交，该版本可以被访问。</li>
+</ul>
+<p>如果某个版本的数据对当前事务不可见的话，那就顺着版本链找到下一个版本的数据，继续按照上边的步骤判断可见性，依此类推，直到版本链中的最后一个版本。如果最后一个版本也不可见的话，那么就意味着该条记录对该事务完全不可见，查询结果就不包含该记录。</p>
+<h2 id="undolog版本链详解">undolog版本链详解</h2>
+<p>图示：<a target="_blank" rel="noopener" href="https://kdocs.cn/l/sjj4G4Mjce4q">https://kdocs.cn/l/sjj4G4Mjce4q</a></p>
+<h4 id="undo-log-版本链字段解释">undo-log 版本链字段解释</h4>
+<p><strong>row trx_id</strong><br>
+数据的版本表示字段，用来标识数据的版本号</p>
+<p><strong>transaction id</strong><br>
+事务ID，它在事务开始的时候向事务系统申请，按时间先后顺序递增</p>
+<p><strong>roll_pointer</strong><br>
+指向到 undo-log 中的指针</p>
+<h3 id="图例过程演示">图例过程演示</h3>
+<p><img src="http://img.github.mailjob.net/oss.github/20210216204355.png" alt=""></p>
+<p>在 A （还未开始）的时候，<code>roll_pointer</code> 指向一个空的 <code>undo log</code>，因为之前这条数据是没有的。</p>
+<p><strong>修改的时候执行的流程如下</strong>：</p>
+<p>1、用 <code>排它锁</code> 锁定这一行的数据<br>
+2、对于要修改的数据，生成 <code>undo-log </code><br>
+3、把指针指向到 <code>undo-log </code> （便于数据回滚）<br>
+4、进行修改数据<br>
+5、把修改的数据指针指向到 <code> row trx_id</code>  中</p>
+<p><strong>以时间轴角度理解 undo log 版本链</strong>：</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210216204322.png" alt=""></p>
+<p><strong>总结</strong>：</p>
+<ul>
+<li>第一次的时候，因为是新插入的数据，没有指向一个空的 <code>undo log</code></li>
+<li>往后开始，每次指向的 <code>undo log</code> 都是修改前的数据生成的 <code>undo log</code></li>
+</ul>
+<h2 id="案例分析mvcc机制">案例分析mvcc机制</h2>
+<h4 id="4个事务的执行流程">4个事务的执行流程</h4>
+<p><img src="http://img.github.mailjob.net/oss.github/20210216211939.png" alt=""></p>
+<h4 id="以上事务对应的-undo-log-链如下">以上事务对应的 undo log 链如下</h4>
+<blockquote>
+<p><strong>说明</strong>：<br>
+1、每个 trx_id 由 excel 中的事务序号标识（这样假设的话更好理解）<br>
+2、事务4，这里先不作体现，后续演示版本比较的时候再说明</p>
+</blockquote>
+<p><img src="http://img.github.mailjob.net/oss.github/20210304172808.png" alt="image-20210304172806806"></p>
+<h4 id="事务4执行时，如何寻找-undo-log">事务4执行时，如何寻找 undo-log</h4>
+<p>当事务4执行的时候，对应的undo-log链如下：</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210304172842.png" alt="image-20210304172840748"></p>
+<p><strong>事务4第一个update开始执行</strong>：</p>
+<p>因为事务1、事务3 还没有 <code>commit </code>，<br>
+所以得到的 <code>max trx id = 3</code>  <code>min trx id = 1</code><br>
+得到的版本链数组是 <code>[1,3]</code><br>
+所以事务4这样开始判断 <code>redo log</code> 链来读取数据：</p>
+<p><strong>如果当前的事务id，小于undo log 链id，说明这个事务，比最早的事务早，则可以读</strong></p>
+<p>trx_id = 4 开始和 trx_id = 3 开始对比，判断出，4不比3小，其次存在于版本链数组中，则不可读<br>
+trx_id = 4 开始和 trx_id = 2 开始对比，判断出，4不比2小，但是 trx_id = 2 不存在与存在于版本链数组中，则可读，读到的是 <code>name = B</code></p>
+<p><strong>事务4第二个update开始执行</strong>：</p>
+<p>依据上面的演示，则可以推导出，读取的是 trx_id = 3 的数据</p>
+<h2 id="总结">总结</h2>
+<p><strong>对于一个事务视图(ReadView)来说，它能够读到那些版本数据，要遵循以下规则</strong>：</p>
+<ul>
+<li>当前事务内的更新，可以读到；</li>
+<li>版本未提交，不能读到；</li>
+<li>版本已提交，但是却在快照创建后提交的，不能读到；</li>
+<li>版本已提交，且是在快照创建前提交的，可以读到；</li>
+</ul>
+<p><strong>对于 undo log 版本链的判断，存在以下规则</strong></p>
+<ul>
+<li>事务id &lt; 未提交事务的最小id：可读</li>
+<li>最小id &lt;= 事务id &lt;= 事务的最大id：则判断事务id是否在未提交事务id的数组中，若在则不可读(只有自己可读)</li>
+<li>事务id &gt; 事务的最大id：则不可读</li>
+</ul>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/2327774433.html">https://blog.mailjob.net/posts/2327774433.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%A6%E7%9D%80%E9%97%AE%E9%A2%98%E6%9D%A5%E5%AD%A6%E4%B9%A0"><span class="toc-text">带着问题来学习</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#MVCC%E6%98%AF%E4%B8%BA%E4%BA%86%E8%A7%A3%E5%86%B3%E5%93%AA%E4%BA%9B%E9%97%AE%E9%A2%98-%EF%BC%9F"><span class="toc-text">MVCC是为了解决哪些问题 ？</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#MVCC%E6%98%AF%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E7%9A%84-%EF%BC%9F"><span class="toc-text">MVCC是如何实现的 ？</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9C%A8%E5%93%AA%E4%BA%9B%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB%E4%B8%8B%E5%AE%9E%E7%8E%B0%E4%BA%86mvcc-%EF%BC%9F"><span class="toc-text">在哪些隔离级别下实现了mvcc ？</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9C%A8RU%E5%92%8CSerializable%E4%B8%BA%E4%BB%80%E4%B9%88%E6%B2%A1%E6%9C%89mvcc-%EF%BC%9F"><span class="toc-text">在RU和Serializable为什么没有mvcc ？</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="toc-text">基本概念</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BD%93%E5%89%8D%E8%AF%BB-Current-Read"><span class="toc-text">当前读(Current Read)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BF%AB%E7%85%A7%E8%AF%BB-Snapshot-Read"><span class="toc-text">快照读(Snapshot Read)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MVCC%E6%95%B0%E6%8D%AE%E4%BF%AE%E6%94%B9%E8%BF%87%E7%A8%8B%EF%BC%9A"><span class="toc-text">MVCC数据修改过程：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MVCC%E6%95%B0%E6%8D%AE%E4%BF%AE%E6%94%B9%E5%92%8C%E6%82%B2%E8%A7%82%E9%94%81%E6%95%B0%E6%8D%AE%E4%BF%AE%E6%94%B9%E5%AF%B9%E6%AF%94"><span class="toc-text">MVCC数据修改和悲观锁数据修改对比</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E8%A7%86%E5%9B%BE-ReadView-%E8%AF%A6%E8%A7%A3"><span class="toc-text">事务视图(ReadView)详解</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ReadView%E4%B8%8A%E7%9A%84%E5%87%A0%E4%B8%AA%E5%8F%82%E6%95%B0%EF%BC%9A"><span class="toc-text">ReadView上的几个参数：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B9%E6%8D%AEReadView%E5%88%A4%E6%96%AD%E5%8F%AF%E8%A7%81%E6%80%A7%EF%BC%9A"><span class="toc-text">根据ReadView判断可见性：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#undolog%E7%89%88%E6%9C%AC%E9%93%BE%E8%AF%A6%E8%A7%A3"><span class="toc-text">undolog版本链详解</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#undo-log-%E7%89%88%E6%9C%AC%E9%93%BE%E5%AD%97%E6%AE%B5%E8%A7%A3%E9%87%8A"><span class="toc-text">undo-log 版本链字段解释</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%BE%E4%BE%8B%E8%BF%87%E7%A8%8B%E6%BC%94%E7%A4%BA"><span class="toc-text">图例过程演示</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B%E5%88%86%E6%9E%90mvcc%E6%9C%BA%E5%88%B6"><span class="toc-text">案例分析mvcc机制</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#4%E4%B8%AA%E4%BA%8B%E5%8A%A1%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B"><span class="toc-text">4个事务的执行流程</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%A5%E4%B8%8A%E4%BA%8B%E5%8A%A1%E5%AF%B9%E5%BA%94%E7%9A%84-undo-log-%E9%93%BE%E5%A6%82%E4%B8%8B"><span class="toc-text">以上事务对应的 undo log 链如下</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A14%E6%89%A7%E8%A1%8C%E6%97%B6%EF%BC%8C%E5%A6%82%E4%BD%95%E5%AF%BB%E6%89%BE-undo-log"><span class="toc-text">事务4执行时，如何寻找 undo-log</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Mysql索引介绍以及选择原则 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="普通索引 覆盖索引  覆盖索引是我们对于mysql建立索引的最终追求  只需要在一棵索引树上就能获取SQL所需的所有列数据，无需回表，速度更快。 Extra*：Using index* 如图，在innodb查询中，只需要通过普通索引就可以得到所查询的数据。无需通过主键索引取查询相应的数据，即为覆盖索引！  如果避免（innodb）回表查询 通过创建联合索引，避免回表查询问题：https:&#x2F;&#x2F;bl">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mysql索引介绍以及选择原则">
+<meta property="og:url" content="https://blog.mailjob.net/posts/3501359074.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="普通索引 覆盖索引  覆盖索引是我们对于mysql建立索引的最终追求  只需要在一棵索引树上就能获取SQL所需的所有列数据，无需回表，速度更快。 Extra*：Using index* 如图，在innodb查询中，只需要通过普通索引就可以得到所查询的数据。无需通过主键索引取查询相应的数据，即为覆盖索引！  如果避免（innodb）回表查询 通过创建联合索引，避免回表查询问题：https:&#x2F;&#x2F;bl">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210215110428.png">
+<meta property="article:published_time" content="2021-02-11T15:03:58.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.982Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="mysql">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210215110428.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Mysql索引介绍以及选择原则
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3501359074.html" class="article-date">
+	  <time datetime="2021-02-11T15:03:58.000Z" itemprop="datePublished">2021-02-11</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/mysql/">mysql</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/mysql/" rel="tag">mysql</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/3501359074.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 2.1k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 7(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <meta name="referrer" content="no-referrer"/>
+<h1 id="普通索引">普通索引</h1>
+<h4 id="覆盖索引">覆盖索引</h4>
+<blockquote>
+<p>覆盖索引是我们对于mysql建立索引的最终追求</p>
+</blockquote>
+<p><strong>只需要在一棵索引树上就能获取SQL所需的所有列数据，无需回表，速度更快。</strong></p>
+<p><em>Extra</em>*：Using index*</p>
+<p>如图，在innodb查询中，只需要通过普通索引就可以得到所查询的数据。无需通过主键索引取查询相应的数据，即为覆盖索引！</p>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210215110428.png" alt=""></p>
+<h4 id="如果避免（innodb）回表查询">如果避免（innodb）回表查询</h4>
+<p>通过创建联合索引，避免回表查询问题：<a href="https://blog.mailjob.net/posts/2656561906.html">https://blog.mailjob.net/posts/2656561906.html</a></p>
+<h4 id="联合索引最左匹配原则">联合索引最左匹配原则</h4>
+<p>创建 <strong>(A,B,C)联合索引时，相当于创建了(A)单列索引，(A,B)联合索引以及(A,B,C)联合索引</strong></p>
+<p>在 mysql5.6 之前，想要索引生效的话,只能使用 <code>A</code> 和 <code>A,B</code> 和 <code>A,B,C</code> 三种组合。</p>
+<p>在 mysql5.6 之后，由于mysql的优化器进行了优化，只要最终的排列顺序符合最左原则即可，那么此处符合覆盖索引条件的有以下索引：</p>
+<p>A<br>
+A,B<br>
+A,B,C<br>
+A,C,B<br>
+C,B,A<br>
+C,A,B<br>
+B,A,C<br>
+B,C,A</p>
+<p><strong><code>A,C</code> 组合是否用到了索引？</strong></p>
+<p>只用到了 <code>A</code> 的索引，<code>C</code> 并没有用到</p>
+<h1 id="Hash索引">Hash索引</h1>
+<p>在MySQL的存储引擎中，MyISAM不支持哈希索引，而InnoDB中的hash索引是存储引擎根据B-Tree索引自建的</p>
+<blockquote>
+<p>hash索引的特点</p>
+<p>1、hash索引是基于hash表实现的，只有查询条件精确匹配hash索引中的所有列的时候，才能用到hash索引。</p>
+<p>2、对于hash索引中的所有列，存储引擎都会为每一行计算一个hash码，hash索引中存储的就是hash码。</p>
+<p>3、hash索引包括键值、hash码和指针 。</p>
+</blockquote>
+<p>因为hash索引本身只需要存储对应的hash值，所以索引的结构十分紧凑，这也让hash索引查找的速度非常快。然而，hash索引也是存在其限制的：</p>
+<blockquote>
+<p>hash索引的限制</p>
+<ol>
+<li>Hash索引必须进行二次查找 使用哈市索引两次查找，第一次找到相应的行，第二次读取数据，但是被频繁访问到的行一般会缓存在内存中，这点对数据库性能的影响不大。</li>
+<li>hash索引不能用于外排序hash索引存储的是hash码而不是键值，所以无法用于外排序</li>
+<li>hash索引不支持部分索引查找也不支持范围查找只能用到等值查询，不能范围和模糊查询</li>
+<li>hash索引中的hash码的计算可能存在hash冲突</li>
+</ol>
+</blockquote>
+<p>当出现hash冲突的时候，存储引擎必须遍历整个链表中的所有行指针，逐行比较，直到找到所有的符合条件的行，若hash冲突很多的话，一些索引的维护代价机会很高，所以说hash索引不适用于选择性很差的列上（重复值很多）。姓名、性别、身份证（合适）</p>
+<p>上面说到InnoDB的“自适应hash索引”。就是当InnoDB注意到某些索引值被使用的非常频繁时，它会在内存中基于B-Tree索引上在创建一个hash索引，这样就让B-tree索引也具有hash索引的一些优点。这是一个完全自动的内部的行为，用户无法控制或配置，不过，如果有需要，完全可以关闭该功能。</p>
+<h4 id="BTree索引和哈希索引的区别">BTree索引和哈希索引的区别</h4>
+<p>Hash索引结构的特殊性，其检索效率非常高，索引的检索可以一次定位，不像B-Tree索引需要从根节点到枝节点，最后才能访问到页节点这样多次的IO访问，所以Hash索引的查询效率要远高于B-Tree索引</p>
+<h5 id="Hash索引的弊端">Hash索引的弊端</h5>
+<p>1、Hash索引仅仅能满足&quot;=&quot;,“IN&quot;和”&lt;=&gt;&quot;查询，不能使用范围查询。</p>
+<p>2、Hash索引无法被用来避免数据的排序操作。</p>
+<p>3、Hash索引不能利用部分索引键查询。</p>
+<blockquote>
+<p>对于组合索引，Hash索引在计算Hash值的时候是组合索引键合并后再一起计算Hash值，而不是单独计算Hash值，所以通过组合索引的前面一个或几个索引键进行查询的时候，Hash索引也无法被利用</p>
+</blockquote>
+<p>4、Hash索引在任何时候都不能避免表扫描。</p>
+<blockquote>
+<p>Hash索引是将索引键通过Hash运算之后，将 Hash运算结果的Hash值和所对应的行指针信息存放于一个Hash表中，由于不同索引键存在相同Hash值，所以即使取满足某个Hash键值的数据的记录条数，也无法从Hash索引中直接完成查询，还是要通过访问表中的实际数据进行相应的比较，并得到相应的结果</p>
+</blockquote>
+<p>5、Hash索引遇到大量Hash值相等的情况后性能并不一定就会比BTree索引高。</p>
+<blockquote>
+<p>对于选择性比较低的索引键，如果创建Hash索引，那么将会存在大量记录指针信息存于同一个Hash值相关联。这样要定位某一条记录时就会非常麻烦，会浪费多次表数据的访问，而造成整体性能低下</p>
+</blockquote>
+<h1 id="全文索引">全文索引</h1>
+<p>全文索引,通过建立<code>倒排索引</code>,可以极大的提升检索效率,解决判断字段是否包含的问题. 例如: 有title字段,需要查询所有包含 &quot;政府&quot;的记录. 需要 like &quot;%政府%“方式查询,查询速度慢,当查询包含&quot;政府” OR &quot;中国&quot;的需要是,sql难以简单满足.全文索引就可以实现这个功能.</p>
+<blockquote>
+<p>倒排索引（英语：Inverted index），也常被称为反向索引、置入档案或反向档案，是一种索引方法，被用来存储在全文搜索下某个单词在一个文档或者一组文档中的存储位置的映射。它是文档检索系统中最常用的数据结构。</p>
+</blockquote>
+<h5 id="注意">注意</h5>
+<p>在MySQL 5.6版本以前,只有MyISAM存储引擎支持全文引擎.在5.6版本中,InnoDB加入了对全文索引的支持,但是不支持中文全文索引.在5.7.6版本,MySQL内置了ngram全文解析器,用来支持亚洲语种的分词.</p>
+<h5 id="全文索引带来的负面影响：">全文索引带来的负面影响：</h5>
+<ol>
+<li>
+<p>占有存储空间更大，如果内存一次装不下全部索引，性能会非常差。</p>
+</li>
+<li>
+<p>增删改代价更大，修改文本中10个单词，则要操作维护索引10次，而不是普通索引的一次。</p>
+</li>
+<li>
+<p>如果一个列上有全文索引则一定会用上，即使有性能更好的其他索引也不会用上。由于只是存储文档指针，也就用不上索引覆盖。</p>
+</li>
+</ol>
+<h5 id="示例">示例</h5>
+<blockquote>
+<p>根据名称创建全文索引：alter table customers1 add fulltext index  testfulltext(name) with parser ngram;</p>
+<p>select * from customers1 where match(name) against(‘-化实’,in boolean mode) limit 0,5;</p>
+</blockquote>
+<h1 id="索引选择原则">索引选择原则</h1>
+<p><strong>注：字段一般是推荐重复比较少的字段影响到数据的检索，如果是项目需求（可建立联合索引）</strong></p>
+<ol>
+<li>唯一字段可以单独建立单索引，非唯一考虑联合索引,推荐尽量使用唯一字段建立索引</li>
+<li>索引的个数，联合索引的个数 最佳 6个 以内，如果索引因为项目需求：最多 10个</li>
+<li>索引的使用遵循最左匹配原则其次覆盖索引</li>
+<li>尽量选择小的字段建立索引 int ，varchar(10)， char(5)</li>
+<li>避免&lt;，&lt;= ，&gt; ,&gt;= , % ,between 之前的条件。选择索引的字段的范围和模糊之前，因为范围与模糊会引起索引失效，针对于联合索引，就是联合索引的中间尽量不要有范围查询的字段</li>
+<li>尽量多使用explain分析</li>
+<li>避免更新频繁的字段 （二叉树会一直变化，导致性能变慢）</li>
+<li>建立的索引- 优先考虑 建立 联合索引</li>
+<li>索引字段不要有 null， 不是 ‘’</li>
+</ol>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/3501359074.html">https://blog.mailjob.net/posts/3501359074.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%99%AE%E9%80%9A%E7%B4%A2%E5%BC%95"><span class="toc-text">普通索引</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%A6%86%E7%9B%96%E7%B4%A2%E5%BC%95"><span class="toc-text">覆盖索引</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A6%82%E6%9E%9C%E9%81%BF%E5%85%8D%EF%BC%88innodb%EF%BC%89%E5%9B%9E%E8%A1%A8%E6%9F%A5%E8%AF%A2"><span class="toc-text">如果避免（innodb）回表查询</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%81%94%E5%90%88%E7%B4%A2%E5%BC%95%E6%9C%80%E5%B7%A6%E5%8C%B9%E9%85%8D%E5%8E%9F%E5%88%99"><span class="toc-text">联合索引最左匹配原则</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Hash%E7%B4%A2%E5%BC%95"><span class="toc-text">Hash索引</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#BTree%E7%B4%A2%E5%BC%95%E5%92%8C%E5%93%88%E5%B8%8C%E7%B4%A2%E5%BC%95%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-text">BTree索引和哈希索引的区别</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#Hash%E7%B4%A2%E5%BC%95%E7%9A%84%E5%BC%8A%E7%AB%AF"><span class="toc-text">Hash索引的弊端</span></a></li></ol></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%A8%E6%96%87%E7%B4%A2%E5%BC%95"><span class="toc-text">全文索引</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%B3%A8%E6%84%8F"><span class="toc-text">注意</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%85%A8%E6%96%87%E7%B4%A2%E5%BC%95%E5%B8%A6%E6%9D%A5%E7%9A%84%E8%B4%9F%E9%9D%A2%E5%BD%B1%E5%93%8D%EF%BC%9A"><span class="toc-text">全文索引带来的负面影响：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%A4%BA%E4%BE%8B"><span class="toc-text">示例</span></a></li></ol></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%B4%A2%E5%BC%95%E9%80%89%E6%8B%A9%E5%8E%9F%E5%88%99"><span class="toc-text">索引选择原则</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

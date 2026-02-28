@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Mysql优化器追踪分析sql语句 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="前言  平常用 explain 就可以sql语句的性能了。但是，如果你觉得分析的不够详尽，你想查看内部的拆解过程，那么你可以试试用mysql优化器进行追踪分析  相关链接  explain 详解：https:&#x2F;&#x2F;blog.mailjob.net&#x2F;posts&#x2F;183747545.html skip_scan_range（MySQL 8.0的新特性）：https:&#x2F;&#x2F;blog.csdn.net&#x2F;wei">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mysql优化器追踪分析sql语句">
+<meta property="og:url" content="https://blog.mailjob.net/posts/2162225682.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="前言  平常用 explain 就可以sql语句的性能了。但是，如果你觉得分析的不够详尽，你想查看内部的拆解过程，那么你可以试试用mysql优化器进行追踪分析  相关链接  explain 详解：https:&#x2F;&#x2F;blog.mailjob.net&#x2F;posts&#x2F;183747545.html skip_scan_range（MySQL 8.0的新特性）：https:&#x2F;&#x2F;blog.csdn.net&#x2F;wei">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-02-17T02:28:08.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.982Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="mysql">
+<meta name="twitter:card" content="summary">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Mysql优化器追踪分析sql语句
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/2162225682.html" class="article-date">
+	  <time datetime="2021-02-17T02:28:08.000Z" itemprop="datePublished">2021-02-17</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/mysql/">mysql</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/mysql/" rel="tag">mysql</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/2162225682.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 2.5k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 11(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="前言">前言</h2>
+<blockquote>
+<p>平常用 explain 就可以sql语句的性能了。但是，如果你觉得分析的不够详尽，你想查看内部的拆解过程，那么你可以试试用mysql优化器进行追踪分析</p>
+</blockquote>
+<h2 id="相关链接">相关链接</h2>
+<blockquote>
+<p>explain 详解：<a href="https://blog.mailjob.net/posts/183747545.html">https://blog.mailjob.net/posts/183747545.html</a></p>
+<p>skip_scan_range（MySQL 8.0的新特性）：<a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_43970890/article/details/89494915">https://blog.csdn.net/weixin_43970890/article/details/89494915</a></p>
+</blockquote>
+<h2 id="操作方法">操作方法</h2>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">set</span> optimizer_trace<span class="token operator">=</span><span class="token string">"enabled=on"</span><span class="token punctuation">;</span> <span class="token comment">-- 开启trace查看优化器的结果</span>
+<span class="token keyword">set</span> end_markers_in_json<span class="token operator">=</span><span class="token keyword">on</span><span class="token punctuation">;</span> <span class="token comment">-- 增加注释</span>
+<span class="token comment">#sql query#; -- sql 执行语句</span>
+<span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> information_schema<span class="token punctuation">.</span>optimizer_trace \G<span class="token punctuation">;</span> <span class="token comment">-- 查看分析结果</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="执行结果包含内容">执行结果包含内容</h2>
+<pre class="line-numbers language-none"><code class="language-none">1.join_preparation ：准备阶段，包查询语句转换，转换成嵌套循环语句等
+
+   expanded_query
+   transformations_to_nested_joins
+
+2.join_optimization ：优化阶段，包括以下主要阶段
+
+  condition_processing ：处理where条件部分，主要包括等式处理、常量处理、多余条件处理
+  table_dependencies ：表依赖检查
+  ref_optimizer_key_uses ：评估可用的索引
+  rows_estimation        ：评估访问单表的方式，及扫描的行数与代价
+  considered_execution_plans ：评估最终可使用的执行计划
+  condition_on_constant_tables :检查带常量表的条件
+  attaching_conditions_to_tables ：将常量条件作用到表
+  refine_plan 改进计划，不理解
+
+3.join_execution  ：执行阶段<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="优化器内容结果分析">优化器内容结果分析</h2>
+<h4 id="explain-分析">explain 分析</h4>
+<blockquote>
+<p>以下 <code>left` `join</code>语句，d表与s表关联，当<code>where</code>条件在d.deptid上时，s表无法走索引。因此通过开启trace方式做一些追踪。</p>
+</blockquote>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">root@<span class="token punctuation">(</span>none<span class="token punctuation">)</span> <span class="token number">09</span>:<span class="token number">20</span>:<span class="token number">20</span><span class="token operator">></span><span class="token keyword">explain</span> <span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> SSS<span class="token punctuation">.</span>DEPARTMENT d <span class="token keyword">LEFT</span> <span class="token keyword">JOIN</span> ppp<span class="token punctuation">.</span>shop s <span class="token keyword">ON</span> d<span class="token punctuation">.</span>DEPTID <span class="token operator">=</span> s<span class="token punctuation">.</span>DEPTID <span class="token keyword">WHERE</span> d<span class="token punctuation">.</span>DEPTID <span class="token operator">=</span> <span class="token string">'00001111'</span><span class="token punctuation">;</span>
+<span class="token operator">+</span><span class="token comment">----+-------------+-------+------------+-------+----------------------------+---------+---------+-------+--------+----------+-------------+</span>
+<span class="token operator">|</span> id <span class="token operator">|</span> select_type <span class="token operator">|</span> <span class="token keyword">table</span> <span class="token operator">|</span> partitions <span class="token operator">|</span> <span class="token keyword">type</span>  <span class="token operator">|</span> possible_keys              <span class="token operator">|</span> <span class="token keyword">key</span>     <span class="token operator">|</span> key_len <span class="token operator">|</span> ref   <span class="token operator">|</span> <span class="token keyword">rows</span>   <span class="token operator">|</span> filtered <span class="token operator">|</span> Extra       <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">----+-------------+-------+------------+-------+----------------------------+---------+---------+-------+--------+----------+-------------+</span>
+<span class="token operator">|</span>  <span class="token number">1</span> <span class="token operator">|</span> <span class="token keyword">SIMPLE</span>      <span class="token operator">|</span> d     <span class="token operator">|</span> <span class="token boolean">NULL</span>       <span class="token operator">|</span> const <span class="token operator">|</span> <span class="token keyword">PRIMARY</span><span class="token punctuation">,</span>INDEX_DEPARTMENT_5 <span class="token operator">|</span> <span class="token keyword">PRIMARY</span> <span class="token operator">|</span> <span class="token number">130</span>     <span class="token operator">|</span> const <span class="token operator">|</span>      <span class="token number">1</span> <span class="token operator">|</span>   <span class="token number">100.00</span> <span class="token operator">|</span> <span class="token boolean">NULL</span>        <span class="token operator">|</span>
+<span class="token operator">|</span>  <span class="token number">1</span> <span class="token operator">|</span> <span class="token keyword">SIMPLE</span>      <span class="token operator">|</span> s     <span class="token operator">|</span> <span class="token boolean">NULL</span>       <span class="token operator">|</span> <span class="token keyword">ALL</span>   <span class="token operator">|</span> <span class="token boolean">NULL</span>                       <span class="token operator">|</span> <span class="token boolean">NULL</span>    <span class="token operator">|</span> <span class="token boolean">NULL</span>    <span class="token operator">|</span> <span class="token boolean">NULL</span>  <span class="token operator">|</span> <span class="token number">978629</span> <span class="token operator">|</span>   <span class="token number">100.00</span> <span class="token operator">|</span> <span class="token keyword">Using</span> <span class="token keyword">where</span> <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">----+-------------+-------+------------+-------+----------------------------+---------+---------+-------+--------+----------+-------------+</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="优化器分析">优化器分析</h4>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">root@<span class="token punctuation">(</span>none<span class="token punctuation">)</span> <span class="token number">09</span>:<span class="token number">39</span>:<span class="token number">58</span><span class="token operator">></span> <span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> information_schema<span class="token punctuation">.</span>optimizer_trace\G<span class="token punctuation">;</span>
+<span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span> <span class="token number">1.</span> <span class="token keyword">row</span> <span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span>
+                            QUERY: <span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> SSS<span class="token punctuation">.</span>DEPARTMENT d <span class="token keyword">LEFT</span> <span class="token keyword">JOIN</span> ppp<span class="token punctuation">.</span>shop s <span class="token keyword">ON</span> d<span class="token punctuation">.</span>DEPTID <span class="token operator">=</span> s<span class="token punctuation">.</span>DEPTID <span class="token keyword">WHERE</span> d<span class="token punctuation">.</span>DEPTID <span class="token operator">=</span> <span class="token string">'00001111'</span>
+                            TRACE: &#123;
+  <span class="token string">"steps"</span>: <span class="token punctuation">[</span>
+   
+  <span class="token comment">#准备阶段</span>
+    &#123;
+      <span class="token string">"join_preparation"</span>: &#123;
+        <span class="token string">"select#"</span>: <span class="token number">1</span><span class="token punctuation">,</span>
+        <span class="token string">"steps"</span>: <span class="token punctuation">[</span>
+          &#123;  
+          <span class="token comment">#expanded_query，解析查询语句，"*" 转换成字段，left join on 处转化成on((`SSS`.`d`.`Deptid` = convert(`ppp`.`s`.`Deptid` using utf8mb4))))</span>
+            <span class="token string">"expanded_query"</span>: <span class="token string">"/* select#1 */ select `SSS`.`d`.`Organid` AS `Organid`,。。。`s`.`Status` AS `Status`,`ppp`.`s`.`Stylecategoryid` AS `Stylecategoryid`,`ppp`.`s`.`Turnontime` AS `Turnontime` from (`SSS`.`department` `d` left join `ppp`.`shop` `s` on((`SSS`.`d`.`Deptid` = convert(`ppp`.`s`.`Deptid` using utf8mb4)))) where (`SSS`.`d`.`Deptid` = '00001111')"</span>
+          &#125;<span class="token punctuation">,</span>
+          &#123;
+          <span class="token comment">#转化成的nested join语句：</span>
+            <span class="token string">"transformations_to_nested_joins"</span>: &#123;
+              <span class="token string">"transformations"</span>: <span class="token punctuation">[</span>
+                <span class="token string">"parenthesis_removal"</span>
+              <span class="token punctuation">]</span> <span class="token comment">/* transformations */</span><span class="token punctuation">,</span>
+              <span class="token string">"expanded_query"</span>: <span class="token string">"/* select#1 */ select `SSS`.`d`.`Organid`。。。 `SSS`.`d`.`Guidecode` AS `Guidecode`,`SSS`.`d`.`Createdate` AS `Createdate`,`SSS`.`d`.`Plateformuser` AS `Plateformuser`,`SSS`.`d`.`Plateformdept` AS `Plateformdept`,`SSS`.`d`.`Agentuser` AS `Agentuser`,`SSS`.`d`.`Agentdept` AS `Agentdept`,`SSS`.`d`.`Shopstatus` AS `Shopstatus`,`SSS`.`d`.`Deptshortname` AS `Deptshortname`,`SSS`.`d`.`Storetype` AS `Storetype`,`SSS`.`d`.`Depttype` AS `Depttype`,`ppp`.`s`.`Shopid` AS `Shopid`,`ppp`.`s`.`Objectid` AS `Objectid`,`ppp`.`s`.`Shopname` AS `Shopname`,`ppp`Tel`,`ppp`.`s`.`Introduce` AS `Introduce`,`ppp`.`s`.`Industry` AS `Industry`,`ppp`.`s`.`Address` AS `Address`,`ppp`.`s`.`Shop360image` AS `Shop360image`,`ppp`.`s`.`Domain` AS `Domain`,`ppp`.`s`.`Organid` AS `Organid`,`ppp`.`s`.`Deptid` AS `Deptid`,`ppp`.`s`.`Brandids` AS `Brandids`,`ppp`.`s`.`Extdata` AS `Extdata`,`ppp`.`s`.`Ranking` AS `Ranking`,`ppp`.`s`.`Isdelete` AS `Isdelete`,`ppp`.`s`.`District` AS `District`,`ppp`.`s`.`City` AS `City`,`ppp`.`s`.`Province` AS `Province`,`ppp`.`s`.`Phone` AS `Phone`,`ppp`.`s`.`Watermarkimage` AS `Watermarkimage`,`ppp`.`s`.`Drawingimage` AS `Drawingimage`,`ppp`.`s`.`Contactuser` AS `Contactuser`,`ppp`.`s`.`Panoloadingimage` AS `Panoloadingimage`,`ppp`.`s`.`Lngandlat` AS `Lngandlat`,`ppp`.`s`.`Createtime` AS `Createtime`,`ppp`.`s`.`Shoptype` AS `Shoptype`,`ppp`.`s`.`Status` AS `Status`,`ppp`.`s`.`Stylecategoryid` AS `Stylecategoryid`,`ppp`.`s`.`Turnontime` AS `Turnontime` from `SSS`.`department` `d` left join `ppp`.`shop` `s` on((`SSS`.`d`.`Deptid` = convert(`ppp`.`s`.`Deptid` using utf8mb4))) where (`SSS`.`d`.`Deptid` = '00001111')"</span>
+            &#125; <span class="token comment">/* transformations_to_nested_joins */</span>
+          &#125;
+        <span class="token punctuation">]</span> <span class="token comment">/* steps */</span>
+      &#125; <span class="token comment">/* join_preparation */</span>
+    &#125;<span class="token punctuation">,</span><span class="token comment">#准备阶段结束</span>
+     
+     
+    &#123;
+    <span class="token comment">#优化阶段：</span>
+      <span class="token string">"join_optimization"</span>: &#123;
+        <span class="token string">"select#"</span>: <span class="token number">1</span><span class="token punctuation">,</span>
+        <span class="token string">"steps"</span>: <span class="token punctuation">[</span>
+          &#123; 
+          <span class="token comment">#处理where条件部分，化简条件：</span>
+            <span class="token string">"condition_processing"</span>: &#123;
+              <span class="token string">"condition"</span>: <span class="token string">"WHERE"</span><span class="token punctuation">,</span>
+              <span class="token string">"original_condition"</span>: <span class="token string">"(`SSS`.`d`.`Deptid` = '00001111')"</span><span class="token punctuation">,</span><span class="token comment">---原始条件</span>
+              <span class="token string">"steps"</span>: <span class="token punctuation">[</span>
+                &#123;
+                  <span class="token string">"transformation"</span>: <span class="token string">"equality_propagation"</span><span class="token punctuation">,</span> <span class="token comment">----等式处理</span>
+                  <span class="token string">"resulting_condition"</span>: <span class="token string">"(`SSS`.`d`.`Deptid` = '00001111')"</span>
+                &#125;<span class="token punctuation">,</span>
+                &#123;
+                  <span class="token string">"transformation"</span>: <span class="token string">"constant_propagation"</span><span class="token punctuation">,</span><span class="token comment">-----常量处理</span>
+                  <span class="token string">"resulting_condition"</span>: <span class="token string">"(`SSS`.`d`.`Deptid` = '00001111')"</span>
+                &#125;<span class="token punctuation">,</span>
+                &#123;
+                  <span class="token string">"transformation"</span>: <span class="token string">"trivial_condition_removal"</span><span class="token punctuation">,</span><span class="token comment">----去除多余无关的条件处理</span>
+                  <span class="token string">"resulting_condition"</span>: <span class="token string">"(`SSS`.`d`.`Deptid` = '00001111')"</span>
+                &#125;
+              <span class="token punctuation">]</span> <span class="token comment">/* steps */</span>
+            &#125; <span class="token comment">/* condition_processing */</span>
+          &#125;<span class="token punctuation">,</span><span class="token comment">#结束，因为这里已经够简化了，所以三次处理后都是同样的。</span>
+           
+          &#123;
+          <span class="token comment">#替代产生的字段</span>
+            <span class="token string">"substitute_generated_columns"</span>: &#123;
+            &#125; <span class="token comment">/* substitute_generated_columns */</span>
+          &#125;<span class="token punctuation">,</span>
+           
+          &#123;
+          <span class="token comment">#表依赖关系检查</span>
+            <span class="token comment">/*
+            table：涉及的表名，如果有别名，也会展示出来
+            row_may_be_null：行是否可能为NULL，这里是指JOIN操作之后，这张表里的数据是不是可能为
+            NULL。如果语句中使用了LEFT JOIN，则后一张表的row_may_be_null会显示为true
+            map_bit：表的映射编号，从0开始递增
+            depends_on_map_bits：依赖的映射表。主要是当使用STRAIGHT_JOIN强行控制连接顺序或者LEFT
+            JOIN/RIGHT JOIN有顺序差别时，会在depends_on_map_bits中展示前置表的map_bit值。
+            */</span>
+            <span class="token string">"table_dependencies"</span>: <span class="token punctuation">[</span>
+              &#123;
+                <span class="token string">"table"</span>: <span class="token string">"`SSS`.`department` `d`"</span><span class="token punctuation">,</span> <span class="token comment">------表d</span>
+                <span class="token string">"row_may_be_null"</span>: <span class="token boolean">false</span><span class="token punctuation">,</span>
+                <span class="token string">"map_bit"</span>: <span class="token number">0</span><span class="token punctuation">,</span>
+                <span class="token string">"depends_on_map_bits"</span>: <span class="token punctuation">[</span>
+                <span class="token punctuation">]</span> <span class="token comment">/* depends_on_map_bits */</span>
+              &#125;<span class="token punctuation">,</span>
+              &#123;
+                <span class="token string">"table"</span>: <span class="token string">"`ppp`.`shop` `s`"</span><span class="token punctuation">,</span> <span class="token comment">--------表s</span>
+                <span class="token string">"row_may_be_null"</span>: <span class="token boolean">true</span><span class="token punctuation">,</span>
+                <span class="token string">"map_bit"</span>: <span class="token number">1</span><span class="token punctuation">,</span>
+                <span class="token string">"depends_on_map_bits"</span>: <span class="token punctuation">[</span>
+                  <span class="token number">0</span>
+                <span class="token punctuation">]</span> <span class="token comment">/* depends_on_map_bits */</span>
+              &#125;
+            <span class="token punctuation">]</span> <span class="token comment">/* table_dependencies */</span>
+          &#125;<span class="token punctuation">,</span> <span class="token comment">#表依赖关系检查结束</span>
+           
+           
+          &#123;<span class="token comment">#找出可使用索引的字段：</span>
+            <span class="token string">"ref_optimizer_key_uses"</span>: <span class="token punctuation">[</span>
+              &#123;
+                <span class="token string">"table"</span>: <span class="token string">"`SSS`.`department` `d`"</span><span class="token punctuation">,</span>
+                <span class="token string">"field"</span>: <span class="token string">"Deptid"</span><span class="token punctuation">,</span> <span class="token comment">----------可用的是Deptid</span>
+                <span class="token string">"equals"</span>: <span class="token string">"'00001111'"</span><span class="token punctuation">,</span>
+                <span class="token string">"null_rejecting"</span>: <span class="token boolean">false</span> <span class="token comment">---</span>
+              &#125;<span class="token punctuation">,</span>
+              &#123;
+                <span class="token string">"table"</span>: <span class="token string">"`SSS`.`department` `d`"</span><span class="token punctuation">,</span>
+                <span class="token string">"field"</span>: <span class="token string">"Deptid"</span><span class="token punctuation">,</span>
+                <span class="token string">"equals"</span>: <span class="token string">"'00001111'"</span><span class="token punctuation">,</span>
+                <span class="token string">"null_rejecting"</span>: <span class="token boolean">false</span>
+              &#125;
+            <span class="token punctuation">]</span> <span class="token comment">/* ref_optimizer_key_uses */</span>
+          &#125;<span class="token punctuation">,</span>
+           
+          &#123;<span class="token comment">#评估每个表单表访问行数及相应代价。</span>
+            <span class="token string">"rows_estimation"</span>: <span class="token punctuation">[</span>
+              &#123;
+                <span class="token string">"table"</span>: <span class="token string">"`SSS`.`department` `d`"</span><span class="token punctuation">,</span>
+                <span class="token string">"rows"</span>: <span class="token number">1</span><span class="token punctuation">,</span>   <span class="token comment">---返回1行</span>
+                <span class="token string">"cost"</span>: <span class="token number">1</span><span class="token punctuation">,</span>   <span class="token comment">---代价为1</span>
+                <span class="token string">"table_type"</span>: <span class="token string">"const"</span><span class="token punctuation">,</span>  <span class="token comment">---d表使用的方式是const，即根据主键索引获取</span>
+                <span class="token string">"empty"</span>: <span class="token boolean">false</span>
+              &#125;<span class="token punctuation">,</span>
+              &#123;
+                <span class="token string">"table"</span>: <span class="token string">"`ppp`.`shop` `s`"</span><span class="token punctuation">,</span>
+                <span class="token string">"table_scan"</span>: &#123; <span class="token comment">-------s表直接使用全表扫描</span>
+                  <span class="token string">"rows"</span>: <span class="token number">978662</span><span class="token punctuation">,</span> <span class="token comment">------扫描978662行</span>
+                  <span class="token string">"cost"</span>: <span class="token number">8109</span>    <span class="token comment">------代价为8109</span>
+                &#125; <span class="token comment">/* table_scan */</span>
+              &#125;
+            <span class="token punctuation">]</span> <span class="token comment">/* rows_estimation */</span>
+          &#125;<span class="token punctuation">,</span>
+           
+           
+          &#123;<span class="token comment">#评估执行计划，这里考虑两表连接(负责对比各可行计划的开销，并选择相对最优的执行计划)</span>
+            <span class="token string">"considered_execution_plans"</span>: <span class="token punctuation">[</span>
+              &#123;
+                <span class="token string">"plan_prefix"</span>: <span class="token punctuation">[</span><span class="token comment">------------------执行计划的前缀，这里是d表，因为是left join 我认为指的应该是驱动表的意思</span>
+                  <span class="token string">"`SSS`.`department` `d`"</span>
+                <span class="token punctuation">]</span> <span class="token comment">/* plan_prefix */</span><span class="token punctuation">,</span>
+                <span class="token string">"table"</span>: <span class="token string">"`ppp`.`shop` `s`"</span><span class="token punctuation">,</span>
+                <span class="token string">"best_access_path"</span>: &#123;<span class="token comment">-------最优访问路径</span>
+                  <span class="token string">"considered_access_paths"</span>: <span class="token punctuation">[</span>考虑的访问路径
+                    &#123;
+                      <span class="token string">"rows_to_scan"</span>: <span class="token number">978662</span><span class="token punctuation">,</span><span class="token comment">---扫描978662行</span>
+                      <span class="token string">"access_type"</span>: <span class="token string">"scan"</span><span class="token punctuation">,</span><span class="token comment">--------全表扫描的方式</span>
+                      <span class="token string">"resulting_rows"</span>: <span class="token number">978662</span><span class="token punctuation">,</span>
+                      <span class="token string">"cost"</span>: <span class="token number">203841</span><span class="token punctuation">,</span><span class="token comment">----------使用代价</span>
+                      <span class="token string">"chosen"</span>: <span class="token boolean">true</span><span class="token comment">-------选中</span>
+                    &#125;
+                  <span class="token punctuation">]</span> <span class="token comment">/* considered_access_paths */</span>
+                &#125; <span class="token comment">/* best_access_path */</span><span class="token punctuation">,</span>
+                <span class="token string">"condition_filtering_pct"</span>: <span class="token number">100</span><span class="token punctuation">,</span>条件过滤率<span class="token number">100</span><span class="token operator">%</span>，指的是这里与上一个表进行行过滤的行数
+                <span class="token string">"rows_for_plan"</span>: <span class="token number">978662</span><span class="token punctuation">,</span><span class="token comment">------执行计划的扫描行数978662</span>
+                <span class="token string">"cost_for_plan"</span>: <span class="token number">203841</span><span class="token punctuation">,</span><span class="token comment">-------执行计划的cost203841</span>
+                <span class="token string">"chosen"</span>: <span class="token boolean">true</span><span class="token comment">---------选中</span>
+              &#125;
+            <span class="token punctuation">]</span> <span class="token comment">/* considered_execution_plans */</span>
+          &#125;<span class="token punctuation">,</span>
+           
+           
+          &#123;<span class="token comment">#检查带常量表的条件</span>
+            <span class="token string">"condition_on_constant_tables"</span>: <span class="token string">"('00001111' = '00001111')"</span><span class="token punctuation">,</span>
+            <span class="token string">"condition_value"</span>: <span class="token boolean">true</span>
+          &#125;<span class="token punctuation">,</span>
+           
+           
+          &#123;   <span class="token comment">#将常量条件作用到表，这里主要是将d表的中的deptid条件作用到s表的deptid</span>
+            <span class="token string">"attaching_conditions_to_tables"</span>: &#123;
+              <span class="token string">"original_condition"</span>: <span class="token string">"('00001111' = '00001111')"</span><span class="token punctuation">,</span>
+              <span class="token string">"attached_conditions_computation"</span>: <span class="token punctuation">[</span>
+              <span class="token punctuation">]</span> <span class="token comment">/* attached_conditions_computation */</span><span class="token punctuation">,</span>
+              <span class="token string">"attached_conditions_summary"</span>: <span class="token punctuation">[</span>
+                &#123;
+                  <span class="token string">"table"</span>: <span class="token string">"`ppp`.`shop` `s`"</span><span class="token punctuation">,</span>
+                  <span class="token string">"attached"</span>: <span class="token string">"&lt;if>(is_not_null_compl(s), ('00001111' = convert(`ppp`.`s`.`Deptid` using utf8mb4)), true)"</span>
+                &#125;
+              <span class="token punctuation">]</span> <span class="token comment">/* attached_conditions_summary */</span>
+            &#125; <span class="token comment">/* attaching_conditions_to_tables */</span>
+          &#125;<span class="token punctuation">,</span>
+           
+           
+          &#123; <span class="token comment"># 改善执行计划</span>
+            <span class="token string">"refine_plan"</span>: <span class="token punctuation">[</span>
+              &#123;
+                <span class="token string">"table"</span>: <span class="token string">"`ppp`.`shop` `s`"</span>
+              &#125;
+            <span class="token punctuation">]</span> <span class="token comment">/* refine_plan */</span>
+          &#125;
+        <span class="token punctuation">]</span> <span class="token comment">/* steps */</span>
+      &#125; <span class="token comment">/* join_optimization */</span>
+    &#125;<span class="token punctuation">,</span>
+     
+    &#123;
+      <span class="token string">"join_execution"</span>: &#123;
+        <span class="token string">"select#"</span>: <span class="token number">1</span><span class="token punctuation">,</span>
+        <span class="token string">"steps"</span>: <span class="token punctuation">[</span>
+        <span class="token punctuation">]</span> <span class="token comment">/* steps */</span>
+      &#125; <span class="token comment">/* join_execution */</span>
+    &#125;
+     
+  <span class="token punctuation">]</span> <span class="token comment">/* steps */</span>
+&#125;
+MISSING_BYTES_BEYOND_MAX_MEM_SIZE: <span class="token number">0</span>
+          INSUFFICIENT_PRIVILEGES: <span class="token number">0</span>
+<span class="token number">1</span> <span class="token keyword">row</span> <span class="token operator">in</span> <span class="token keyword">set</span> <span class="token punctuation">(</span><span class="token number">0.00</span> sec<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="rows-estimation-说明">rows_estimation 说明</h5>
+<pre class="line-numbers language-none"><code class="language-none">table：表名
+range_analysis：
+table_scan：如果全表扫描的话，需要扫描多少行（row，2838216），以及需要的代价（cost，
+286799）
+potential_range_indexes：列出表中所有的索引并分析其是否可用。如果不可用的话，会列出不
+可用的原因是什么；如果可用会列出索引中可用的字段；
+setup_range_conditions：如果有可下推的条件，则带条件考虑范围查询
+group_index_range：当使用了GROUP BY或DISTINCT时，是否有合适的索引可用。当未使用GROUP
+BY或DISTINCT时，会显示chosen&#x3D;false, cause&#x3D;not_group_by_or_distinct；如使用了GROUP BY或
+DISTINCT，但是多表查询时，会显示chosen&#x3D;false，cause &#x3D;not_single_table。其他情况下会尝试
+分析可用的索引（potential_group_range_indexes）并计算对应的扫描行数及其所需代价
+skip_scan_range：是否使用了skip scan
+TIPS skip_scan_range是MySQL 8.0的新特性，感兴趣的可详见
+https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_43970890&#x2F;article&#x2F;details&#x2F;89494915
+analyzing_range_alternatives：分析各个索引的使用成本
+range_scan_alternatives：range扫描分析
+index：索引名
+ranges：range扫描的条件范围
+index_dives_for_eq_ranges：是否使用了index dive，该值会被参数
+eq_range_index_dive_limit变量值影响。
+rowid_ordered：该range扫描的结果集是否根据PK值进行排序
+using_mrr：是否使用了mrr
+index_only：表示是否使用了覆盖索引
+rows：扫描的行数
+cost：索引的使用成本
+chosen：表示是否使用了该索引
+analyzing_roworder_intersect：分析是否使用了索引合并（index merge），如果未使用，
+会在cause中展示原因；如果使用了索引合并，会在该部分展示索引合并的代价。
+chosen_range_access_summary：在前一个步骤中分析了各类索引使用的方法及代价，得出了
+一定的中间结果之后，在summary阶段汇总前一阶段的中间结果确认最后的方案
+range_access_plan：range扫描最终选择的执行计划。
+type：展示执行计划的type，如果使用了索引合并，则会显示index_roworder_intersect
+index：索引名
+rows：扫描的行数
+ranges：range扫描的条件范围
+rows_for_plan：该执行计划的扫描行数
+cost_for_plan：该执行计划的执行代价
+chosen：是否选择该执行计划<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="considered-execution-plans-说明">considered_execution_plans 说明</h5>
+<pre class="line-numbers language-none"><code class="language-none">plan_prefix：当前计划的前置执行计划。
+table：涉及的表名，如果有别名，也会展示出来
+best_access_path：通过对比considered_access_paths，选择一个最优的访问路径
+considered_access_paths：当前考虑的访问路径
+access_type：使用索引的方式，可参考explain中的type字段
+index：索引
+rows：行数
+cost：开销
+chosen：是否选用这种执行路径
+condition_filtering_pct：类似于explain的filtered列，是一个估算值
+rows_for_plan：执行计划最终的扫描行数，由considered_access_paths.rows X
+condition_filtering_pct计算获得。
+cost_for_plan：执行计划的代价，由considered_access_paths.cost相加获得
+chosen：是否选择了该执行计划
+attaching_conditions_to_tables
+基于considered_execution_plans中选择的执行计划，改造原有where条件，并针对表增加适当的附
+加条件，以便于单表数据的筛选。<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>**TIPS **</p>
+<p>这部分条件的增加主要是为了便于ICP（索引条件下推），但ICP是否开启并不影响这部<br>
+分内容的构造。 ICP参考文档：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/Terry-Wu/p/9273177.html">https://www.cnblogs.com/Terry-Wu/p/9273177.html</a></p>
+</blockquote>
+<h5 id="attaching-conditions-to-tables-说明">attaching_conditions_to_tables 说明</h5>
+<pre class="line-numbers language-none"><code class="language-none">original_condition：原始的条件语句
+attached_conditions_computation：使用启发式算法计算已使用的索引，如果已使用的索引的访问
+类型是ref，则计算用range能否使用组合索引中更多的列，如果可以，则用range的方式替换ref。
+attached_conditions_summary：附加之后的情况汇总
+table：表名
+attached：附加的条件或原语句中能直接下推给单表筛选的条件。<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="finalizing-table-conditions-说明">finalizing_table_conditions 说明</h5>
+<pre class="line-numbers language-none"><code class="language-none">最终的、经过优化后的表条件
+
+&#123;
+    &quot;finalizing_table_conditions&quot;: [
+    &#123;
+    &quot;table&quot;: &quot;&#96;salaries&#96;&quot;,
+    &quot;original_table_condition&quot;: &quot;((&#96;salaries&#96;.&#96;to_date&#96; &#x3D; DATE&#39;1987-06-26&#39;) and
+    (&#96;salaries&#96;.&#96;from_date&#96; &#x3D; DATE&#39;1986-06-26&#39;))&quot;,
+    &quot;final_table_condition &quot;: null
+    &#125;
+    ] &#x2F;* finalizing_table_conditions *&#x2F;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/2162225682.html">https://blog.mailjob.net/posts/2162225682.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E9%93%BE%E6%8E%A5"><span class="toc-text">相关链接</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%93%8D%E4%BD%9C%E6%96%B9%E6%B3%95"><span class="toc-text">操作方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%A7%E8%A1%8C%E7%BB%93%E6%9E%9C%E5%8C%85%E5%90%AB%E5%86%85%E5%AE%B9"><span class="toc-text">执行结果包含内容</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BC%98%E5%8C%96%E5%99%A8%E5%86%85%E5%AE%B9%E7%BB%93%E6%9E%9C%E5%88%86%E6%9E%90"><span class="toc-text">优化器内容结果分析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#explain-%E5%88%86%E6%9E%90"><span class="toc-text">explain 分析</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%98%E5%8C%96%E5%99%A8%E5%88%86%E6%9E%90"><span class="toc-text">优化器分析</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#rows-estimation-%E8%AF%B4%E6%98%8E"><span class="toc-text">rows_estimation 说明</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#considered-execution-plans-%E8%AF%B4%E6%98%8E"><span class="toc-text">considered_execution_plans 说明</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#attaching-conditions-to-tables-%E8%AF%B4%E6%98%8E"><span class="toc-text">attaching_conditions_to_tables 说明</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#finalizing-table-conditions-%E8%AF%B4%E6%98%8E"><span class="toc-text">finalizing_table_conditions 说明</span></a></li></ol></li></ol></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Mysql事务的隔离级别 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="前言 本文所说的 MySQL 事务都是指在 InnoDB 引擎下，MyISAM 引擎是不支持事务的。 读未提交和串行化基本上是不需要考虑的隔离级别，前者不加锁限制。串行化相当于单线程执行，效率太差。 读提交解决了脏读问题，行锁解决了并发更新的问题。并且 MySQL 在可重复读级别解决了幻读问题，是通过行锁和间隙锁的组合 Next-Key 锁实现的。 参考文献    事务4大隔离级别（思维导图）：h">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mysql事务的隔离级别">
+<meta property="og:url" content="https://blog.mailjob.net/posts/607672036.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="前言 本文所说的 MySQL 事务都是指在 InnoDB 引擎下，MyISAM 引擎是不支持事务的。 读未提交和串行化基本上是不需要考虑的隔离级别，前者不加锁限制。串行化相当于单线程执行，效率太差。 读提交解决了脏读问题，行锁解决了并发更新的问题。并且 MySQL 在可重复读级别解决了幻读问题，是通过行锁和间隙锁的组合 Next-Key 锁实现的。 参考文献    事务4大隔离级别（思维导图）：h">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210216111027.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210216111405.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210215225118.jpeg">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210215225121.jpeg">
+<meta property="article:published_time" content="2021-02-16T09:45:05.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.982Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="mysql">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/oss.github/20210216111027.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Mysql事务的隔离级别
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/607672036.html" class="article-date">
+	  <time datetime="2021-02-16T09:45:05.000Z" itemprop="datePublished">2021-02-16</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/mysql/">mysql</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/mysql/" rel="tag">mysql</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/607672036.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.7k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 5(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="前言">前言</h2>
+<p>本文所说的 MySQL 事务都是指在 <code>InnoDB</code> 引擎下，MyISAM 引擎是不支持事务的。</p>
+<p>读未提交和串行化基本上是不需要考虑的隔离级别，前者不加锁限制。串行化相当于单线程执行，效率太差。</p>
+<p>读提交解决了脏读问题，行锁解决了并发更新的问题。并且 MySQL 在可重复读级别解决了幻读问题，是通过行锁和间隙锁的组合 Next-Key 锁实现的。</p>
+<h2 id="参考文献">参考文献</h2>
+<blockquote>
+<ul>
+<li>
+<p>事务4大隔离级别（思维导图）：<a target="_blank" rel="noopener" href="https://kdocs.cn/l/ssTeFXsem1JU">https://kdocs.cn/l/ssTeFXsem1JU</a></p>
+</li>
+<li>
+<p>优秀博文：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/117476959">https://zhuanlan.zhihu.com/p/117476959</a></p>
+</li>
+</ul>
+</blockquote>
+<h2 id="基础概念">基础概念</h2>
+<h3 id="事务隔离级别产生的问题对比">事务隔离级别产生的问题对比</h3>
+<table>
+<thead>
+<tr>
+<th>事务隔离级别</th>
+<th>脏读</th>
+<th>不可重复读</th>
+<th>幻读</th>
+<th>加锁读</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>读未提交（read-uncommitted）</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>否</td>
+</tr>
+<tr>
+<td>不可重复读（read-committed）</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>否</td>
+</tr>
+<tr>
+<td>可重复读（repeatable-read）</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+<td>否</td>
+</tr>
+<tr>
+<td>串行化（serializable）</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+</tr>
+</tbody>
+</table>
+<h3 id="产生的问题名次解释">产生的问题名次解释</h3>
+<h4 id="1、脏读">1、脏读</h4>
+<p><strong>事务A读到了事务B还没有提交的数据</strong></p>
+<blockquote>
+<p>比如银行取钱，事务A开启事务，此时切换到事务B，事务B开启事务–&gt;取走100元，此时切换回事务A，事务A读取的肯定是数据库里面的原始数据，因为事务B取走了100块钱，并没有提交，数据库里面的账务余额肯定还是原始余额，这就是脏读。</p>
+</blockquote>
+<h4 id="2、不可重复读">2、不可重复读</h4>
+<p><strong>在一个事务里面读取了两次某个数据，读出来的数据不一致</strong></p>
+<blockquote>
+<p>还是以银行取钱为例，事务A开启事务–&gt;查出银行卡余额为1000元，此时切换到事务B事务B开启事务–&gt;事务B取走100元–&gt;提交，数据库里面余额变为900元，此时切换回事务A，事务A再查一次查出账户余额为900元，这样对事务A而言，在同一个事务内两次读取账户余额数据不一致，这就是不可重复读。</p>
+</blockquote>
+<h4 id="3、幻读">3、幻读</h4>
+<p><strong>在一个事务里面的操作中发现了未被操作的数据</strong></p>
+<blockquote>
+<p>比如学生信息，事务A开启事务–&gt;修改所有学生当天签到状况为false，此时切换到事务B，事务B开启事务–&gt;事务B插入了一条学生数据，此时切换回事务A，事务A提交的时候发现了一条自己没有修改过的数据，这就是幻读，就好像发生了幻觉一样。幻读出现的前提是并发的事务中有事务发生了插入、删除操作。</p>
+</blockquote>
+<h2 id="事务的隔离级别示例：">事务的隔离级别示例：</h2>
+<h3 id="读未提交（READ-UNCOMMITTED）">读未提交（READ_UNCOMMITTED）</h3>
+<p><strong>即能够读取到没有被提交的数据</strong></p>
+<h4 id="举例说明：">举例说明：</h4>
+<p>启动两个事务，分别为事务A和事务B。在事务A中使用 update 语句，修改 age 的值为10，初始是1。在执行完 update 语句之后。在事务B中查询 user 表，会看到 age 的值已经是 10 了，这时候事务A还没有提交（commit）。</p>
+<p><em>在事务B进行操作的过程中，很有可能事务A由于某些原因，进行了事务回滚操作，那其实事务B得到的就是脏数据了，拿着脏数据去进行其他的计算，那结果肯定也是有问题的</em></p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210216111027.png" alt=""></p>
+<p>顺着时间轴往表示两事务中操作的执行顺序，重点看图中 <code>age</code> 字段的值。</p>
+<h3 id="读已提交（READ-COMMITED-）">读已提交（READ_COMMITED ）</h3>
+<p><strong>在一个事务里面读取了两次某个数据，读出来的数据不一致</strong></p>
+<h4 id="举例说明：-2">举例说明：</h4>
+<p>启动两个事务，分别为事务A和事务B。在事务A中使用 update 语句将 id=1 的记录行 age 字段改为 10。此时，在事务B中使用 select 语句进行查询，我们发现在事务A提交之前，事务B中查询到的记录 age 一直是1，直到事务A提交，此时在事务B中 select 查询，发现 age 的值已经是 10 了。</p>
+<p><em>这就出现了一个问题，在<strong>同一事务中</strong>(本例中的事务B)，事务的<strong>不同时刻同样的查询条件</strong>，查询出来的记录<strong>内容是不一样的</strong>，<strong>事务A的提交影响了事务B的查询结果</strong>，这就是不可重复读，也就是读提交隔离级别。</em></p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210216111405.png" alt=""></p>
+<p>每个 select 语句都有自己的一份快照，而不是一个事务一份，所以在不同的时刻，查询出来的数据可能是不一致的。</p>
+<p>读提交解决了脏读的问题，但是无法做到可重复读，也没办法解决幻读。</p>
+<h3 id="可重复读取（REPEATABLE-READ）">可重复读取（REPEATABLE_READ）</h3>
+<p><strong>在一个事务里面的操作中发现了未被操作的数据</strong></p>
+<h4 id="举例说明：-3">举例说明：</h4>
+<p>RR 隔离级别下，如果只是<strong>读</strong>的话，不会产生脏读、不可重复读、幻读。如果事务中有<code>写</code> 的话，则会产生<code>幻读</code>问题。下面，我通过两个案例，对读和写，进行隔离级别的分析 。</p>
+<p><strong>读 Read</strong></p>
+<p><code>事务A</code>启动后修改了数据，并且在<code>事务B</code>之前提交。<code>事务B</code>在事务开始和<code>事务A</code>提交之后两个时间节点都读取的数据相同，已经可以看出可重复读的效果。</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210215225118.jpeg" alt="img"></p>
+<p><strong>写 Write （幻读产生过程）</strong></p>
+<p><code>事务A</code>开始后，执行 <code>update</code> 操作，将 <code>age = 1</code> 的记录的 <code>name</code> 改为 <code>“风筝2号”</code>；<br>
+<code>事务B</code>开始后，在事务执行完 <code>update</code> 后，执行 <code>insert</code> 操作，插入记录 <code>age =1，name = 古时的风筝</code>。<br>
+这和事务A修改的那条记录值相同，然后提交。<br>
+<code>事务B</code>提交后，<code>事务A</code>中执行 <code>select</code>，查询 <code>age=1</code> 的数据。<br>
+这时会发现多了一行，并且发现还有一条 <code>name = 古时的风筝，age = 1</code> 的记录，这其实就是<code>事务B</code>刚刚插入的，这就是<code>幻读</code>。</p>
+<p><strong>需要说明的是：当你在 MySQL 中测试幻读的时候，并不会出现图中的结果，幻读并没有发生，MySQL 的可重复读(RR)隔离级别其实解决了幻读问题（可阅读MVCC相关文章）</strong></p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210215225121.jpeg" alt="img"></p>
+<h3 id="串行化（SERLALIZABLE）">串行化（SERLALIZABLE）</h3>
+<p>最高的事务隔离级别，不管多少事务，挨个运行完一个事务的所有子事务之后才可以执行另外一个事务里面的所有子事务，这样就解决了脏读、不可重复读和幻读的问题了</p>
+<p>但是效果最差，它将事务的执行变为顺序执行，与其他三个隔离级别相比，它就相当于单线程，后一个事务的执行必须等待前一个事务结束。</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/607672036.html">https://blog.mailjob.net/posts/607672036.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5"><span class="toc-text">基础概念</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB%E4%BA%A7%E7%94%9F%E7%9A%84%E9%97%AE%E9%A2%98%E5%AF%B9%E6%AF%94"><span class="toc-text">事务隔离级别产生的问题对比</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%A7%E7%94%9F%E7%9A%84%E9%97%AE%E9%A2%98%E5%90%8D%E6%AC%A1%E8%A7%A3%E9%87%8A"><span class="toc-text">产生的问题名次解释</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E3%80%81%E8%84%8F%E8%AF%BB"><span class="toc-text">1、脏读</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E3%80%81%E4%B8%8D%E5%8F%AF%E9%87%8D%E5%A4%8D%E8%AF%BB"><span class="toc-text">2、不可重复读</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3%E3%80%81%E5%B9%BB%E8%AF%BB"><span class="toc-text">3、幻读</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E7%9A%84%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB%E7%A4%BA%E4%BE%8B%EF%BC%9A"><span class="toc-text">事务的隔离级别示例：</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AF%BB%E6%9C%AA%E6%8F%90%E4%BA%A4%EF%BC%88READ-UNCOMMITTED%EF%BC%89"><span class="toc-text">读未提交（READ_UNCOMMITTED）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%BE%E4%BE%8B%E8%AF%B4%E6%98%8E%EF%BC%9A"><span class="toc-text">举例说明：</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AF%BB%E5%B7%B2%E6%8F%90%E4%BA%A4%EF%BC%88READ-COMMITED-%EF%BC%89"><span class="toc-text">读已提交（READ_COMMITED ）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%BE%E4%BE%8B%E8%AF%B4%E6%98%8E%EF%BC%9A-2"><span class="toc-text">举例说明：</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%AF%E9%87%8D%E5%A4%8D%E8%AF%BB%E5%8F%96%EF%BC%88REPEATABLE-READ%EF%BC%89"><span class="toc-text">可重复读取（REPEATABLE_READ）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%BE%E4%BE%8B%E8%AF%B4%E6%98%8E%EF%BC%9A-3"><span class="toc-text">举例说明：</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%B2%E8%A1%8C%E5%8C%96%EF%BC%88SERLALIZABLE%EF%BC%89"><span class="toc-text">串行化（SERLALIZABLE）</span></a></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

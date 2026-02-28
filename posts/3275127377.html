@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Mysql中的各种锁详解 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="锁的基本概念 1、什么是锁？ 在数据库中，锁主要用于解决并发访问时保证数据的一致性和有效性。 锁是计算机协调多个进程或线程并发访问某一资源的机制。 2、锁的区分 3.1、按照锁的粒度划分：行锁(Record Lock)、表锁(table lock)、页锁(page lock)。 3.2、按照锁的使用方式划分(悲观锁的一种实现)：共享锁(S Lock)、排它锁(X Lock)。 3.3、还有两种思想">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mysql中的各种锁详解">
+<meta property="og:url" content="https://blog.mailjob.net/posts/3275127377.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="锁的基本概念 1、什么是锁？ 在数据库中，锁主要用于解决并发访问时保证数据的一致性和有效性。 锁是计算机协调多个进程或线程并发访问某一资源的机制。 2、锁的区分 3.1、按照锁的粒度划分：行锁(Record Lock)、表锁(table lock)、页锁(page lock)。 3.2、按照锁的使用方式划分(悲观锁的一种实现)：共享锁(S Lock)、排它锁(X Lock)。 3.3、还有两种思想">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210215183852.png">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210215184331.jpeg">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210215184656.jpeg">
+<meta property="article:published_time" content="2021-02-15T09:00:27.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.982Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="mysql">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210215183852.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Mysql中的各种锁详解
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3275127377.html" class="article-date">
+	  <time datetime="2021-02-15T09:00:27.000Z" itemprop="datePublished">2021-02-15</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/mysql/">mysql</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/mysql/" rel="tag">mysql</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/3275127377.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 3.8k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 14(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="锁的基本概念">锁的基本概念</h2>
+<h3 id="1、什么是锁？">1、什么是锁？</h3>
+<p><strong>在数据库中，锁主要用于解决并发访问时保证数据的一致性和有效性。</strong></p>
+<p>锁是计算机协调多个进程或线程并发访问某一资源的机制。</p>
+<h3 id="2、锁的区分">2、锁的区分</h3>
+<p>3.1、按照锁的粒度划分：行锁(Record Lock)、表锁(table lock)、页锁(page lock)。<br>
+3.2、按照锁的使用方式划分(悲观锁的一种实现)：共享锁(S Lock)、排它锁(X Lock)。<br>
+3.3、还有两种思想上的锁：悲观锁(PCC)、乐观锁(OCC)。<br>
+3.4、InnoDB中有几种行级锁类型：行锁（Record Lock）、间隙锁（Gap Lock）、后码锁（Next-key Lock）。</p>
+<p><strong>部分名次解释</strong>：</p>
+<p>行锁：锁直接加在索引记录上面，锁住的是key。<br>
+间隙锁：锁定索引记录间隙，确保索引记录的间隙不变。间隙锁是针对事务隔离级别为<code>可重复读</code>或以上级别而已的。<br>
+后码锁：行锁和间隙锁组合起来就叫Next-Key Lock。当InnoDB扫描索引记录的时候，会首先对索引记录加上行锁（Record Lock），再对索引记录两边的间隙加上间隙锁（Gap Lock）。加上间隙锁之后，其他事务就不能在这个间隙修改或者插入记录。<br>
+页锁：<code>BDB存储引擎</code>支持页级锁<code>(不常用)</code>。页级锁是MySQL中锁定粒度介于行级锁和表级锁中间的一种锁。表级锁速度快，但冲突多，行级冲突少，但速度慢。所以取了折衷的页级，一次锁定相邻的一组记录。</p>
+<h3 id="3、悲观锁的分类">3、悲观锁的分类</h3>
+<p><strong>InnoDB 存储引擎实现了如下两种标准的行级锁</strong>：</p>
+<h4 id="共享锁（S-Lock）（-lock-in-share-mode）">共享锁（S Lock）（ lock in share mode）</h4>
+<p>允许事务读一行数据。</p>
+<blockquote>
+<p>共享锁也叫 <code>读锁</code>，允许持有锁的事务读取一行。即不能进行写操作来提供一致性读取。如果资源上没有写锁，事务可以立即获得读锁，多个事务可以在同时获得读锁，如果读锁没有释放，写锁不能被获取，写事务只能放入等待队列。<br>
+<strong>若事务 T 对数据对象 A 加上 S 锁，则事务 T 可以读 A 但不能修改 A。共享锁就是允许多个线程同时获取一个锁，一个锁可以同时被多个线程拥有</strong></p>
+</blockquote>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">select</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> <span class="token keyword">lock</span> <span class="token operator">in</span> <span class="token keyword">share</span> <span class="token keyword">mode</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h4 id="排他锁（X-Lock）（-for-update）">排他锁（X Lock）（ for update）</h4>
+<p>允许事务删除或者更新一行数据。</p>
+<blockquote>
+<p>排它锁也叫 <code>写锁</code> ，允许持有锁的事务更新或者删除行。在一定的时间范围内，只能存在一个写锁。<br>
+<strong>写锁的优先级高于读锁。当一个资源上没有锁时，或者所有的锁请求都在等待队列中，</strong><br>
+<strong>若事务T对数据对象A加上X锁，事务T可以读A也可以修改A，其他事务不能再对A加任何锁，直到T释放A上的锁。这保证了其他事务在T释放A上的锁之前不能再读取和修改A。排它锁，也称作独占锁，一个锁在某一时刻只能被一个线程占有，其它线程必须等待锁被释放之后才可能获取到锁。</strong></p>
+</blockquote>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">select</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> <span class="token keyword">for</span> <span class="token keyword">update</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>下面是锁的授予方式</strong>：</p>
+<ul>
+<li>首先将锁授予写锁队列中等待的请求；</li>
+<li>如果写锁队列中没有对资源的锁请求，那么将锁授予读锁队列中的第一个请求。</li>
+</ul>
+<h4 id="区别总结：">区别总结：</h4>
+<p><strong>相同点</strong>：</p>
+<ul>
+<li>都是属于<code>悲观锁(PCC)</code></li>
+<li>for update 与 lock in share mode 都是用于确保被选中的记录值不能被其它事务更新（上锁）</li>
+</ul>
+<p><strong>不同点</strong>：</p>
+<ul>
+<li>lock in share mode 不会阻塞其它事务读取被锁定行记录的值，而 for update 会阻塞其他锁定性读对锁定行的读取（非锁定性读仍然可以读取这些记录，lock in share mode 和 for update 都是锁定性读）</li>
+</ul>
+<p><strong>举例说明</strong>：</p>
+<p>这么说比较抽象，我们举个计数器的例子：在一条语句中读取一个值，然后在另一条语句中<code>(UPDATE table SET num=num+1 WHERE id=x)</code>更新这个值。使用 <code>lock in share mode</code> 的话可以允许两个事务读取相同的初始化值，所以执行两个事务之后最终计数器的值<code>+1</code>；而如果使用 <code>for update</code> 的话，会锁定第二个事务对记录值的读取直到第一个事务执行完成，这样计数器的最终结果就是<code>+2</code>了。</p>
+<h3 id="4、Lock-与-Latch">4、Lock 与 Latch</h3>
+<p>在数据库中，<code>lock</code> 与 <code>latch</code> 都可以被称之为 “锁”，但是两者的意义截然不同，本文主要关注 <code>lock </code>：</p>
+<p>**Latch: **latch一般称之为<a target="_blank" rel="noopener" href="https://hanyu.baidu.com/zici/s?wd=%E9%97%A9&amp;query=%E9%97%A8%E5%AD%97%E9%87%8C%E9%9D%A2%E4%B8%80%E4%B8%AA%E4%B8%80&amp;srcid=28238&amp;from=kg0">闩</a>锁（轻量级的锁）。因为其要求锁定的时间必须非常短。若持续的时间比较长，则性能会非常差。在InnoDB引擎中，latch又可以分为 <code>mutex（互斥锁）</code>和 <code>rwlock（读写锁）</code>。其目的用于保证并发线程操作临界资源的正确性，并且通常没有死锁检测的机制。</p>
+<p><strong>Lock</strong>：lock的对象是事务，用于锁定数据库中的对象，例如：表、页、行。并且一般 lock 的对象仅在事务 <code>commit</code> 或者 <code>rollback</code> 后进行释放（不同隔离级别释放的时间可能不同）。此外，lock 正入其他大多数数据库意义，是有死锁机制的。</p>
+<h2 id="测试示例">测试示例</h2>
+<h3 id="1、悲观锁-PCC-测试：">1、悲观锁(PCC)测试：</h3>
+<p><strong>测试注意事项</strong>： 需要关闭 mysql 中的 autocommit 属性，因为 mysql 默认使用自动提交模式，也就是说当我们进行一个sql操作的时候，mysql会将这个操作当做一个事务并且自动提交这个操作。</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token comment">-- 开始事务</span>
+<span class="token keyword">begin</span><span class="token punctuation">;</span> <span class="token operator">/</span> <span class="token keyword">begin</span> <span class="token keyword">work</span><span class="token punctuation">;</span> <span class="token operator">/</span> <span class="token keyword">start</span> <span class="token keyword">transaction</span><span class="token punctuation">;</span> <span class="token punctuation">(</span>三者选一就可以<span class="token punctuation">)</span>
+<span class="token comment">-- 查询出商品信息(加一个锁)</span>
+<span class="token keyword">select</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> <span class="token keyword">for</span> <span class="token keyword">update</span><span class="token punctuation">;</span>
+<span class="token comment">-- 提交事务（则会释放锁）</span>
+<span class="token keyword">commit</span><span class="token punctuation">;</span> <span class="token operator">/</span> <span class="token keyword">commit</span> <span class="token keyword">work</span><span class="token punctuation">;</span> <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="1-1、间隙锁（Gap-Lock）测试">1.1、间隙锁（Gap Lock）测试</h4>
+<p>间隙锁，是在索引的间隙之间加上锁，这是为什么 <strong>RR隔离级别</strong> 下能防止<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_38238296/article/details/88363017">幻读</a> 的主要原因。</p>
+<p>当我们用范围条件检索数据，并请求共享或排他锁时，InnoDB会给符合条件的已有数据记录的索引项加锁；对于键值在条件范围内但不存在的记录，叫做“间隙(GAP)”，InnoDB也会对这个“间隙”加锁，这种锁机制就是所谓的间隙锁(NEXT-KEY)锁。</p>
+<p><strong>危害</strong>：</p>
+<p>因为Query执行过程中通过范围查找的话，他会锁定整个范围内所有的索引键值，即使这个键值并不存在。</p>
+<p>间隙锁有一个比较致命的弱点，就是当锁定一个范围键值之后，即使某些不存在的键值也会被无辜的锁定，而造成在锁定的时候无法插入锁定值范围内的任何数据，在某些场景下这可能会针对性造成很大的危害。</p>
+<p><strong>数据表此时的数据如下</strong>：</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql<span class="token operator">></span> <span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> <span class="token keyword">user</span><span class="token punctuation">;</span>
+<span class="token operator">+</span><span class="token comment">----+------------+------+</span>
+<span class="token operator">|</span> id <span class="token operator">|</span> username   <span class="token operator">|</span> age  <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">----+------------+------+</span>
+<span class="token operator">|</span>  <span class="token number">1</span> <span class="token operator">|</span> ZAAAA York <span class="token operator">|</span>   <span class="token number">20</span> <span class="token operator">|</span>
+<span class="token operator">|</span>  <span class="token number">2</span> <span class="token operator">|</span> starsky    <span class="token operator">|</span>   <span class="token number">20</span> <span class="token operator">|</span>
+<span class="token operator">|</span>  <span class="token number">4</span> <span class="token operator">|</span> will       <span class="token operator">|</span>   <span class="token number">10</span> <span class="token operator">|</span>
+<span class="token operator">|</span>  <span class="token number">5</span> <span class="token operator">|</span> harry      <span class="token operator">|</span>   <span class="token number">10</span> <span class="token operator">|</span>
+<span class="token operator">|</span>  <span class="token number">7</span> <span class="token operator">|</span> cara       <span class="token operator">|</span>   <span class="token number">30</span> <span class="token operator">|</span>
+<span class="token operator">|</span>  <span class="token number">8</span> <span class="token operator">|</span> AAAA       <span class="token operator">|</span>   <span class="token number">40</span> <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">----+------------+------+</span>
+<span class="token number">6</span> <span class="token keyword">rows</span> <span class="token operator">in</span> <span class="token keyword">set</span> <span class="token punctuation">(</span><span class="token number">0.00</span> sec<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>注意表中的数据，ID包含 【1，2，4，5，7，8】 缺少【3，6】。此处 id 不连续</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token comment">-- 事务1</span>
+<span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> <span class="token keyword">user</span> id <span class="token operator">between</span> <span class="token number">1</span> <span class="token operator">and</span> <span class="token number">5</span> <span class="token keyword">for</span> <span class="token keyword">update</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token comment">-- 事务2</span>
+<span class="token keyword">insert</span> <span class="token keyword">into</span> <span class="token keyword">user</span> <span class="token punctuation">(</span>id<span class="token punctuation">,</span>username<span class="token punctuation">,</span>age<span class="token punctuation">)</span><span class="token keyword">values</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token string">'php'</span><span class="token punctuation">,</span><span class="token number">30</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210215183852.png" alt="img"></p>
+<p>可以看到，事务2在执行新增 id 为 2的数据时出现了所等待现象。说明id为2的数据被事务1进行的范围查询加锁锁住，其他事务需要等到事务1进行提交或者回滚之后 才能继续操作事务1锁住的数据。</p>
+<h3 id="2、乐观锁-OCC-测试：">2、乐观锁(OCC)测试：</h3>
+<p>比较常见的是，我们有这么几种方式实现乐观锁。例如：CAS、MVCC、Redis分布式锁。</p>
+<h4 id="2-1、CAS">2.1、CAS</h4>
+<blockquote>
+<p>CAS（比较与交换，Compare and swap） 是一种有名的无锁算法。无锁编程，即不使用锁的情况下实现多线程之间的变量同步，也就是在没有线程被阻塞的情况下实现变量的同步，所以也叫非阻塞同步（Non-blocking Synchronization）。实现非阻塞同步的方案称为“无锁编程算法”（ Non-blocking algorithm）。</p>
+</blockquote>
+<p><strong>2.1.1、使用数据库版本字段version实现</strong></p>
+<p>何谓数据版本？即为数据增加一个版本标识，一般是通过为数据库表增加一个数字类型的 “version” 字段来实现。当读取数据时，将version字段的值一同读出，数据每更新一次，对此version值加一。当我们提交更新的时候，判断数据库表对应记录的当前版本信息与第一次取出来的version值进行比对，如果数据库表当前版本号与第一次取出来的version值相等，则予以更新，否则认为是过期数据。</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token identifier"><span class="token punctuation">`</span>test_table<span class="token punctuation">`</span></span> <span class="token punctuation">(</span>
+  <span class="token identifier"><span class="token punctuation">`</span>id<span class="token punctuation">`</span></span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token number">11</span><span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span> <span class="token keyword">AUTO_INCREMENT</span> <span class="token keyword">COMMENT</span> <span class="token string">'自增ID'</span><span class="token punctuation">,</span>
+  <span class="token identifier"><span class="token punctuation">`</span>name<span class="token punctuation">`</span></span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">20</span><span class="token punctuation">)</span> <span class="token keyword">DEFAULT</span> <span class="token boolean">NULL</span> <span class="token keyword">COMMENT</span> <span class="token string">'姓名'</span><span class="token punctuation">,</span>
+  <span class="token identifier"><span class="token punctuation">`</span>age<span class="token punctuation">`</span></span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token number">11</span><span class="token punctuation">)</span> <span class="token keyword">DEFAULT</span> <span class="token boolean">NULL</span> <span class="token keyword">COMMENT</span> <span class="token string">'年龄'</span><span class="token punctuation">,</span>
+  <span class="token identifier"><span class="token punctuation">`</span>version<span class="token punctuation">`</span></span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token number">11</span><span class="token punctuation">)</span> <span class="token keyword">unsigned</span> zerofill <span class="token operator">NOT</span> <span class="token boolean">NULL</span> <span class="token keyword">COMMENT</span> <span class="token string">'数据版本'</span><span class="token punctuation">,</span>
+  <span class="token keyword">PRIMARY</span> <span class="token keyword">KEY</span> <span class="token punctuation">(</span><span class="token identifier"><span class="token punctuation">`</span>id<span class="token punctuation">`</span></span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span> <span class="token keyword">ENGINE</span><span class="token operator">=</span><span class="token keyword">InnoDB</span> <span class="token keyword">DEFAULT</span> <span class="token keyword">CHARSET</span><span class="token operator">=</span>utf8mb4<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token comment">-- 得到数据的version</span>
+mysql<span class="token operator">></span> <span class="token keyword">SELECT</span> id<span class="token punctuation">,</span><span class="token identifier"><span class="token punctuation">`</span>name<span class="token punctuation">`</span></span><span class="token punctuation">,</span>version <span class="token keyword">FROM</span> test_table<span class="token punctuation">;</span>
+
+<span class="token comment">-- 根据数据version修改数据记录</span>
+mysql<span class="token operator">></span> <span class="token keyword">UPDATE</span> test_table <span class="token keyword">SET</span> <span class="token identifier"><span class="token punctuation">`</span>name<span class="token punctuation">`</span></span><span class="token operator">=</span><span class="token string">'xx'</span><span class="token punctuation">,</span> version<span class="token operator">=</span>version<span class="token operator">+</span><span class="token number">1</span>  <span class="token keyword">WHERE</span> version <span class="token operator">=</span> <span class="token comment">#&#123;version&#125;;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>所以，当你用 version 实现一个乐观锁的时候，可以不用事务，也不用锁表。</p>
+<p><strong>2.1.2、使用数据库时间戳字段timestamp实现</strong></p>
+<p>和第一种version差不多，同样是在需要乐观锁控制的table中增加一个字段，字段类型使用时间戳（timestamp）, 和上面的version类似，也是在更新提交的时候检查当前数据库中数据的时间戳和自己更新前取到的时间戳进行对比，如果一致则OK，否则就是版本冲突。</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token identifier"><span class="token punctuation">`</span>test_table<span class="token punctuation">`</span></span> <span class="token punctuation">(</span>
+  <span class="token identifier"><span class="token punctuation">`</span>id<span class="token punctuation">`</span></span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token number">11</span><span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span> <span class="token keyword">AUTO_INCREMENT</span> <span class="token keyword">COMMENT</span> <span class="token string">'自增ID'</span><span class="token punctuation">,</span>
+  <span class="token identifier"><span class="token punctuation">`</span>name<span class="token punctuation">`</span></span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">20</span><span class="token punctuation">)</span> <span class="token keyword">DEFAULT</span> <span class="token boolean">NULL</span> <span class="token keyword">COMMENT</span> <span class="token string">'姓名'</span><span class="token punctuation">,</span>
+  <span class="token identifier"><span class="token punctuation">`</span>timestamp<span class="token punctuation">`</span></span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token number">11</span><span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span> <span class="token keyword">COMMENT</span> <span class="token string">'时间戳'</span><span class="token punctuation">,</span>
+  <span class="token keyword">PRIMARY</span> <span class="token keyword">KEY</span> <span class="token punctuation">(</span><span class="token identifier"><span class="token punctuation">`</span>id<span class="token punctuation">`</span></span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span> <span class="token keyword">ENGINE</span><span class="token operator">=</span><span class="token keyword">InnoDB</span> <span class="token keyword">DEFAULT</span> <span class="token keyword">CHARSET</span><span class="token operator">=</span>utf8mb4<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token comment">-- 得到数据的timestamp</span>
+mysql<span class="token operator">></span> <span class="token keyword">SELECT</span> id<span class="token punctuation">,</span><span class="token identifier"><span class="token punctuation">`</span>name<span class="token punctuation">`</span></span><span class="token punctuation">,</span><span class="token keyword">timestamp</span> <span class="token keyword">FROM</span> test_table<span class="token punctuation">;</span>
+
+<span class="token comment">-- 根据数据version修改数据记录</span>
+mysql<span class="token operator">></span> <span class="token keyword">UPDATE</span> test_table <span class="token keyword">SET</span> <span class="token identifier"><span class="token punctuation">`</span>name<span class="token punctuation">`</span></span><span class="token operator">=</span><span class="token string">'xx'</span><span class="token punctuation">,</span> <span class="token keyword">timestamp</span><span class="token operator">=</span>unix_timestamp<span class="token punctuation">(</span><span class="token function">now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>  <span class="token keyword">WHERE</span> <span class="token keyword">timestamp</span> <span class="token operator">=</span> <span class="token comment">#&#123;timestamp&#125;;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="2-2、MVCC">2.2、MVCC</h4>
+<blockquote>
+<p>维基百科: 多版本并发控制(Multiversion concurrency control， MCC 或 MVCC)，是数据库管理系统常用的一种并发控制，也用于程序设计语言实现事务内存。</p>
+</blockquote>
+<p>关于MVCC请阅读这篇文章：<a href="https://blog.mailjob.net/posts/2327774433.html">https://blog.mailjob.net/posts/2327774433.html</a></p>
+<h4 id="2-3、分布式锁">2.3、分布式锁</h4>
+<p>比较常见的分布式锁的实现方式有：<a href="https://blog.mailjob.net/posts/3807265096.html">Redis分布式锁</a>、<a target="_blank" rel="noopener" href="https://www.runoob.com/w3cnote/zookeeper-locks.html">Zookeeper分布式锁</a></p>
+<h3 id="3、不同锁的优缺点比较：">3、不同锁的优缺点比较：</h3>
+<h4 id="悲观锁">悲观锁</h4>
+<p>悲观锁的优点：</p>
+<p>悲观锁实际上是采取了 <strong>“先取锁在访问”</strong> 的策略，为数据的处理安全提供了保证</p>
+<p>悲观锁的不足：</p>
+<p>在效率方面，由于额外的加锁机制产生了额外的开销，并且增加了死锁的机会。并且降低了并发性；当一个事物所以一行数据的时候，其他事物必须等待该事务提交之后，才能操作这行数据。</p>
+<h4 id="乐观锁">乐观锁</h4>
+<p>乐观锁的优点：</p>
+<p>乐观并发控制相信事务之间的数据竞争 (data race) 的概率是比较小的，因此尽可能直接做下去，直到提交的时候才去锁定，所以不会产生任何锁和死锁。</p>
+<p>乐观锁的不足：</p>
+<p>但如果直接简单这么做，还是有可能会遇到不可预期的结果，例如两个事务都读取了数据库的某一行，经过修改以后写回数据库，这时就遇到了问题。</p>
+<h2 id="锁的常见问题：">锁的常见问题：</h2>
+<h3 id="1、锁升级现象">1、锁升级现象</h3>
+<p><strong>问题</strong>：</p>
+<p>在不通过索引条件查询的时候，InnoDB使用的是表锁。InnoDB 升级为表锁后，届时并发性将大大折扣。</p>
+<p>由于 MySQL 的行锁是针对索引加的锁，不是针对记录加的锁。所以虽然是访问不同行 的记录，但是如果是使用相同的索引键，是会出现锁冲突的。</p>
+<p>当表有多个索引的时候，不同的事务可以使用不同的索引锁定不同的行。另外，不论是使用主键索引、唯一索引、普通索引。InnoDB 都会使用行锁来对数据加锁。</p>
+<p><strong>解决问题</strong>：</p>
+<p>如果 MySQL 认为全表扫 效率更高。比如对一些很小的表，它就不会使用索引。这种情况下 InnoDB 将使用表锁，而不是行锁。因此，在分析锁冲突时,，别忘了检查 SQL 的执行计划（explain查看），以确认是否真正使用了索引。</p>
+<h3 id="2、死锁">2、死锁</h3>
+<p><strong>注意</strong>：MyISAM中是不会产生死锁的，因为MyISAM总是一次性获得所需的全部锁，要么全部满足，要么全部等待。而在InnoDB中，锁是逐步获得的，就造成了死锁的可能。</p>
+<h4 id="问题：">问题：</h4>
+<p>在InnoDB中，行级锁并不是直接锁记录，而是锁索引。索引分为主键索引和非主键索引两种，如果一条sql语句操作了主键索引，MySQL就会锁定这条主键索引；如果一条语句操作了非主键索引，MySQL会先锁定该非主键索引，再锁定相关的主键索引。</p>
+<p>当两个事务同时执行，一个锁住了主键索引，在等待其他相关索引。另一个锁定了非主键索引，在等待主键索引。这样就会发生死锁。</p>
+<p><strong>1.1、两个 session （窗口）的两条语句</strong></p>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210215184331.jpeg" alt="在这里插入图片描述"></p>
+<p>首先session1获得 id=1的锁 session2获得id=5的锁，然后session想要获取id=5的锁 等待，session2想要获取id=1的锁 ，也等待！（互相等待，则发生了死锁）</p>
+<p><strong>1.2、 两个session的一条语句</strong></p>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210215184656.jpeg" alt="在这里插入图片描述"></p>
+<p>这种情况需要我们了解数据的<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_38238296/article/details/88362682">索引的检索顺序原理</a>简单说下：普通索引上面保存了主键索引，当我们使用普通索引检索数据时，如果所需的信息不够，那么会继续遍历主键索引。</p>
+<p><strong>假设默认情况是<code>RR</code>隔离级别</strong></p>
+<p>针对session 1 从name索引出发，检索到的是（hdc,1）（hdc,6）不仅会加name索引上的记录X锁，而且会加聚簇索引上的记录X锁，加锁顺序为先[1,hdc,100]，后[6,hdc,10] 这个顺序是因为B+树结构的有序性。<br>
+而Session 2，从pubtime索引出发，[10,6],[100,1]均满足过滤条件，同样也会加聚簇索引上的记录X锁，加锁顺序为[6,hdc,10]，后[1,hdc,100]。<br>
+发现没有，跟Session 1的加锁顺序正好相反，如果两个Session恰好都持有了第一把锁，请求加第二把锁，死锁就发生了。</p>
+<h4 id="解决方案：">解决方案：</h4>
+<ol>
+<li>如果不同程序会并发存取多个表，尽量约定以相同的顺序访问表，可以大大降低死锁机会。</li>
+<li>在同一个事务中，尽可能做到一次锁定所需要的所有资源，减少死锁产生概率。</li>
+<li>对于非常容易产生死锁的业务部分，可以尝试使用升级锁定颗粒度，通过表级锁定来减少死锁产生的概率。</li>
+</ol>
+<h2 id="参考文献">参考文献</h2>
+<blockquote>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/horses/article/details/103324323">https://blog.csdn.net/horses/article/details/103324323</a></li>
+</ul>
+</blockquote>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/3275127377.html">https://blog.mailjob.net/posts/3275127377.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%94%81%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="toc-text">锁的基本概念</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81%E4%BB%80%E4%B9%88%E6%98%AF%E9%94%81%EF%BC%9F"><span class="toc-text">1、什么是锁？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E9%94%81%E7%9A%84%E5%8C%BA%E5%88%86"><span class="toc-text">2、锁的区分</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81%E6%82%B2%E8%A7%82%E9%94%81%E7%9A%84%E5%88%86%E7%B1%BB"><span class="toc-text">3、悲观锁的分类</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%B1%E4%BA%AB%E9%94%81%EF%BC%88S-Lock%EF%BC%89%EF%BC%88-lock-in-share-mode%EF%BC%89"><span class="toc-text">共享锁（S Lock）（ lock in share mode）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8E%92%E4%BB%96%E9%94%81%EF%BC%88X-Lock%EF%BC%89%EF%BC%88-for-update%EF%BC%89"><span class="toc-text">排他锁（X Lock）（ for update）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8C%BA%E5%88%AB%E6%80%BB%E7%BB%93%EF%BC%9A"><span class="toc-text">区别总结：</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4%E3%80%81Lock-%E4%B8%8E-Latch"><span class="toc-text">4、Lock 与 Latch</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E7%A4%BA%E4%BE%8B"><span class="toc-text">测试示例</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81%E6%82%B2%E8%A7%82%E9%94%81-PCC-%E6%B5%8B%E8%AF%95%EF%BC%9A"><span class="toc-text">1、悲观锁(PCC)测试：</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-1%E3%80%81%E9%97%B4%E9%9A%99%E9%94%81%EF%BC%88Gap-Lock%EF%BC%89%E6%B5%8B%E8%AF%95"><span class="toc-text">1.1、间隙锁（Gap Lock）测试</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E4%B9%90%E8%A7%82%E9%94%81-OCC-%E6%B5%8B%E8%AF%95%EF%BC%9A"><span class="toc-text">2、乐观锁(OCC)测试：</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#2-1%E3%80%81CAS"><span class="toc-text">2.1、CAS</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-2%E3%80%81MVCC"><span class="toc-text">2.2、MVCC</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-3%E3%80%81%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81"><span class="toc-text">2.3、分布式锁</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81%E4%B8%8D%E5%90%8C%E9%94%81%E7%9A%84%E4%BC%98%E7%BC%BA%E7%82%B9%E6%AF%94%E8%BE%83%EF%BC%9A"><span class="toc-text">3、不同锁的优缺点比较：</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%82%B2%E8%A7%82%E9%94%81"><span class="toc-text">悲观锁</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B9%90%E8%A7%82%E9%94%81"><span class="toc-text">乐观锁</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%94%81%E7%9A%84%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%EF%BC%9A"><span class="toc-text">锁的常见问题：</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81%E9%94%81%E5%8D%87%E7%BA%A7%E7%8E%B0%E8%B1%A1"><span class="toc-text">1、锁升级现象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E6%AD%BB%E9%94%81"><span class="toc-text">2、死锁</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%97%AE%E9%A2%98%EF%BC%9A"><span class="toc-text">问题：</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%EF%BC%9A"><span class="toc-text">解决方案：</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Linux CentOS 系统 防火墙管理 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="CentOS 6.x 防火墙配置文件地址 vi &#x2F;etc&#x2F;sysconfig&#x2F;iptables 管理命令 重启防火墙 # service iptables restart  查看开放端口  # &#x2F;etc&#x2F;init.d&#x2F;iptables status   关闭防火墙  # &#x2F;etc&#x2F;init.d&#x2F;iptable">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux CentOS 系统 防火墙管理">
+<meta property="og:url" content="https://blog.mailjob.net/posts/353228769.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="CentOS 6.x 防火墙配置文件地址 vi &#x2F;etc&#x2F;sysconfig&#x2F;iptables 管理命令 重启防火墙 # service iptables restart  查看开放端口  # &#x2F;etc&#x2F;init.d&#x2F;iptables status   关闭防火墙  # &#x2F;etc&#x2F;init.d&#x2F;iptable">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-02-07T06:51:13.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.980Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="linux">
+<meta name="twitter:card" content="summary">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Linux CentOS 系统 防火墙管理
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/353228769.html" class="article-date">
+	  <time datetime="2021-02-07T06:51:13.000Z" itemprop="datePublished">2021-02-07</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/linux/">linux</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/linux/" rel="tag">linux</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/353228769.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 745(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 3(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="CentOS-6-x">CentOS 6.x</h2>
+<p><strong>防火墙配置文件地址</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">vi &#x2F;etc&#x2F;sysconfig&#x2F;iptables<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>管理命令</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">重启防火墙
+# service iptables restart
+
+查看开放端口 
+# &#x2F;etc&#x2F;init.d&#x2F;iptables status
+ 
+关闭防火墙 
+# &#x2F;etc&#x2F;init.d&#x2F;iptables stop<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>配置防火墙允许指定ip访问端口</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">关闭所有80端口
+# iptables -I INPUT -p tcp --dport 80 -j DROP 
+
+开启ip段192.168.1.0&#x2F;24端的80口
+# iptables -I INPUT -s 192.168.1.0&#x2F;24 -p tcp --dport 80 -j ACCEPT
+
+开启ip段211.123.16.123&#x2F;24端ip段的80口
+iptables -I INPUT -s 211.123.16.123&#x2F;24 -p tcp --dport 80 -j ACCEPT
+
+开放一个IP的一些端口，其它都封闭
+iptables -A Filter -p tcp --dport 80 -s 192.168.100.200 -d www.pconline.com.cn -j ACCEPT
+iptables -A Filter -p tcp --dport 25 -s 192.168.100.200 -j ACCEPT
+iptables -A Filter -p tcp --dport 109 -s 192.168.100.200 -j ACCEPT
+iptables -A Filter -p tcp --dport 110 -s 192.168.100.200 -j ACCEPT
+iptables -A Filter -p tcp --dport 53 -j ACCEPT
+iptables -A Filter -p udp --dport 53 -j ACCEPT
+iptables -A Filter -j DROP
+
+多个端口
+iptables -A Filter -p tcp -m multiport --destination-port 22,53,80,110 -s 192.168.20.3 -j REJECT
+
+指定时间上网
+iptables -A Filter -s 10.10.10.253 -m time --timestart 6:00 --timestop 11:00 --days Mon,Tue,Wed,Thu,Fri,Sat,Sun -j DROP
+iptables -A Filter -m time --timestart 12:00 --timestop 13:00 --days Mon,Tue,Wed,Thu,Fri,Sat,Sun -j ACCEPT
+iptables -A Filter -m time --timestart 17:30 --timestop 8:30 --days Mon,Tue,Wed,Thu,Fri,Sat,Sun -j ACCEPT<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="CentOS-7-x">CentOS 7.x</h2>
+<p><strong>管理命令</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">查看firewall服务状态
+systemctl status firewalld
+firewall-cmd --state
+
+# 平滑重载防火墙
+firewall-cmd --reload
+
+# 开启
+service firewalld start
+systemctl start firewalld
+# 重启
+service firewalld restart
+# 关闭
+service firewalld stop
+systemctl stop firewalld
+
+# 开机启动
+systemctl enable firewalld        
+# 取消开机启动
+systemctl disable firewalld       
+
+查看防火墙规则
+firewall-cmd --list-all 
+
+查看防火墙的开放的端口
+firewall-cmd --permanent --list-ports<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>防火墙管理</strong></p>
+<pre class="line-numbers language-none"><code class="language-none"># 查询端口是否开放
+firewall-cmd --query-port&#x3D;8080&#x2F;tcp
+# 开放80端口
+firewall-cmd --permanent --add-port&#x3D;80&#x2F;tcp
+# 移除端口
+firewall-cmd --permanent --remove-port&#x3D;8080&#x2F;tcp
+
+# 参数解释
+1、firwall-cmd：是Linux提供的操作firewall的一个工具；
+2、--permanent：表示设置为持久；
+3、--add-port：标识添加的端口；<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>CentOS切换为iptables防火墙</strong></p>
+<p>切换到iptables首先应该关掉默认的firewalld，然后安装iptables服务。</p>
+<p><strong>1、关闭firewall</strong>：</p>
+<pre class="line-numbers language-none"><code class="language-none">systemctl stop firewalld          # 关闭
+systemctl disable firewalld       # 取消开机启动12<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p><strong>2、安装iptables防火墙</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">yum install iptables-services #安装1<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>3、编辑iptables防火墙配置</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">vi &#x2F;etc&#x2F;sysconfig&#x2F;iptables 1<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>下边是一个完整的配置文件：</p>
+<pre class="line-numbers language-none"><code class="language-none">Firewall configuration written by system-config-firewall
+
+Manual customization of this file is not recommended.
+
+*filter
+
+:INPUT ACCEPT [0:0]
+
+:FORWARD ACCEPT [0:0]
+
+:OUTPUT ACCEPT [0:0]
+
+-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+-A INPUT -p icmp -j ACCEPT
+
+-A INPUT -i lo -j ACCEPT
+
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 22 -j ACCEPT
+
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT
+
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 3306 -j ACCEPT
+
+-A INPUT -j REJECT --reject-with icmp-host-prohibited
+
+-A FORWARD -j REJECT --reject-with icmp-host-prohibited
+
+COMMIT
+123456789101112131415161718192021222324252627282930<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>:wq! #保存退出</p>
+<pre class="line-numbers language-none"><code class="language-none">service iptables start #开启
+systemctl enable iptables.service #设置防火墙开机启动<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/353228769.html">https://blog.mailjob.net/posts/353228769.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#CentOS-6-x"><span class="toc-text">CentOS 6.x</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CentOS-7-x"><span class="toc-text">CentOS 7.x</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

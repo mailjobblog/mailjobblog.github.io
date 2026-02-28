@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Hexo 结合github搭建网站 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="前言 github-page搭建网站好处  全是静态文件，访问速度快； 免费方便，不用花一分钱就可以搭建一个网站，不需要服务器不需要后台； 可以随意绑定自己的域名； 数据绝对安全，基于github的版本管理，想恢复到哪个历史版本都行； 网站内容可以轻松打包、转移、发布到其它平台；  准备工作  有一个github账号，没有的话去注册一个； 安装了node.js、npm，并了解相关基础知识； 安装了">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hexo 结合github搭建网站">
+<meta property="og:url" content="https://blog.mailjob.net/posts/95206489.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="前言 github-page搭建网站好处  全是静态文件，访问速度快； 免费方便，不用花一分钱就可以搭建一个网站，不需要服务器不需要后台； 可以随意绑定自己的域名； 数据绝对安全，基于github的版本管理，想恢复到哪个历史版本都行； 网站内容可以轻松打包、转移、发布到其它平台；  准备工作  有一个github账号，没有的话去注册一个； 安装了node.js、npm，并了解相关基础知识； 安装了">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210110150439101.png">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210110150754937.png">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210110151253462.png">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210110151409849.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210110151629233.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xpYmluZW1haWw=,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210110153155188.png">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210110153532982.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210110153716415.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xpYmluZW1haWw=,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/2021011015465210.png">
+<meta property="article:published_time" content="2021-01-21T07:00:00.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.977Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210110150439101.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Hexo 结合github搭建网站
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/95206489.html" class="article-date">
+	  <time datetime="2021-01-21T07:00:00.000Z" itemprop="datePublished">2021-01-21</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/blog/">blog</a>
+  </span>
+
+
+                
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/95206489.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.4k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 5(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="前言">前言</h2>
+<h3 id="github-page搭建网站好处">github-page搭建网站好处</h3>
+<ol>
+<li>全是静态文件，访问速度快；</li>
+<li>免费方便，不用花一分钱就可以搭建一个网站，不需要服务器不需要后台；</li>
+<li>可以随意绑定自己的域名；</li>
+<li>数据绝对安全，基于github的版本管理，想恢复到哪个历史版本都行；</li>
+<li>网站内容可以轻松打包、转移、发布到其它平台；</li>
+</ol>
+<h3 id="准备工作">准备工作</h3>
+<ul>
+<li>有一个github账号，没有的话去注册一个；</li>
+<li>安装了node.js、npm，并了解相关基础知识；</li>
+<li>安装了git for windows（或者其它git客户端）</li>
+</ul>
+<h3 id="nodejs-安装">nodejs 安装</h3>
+<ul>
+<li>nodejs 安装地址：<a target="_blank" rel="noopener" href="https://nodejs.org/zh-cn/download/">https://nodejs.org/zh-cn/download/</a></li>
+<li>nodejs 安装完成后查看版本，如果看到了版本号，意味着你安装成功了</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">node -v
+npm -v<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210110150439101.png" alt=""></p>
+<h3 id="Github-配置">Github 配置</h3>
+<h4 id="1、github-repository">1、github repository</h4>
+<ul>
+<li>创建您的 github 仓库，请注意，格式是：<code>xxx.github.io</code></li>
+<li>比如我的 github 的 username 是 “jefferyjob”，那么我的仓库命名是：<code>jefferyjob.github.io</code></li>
+</ul>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210110150754937.png" alt="img"></p>
+<h5 id="2、ssh配置">2、ssh配置</h5>
+<p>打开你的 gith bash 输入以下命令，连续回车，集合创建成功 git 的私钥和公钥</p>
+<pre class="line-numbers language-none"><code class="language-none">ssh-keygen -t rsa -C &quot;邮件地址&quot;<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210110151253462.png" alt="img"></p>
+<p>输入以下命令查看您的公钥</p>
+<pre class="line-numbers language-none"><code class="language-none">cat ~&#x2F;.ssh&#x2F;id_rsa.pub<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210110151409849.png" alt="img"></p>
+<p>然后在 github 的仓库中添加自己的私钥</p>
+<p><img src="https://img-blog.csdnimg.cn/20210110151629233.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xpYmluZW1haWw=,size_16,color_FFFFFF,t_70" alt="img"></p>
+<h2 id="本地部署Hexo">本地部署Hexo</h2>
+<h3 id="HEXO介绍">HEXO介绍</h3>
+<h4 id="1-hexo简介">1. hexo简介</h4>
+<p>Hexo是一个简单、快速、强大的基于 Github Pages 的博客发布工具，支持Markdown格式，有众多优秀插件和主题。<br>
+官网： <a target="_blank" rel="noopener" href="http://hexo.io/">http://hexo.io</a><br>
+github: <a target="_blank" rel="noopener" href="https://github.com/hexojs/hexo">https://github.com/hexojs/hexo</a></p>
+<h4 id="2-原理">2. 原理</h4>
+<p>由于github pages存放的都是静态文件，博客存放的不只是文章内容，还有文章列表、分类、标签、翻页等动态内容，假如每次写完一篇文章都要手动更新博文目录和相关链接信息，相信谁都会疯掉，所以hexo所做的就是将这些md文件都放在本地，每次写完文章后调用写好的命令来批量完成相关页面的生成，然后再将有改动的页面提交到github。</p>
+<h4 id="3-注意事项">3. 注意事项</h4>
+<p>3.1. 很多命令既可以用Windows的cmd来完成，也可以使用git bash来完成，但是部分命令会有一些问题，为避免不必要的问题，建议全部使用git bash来执行；<br>
+3.2. hexo不同版本差别比较大，网上很多文章的配置信息都是基于2.x的，所以注意不要被误导；<br>
+3.3. hexo有2种<code>_config.yml</code>文件，一个是根目录下的全局的<code>_config.yml</code>，一个是各个<code>theme</code>下的；</p>
+<h3 id="1、全局安装">1、全局安装</h3>
+<pre class="line-numbers language-none"><code class="language-none">$ npm install -g hexo<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="2、初始化">2、初始化</h3>
+<p>新建一个文件夹（名字可以随便取），比如我的是 <code>G:\jefferyjob.io</code>，由于这个文件夹将来就作为你存放代码的地方，所以最好放在你的工作目录。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">// 进入项目目录
+$ <span class="token builtin class-name">cd</span> /g/jefferyjob.io
+
+// 初始化 hexo 项目（需要3到5分钟的时间）
+$ hexo init<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>hexo会自动下载一些文件到这个目录，包括node_modules，目录结构如下图：</p>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210110153155188.png" alt="img"></p>
+<p>运行以下命令，启动试试吧</p>
+<pre class="line-numbers language-none"><code class="language-none"># 生成静态页面
+$ hexo g 
+
+# 启动服务
+$ hexo s <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>执行以上命令之后，<code>hexo</code>就会在<code>public</code>文件夹生成相关<code>html</code>文件</p>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210110153532982.png" alt="img"></p>
+<h3 id="测试网站">测试网站</h3>
+<p><strong>打开浏览器访问 <code>http://localhost:4000/</code> 即可看到内容</strong></p>
+<blockquote>
+<p>很多人会碰到浏览器一直在转圈但是就是加载不出来的问题，一般情况下是因为端口占用的缘故<br>
+因为4000这个端口太常见了，解决端口冲突问题请参考这篇文章：<br>
+<a target="_blank" rel="noopener" href="http://blog.liuxianan.com/windows-port-bind.html">http://blog.liuxianan.com/windows-port-bind.html</a></p>
+</blockquote>
+<p><strong>第一次初始化的时候hexo已经帮我们写了一篇名为 Hello World 的文章，打开时就是这个样子</strong></p>
+<p><img src="https://img-blog.csdnimg.cn/20210110153716415.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xpYmluZW1haWw=,size_16,color_FFFFFF,t_70" alt=""></p>
+<h2 id="Hexo部署到github">Hexo部署到github</h2>
+<h3 id="1、部署仓库地址">1、部署仓库地址</h3>
+<p>如果你一切都配置好了，发布上传很容易，一句 <code>hexo d </code>就搞定，当然关键还是你要把所有东西配置好。<br>
+首先，<code>ssh key </code>肯定要配置好。<br>
+其次，配置 <code>_config.yml </code>中有关deploy的部分：</p>
+<p>正确写法：</p>
+<pre class="line-numbers language-none"><code class="language-none">deploy:
+  type: git
+  repository: git@github.com:jefferyjob&#x2F;jefferyjob.github.io.git
+  branch: main<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>错误写法：</p>
+<pre class="line-numbers language-none"><code class="language-none">deploy:
+  type: github
+  repository: https:&#x2F;&#x2F;github.com&#x2F;jefferyjob&#x2F;jefferyjob.github.io.git
+  branch: main<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="这里有几个注意点：">这里有几个注意点：</h4>
+<blockquote>
+<p>1、钩子请使用<code>git</code>，而不要使用<code>http</code>拉取<br>
+2、branch使用<code>main</code>，不要用<code>master</code>（ 从2020年10月1日开始，github默认分支使用<code>main</code>，详见：<a target="_blank" rel="noopener" href="https://github.com/github/renaming">https://github.com/github/renaming</a> ）<br>
+3、该仓库的秘钥要提前配置好</p>
+</blockquote>
+<p>后面一种写法是hexo2.x的写法，现在已经不行了，无论是哪种写法，此时直接执行<code>hexo d</code>的话一般会报如下错误：</p>
+<pre class="line-numbers language-none"><code class="language-none">Deployer not found: github 或者 Deployer not found: git<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="2、安装插件">2、安装插件</h3>
+<p>HexoBlog部署到git我们需要安装<code>hexo-deployer-git</code>插件，在博客HexoBlog根目录运行</p>
+<pre class="line-numbers language-none"><code class="language-none">npm install hexo-deployer-git --save<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>输入 <code>hexo d </code>就会将本次有改动的代码全部提交，没有改动的不会：</p>
+<pre class="line-numbers language-none"><code class="language-none">hexo d<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/2021011015465210.png" alt="img"></p>
+<h2 id="Hexo-常用命令">Hexo 常用命令</h2>
+<pre class="line-numbers language-none"><code class="language-none">hexo new &quot;postName&quot; #新建文章
+hexo new page &quot;pageName&quot; #新建页面
+hexo generate #生成静态页面至public目录
+hexo server #开启预览访问端口（默认端口4000，&#39;ctrl + c&#39;关闭server）
+hexo deploy #部署到GitHub
+hexo help  # 查看帮助
+hexo version  #查看Hexo的版本<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>缩写：</p>
+<pre class="line-numbers language-none"><code class="language-none">hexo n &#x3D;&#x3D; hexo new
+hexo g &#x3D;&#x3D; hexo generate
+hexo s &#x3D;&#x3D; hexo server
+hexo d &#x3D;&#x3D; hexo deploy<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>组合命令：</p>
+<pre class="line-numbers language-none"><code class="language-none">hexo s -g #生成并本地预览
+hexo d -g #生成并上传<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/95206489.html">https://blog.mailjob.net/posts/95206489.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#github-page%E6%90%AD%E5%BB%BA%E7%BD%91%E7%AB%99%E5%A5%BD%E5%A4%84"><span class="toc-text">github-page搭建网站好处</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="toc-text">准备工作</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#nodejs-%E5%AE%89%E8%A3%85"><span class="toc-text">nodejs 安装</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Github-%E9%85%8D%E7%BD%AE"><span class="toc-text">Github 配置</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E3%80%81github-repository"><span class="toc-text">1、github repository</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#2%E3%80%81ssh%E9%85%8D%E7%BD%AE"><span class="toc-text">2、ssh配置</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%AC%E5%9C%B0%E9%83%A8%E7%BD%B2Hexo"><span class="toc-text">本地部署Hexo</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#HEXO%E4%BB%8B%E7%BB%8D"><span class="toc-text">HEXO介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-hexo%E7%AE%80%E4%BB%8B"><span class="toc-text">1. hexo简介</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E5%8E%9F%E7%90%86"><span class="toc-text">2. 原理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="toc-text">3. 注意事项</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81%E5%85%A8%E5%B1%80%E5%AE%89%E8%A3%85"><span class="toc-text">1、全局安装</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">2、初始化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E7%BD%91%E7%AB%99"><span class="toc-text">测试网站</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Hexo%E9%83%A8%E7%BD%B2%E5%88%B0github"><span class="toc-text">Hexo部署到github</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81%E9%83%A8%E7%BD%B2%E4%BB%93%E5%BA%93%E5%9C%B0%E5%9D%80"><span class="toc-text">1、部署仓库地址</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%99%E9%87%8C%E6%9C%89%E5%87%A0%E4%B8%AA%E6%B3%A8%E6%84%8F%E7%82%B9%EF%BC%9A"><span class="toc-text">这里有几个注意点：</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E5%AE%89%E8%A3%85%E6%8F%92%E4%BB%B6"><span class="toc-text">2、安装插件</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Hexo-%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-text">Hexo 常用命令</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

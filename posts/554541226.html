@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Redis数据类型Hash | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="参考资料 Redis 常用命令，思维导图：https:&#x2F;&#x2F;www.kdocs.cn&#x2F;view&#x2F;l&#x2F;ss49IFenIOSm 底层实现  Hash 就是字典，所以明白了这个，接着往下看就没啥问题了 Redis hash数据结构 是一个键值对（key-value）集合,它是一个 string 类型的 field 和 value 的映射表 一个哈希表里面可以有多个哈希表节点，而每个哈希表节点就保存了字典">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis数据类型Hash">
+<meta property="og:url" content="https://blog.mailjob.net/posts/554541226.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="参考资料 Redis 常用命令，思维导图：https:&#x2F;&#x2F;www.kdocs.cn&#x2F;view&#x2F;l&#x2F;ss49IFenIOSm 底层实现  Hash 就是字典，所以明白了这个，接着往下看就没啥问题了 Redis hash数据结构 是一个键值对（key-value）集合,它是一个 string 类型的 field 和 value 的映射表 一个哈希表里面可以有多个哈希表节点，而每个哈希表节点就保存了字典">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/img_convert/592b24c76caa8b1724d3fbb3f02b8fe9.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/img_convert/d00d8cfce77d999db432d27bbf9abd38.png">
+<meta property="article:published_time" content="2021-01-19T13:55:55.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.986Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="redis">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/img_convert/592b24c76caa8b1724d3fbb3f02b8fe9.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Redis数据类型Hash
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/554541226.html" class="article-date">
+	  <time datetime="2021-01-19T13:55:55.000Z" itemprop="datePublished">2021-01-19</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/redis/" rel="tag">redis</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/554541226.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 691(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 2(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="参考资料">参考资料</h2>
+<p>Redis 常用命令，思维导图：<a target="_blank" rel="noopener" href="https://www.kdocs.cn/view/l/ss49IFenIOSm">https://www.kdocs.cn/view/l/ss49IFenIOSm</a></p>
+<h2 id="底层实现">底层实现</h2>
+<p><img src="https://img-blog.csdnimg.cn/img_convert/592b24c76caa8b1724d3fbb3f02b8fe9.png" alt="img"></p>
+<p>Hash 就是字典，所以明白了这个，接着往下看就没啥问题了</p>
+<p>Redis hash数据结构 是一个键值对（key-value）集合,它是一个 string 类型的 field 和 value 的映射表</p>
+<p>一个哈希表里面可以有多个哈希表节点，而每个哈希表节点就保存了字典中的一个键值对</p>
+<p><strong>table属性是一个数组,数组中的每个元素都是指向dictEntry结构的指针,每个dictEntry结构保存着一个键值对</strong>,size属性记录了table的大小 used哈希表目前已有的节点sizemask属性的值总是等于size-1</p>
+<h2 id="散列存储">散列存储</h2>
+<p><strong>创建的时候是ht0，有数据了就是ht1，然后发现数据大了，就把ht1的数据导入到ht0，然后ht1的数据被清空，ht0数据变大后，再导入到ht1。这样循环扩大存储空间</strong></p>
+<h2 id="String-Json-和-Hash-存储对比">String+Json 和 Hash 存储对比</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">类型</th>
+<th style="text-align:left">String+Json</th>
+<th style="text-align:left">Hash</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">效率</td>
+<td style="text-align:left">很高</td>
+<td style="text-align:left">高</td>
+</tr>
+<tr>
+<td style="text-align:left">容量</td>
+<td style="text-align:left">低</td>
+<td style="text-align:left">低</td>
+</tr>
+<tr>
+<td style="text-align:left">灵活性</td>
+<td style="text-align:left">低</td>
+<td style="text-align:left">高</td>
+</tr>
+<tr>
+<td style="text-align:left">序列化</td>
+<td style="text-align:left">简单</td>
+<td style="text-align:left">复杂</td>
+</tr>
+</tbody>
+</table>
+<h2 id="应用场景">应用场景</h2>
+<p>1、当某个对象需要频繁的更新的时候，不适合用string+json这个方法，因为每次的更新对需要对整个对象序列化复制。如果使用hash的话，就可以直接怼某个单独的字段修改，不需要修改整个对象。（例如：销量、评论数、关注量）</p>
+<p>2、所以说，如果你存储的数据里面有很多个field（字段），并且呢还经常更新，那么你最好使用hash，可以更加灵活。反之用string+json合适例如优惠券</p>
+<h2 id="常用命令">常用命令</h2>
+<p><img src="https://img-blog.csdnimg.cn/img_convert/d00d8cfce77d999db432d27bbf9abd38.png" alt="img"></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">命  令</th>
+<th style="text-align:left">说  明</th>
+<th style="text-align:left">备  注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">hdel key field1[field2…]</td>
+<td style="text-align:left">删除 hash 结构中的某个（些）字段</td>
+<td style="text-align:left">可以进行多个字段的删除</td>
+</tr>
+<tr>
+<td style="text-align:left">hexists key field</td>
+<td style="text-align:left">判断 hash 结构中是否存在 field 字段</td>
+<td style="text-align:left">存在返回 1，否则返回 0</td>
+</tr>
+<tr>
+<td style="text-align:left">hgetall key</td>
+<td style="text-align:left">获取所有 hash 结构中的键值</td>
+<td style="text-align:left">返回键和值</td>
+</tr>
+<tr>
+<td style="text-align:left">hincrby key field increment</td>
+<td style="text-align:left">指定给 hash 结构中的某一字段加上一个整数</td>
+<td style="text-align:left">要求该字段也是整数字符串</td>
+</tr>
+<tr>
+<td style="text-align:left">hincrbyfloat key field increment</td>
+<td style="text-align:left">指定给 hash 结构中的某一字段加上一个浮点数</td>
+<td style="text-align:left">要求该字段是数字型字符串</td>
+</tr>
+<tr>
+<td style="text-align:left">hkeys key</td>
+<td style="text-align:left">返回 hash 中所有的键</td>
+<td style="text-align:left">——</td>
+</tr>
+<tr>
+<td style="text-align:left">hlen key</td>
+<td style="text-align:left">返回 hash 中键值对的数量</td>
+<td style="text-align:left">——</td>
+</tr>
+<tr>
+<td style="text-align:left">hmget key field1[field2…]</td>
+<td style="text-align:left">返回 hash 中指定的键的值，可以是多个</td>
+<td style="text-align:left">依次返回值</td>
+</tr>
+<tr>
+<td style="text-align:left">hmset key field1 value1 [field2 field2…]</td>
+<td style="text-align:left">hash 结构设置多个键值对</td>
+<td style="text-align:left">——</td>
+</tr>
+<tr>
+<td style="text-align:left">hset key filed value</td>
+<td style="text-align:left">在 hash 结构中设置键值对</td>
+<td style="text-align:left">单个设值</td>
+</tr>
+<tr>
+<td style="text-align:left">hsetnx key field value</td>
+<td style="text-align:left">当 hash 结构中不存在对应的键，才设置值</td>
+<td style="text-align:left">——</td>
+</tr>
+<tr>
+<td style="text-align:left">hvals key</td>
+<td style="text-align:left">获取 hash 结构中所有的值</td>
+<td style="text-align:left">——</td>
+</tr>
+</tbody>
+</table>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/554541226.html">https://blog.mailjob.net/posts/554541226.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0"><span class="toc-text">底层实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%A3%E5%88%97%E5%AD%98%E5%82%A8"><span class="toc-text">散列存储</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#String-Json-%E5%92%8C-Hash-%E5%AD%98%E5%82%A8%E5%AF%B9%E6%AF%94"><span class="toc-text">String+Json 和 Hash 存储对比</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">应用场景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-text">常用命令</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

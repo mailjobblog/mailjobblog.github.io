@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Nginx基础知识总结 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="Nginx 概述  Nginx 是开源、高性能、高可靠的 Web 和反向代理服务器，而且支持热部署，几乎可以做到 7 * 24 小时不间断运行，即使运行几个月也不需要重新启动，还能在不间断服务的情况下对软件版本进行热更新。性能是 Nginx 最重要的考量，其占用内存少、并发能力强、能支持高达 5w 个并发连接数，最重要的是， Nginx 是免费的并可以商业化，配置使用也比较简单。 Nginx 特">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Nginx基础知识总结">
+<meta property="og:url" content="https://blog.mailjob.net/posts/31352437.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="Nginx 概述  Nginx 是开源、高性能、高可靠的 Web 和反向代理服务器，而且支持热部署，几乎可以做到 7 * 24 小时不间断运行，即使运行几个月也不需要重新启动，还能在不间断服务的情况下对软件版本进行热更新。性能是 Nginx 最重要的考量，其占用内存少、并发能力强、能支持高达 5w 个并发连接数，最重要的是， Nginx 是免费的并可以商业化，配置使用也比较简单。 Nginx 特">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210508090822890.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210508091444609.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hlbGxvV3VkZQ==,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210508093616184.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210508093924221.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hlbGxvV3VkZQ==,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/202105080940050.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210508094850198.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hlbGxvV3VkZQ==,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210508094906537.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hlbGxvV3VkZQ==,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/2021050809492298.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hlbGxvV3VkZQ==,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210508101754614.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210508095050782.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hlbGxvV3VkZQ==,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/2021050809512035.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210508095129336.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hlbGxvV3VkZQ==,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/202105080951442.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hlbGxvV3VkZQ==,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210508095203333.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hlbGxvV3VkZQ==,size_16,color_FFFFFF,t_70">
+<meta property="article:published_time" content="2022-05-01T10:06:51.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.980Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="linux">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/20210508090822890.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Nginx基础知识总结
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/31352437.html" class="article-date">
+	  <time datetime="2022-05-01T10:06:51.000Z" itemprop="datePublished">2022-05-01</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/linux/">linux</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/linux/" rel="tag">linux</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/31352437.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 10.7k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 43(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <meta name="referrer" content="no-referrer" />
+<h2 id="Nginx-概述">Nginx 概述</h2>
+<p><img src="https://img-blog.csdnimg.cn/20210508090822890.png" alt="在这里插入图片描述"></p>
+<p><strong>Nginx</strong> 是开源、高性能、高可靠的 <strong>Web</strong> 和<a target="_blank" rel="noopener" href="https://so.csdn.net/so/search?q=%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86&amp;spm=1001.2101.3001.7020">反向代理</a>服务器，而且支持热部署，几乎可以做到 7 * 24 小时不间断运行，即使运行几个月也不需要重新启动，还能在不间断服务的情况下对软件版本进行热更新。性能是 <strong>Nginx</strong> 最重要的考量，其占用<a target="_blank" rel="noopener" href="https://so.csdn.net/so/search?q=%E5%86%85%E5%AD%98&amp;spm=1001.2101.3001.7020">内存</a>少、并发能力强、能支持高达 5w 个并发连接数，最重要的是， <strong>Nginx</strong> 是免费的并可以商业化，配置使用也比较简单。</p>
+<h2 id="Nginx-特点">Nginx 特点</h2>
+<ul>
+<li>高并发、高性能；</li>
+<li>模块化架构使得它的扩展性非常好；</li>
+<li>异步非阻塞的事件驱动模型这点和 Node.js 相似；</li>
+<li>相对于其它服务器来说它可以连续几个月甚至更长而不需要重启服务器使得它具有高可靠性；</li>
+<li>热部署、平滑升级；</li>
+<li>完全开源，生态繁荣；</li>
+</ul>
+<h2 id="Nginx-作用">Nginx 作用</h2>
+<p>Nginx 的最重要的几个使用场景：</p>
+<ol>
+<li>静态资源服务，通过本地文件系统提供服务；</li>
+<li>反向代理服务，延伸出包括缓存、负载均衡等；</li>
+<li>API 服务， OpenResty ；</li>
+</ol>
+<p>对于前端来说 Node.js 并不陌生， Nginx 和 Node.js 的很多理念类似， HTTP 服务器、事件驱动、异步非阻塞等，且 Nginx 的大部分功能使用 Node.js 也可以实现，但 Nginx 和 Node.js 并不冲突，都有自己擅长的领域。 Nginx 擅长于底层服务器端资源的处理（静态资源处理转发、反向代理，负载均衡等）， Node.js 更擅长上层具体业务逻辑的处理，两者可以完美组合。<br>
+用一张图表示：<br>
+<img src="https://img-blog.csdnimg.cn/20210508091444609.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hlbGxvV3VkZQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<h2 id="Nginx-安装">Nginx 安装</h2>
+<p>本文演示的是 Linux centOS 7.x 的操作系统上安装 Nginx ，至于在其它操作系统上进行安装可以网上自行搜索，都非常简单的。</p>
+<p>使用 yum 安装 Nginx ：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">yum install nginx <span class="token operator">-</span>y<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>安装完成后，通过 <code>rpm -ql nginx</code>命令查看 Nginx 的安装信息：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell"><span class="token comment"># Nginx配置文件</span>
+<span class="token operator">/</span>etc/nginx/nginx<span class="token punctuation">.</span>conf <span class="token comment"># nginx 主配置文件</span>
+<span class="token operator">/</span>etc/nginx/nginx<span class="token punctuation">.</span>conf<span class="token punctuation">.</span>default
+
+<span class="token comment"># 可执行程序文件</span>
+<span class="token operator">/</span>usr/bin/nginx-upgrade
+<span class="token operator">/</span>usr/sbin/nginx
+
+<span class="token comment"># nginx库文件</span>
+<span class="token operator">/</span>usr/lib/systemd/system/nginx<span class="token punctuation">.</span>service <span class="token comment"># 用于配置系统守护进程</span>
+<span class="token operator">/</span>usr/lib64/nginx/modules <span class="token comment"># Nginx模块目录</span>
+
+<span class="token comment"># 帮助文档</span>
+<span class="token operator">/</span>usr/share/doc/nginx-1<span class="token punctuation">.</span>16<span class="token punctuation">.</span>1
+<span class="token operator">/</span>usr/share/doc/nginx-1<span class="token punctuation">.</span>16<span class="token punctuation">.</span>1/CHANGES
+<span class="token operator">/</span>usr/share/doc/nginx-1<span class="token punctuation">.</span>16<span class="token punctuation">.</span>1/README
+<span class="token operator">/</span>usr/share/doc/nginx-1<span class="token punctuation">.</span>16<span class="token punctuation">.</span>1/README<span class="token punctuation">.</span>dynamic
+<span class="token operator">/</span>usr/share/doc/nginx-1<span class="token punctuation">.</span>16<span class="token punctuation">.</span>1/UPGRADE-NOTES-1<span class="token punctuation">.</span>6-to-1<span class="token punctuation">.</span>10
+
+<span class="token comment"># 静态资源目录</span>
+<span class="token operator">/</span>usr/share/nginx/html/404<span class="token punctuation">.</span>html
+<span class="token operator">/</span>usr/share/nginx/html/50x<span class="token punctuation">.</span>html
+<span class="token operator">/</span>usr/share/nginx/html/index<span class="token punctuation">.</span>html
+
+<span class="token comment"># 存放Nginx日志文件</span>
+<span class="token operator">/</span><span class="token keyword">var</span><span class="token operator">/</span>log/nginx<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>主要关注的文件夹有两个：</p>
+<ol>
+<li><code>/etc/nginx/conf.d/</code> 是子配置项存放处， <code>/etc/nginx/nginx.conf</code><br>
+主配置文件会默认把这个文件夹中所有子配置项都引入；</li>
+<li><code>/usr/share/nginx/html/</code> 静态文件都放在这个文件夹，也可以根据你自己的习惯放在其他地方；</li>
+</ol>
+<h2 id="Nginx-常用命令">Nginx 常用命令</h2>
+<p><strong>systemctl</strong> 系统命令：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell"><span class="token comment"># 开机配置</span>
+systemctl enable nginx <span class="token comment"># 开机自动启动</span>
+systemctl disable nginx <span class="token comment"># 关闭开机自动启动</span>
+
+<span class="token comment"># 启动Nginx</span>
+systemctl <span class="token function">start</span> nginx <span class="token comment"># 启动Nginx成功后，可以直接访问主机IP，此时会展示Nginx默认页面</span>
+
+<span class="token comment"># 停止Nginx</span>
+systemctl stop nginx
+
+<span class="token comment"># 重启Nginx</span>
+systemctl restart nginx
+
+<span class="token comment"># 重新加载Nginx</span>
+systemctl reload nginx
+
+<span class="token comment"># 查看 Nginx 运行状态</span>
+systemctl status nginx
+
+<span class="token comment"># 查看Nginx进程</span>
+<span class="token function">ps</span> <span class="token operator">-</span>ef <span class="token punctuation">|</span> grep nginx
+
+<span class="token comment"># 杀死Nginx进程</span>
+<span class="token function">kill</span> <span class="token operator">-</span>9 pid <span class="token comment"># 根据上面查看到的Nginx进程号，杀死Nginx进程，-9 表示强制结束进程</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>Nginx</strong> 应用程序命令：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">nginx <span class="token operator">-</span>s reload  <span class="token comment"># 向主进程发送信号，重新加载配置文件，热重启</span>
+nginx <span class="token operator">-</span>s reopen	 <span class="token comment"># 重启 Nginx</span>
+nginx <span class="token operator">-</span>s stop    <span class="token comment"># 快速关闭</span>
+nginx <span class="token operator">-</span>s quit    <span class="token comment"># 等待工作进程处理完成后关闭</span>
+nginx <span class="token operator">-</span>T         <span class="token comment"># 查看当前 Nginx 最终的配置</span>
+nginx <span class="token operator">-</span>t         <span class="token comment"># 检查配置是否有问题</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="Nginx-核心配置">Nginx 核心配置</h2>
+<h3 id="配置文件结构">配置文件结构</h3>
+<p>Nginx 的典型配置示例：</p>
+<pre class="line-numbers language-ini" data-language="ini"><code class="language-ini"><span class="token comment"># main段配置信息</span>
+user  nginx;                        # 运行用户，默认即是nginx，可以不进行设置
+worker_processes  auto;             # Nginx 进程数，一般设置为和 CPU 核数一样
+error_log  /var/log/nginx/error.log warn;   # Nginx 的错误日志存放目录
+pid        /var/run/nginx.pid;      # Nginx 服务启动时的 pid 存放位置
+
+<span class="token comment"># events段配置信息</span>
+events &#123;
+    use epoll;     # 使用epoll的I/O模型(如果你不知道Nginx该使用哪种轮询方法，会自动选择一个最适合你操作系统的)
+    worker_connections 1024;   # 每个进程允许最大并发数
+&#125;
+
+<span class="token comment"># http段配置信息</span>
+<span class="token comment"># 配置使用最频繁的部分，代理、缓存、日志定义等绝大多数功能和第三方模块的配置都在这里设置</span>
+http &#123; 
+    <span class="token comment"># 设置日志模式</span>
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log  /var/log/nginx/access.log  main;   # Nginx访问日志存放位置
+
+    sendfile            on;   # 开启高效传输模式
+    tcp_nopush          on;   # 减少网络报文段的数量
+    tcp_nodelay         on;
+    keepalive_timeout   65;   # 保持连接的时间，也叫超时时间，单位秒
+    types_hash_max_size 2048;
+
+    include             /etc/nginx/mime.types;      # 文件扩展名与类型映射表
+    default_type        application/octet-stream;   # 默认文件类型
+
+    include /etc/nginx/conf.d/*.conf;   # 加载子配置项
+    
+    <span class="token comment"># server段配置信息</span>
+    server &#123;
+    	listen       80;       # 配置监听的端口
+    	server_name  localhost;    # 配置的域名
+      
+    	<span class="token comment"># location段配置信息</span>
+    	location / &#123;
+    		root   /usr/share/nginx/html;  # 网站根目录
+    		index  index.html index.htm;   # 默认首页文件
+    		deny 172.168.22.11;   # 禁止访问的ip地址，可以为all
+    		allow 172.168.33.44；# 允许访问的ip地址，可以为all
+    	&#125;
+    	
+    	error_page 500 502 503 504 /50x.html;  # 默认50x对应的访问页面
+    	error_page 400 404 error.html;   # 同上
+    &#125;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>main 全局配置，对全局生效；</li>
+<li>events 配置影响 Nginx 服务器与用户的网络连接；</li>
+<li>http 配置代理，缓存，日志定义等绝大多数功能和第三方模块的配置；</li>
+<li>server 配置虚拟主机的相关参数，一个 http 块中可以有多个 server 块；</li>
+<li>location 用于配置匹配的 uri ；</li>
+<li>upstream 配置后端服务器具体地址，负载均衡配置不可或缺的部分；</li>
+</ul>
+<p>用一张图清晰的展示它的层级结构：<br>
+<img src="https://img-blog.csdnimg.cn/20210508093616184.png" alt="在这里插入图片描述"></p>
+<h3 id="配置文件-main-段核心参数">配置文件 main 段核心参数</h3>
+<h4 id="user">user</h4>
+<p>指定运行 Nginx 的 woker 子进程的属主和属组，其中组可以不指定。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">user USERNAME <span class="token namespace">[GROUP]</span>
+
+user nginx lion<span class="token punctuation">;</span> <span class="token comment"># 用户是nginx;组是lion</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<h4 id="pid">pid</h4>
+<p>指定运行 Nginx master 主进程的 pid 文件存放路径。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">pid <span class="token operator">/</span>opt/nginx/logs/nginx<span class="token punctuation">.</span>pid <span class="token comment"># master主进程的的pid存放在nginx.pid的文件</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h4 id="worker-rlimit-nofile-number">worker_rlimit_nofile_number</h4>
+<p>指定 worker 子进程可以打开的最大文件句柄数。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">worker_rlimit_nofile 20480<span class="token punctuation">;</span> <span class="token comment"># 可以理解成每个worker子进程的最大连接数量。</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h4 id="worker-rlimit-core">worker_rlimit_core</h4>
+<p>指定 worker 子进程异常终止后的 core 文件，用于记录分析问题。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">worker_rlimit_core 50M<span class="token punctuation">;</span> <span class="token comment"># 存放大小限制</span>
+working_directory <span class="token operator">/</span>opt/nginx/tmp<span class="token punctuation">;</span> <span class="token comment"># 存放目录</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<h4 id="worker-processes-number">worker_processes_number</h4>
+<p>指定 Nginx 启动的 worker 子进程数量。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">worker_processes 4<span class="token punctuation">;</span> <span class="token comment"># 指定具体子进程数量</span>
+worker_processes auto<span class="token punctuation">;</span> <span class="token comment"># 与当前cpu物理核心数一致</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<h4 id="worker-cpu-affinity">worker_cpu_affinity</h4>
+<p>将每个 worker 子进程与我们的 cpu 物理核心绑定。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">worker_cpu_affinity 0001 0010 0100 1000<span class="token punctuation">;</span> <span class="token comment"># 4个物理核心，4个worker子进程</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><img src="https://img-blog.csdnimg.cn/20210508093924221.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hlbGxvV3VkZQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>
+将每个 worker 子进程与特定 CPU 物理核心绑定，优势在于，避免同一个 worker 子进程在不同的 CPU 核心上切换，缓存失效，降低性能。但其并不能真正的避免进程切换。</p>
+<h4 id="worker-priority">worker_priority</h4>
+<p>指定 worker 子进程的 nice 值，以调整运行 Nginx 的优先级，通常设定为负值，以优先调用 Nginx 。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">worker_priority <span class="token operator">-</span>10<span class="token punctuation">;</span> <span class="token comment"># 120-10=110，110就是最终的优先级</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>Linux 默认进程的优先级值是120，值越小越优先； nice 定范围为 -20 到 +19 。<br>
+[备注] 应用的默认优先级值是120加上 nice 值等于它最终的值，这个值越小，优先级越高。</p>
+<h4 id="worker-shutdown-timeout">worker_shutdown_timeout</h4>
+<p>指定 worker 子进程优雅退出时的超时时间。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">worker_shutdown_timeout 5s<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h4 id="timer-resolution">timer_resolution</h4>
+<p>worker 子进程内部使用的计时器精度，调整时间间隔越大，系统调用越少，有利于性能提升；反之，系统调用越多，性能下降。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">timer_resolution 100ms<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>在 Linux 系统中，用户需要获取计时器时需要向操作系统内核发送请求，有请求就必然会有开销，因此这个间隔越大开销就越小。</p>
+<h4 id="daemon">daemon</h4>
+<p>指定 Nginx 的运行方式，前台还是后台，前台用于调试，后台用于生产。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">daemon off<span class="token punctuation">;</span> <span class="token comment"># 默认是on，后台运行模式</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="配置文件-events-段核心参数">配置文件 events 段核心参数</h3>
+<h4 id="use">use</h4>
+<p>Nginx 使用何种事件驱动模型。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">use method<span class="token punctuation">;</span> <span class="token comment"># 不推荐配置它，让nginx自己选择</span>
+
+method 可选值为：<span class="token function">select</span>、poll、kqueue、epoll、<span class="token operator">/</span>dev/poll、eventport<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<h4 id="worker-connections">worker_connections</h4>
+<p>worker 子进程能够处理的最大并发连接数。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">worker_connections 1024 <span class="token comment"># 每个子进程的最大连接数为1024</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h4 id="accept-mutex">accept_mutex</h4>
+<p>是否打开负载均衡互斥锁。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">accept_mutex on <span class="token comment"># 默认是off关闭的，这里推荐打开</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="server-name-指令">server_name 指令</h3>
+<p>指定虚拟主机域名。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">server_name name1 name2 name3
+
+<span class="token comment"># 示例：</span>
+server_name www<span class="token punctuation">.</span>nginx<span class="token punctuation">.</span>com<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>域名匹配的四种写法：</p>
+<ul>
+<li>精确匹配： server_name <a target="_blank" rel="noopener" href="http://www.nginx.com">www.nginx.com</a> ;</li>
+<li>左侧通配： server_name *.nginx.com ;</li>
+<li>右侧统配： server_name www.nginx.* ;</li>
+<li>正则匹配： server_name ~^www.nginx.*$ ;</li>
+</ul>
+<p>匹配优先级**：精确匹配 &gt; 左侧通配符匹配 &gt; 右侧通配符匹配 &gt; 正则表达式匹配**<br>
+server_name 配置实例：<br>
+1、配置本地 DNS 解析 vim /etc/hosts （ macOS 系统）</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell"><span class="token comment"># 添加如下内容，其中 121.42.11.34 是阿里云服务器IP地址</span>
+121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34 www<span class="token punctuation">.</span>nginx-test<span class="token punctuation">.</span>com
+121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34 mail<span class="token punctuation">.</span>nginx-test<span class="token punctuation">.</span>com
+121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34 www<span class="token punctuation">.</span>nginx-test<span class="token punctuation">.</span>org
+121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34 doc<span class="token punctuation">.</span>nginx-test<span class="token punctuation">.</span>com
+121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34 www<span class="token punctuation">.</span>nginx-test<span class="token punctuation">.</span>cn
+121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34 fe<span class="token punctuation">.</span>nginx-test<span class="token punctuation">.</span>club<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>[注意] 这里使用的是虚拟域名进行测试，因此需要配置本地 DNS 解析，如果使用阿里云上购买的域名，则需要在阿里云上设置好域名解析。<br>
+2、配置阿里云 Nginx ，vim /etc/nginx/nginx.conf</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell"><span class="token comment"># 这里只列举了http端中的sever端配置</span>
+
+<span class="token comment"># 左匹配</span>
+server <span class="token punctuation">&#123;</span>
+	listen	80<span class="token punctuation">;</span>
+	server_name	<span class="token operator">*</span><span class="token punctuation">.</span>nginx-test<span class="token punctuation">.</span>com<span class="token punctuation">;</span>
+	root	<span class="token operator">/</span>usr/share/nginx/html/nginx-test/left-match/<span class="token punctuation">;</span>
+	location <span class="token operator">/</span> <span class="token punctuation">&#123;</span>
+		index index<span class="token punctuation">.</span>html<span class="token punctuation">;</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment"># 正则匹配</span>
+server <span class="token punctuation">&#123;</span>
+	listen	80<span class="token punctuation">;</span>
+	server_name	~^<span class="token punctuation">.</span><span class="token operator">*</span>\<span class="token punctuation">.</span>nginx-test\<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">*</span>$<span class="token punctuation">;</span>
+	root	<span class="token operator">/</span>usr/share/nginx/html/nginx-test/reg-match/<span class="token punctuation">;</span>
+	location <span class="token operator">/</span> <span class="token punctuation">&#123;</span>
+		index index<span class="token punctuation">.</span>html<span class="token punctuation">;</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment"># 右匹配</span>
+server <span class="token punctuation">&#123;</span>
+	listen	80<span class="token punctuation">;</span>
+	server_name	www<span class="token punctuation">.</span>nginx-test<span class="token punctuation">.</span><span class="token operator">*</span><span class="token punctuation">;</span>
+	root	<span class="token operator">/</span>usr/share/nginx/html/nginx-test/right-match/<span class="token punctuation">;</span>
+	location <span class="token operator">/</span> <span class="token punctuation">&#123;</span>
+		index index<span class="token punctuation">.</span>html<span class="token punctuation">;</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment"># 完全匹配</span>
+server <span class="token punctuation">&#123;</span>
+	listen	80<span class="token punctuation">;</span>
+	server_name	www<span class="token punctuation">.</span>nginx-test<span class="token punctuation">.</span>com<span class="token punctuation">;</span>
+	root	<span class="token operator">/</span>usr/share/nginx/html/nginx-test/all-match/<span class="token punctuation">;</span>
+	location <span class="token operator">/</span> <span class="token punctuation">&#123;</span>
+		index index<span class="token punctuation">.</span>html<span class="token punctuation">;</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>3、访问分析</p>
+<ul>
+<li>当访问 <a target="_blank" rel="noopener" href="http://www.nginx-test.com">www.nginx-test.com</a> 时，都可以被匹配上，因此选择优先级最高的“完全匹配”；</li>
+<li>当访问 <a target="_blank" rel="noopener" href="http://mail.nginx-test.com">mail.nginx-test.com</a> 时，会进行“左匹配”；</li>
+<li>当访问 <a target="_blank" rel="noopener" href="http://www.nginx-test.org">www.nginx-test.org</a> 时，会进行“右匹配”；</li>
+<li>当访问 <a target="_blank" rel="noopener" href="http://doc.nginx-test.com">doc.nginx-test.com</a> 时，会进行“左匹配”；</li>
+<li>当访问 <a target="_blank" rel="noopener" href="http://www.nginx-test.cn">www.nginx-test.cn</a> 时，会进行“右匹配”；</li>
+<li>当访问 fe.nginx-test.club 时，会进行“正则匹配”；</li>
+</ul>
+<h3 id="root">root</h3>
+<p>指定静态资源目录位置，它可以写在 http 、 server 、 location 等配置中。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">root path
+
+例如：
+location <span class="token operator">/</span>image <span class="token punctuation">&#123;</span>
+	root <span class="token operator">/</span>opt/nginx/static<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+当用户访问 www<span class="token punctuation">.</span>test<span class="token punctuation">.</span>com/image/1<span class="token punctuation">.</span>png 时，实际在服务器找的路径是 <span class="token operator">/</span>opt/nginx/static/image/1<span class="token punctuation">.</span>png<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>[注意] root 会将定义路径与 URI 叠加， alias 则只取定义路径。</p>
+<h3 id="alias">alias</h3>
+<p>它也是指定静态资源目录位置，它只能写在 location 中。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">location <span class="token operator">/</span>image <span class="token punctuation">&#123;</span>
+	alias <span class="token operator">/</span>opt/nginx/static/image/<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+当用户访问 www<span class="token punctuation">.</span>test<span class="token punctuation">.</span>com/image/1<span class="token punctuation">.</span>png 时，实际在服务器找的路径是 <span class="token operator">/</span>opt/nginx/static/image/1<span class="token punctuation">.</span>png<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>[注意] 使用 alias 末尾一定要添加 / ，并且它只能位于 location 中。</p>
+<h3 id="location">location</h3>
+<p>配置路径。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">location <span class="token punctuation">[</span> = <span class="token punctuation">|</span> ~ <span class="token punctuation">|</span> ~<span class="token operator">*</span> <span class="token punctuation">|</span> ^~ <span class="token punctuation">]</span> uri <span class="token punctuation">&#123;</span>
+	<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>匹配规则：</p>
+<ul>
+<li>= 精确匹配；</li>
+<li>~ 正则匹配，区分大小写；</li>
+<li>~* 正则匹配，不区分大小写；</li>
+<li>^~ 匹配到即停止搜索；</li>
+</ul>
+<p>匹配优先级： <strong>= &gt; ^~ &gt; ~ &gt; ~* &gt; 不带任何字符。</strong><br>
+实例：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">server <span class="token punctuation">&#123;</span>
+  listen	80<span class="token punctuation">;</span>
+  server_name	www<span class="token punctuation">.</span>nginx-test<span class="token punctuation">.</span>com<span class="token punctuation">;</span>
+  
+  <span class="token comment"># 只有当访问 www.nginx-test.com/match_all/ 时才会匹配到/usr/share/nginx/html/match_all/index.html</span>
+  location = <span class="token operator">/</span>match_all/ <span class="token punctuation">&#123;</span>
+      root	<span class="token operator">/</span>usr/share/nginx/html
+      index index<span class="token punctuation">.</span>html
+  <span class="token punctuation">&#125;</span>
+  
+  <span class="token comment"># 当访问 www.nginx-test.com/1.jpg 等路径时会去 /usr/share/nginx/images/1.jpg 找对应的资源</span>
+  location ~ \<span class="token punctuation">.</span><span class="token punctuation">(</span>jpeg<span class="token punctuation">|</span>jpg<span class="token punctuation">|</span>png<span class="token punctuation">|</span>svg<span class="token punctuation">)</span>$ <span class="token punctuation">&#123;</span>
+  	root <span class="token operator">/</span>usr/share/nginx/images<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  
+  <span class="token comment"># 当访问 www.nginx-test.com/bbs/ 时会匹配上 /usr/share/nginx/html/bbs/index.html</span>
+  location ^~ <span class="token operator">/</span>bbs/ <span class="token punctuation">&#123;</span>
+  	root <span class="token operator">/</span>usr/share/nginx/html<span class="token punctuation">;</span>
+    index index<span class="token punctuation">.</span>html index<span class="token punctuation">.</span>htm<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="location-中的反斜线">location 中的反斜线</h4>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">location <span class="token operator">/</span>test <span class="token punctuation">&#123;</span>
+	<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token punctuation">&#125;</span>
+
+location <span class="token operator">/</span>test/ <span class="token punctuation">&#123;</span>
+	<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>不带 / 当访问 <a target="_blank" rel="noopener" href="http://www.nginx-test.com/test">www.nginx-test.com/test</a> 时， Nginx 先找是否有 test 目录，如果有则找 test<br>
+目录下的 index.html ；如果没有 test 目录， nginx 则会找是否有 test 文件。</li>
+<li>带 / 当访问 <a target="_blank" rel="noopener" href="http://www.nginx-test.com/test">www.nginx-test.com/test</a> 时， Nginx 先找是否有 test 目录，如果有则找 test<br>
+目录下的 index.html ，如果没有它也不会去找是否存在 test 文件。</li>
+</ul>
+<h4 id="return">return</h4>
+<p>停止处理请求，直接返回响应码或重定向到其他 URL ；执行 return 指令后， location 中后续指令将不会被执行。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell"><span class="token keyword">return</span> code <span class="token namespace">[text]</span><span class="token punctuation">;</span>
+<span class="token keyword">return</span> code URL<span class="token punctuation">;</span>
+<span class="token keyword">return</span> URL<span class="token punctuation">;</span>
+
+例如：
+location <span class="token operator">/</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">return</span> 404<span class="token punctuation">;</span> <span class="token comment"># 直接返回状态码</span>
+<span class="token punctuation">&#125;</span>
+
+location <span class="token operator">/</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">return</span> 404 <span class="token string">"pages not found"</span><span class="token punctuation">;</span> <span class="token comment"># 返回状态码 + 一段文本</span>
+<span class="token punctuation">&#125;</span>
+
+location <span class="token operator">/</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">return</span> 302 <span class="token operator">/</span>bbs <span class="token punctuation">;</span> <span class="token comment"># 返回状态码 + 重定向地址</span>
+<span class="token punctuation">&#125;</span>
+
+location <span class="token operator">/</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">return</span> https:<span class="token operator">/</span><span class="token operator">/</span>www<span class="token punctuation">.</span>baidu<span class="token punctuation">.</span>com <span class="token punctuation">;</span> <span class="token comment"># 返回重定向地址</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="rewrite">rewrite</h3>
+<p>根据指定正则表达式匹配规则，重写 URL 。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">语法：rewrite 正则表达式 要替换的内容 <span class="token namespace">[flag]</span><span class="token punctuation">;</span>
+
+上下文：server、location、<span class="token keyword">if</span>
+
+示例：rewirte <span class="token operator">/</span>images/<span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token operator">*</span>\<span class="token punctuation">.</span>jpg<span class="token punctuation">)</span>$ <span class="token operator">/</span>pic/<span class="token variable">$1</span><span class="token punctuation">;</span> <span class="token comment"># $1是前面括号(.*\.jpg)的反向引用</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>flag 可选值的含义：</p>
+<ul>
+<li>last 重写后的 URL 发起新请求，再次进入 server 段，重试 location 的中的匹配；</li>
+<li>break 直接使用重写后的 URL ，不再匹配其它 location 中语句；</li>
+<li>redirect 返回302临时重定向；</li>
+<li>permanent 返回301永久重定向；</li>
+</ul>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">server<span class="token punctuation">&#123;</span>
+  listen 80<span class="token punctuation">;</span>
+  server_name fe<span class="token punctuation">.</span>lion<span class="token punctuation">.</span>club<span class="token punctuation">;</span> <span class="token comment"># 要在本地hosts文件进行配置</span>
+  root html<span class="token punctuation">;</span>
+  location <span class="token operator">/</span>search <span class="token punctuation">&#123;</span>
+  	rewrite ^<span class="token operator">/</span><span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token operator">*</span><span class="token punctuation">)</span> https:<span class="token operator">/</span><span class="token operator">/</span>www<span class="token punctuation">.</span>baidu<span class="token punctuation">.</span>com redirect<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  
+  location <span class="token operator">/</span>images <span class="token punctuation">&#123;</span>
+  	rewrite <span class="token operator">/</span>images/<span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token operator">*</span><span class="token punctuation">)</span> <span class="token operator">/</span>pics/<span class="token variable">$1</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  
+  location <span class="token operator">/</span>pics <span class="token punctuation">&#123;</span>
+  	rewrite <span class="token operator">/</span>pics/<span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token operator">*</span><span class="token punctuation">)</span> <span class="token operator">/</span>photos/<span class="token variable">$1</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  
+  location <span class="token operator">/</span>photos <span class="token punctuation">&#123;</span>
+  
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>按照这个配置我们来分析：</p>
+<ul>
+<li>当访问 fe.lion.club/search 时，会自动帮我们重定向到 <a target="_blank" rel="noopener" href="https://www.baidu.com">https://www.baidu.com</a>。</li>
+<li>当访问 fe.lion.club/images/1.jpg 时，第一步重写 URL 为 fe.lion.club/pics/1.jpg<br>
+，找到 pics 的 location ，继续重写 URL 为 fe.lion.club/photos/1.jpg ，找到 /photos<br>
+的 location 后，去 html/photos 目录下寻找 1.jpg 静态资源。</li>
+</ul>
+<h3 id="if-指令">if 指令</h3>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">语法：<span class="token keyword">if</span> <span class="token punctuation">(</span>condition<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">&#125;</span>
+
+上下文：server、location
+
+示例：
+<span class="token keyword">if</span><span class="token punctuation">(</span><span class="token variable">$http_user_agent</span> ~ Chrome<span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+  rewrite <span class="token operator">/</span><span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token operator">/</span>browser/<span class="token variable">$1</span> <span class="token keyword">break</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>condition 判断条件：</p>
+<ul>
+<li>$variable 仅为变量时，值为空或以0开头字符串都会被当做 false 处理；</li>
+<li>= 或 != 相等或不等；</li>
+<li>~ 正则匹配；</li>
+<li>! ~ 非正则匹配；</li>
+<li>~* 正则匹配，不区分大小写；</li>
+<li>-f 或 ! -f 检测文件存在或不存在；</li>
+<li>-d 或 ! -d 检测目录存在或不存在；</li>
+<li>-e 或 ! -e 检测文件、目录、符号链接等存在或不存在；</li>
+<li>-x 或 ! -x 检测文件可以执行或不可执行；</li>
+</ul>
+<p>实例：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">server <span class="token punctuation">&#123;</span>
+  listen 8080<span class="token punctuation">;</span>
+  server_name localhost<span class="token punctuation">;</span>
+  root html<span class="token punctuation">;</span>
+  
+  location <span class="token operator">/</span> <span class="token punctuation">&#123;</span>
+  	<span class="token keyword">if</span> <span class="token punctuation">(</span> <span class="token variable">$uri</span> = <span class="token string">"/images/"</span> <span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+    	rewrite <span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token operator">*</span><span class="token punctuation">)</span> <span class="token operator">/</span>pics/ <span class="token keyword">break</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>当访问 localhost:8080/images/ 时，会进入 if 判断里面执行 rewrite 命令。</p>
+<h3 id="autoindex">autoindex</h3>
+<p>用户请求以 / 结尾时，列出目录结构，可以用于快速搭建静态资源下载网站。<br>
+autoindex.conf 配置信息：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">server <span class="token punctuation">&#123;</span>
+  listen 80<span class="token punctuation">;</span>
+  server_name fe<span class="token punctuation">.</span>lion-test<span class="token punctuation">.</span>club<span class="token punctuation">;</span>
+  
+  location <span class="token operator">/</span>download/ <span class="token punctuation">&#123;</span>
+    root <span class="token operator">/</span>opt/source<span class="token punctuation">;</span>
+    
+    autoindex on<span class="token punctuation">;</span> <span class="token comment"># 打开 autoindex，，可选参数有 on | off</span>
+    autoindex_exact_size on<span class="token punctuation">;</span> <span class="token comment"># 修改为off，以KB、MB、GB显示文件大小，默认为on，以bytes显示出⽂件的确切⼤⼩</span>
+    autoindex_format html<span class="token punctuation">;</span> <span class="token comment"># 以html的方式进行格式化，可选参数有 html | json | xml</span>
+    autoindex_localtime off<span class="token punctuation">;</span> <span class="token comment"># 显示的⽂件时间为⽂件的服务器时间。默认为off，显示的⽂件时间为GMT时间</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>当访问 <a target="_blank" rel="noopener" href="http://fe.lion.com/download/">fe.lion.com/download/</a> 时，会把服务器 /opt/source/download/ 路径下的文件展示出来，如下图所示：<br>
+<img src="https://img-blog.csdnimg.cn/202105080940050.png" alt="在这里插入图片描述"></p>
+<h3 id="变量">变量</h3>
+<p>Nginx 提供给使用者的变量非常多，但是终究是一个完整的请求过程所产生数据， Nginx 将这些数据以变量的形式提供给使用者。</p>
+<p>下面列举些项目中常用的变量：</p>
+<table>
+<thead>
+<tr>
+<th>变量名</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>remote_addr</td>
+<td>客户端 IP 地址</td>
+</tr>
+<tr>
+<td>remote_port</td>
+<td>客户端端口</td>
+</tr>
+<tr>
+<td>server_addr</td>
+<td>服务端 IP 地址</td>
+</tr>
+<tr>
+<td>server_port</td>
+<td>服务端端口</td>
+</tr>
+<tr>
+<td>server_protocol</td>
+<td>服务端协议</td>
+</tr>
+<tr>
+<td>binary_remote_addr</td>
+<td>二进制格式的客户端 IP 地址</td>
+</tr>
+<tr>
+<td>connection TCP</td>
+<td>连接的序号，递增</td>
+</tr>
+<tr>
+<td>connection_request TCP</td>
+<td>连接当前的请求数量uri 请求的URL，不包含参数</td>
+</tr>
+<tr>
+<td>request_uri</td>
+<td>请求的URL，包含参数scheme 协议名， http 或 https request_method 请求方法</td>
+</tr>
+<tr>
+<td>request_length</td>
+<td>全部请求的长度，包含请求行、请求头、请求体args 全部参数字符串arg_参数名 获取特定参数值</td>
+</tr>
+<tr>
+<td>is_args URL</td>
+<td>中是否有参数，有的话返回 ? ，否则返回空</td>
+</tr>
+<tr>
+<td>query_string</td>
+<td>与 args 相同</td>
+</tr>
+<tr>
+<td>host</td>
+<td>请求信息中的 Host ，如果请求中没有 Host 行，则在请求头中找，最后使用 nginx 中设置的 server_name 。</td>
+</tr>
+<tr>
+<td>http_user_agent</td>
+<td>用户浏览器</td>
+</tr>
+<tr>
+<td>http_referer</td>
+<td>从哪些链接过来的请求</td>
+</tr>
+<tr>
+<td>http_via</td>
+<td>每经过一层代理服务器，都会添加相应的信息</td>
+</tr>
+<tr>
+<td>http_cookie</td>
+<td>获取用户 cookie</td>
+</tr>
+<tr>
+<td>request_time</td>
+<td>处理请求已消耗的时间</td>
+</tr>
+<tr>
+<td>https</td>
+<td>是否开启了 https ，是则返回 on ，否则返回空</td>
+</tr>
+<tr>
+<td>request_filename</td>
+<td>磁盘文件系统待访问文件的完整路径</td>
+</tr>
+<tr>
+<td>document_root</td>
+<td>由 URI 和 root/alias 规则生成的文件夹路径</td>
+</tr>
+<tr>
+<td>limit_rate</td>
+<td>返回响应时的速度上限值</td>
+</tr>
+</tbody>
+</table>
+<p>实例演示 var.conf ：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">server<span class="token punctuation">&#123;</span>
+	listen 8081<span class="token punctuation">;</span>
+	server_name <span class="token keyword">var</span><span class="token punctuation">.</span>lion-test<span class="token punctuation">.</span>club<span class="token punctuation">;</span>
+	root <span class="token operator">/</span>usr/share/nginx/html<span class="token punctuation">;</span>
+	location <span class="token operator">/</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">return</span> 200 <span class="token string">"
+remote_addr: <span class="token variable">$remote_addr</span>
+remote_port: <span class="token variable">$remote_port</span>
+server_addr: <span class="token variable">$server_addr</span>
+server_port: <span class="token variable">$server_port</span>
+server_protocol: <span class="token variable">$server_protocol</span>
+binary_remote_addr: <span class="token variable">$binary_remote_addr</span>
+connection: <span class="token variable">$connection</span>
+uri: <span class="token variable">$uri</span>
+request_uri: <span class="token variable">$request_uri</span>
+scheme: <span class="token variable">$scheme</span>
+request_method: <span class="token variable">$request_method</span>
+request_length: <span class="token variable">$request_length</span>
+args: <span class="token variable">$args</span>
+arg_pid: <span class="token variable">$arg_pid</span>
+is_args: <span class="token variable">$is_args</span>
+query_string: <span class="token variable">$query_string</span>
+host: <span class="token variable">$host</span>
+http_user_agent: <span class="token variable">$http_user_agent</span>
+http_referer: <span class="token variable">$http_referer</span>
+http_via: <span class="token variable">$http_via</span>
+request_time: <span class="token variable">$request_time</span>
+https: <span class="token variable">$https</span>
+request_filename: <span class="token variable">$request_filename</span>
+document_root: <span class="token variable">$document_root</span>
+"</span><span class="token punctuation">;</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>当我们访问 <a target="_blank" rel="noopener" href="http://var.lion-test.club:8081/test?pid=121414&amp;cid=sadasd">http://var.lion-test.club:8081/test?pid=121414&amp;cid=sadasd</a> 时，由于 Nginx 中写了 return 方法，因此 chrome 浏览器会默认为我们下载一个文件，下面展示的就是下载的文件内容：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">remote_addr: 27<span class="token punctuation">.</span>16<span class="token punctuation">.</span>220<span class="token punctuation">.</span>84
+remote_port: 56838
+server_addr: 172<span class="token punctuation">.</span>17<span class="token punctuation">.</span>0<span class="token punctuation">.</span>2
+server_port: 8081
+server_protocol: HTTP/1<span class="token punctuation">.</span>1
+binary_remote_addr: 茉
+connection: 126
+uri: <span class="token operator">/</span>test/
+request_uri: <span class="token operator">/</span>test/?pid=121414&amp;cid=sadasd
+scheme: http
+request_method: GET
+request_length: 518
+args: pid=121414&amp;cid=sadasd
+arg_pid: 121414
+is_args: ?
+query_string: pid=121414&amp;cid=sadasd
+host: <span class="token keyword">var</span><span class="token punctuation">.</span>lion-test<span class="token punctuation">.</span>club
+http_user_agent: Mozilla/5<span class="token punctuation">.</span>0 <span class="token punctuation">(</span>Macintosh<span class="token punctuation">;</span> Intel Mac OS X 10_14_0<span class="token punctuation">)</span> AppleWebKit/537<span class="token punctuation">.</span>36 <span class="token punctuation">(</span>KHTML<span class="token punctuation">,</span> like Gecko<span class="token punctuation">)</span> Chrome/88<span class="token punctuation">.</span>0<span class="token punctuation">.</span>4324<span class="token punctuation">.</span>182 Safari/537<span class="token punctuation">.</span>36
+http_referer: 
+http_via: 
+request_time: 0<span class="token punctuation">.</span>000
+https: 
+request_filename: <span class="token operator">/</span>usr/share/nginx/html/test/
+document_root: <span class="token operator">/</span>usr/share/nginx/html<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>Nginx 的配置还有非常多，以上只是罗列了一些常用的配置，在实际项目中还是要学会查阅文档。</p>
+<h2 id="Nginx-应用核心概念">Nginx 应用核心概念</h2>
+<p>代理是在服务器和客户端之间假设的一层服务器，代理将接收客户端的请求并将它转发给服务器，然后将服务端的响应转发给客户端。</p>
+<p>不管是正向代理还是反向代理，实现的都是上面的功能。</p>
+<h3 id="正向代理">正向代理</h3>
+<blockquote>
+<p>正向代理，意思是一个位于客户端和原始服务器(origin server)之间的服务器，为了从原始服务器取得内容，客户端向代理发送一个请求并指定目标(原始服务器)，然后代理向原始服务器转交请求并将获得的内容返回给客户端。</p>
+</blockquote>
+<p>正向代理是为我们服务的，即为客户端服务的，客户端可以根据正向代理访问到它本身无法访问到的服务器资源。<br>
+正向代理对我们是透明的，对服务端是非透明的，即服务端并不知道自己收到的是来自代理的访问还是来自真实客户端的访问。</p>
+<h3 id="反向代理">反向代理</h3>
+<blockquote>
+<p>反向代理*（Reverse Proxy）方式是指以代理服务器来接受internet上的连接请求，然后将请求转发给内部网络上的服务器，并将从服务器上得到的结果返回给internet上请求连接的客户端，此时代理服务器对外就表现为一个反向代理服务器。</p>
+</blockquote>
+<p>反向代理是为服务端服务的，反向代理可以帮助服务器接收来自客户端的请求，帮助服务器做请求转发，负载均衡等。<br>
+反向代理对服务端是透明的，对我们是非透明的，即我们并不知道自己访问的是代理服务器，而服务器知道反向代理在为他服务。<br>
+反向代理的优势：</p>
+<ul>
+<li>隐藏真实服务器；</li>
+<li>负载均衡便于横向扩充后端动态服务；</li>
+<li>动静分离，提升系统健壮性；</li>
+</ul>
+<p>那么“动静分离”是什么？负载均衡又是什么？</p>
+<h3 id="动静分离">动静分离</h3>
+<p>动静分离是指在 web 服务器架构中，将静态页面与动态页面或者静态内容接口和动态内容接口分开不同系统访问的架构设计方法，进而提示整个服务的访问性和可维护性。<br>
+<img src="https://img-blog.csdnimg.cn/20210508094850198.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hlbGxvV3VkZQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>
+一般来说，都需要将动态资源和静态资源分开，由于 Nginx 的高并发和静态资源缓存等特性，经常将静态资源部署在 Nginx 上。如果请求的是静态资源，直接到静态资源目录获取资源，如果是动态资源的请求，则利用反向代理的原理，把请求转发给对应后台应用去处理，从而实现动静分离。</p>
+<p>使用前后端分离后，可以很大程度提升静态资源的访问速度，即使动态服务不可用，静态资源的访问也不会受到影响。</p>
+<h3 id="负载均衡">负载均衡</h3>
+<p>一般情况下，客户端发送多个请求到服务器，服务器处理请求，其中一部分可能要操作一些资源比如数据库、静态资源等，服务器处理完毕后，再将结果返回给客户端。</p>
+<p>这种模式对于早期的系统来说，功能要求不复杂，且并发请求相对较少的情况下还能胜任，成本也低。随着信息数量不断增长，访问量和数据量飞速增长，以及系统业务复杂度持续增加，这种做法已无法满足要求，并发量特别大时，服务器容易崩。</p>
+<p>很明显这是由于服务器性能的瓶颈造成的问题，除了堆机器之外，最重要的做法就是负载均衡。</p>
+<p>请求爆发式增长的情况下，单个机器性能再强劲也无法满足要求了，这个时候集群的概念产生了，单个服务器解决不了的问题，可以使用多个服务器，然后将请求分发到各个服务器上，将负载分发到不同的服务器，这就是负载均衡，核心是「分摊压力」。 Nginx 实现负载均衡，一般来说指的是将请求转发给服务器集群。</p>
+<p>举个具体的例子，晚高峰乘坐地铁的时候，入站口经常会有地铁工作人员大喇叭“请走 B 口， B 口人少车空…”，这个工作人员的作用就是负载均衡。<br>
+<img src="https://img-blog.csdnimg.cn/20210508094906537.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hlbGxvV3VkZQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>
+Nginx 实现负载均衡的策略：</p>
+<ul>
+<li>轮询策略：默认情况下采用的策略，将所有客户端请求轮询分配给服务端。这种策略是可以正常工作的，但是如果其中某一台服务器压力太大，出现延迟，会影响所有分配在这台服务器下的用户。</li>
+<li>最小连接数策略：将请求优先分配给压力较小的服务器，它可以平衡每个队列的长度，并避免向压力大的服务器添加更多的请求。</li>
+<li>最快响应时间策略：优先分配给响应时间最短的服务器。</li>
+<li>客户端 ip 绑定策略：来自同一个 ip 的请求永远只分配一台服务器，有效解决了动态网页存在的 session 共享问题。</li>
+</ul>
+<h2 id="Nginx-实战配置">Nginx 实战配置</h2>
+<p>在配置反向代理和负载均衡等等功能之前，有两个核心模块是我们必须要掌握的，这两个模块应该说是 Nginx 应用配置中的核心，它们分别是： upstream 、proxy_pass 。</p>
+<h3 id="upstream">upstream</h3>
+<p>用于定义上游服务器（指的就是后台提供的应用服务器）的相关信息。<br>
+<img src="https://img-blog.csdnimg.cn/2021050809492298.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hlbGxvV3VkZQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">语法：upstream name <span class="token punctuation">&#123;</span>
+	<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token punctuation">&#125;</span>
+
+上下文：http
+
+示例：
+upstream back_end_server<span class="token punctuation">&#123;</span>
+  server 192<span class="token punctuation">.</span>168<span class="token punctuation">.</span>100<span class="token punctuation">.</span>33:8081
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在 upstream 内可使用的指令：</p>
+<ul>
+<li>server 定义上游服务器地址；</li>
+<li>zone 定义共享内存，用于跨 worker 子进程；</li>
+<li>keepalive 对上游服务启用长连接；</li>
+<li>keepalive_requests 一个长连接最多请求 HTTP 的个数；</li>
+<li>keepalive_timeout 空闲情形下，一个长连接的超时时长；</li>
+<li>hash 哈希负载均衡算法；</li>
+<li>ip_hash 依据 IP 进行哈希计算的负载均衡算法；</li>
+<li>least_conn 最少连接数负载均衡算法；</li>
+<li>least_time 最短响应时间负载均衡算法；</li>
+<li>random 随机负载均衡算法；</li>
+</ul>
+<h3 id="server">server</h3>
+<p>定义上游服务器地址。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">语法：server address <span class="token namespace">[parameters]</span>
+
+上下文：upstream<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>parameters 可选值：</p>
+<ul>
+<li>weight=number 权重值，默认为1；</li>
+<li>max_conns=number 上游服务器的最大并发连接数；</li>
+<li>fail_timeout=time 服务器不可用的判定时间；</li>
+<li>max_fails=numer 服务器不可用的检查次数；</li>
+<li>backup 备份服务器，仅当其他服务器都不可用时才会启用；</li>
+<li>down 标记服务器长期不可用，离线维护；</li>
+</ul>
+<h3 id="keepalive">keepalive</h3>
+<p>限制每个 worker 子进程与上游服务器空闲长连接的最大数量。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">keepalive connections<span class="token punctuation">;</span>
+
+上下文：upstream
+
+示例：keepalive 16<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="keepalive-requests">keepalive_requests</h3>
+<p>单个长连接可以处理的最多 HTTP 请求个数。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">语法：keepalive_requests number<span class="token punctuation">;</span>
+
+默认值：keepalive_requests 100<span class="token punctuation">;</span>
+
+上下文：upstream<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="keepalive-timeout">keepalive_timeout</h3>
+<p>空闲长连接的最长保持时间。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">语法：keepalive_timeout time<span class="token punctuation">;</span>
+
+默认值：keepalive_timeout 60s<span class="token punctuation">;</span>
+
+上下文：upstream<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="配置实例">配置实例</h3>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">upstream back_end<span class="token punctuation">&#123;</span>
+	server 127<span class="token punctuation">.</span>0<span class="token punctuation">.</span>0<span class="token punctuation">.</span>1:8081 weight=3 max_conns=1000 fail_timeout=10s max_fails=2<span class="token punctuation">;</span>
+  keepalive 32<span class="token punctuation">;</span>
+  keepalive_requests 50<span class="token punctuation">;</span>
+  keepalive_timeout 30s<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="proxy-pass">proxy_pass</h3>
+<p>用于配置代理服务器。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">语法：proxy_pass URL<span class="token punctuation">;</span>
+
+上下文：location、<span class="token keyword">if</span>、limit_except
+
+示例：
+proxy_pass http:<span class="token operator">/</span><span class="token operator">/</span>127<span class="token punctuation">.</span>0<span class="token punctuation">.</span>0<span class="token punctuation">.</span>1:8081
+proxy_pass http:<span class="token operator">/</span><span class="token operator">/</span>127<span class="token punctuation">.</span>0<span class="token punctuation">.</span>0<span class="token punctuation">.</span>1:8081/proxy<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>URL 参数原则</p>
+<ul>
+<li>URL 必须以 http 或 https 开头；</li>
+<li>URL 中可以携带变量；</li>
+<li>URL 中是否带 URI ，会直接影响发往上游请求的 URL ；</li>
+</ul>
+<p>接下来让我们来看看两种常见的 URL 用法：</p>
+<ul>
+<li>proxy_pass <a target="_blank" rel="noopener" href="http://192.168.100.33:8081">http://192.168.100.33:8081</a></li>
+<li>proxy_pass <a target="_blank" rel="noopener" href="http://192.168.100.33:8081/">http://192.168.100.33:8081/</a></li>
+</ul>
+<p>这两种用法的区别就是带 / 和不带 / ，在配置代理时它们的区别可大了：</p>
+<ul>
+<li>不带 / 意味着 Nginx 不会修改用户 URL ，而是直接透传给上游的应用服务器；</li>
+<li>带 / 意味着 Nginx 会修改用户 URL ，修改方法是将 location 后的 URL 从用户 URL 中删除；</li>
+</ul>
+<p>不带 / 的用法：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">location <span class="token operator">/</span>bbs/<span class="token punctuation">&#123;</span>
+  proxy_pass http:<span class="token operator">/</span><span class="token operator">/</span>127<span class="token punctuation">.</span>0<span class="token punctuation">.</span>0<span class="token punctuation">.</span>1:8080<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>分析：</p>
+<ol>
+<li>用户请求 URL ： /bbs/abc/test.html</li>
+<li>请求到达 Nginx 的 URL ： /bbs/abc/test.html</li>
+<li>请求到达上游应用服务器的 URL ： /bbs/abc/test.html</li>
+</ol>
+<p>带 / 的用法：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">location <span class="token operator">/</span>bbs/<span class="token punctuation">&#123;</span>
+  proxy_pass http:<span class="token operator">/</span><span class="token operator">/</span>127<span class="token punctuation">.</span>0<span class="token punctuation">.</span>0<span class="token punctuation">.</span>1:8080/<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>分析：</p>
+<ol>
+<li>用户请求 URL ： /bbs/abc/test.html</li>
+<li>请求到达 Nginx 的 URL ： /bbs/abc/test.html</li>
+<li>请求到达上游应用服务器的 URL ： /abc/test.html</li>
+</ol>
+<p>并没有拼接上 /bbs ，这点和 root 与 alias 之间的区别是保持一致的。</p>
+<h3 id="配置反向代理">配置反向代理</h3>
+<p>这里为了演示更加接近实际，作者准备了两台云服务器，它们的公网 IP 分别是： 121.42.11.34 与 121.5.180.193 。<br>
+我们把 121.42.11.34 服务器作为上游服务器，做如下配置：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell"><span class="token comment"># /etc/nginx/conf.d/proxy.conf</span>
+server<span class="token punctuation">&#123;</span>
+  listen 8080<span class="token punctuation">;</span>
+  server_name localhost<span class="token punctuation">;</span>
+  
+  location <span class="token operator">/</span>proxy/ <span class="token punctuation">&#123;</span>
+    root <span class="token operator">/</span>usr/share/nginx/html/proxy<span class="token punctuation">;</span>
+    index index<span class="token punctuation">.</span>html<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment"># /usr/share/nginx/html/proxy/index.html</span>
+&lt;h1> 121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34 proxy html &lt;<span class="token operator">/</span>h1><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>配置完成后重启 Nginx 服务器 nginx -s reload 。<br>
+把 121.5.180.193 服务器作为代理服务器，做如下配置：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell"><span class="token comment"># /etc/nginx/conf.d/proxy.conf</span>
+upstream back_end <span class="token punctuation">&#123;</span>
+  server 121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34:8080 weight=2 max_conns=1000 fail_timeout=10s max_fails=3<span class="token punctuation">;</span>
+  keepalive 32<span class="token punctuation">;</span>
+  keepalive_requests 80<span class="token punctuation">;</span>
+  keepalive_timeout 20s<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+server <span class="token punctuation">&#123;</span>
+  listen 80<span class="token punctuation">;</span>
+  server_name proxy<span class="token punctuation">.</span>lion<span class="token punctuation">.</span>club<span class="token punctuation">;</span>
+  location <span class="token operator">/</span>proxy <span class="token punctuation">&#123;</span>
+  	proxy_pass http:<span class="token operator">/</span><span class="token operator">/</span>back_end/proxy<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>本地机器要访问 proxy.lion.club 域名，因此需要配置本地 hosts ，通过命令：vim /etc/hosts 进入配置文件，添加如下内容：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">121<span class="token punctuation">.</span>5<span class="token punctuation">.</span>180<span class="token punctuation">.</span>193 proxy<span class="token punctuation">.</span>lion<span class="token punctuation">.</span>club<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><img src="https://img-blog.csdnimg.cn/20210508101754614.png" alt="在这里插入图片描述"></p>
+<p>分析：</p>
+<ol>
+<li>当访问 proxy.lion.club/proxy 时通过 upstream 的配置找到 121.42.11.34:8080 ；</li>
+<li>因此访问地址变为 <a target="_blank" rel="noopener" href="http://121.42.11.34:8080/proxy">http://121.42.11.34:8080/proxy</a> ；</li>
+<li>连接到 121.42.11.34 服务器，找到 8080 端口提供的 server ；</li>
+<li>通过 server 找到 /usr/share/nginx/html/proxy/index.html 资源，最终展示出来。</li>
+</ol>
+<h3 id="配置负载均衡">配置负载均衡</h3>
+<p>配置负载均衡主要是要使用 upstream 指令。<br>
+我们把 121.42.11.34 服务器作为上游服务器，做如下配置（ /etc/nginx/conf.d/balance.conf ）：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">server<span class="token punctuation">&#123;</span>
+  listen 8020<span class="token punctuation">;</span>
+  location <span class="token operator">/</span> <span class="token punctuation">&#123;</span>
+  	<span class="token keyword">return</span> 200 <span class="token string">'return 8020 \n'</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+server<span class="token punctuation">&#123;</span>
+  listen 8030<span class="token punctuation">;</span>
+  location <span class="token operator">/</span> <span class="token punctuation">&#123;</span>
+  	<span class="token keyword">return</span> 200 <span class="token string">'return 8030 \n'</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+server<span class="token punctuation">&#123;</span>
+  listen 8040<span class="token punctuation">;</span>
+  location <span class="token operator">/</span> <span class="token punctuation">&#123;</span>
+  	<span class="token keyword">return</span> 200 <span class="token string">'return 8040 \n'</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>配置完成后：</p>
+<ol>
+<li>nginx -t 检测配置是否正确；</li>
+<li>nginx -s reload 重启 Nginx 服务器；</li>
+<li>执行 ss -nlt 命令查看端口是否被占用，从而判断 Nginx 服务是否正确启动。</li>
+</ol>
+<p>把 121.5.180.193 服务器作为代理服务器，做如下配置（ /etc/nginx/conf.d/balance.conf ）：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">upstream demo_server <span class="token punctuation">&#123;</span>
+  server 121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34:8020<span class="token punctuation">;</span>
+  server 121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34:8030<span class="token punctuation">;</span>
+  server 121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34:8040<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+server <span class="token punctuation">&#123;</span>
+  listen 80<span class="token punctuation">;</span>
+  server_name balance<span class="token punctuation">.</span>lion<span class="token punctuation">.</span>club<span class="token punctuation">;</span>
+  
+  location <span class="token operator">/</span>balance/ <span class="token punctuation">&#123;</span>
+  	proxy_pass http:<span class="token operator">/</span><span class="token operator">/</span>demo_server<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>配置完成后重启 Nginx 服务器。并且在需要访问的客户端配置好 ip 和域名的映射关系。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell"><span class="token comment"># /etc/hosts</span>
+121<span class="token punctuation">.</span>5<span class="token punctuation">.</span>180<span class="token punctuation">.</span>193 balance<span class="token punctuation">.</span>lion<span class="token punctuation">.</span>club<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>在客户端机器执行 curl <a target="_blank" rel="noopener" href="http://balance.lion.club/balance/">http://balance.lion.club/balance/</a> 命令：<br>
+<img src="https://img-blog.csdnimg.cn/20210508095050782.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hlbGxvV3VkZQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>
+不难看出，负载均衡的配置已经生效了，每次给我们分发的上游服务器都不一样。就是通过简单的轮询策略进行上游服务器分发。</p>
+<p>接下来，我们再来了解下 Nginx 的其它分发策略。</p>
+<h4 id="hash-算法">hash 算法</h4>
+<p>通过制定关键字作为 hash key ，基于 hash 算法映射到特定的上游服务器中。关键字可以包含有变量、字符串。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">upstream demo_server <span class="token punctuation">&#123;</span>
+  hash <span class="token variable">$request_uri</span><span class="token punctuation">;</span>
+  server 121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34:8020<span class="token punctuation">;</span>
+  server 121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34:8030<span class="token punctuation">;</span>
+  server 121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34:8040<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+server <span class="token punctuation">&#123;</span>
+  listen 80<span class="token punctuation">;</span>
+  server_name balance<span class="token punctuation">.</span>lion<span class="token punctuation">.</span>club<span class="token punctuation">;</span>
+  
+  location <span class="token operator">/</span>balance/ <span class="token punctuation">&#123;</span>
+  	proxy_pass http:<span class="token operator">/</span><span class="token operator">/</span>demo_server<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>hash $request_uri 表示使用 request_uri 变量作为 hash 的 key 值，只要访问的 URI 保持不变，就会一直分发给同一台服务器。</p>
+<h4 id="ip-hash">ip_hash</h4>
+<p>根据客户端的请求 ip 进行判断，只要 ip 地址不变就永远分配到同一台主机。它可以有效解决后台服务器 session 保持的问题。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">upstream demo_server <span class="token punctuation">&#123;</span>
+  ip_hash<span class="token punctuation">;</span>
+  server 121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34:8020<span class="token punctuation">;</span>
+  server 121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34:8030<span class="token punctuation">;</span>
+  server 121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34:8040<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+server <span class="token punctuation">&#123;</span>
+  listen 80<span class="token punctuation">;</span>
+  server_name balance<span class="token punctuation">.</span>lion<span class="token punctuation">.</span>club<span class="token punctuation">;</span>
+  
+  location <span class="token operator">/</span>balance/ <span class="token punctuation">&#123;</span>
+  	proxy_pass http:<span class="token operator">/</span><span class="token operator">/</span>demo_server<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="最少连接数算法">最少连接数算法</h4>
+<p>各个 worker 子进程通过读取共享内存的数据，来获取后端服务器的信息。来挑选一台当前已建立连接数最少的服务器进行分配请求。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">语法：least_conn<span class="token punctuation">;</span>
+
+上下文：upstream<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>示例：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">upstream demo_server <span class="token punctuation">&#123;</span>
+  zone test 10M<span class="token punctuation">;</span> <span class="token comment"># zone可以设置共享内存空间的名字和大小</span>
+  least_conn<span class="token punctuation">;</span>
+  server 121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34:8020<span class="token punctuation">;</span>
+  server 121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34:8030<span class="token punctuation">;</span>
+  server 121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34:8040<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+server <span class="token punctuation">&#123;</span>
+  listen 80<span class="token punctuation">;</span>
+  server_name balance<span class="token punctuation">.</span>lion<span class="token punctuation">.</span>club<span class="token punctuation">;</span>
+  
+  location <span class="token operator">/</span>balance/ <span class="token punctuation">&#123;</span>
+  	proxy_pass http:<span class="token operator">/</span><span class="token operator">/</span>demo_server<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>最后你会发现，负载均衡的配置其实一点都不复杂。</p>
+<h3 id="配置缓存">配置缓存</h3>
+<p>缓存可以非常有效的提升性能，因此不论是客户端（浏览器），还是代理服务器（ Nginx ），乃至上游服务器都多少会涉及到缓存。可见缓存在每个环节都是非常重要的。下面让我们来学习 Nginx 中如何设置缓存策略。</p>
+<h4 id="proxy-cache">proxy_cache</h4>
+<p>存储一些之前被访问过、而且可能将要被再次访问的资源，使用户可以直接从代理服务器获得，从而减少上游服务器的压力，加快整个访问速度。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">语法：proxy_cache zone <span class="token punctuation">|</span> off <span class="token punctuation">;</span> <span class="token comment"># zone 是共享内存的名称</span>
+
+默认值：proxy_cache off<span class="token punctuation">;</span>
+
+上下文：http、server、location<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="proxy-cache-path">proxy_cache_path</h4>
+<p>设置缓存文件的存放路径。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">语法：proxy_cache_path path <span class="token namespace">[level=levels]</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>可选参数省略，下面会详细列举
+
+默认值：proxy_cache_path off
+
+上下文：http<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>参数含义：</p>
+<ul>
+<li>path 缓存文件的存放路径；</li>
+<li>level path 的目录层级；</li>
+<li>keys_zone 设置共享内存；</li>
+<li>inactive 在指定时间内没有被访问，缓存会被清理，默认10分钟；</li>
+</ul>
+<h4 id="proxy-cache-key">proxy_cache_key</h4>
+<p>设置缓存文件的 key 。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">语法：proxy_cache_key
+
+默认值：proxy_cache_key <span class="token variable">$scheme</span><span class="token variable">$proxy_host</span><span class="token variable">$request_uri</span><span class="token punctuation">;</span>
+
+上下文：http、server、location<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="proxy-cache-valid">proxy_cache_valid</h4>
+<p>配置什么状态码可以被缓存，以及缓存时长。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">语法：proxy_cache_valid <span class="token namespace">[code...]</span> time<span class="token punctuation">;</span>
+
+上下文：http、server、location
+
+配置示例：proxy_cache_valid 200 304 2m<span class="token punctuation">;</span><span class="token punctuation">;</span> <span class="token comment"># 说明对于状态为200和304的缓存文件的缓存时间是2分钟</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="proxy-no-cache">proxy_no_cache</h4>
+<p>定义相应保存到缓存的条件，如果字符串参数的至少一个值不为空且不等于“ 0”，则将不保存该响应到缓存。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">语法：proxy_no_cache string<span class="token punctuation">;</span>
+
+上下文：http、server、location
+
+示例：proxy_no_cache <span class="token variable">$http_pragma</span>    <span class="token variable">$http_authorization</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="proxy-cache-bypass">proxy_cache_bypass</h4>
+<p>定义条件，在该条件下将不会从缓存中获取响应。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">语法：proxy_cache_bypass string<span class="token punctuation">;</span>
+
+上下文：http、server、location
+
+示例：proxy_cache_bypass <span class="token variable">$http_pragma</span>    <span class="token variable">$http_authorization</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="upstream-cache-status-变量">upstream_cache_status 变量</h4>
+<p>它存储了缓存是否命中的信息，会设置在响应头信息中，在调试中非常有用。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">MISS: 未命中缓存
+HIT： 命中缓存
+EXPIRED: 缓存过期
+STALE: 命中了陈旧缓存
+REVALIDDATED: Nginx验证陈旧缓存依然有效
+UPDATING: 内容陈旧，但正在更新
+BYPASS: X响应从原始服务器获取<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="配置实例-2">配置实例</h4>
+<p>我们把 121.42.11.34 服务器作为上游服务器，做如下配置（ /etc/nginx/conf.d/cache.conf ）：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">server <span class="token punctuation">&#123;</span>
+  listen 1010<span class="token punctuation">;</span>
+  root <span class="token operator">/</span>usr/share/nginx/html/1010<span class="token punctuation">;</span>
+  location <span class="token operator">/</span> <span class="token punctuation">&#123;</span>
+  	index index<span class="token punctuation">.</span>html<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+server <span class="token punctuation">&#123;</span>
+  listen 1020<span class="token punctuation">;</span>
+  root <span class="token operator">/</span>usr/share/nginx/html/1020<span class="token punctuation">;</span>
+  location <span class="token operator">/</span> <span class="token punctuation">&#123;</span>
+  	index index<span class="token punctuation">.</span>html<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>把 121.5.180.193 服务器作为代理服务器，做如下配置（ /etc/nginx/conf.d/cache.conf ）：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">proxy_cache_path <span class="token operator">/</span>etc/nginx/cache_temp levels=2:2 keys_zone=cache_zone:30m max_size=2g inactive=60m use_temp_path=off<span class="token punctuation">;</span>
+
+upstream cache_server<span class="token punctuation">&#123;</span>
+  server 121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34:1010<span class="token punctuation">;</span>
+  server 121<span class="token punctuation">.</span>42<span class="token punctuation">.</span>11<span class="token punctuation">.</span>34:1020<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+server <span class="token punctuation">&#123;</span>
+  listen 80<span class="token punctuation">;</span>
+  server_name cache<span class="token punctuation">.</span>lion<span class="token punctuation">.</span>club<span class="token punctuation">;</span>
+  location <span class="token operator">/</span> <span class="token punctuation">&#123;</span>
+    proxy_cache cache_zone<span class="token punctuation">;</span> <span class="token comment"># 设置缓存内存，上面配置中已经定义好的</span>
+    proxy_cache_valid 200 5m<span class="token punctuation">;</span> <span class="token comment"># 缓存状态为200的请求，缓存时长为5分钟</span>
+    proxy_cache_key <span class="token variable">$request_uri</span><span class="token punctuation">;</span> <span class="token comment"># 缓存文件的key为请求的URI</span>
+    add_header Nginx-Cache-Status <span class="token variable">$upstream_cache_status</span> <span class="token comment"># 把缓存状态设置为头部信息，响应给客户端</span>
+    proxy_pass http:<span class="token operator">/</span><span class="token operator">/</span>cache_server<span class="token punctuation">;</span> <span class="token comment"># 代理转发</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>缓存就是这样配置，我们可以在 /etc/nginx/cache_temp 路径下找到相应的缓存文件。</p>
+<p>对于一些实时性要求非常高的页面或数据来说，就不应该去设置缓存，下面来看看如何配置不缓存的内容。</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">server <span class="token punctuation">&#123;</span>
+  listen 80<span class="token punctuation">;</span>
+  server_name cache<span class="token punctuation">.</span>lion<span class="token punctuation">.</span>club<span class="token punctuation">;</span>
+  <span class="token comment"># URI 中后缀为 .txt 或 .text 的设置变量值为 "no cache"</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token variable">$request_uri</span> ~ \<span class="token punctuation">.</span><span class="token punctuation">(</span>txt<span class="token punctuation">|</span>text<span class="token punctuation">)</span>$<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  	<span class="token function">set</span> <span class="token variable">$cache_name</span> <span class="token string">"no cache"</span>
+  <span class="token punctuation">&#125;</span>
+  
+  location <span class="token operator">/</span> <span class="token punctuation">&#123;</span>
+    proxy_no_cache <span class="token variable">$cache_name</span><span class="token punctuation">;</span> <span class="token comment"># 判断该变量是否有值，如果有值则不进行缓存，如果没有值则进行缓存</span>
+    proxy_cache cache_zone<span class="token punctuation">;</span> <span class="token comment"># 设置缓存内存</span>
+    proxy_cache_valid 200 5m<span class="token punctuation">;</span> <span class="token comment"># 缓存状态为200的请求，缓存时长为5分钟</span>
+    proxy_cache_key <span class="token variable">$request_uri</span><span class="token punctuation">;</span> <span class="token comment"># 缓存文件的key为请求的URI</span>
+    add_header Nginx-Cache-Status <span class="token variable">$upstream_cache_status</span> <span class="token comment"># 把缓存状态设置为头部信息，响应给客户端</span>
+    proxy_pass http:<span class="token operator">/</span><span class="token operator">/</span>cache_server<span class="token punctuation">;</span> <span class="token comment"># 代理转发</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="HTTPS">HTTPS</h3>
+<p>在学习如何配置 HTTPS 之前，我们先来简单回顾下 HTTPS 的工作流程是怎么样的？它是如何进行加密保证安全的？</p>
+<h4 id="HTTPS-工作流程">HTTPS 工作流程</h4>
+<ol>
+<li>客户端（浏览器）访问 <a target="_blank" rel="noopener" href="https://www.baidu.com">https://www.baidu.com</a> 百度网站；</li>
+<li>百度服务器返回 HTTPS 使用的 CA 证书；</li>
+<li>浏览器验证 CA 证书是否为合法证书；</li>
+<li>验证通过，证书合法，生成一串随机数并使用公钥（证书中提供的）进行加密；</li>
+<li>发送公钥加密后的随机数给百度服务器；</li>
+<li>百度服务器拿到密文，通过私钥进行解密，获取到随机数（公钥加密，私钥解密，反之也可以）；</li>
+<li>百度服务器把要发送给浏览器的内容，使用随机数进行加密后传输给浏览器；</li>
+<li>此时浏览器可以使用随机数进行解密，获取到服务器的真实传输内容；</li>
+</ol>
+<p>这就是 HTTPS 的基本运作原理，使用对称加密和非对称机密配合使用，保证传输内容的安全性。<br>
+<a target="_blank" rel="noopener" href="https://juejin.cn/post/6844904148601667598#heading-37">关于HTTPS更多知识，可以查看作者的另外一篇文章《学习 HTTP 协议》</a>。</p>
+<h4 id="配置证书">配置证书</h4>
+<p>下载证书的压缩文件，里面有个 Nginx 文件夹，把 xxx.crt 和 xxx.key 文件拷贝到服务器目录，再进行如下配置：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">server <span class="token punctuation">&#123;</span>
+  listen 443 ssl http2 default_server<span class="token punctuation">;</span>   <span class="token comment"># SSL 访问端口号为 443</span>
+  server_name lion<span class="token punctuation">.</span>club<span class="token punctuation">;</span>         <span class="token comment"># 填写绑定证书的域名(我这里是随便写的)</span>
+  ssl_certificate <span class="token operator">/</span>etc/nginx/https/lion<span class="token punctuation">.</span>club_bundle<span class="token punctuation">.</span>crt<span class="token punctuation">;</span>   <span class="token comment"># 证书地址</span>
+  ssl_certificate_key <span class="token operator">/</span>etc/nginx/https/lion<span class="token punctuation">.</span>club<span class="token punctuation">.</span>key<span class="token punctuation">;</span>      <span class="token comment"># 私钥地址</span>
+  ssl_session_timeout 10m<span class="token punctuation">;</span>
+  ssl_protocols TLSv1 TLSv1<span class="token punctuation">.</span>1 TLSv1<span class="token punctuation">.</span>2<span class="token punctuation">;</span> <span class="token comment"># 支持ssl协议版本，默认为后三个，主流版本是[TLSv1.2]</span>
+ 
+  location <span class="token operator">/</span> <span class="token punctuation">&#123;</span>
+    root         <span class="token operator">/</span>usr/share/nginx/html<span class="token punctuation">;</span>
+    index        index<span class="token punctuation">.</span>html index<span class="token punctuation">.</span>htm<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>如此配置后就能正常访问 HTTPS 版的网站了。</p>
+<h3 id="配置跨域-CORS">配置跨域 CORS</h3>
+<p>先简单回顾下跨域究竟是怎么回事。</p>
+<h4 id="跨域的定义">跨域的定义</h4>
+<p>同源策略限制了从同一个源加载的文档或脚本如何与来自另一个源的资源进行交互。这是一个用于隔离潜在恶意文件的重要安全机制。通常不允许不同源间的读操作。</p>
+<h4 id="同源的定义">同源的定义</h4>
+<p>如果两个页面的协议，端口（如果有指定）和域名都相同，则两个页面具有相同的源。<br>
+下面给出了与 URL <a target="_blank" rel="noopener" href="http://store.company.com/dir/page.html">http://store.company.com/dir/page.html</a> 的源进行对比的示例:<br>
+<a target="_blank" rel="noopener" href="http://store.company.com/dir2/other.html">http://store.company.com/dir2/other.html</a> 同源</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">https:<span class="token operator">/</span><span class="token operator">/</span>store<span class="token punctuation">.</span>company<span class="token punctuation">.</span>com/secure<span class="token punctuation">.</span>html 不同源，协议不同
+http:<span class="token operator">/</span><span class="token operator">/</span>store<span class="token punctuation">.</span>company<span class="token punctuation">.</span>com:81/<span class="token function">dir</span><span class="token operator">/</span>etc<span class="token punctuation">.</span>html 不同源，端口不同
+http:<span class="token operator">/</span><span class="token operator">/</span>news<span class="token punctuation">.</span>company<span class="token punctuation">.</span>com/<span class="token function">dir</span><span class="token operator">/</span>other<span class="token punctuation">.</span>html 不同源，主机不同<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>不同源会有如下限制：</p>
+<ul>
+<li>Web 数据层面，同源策略限制了不同源的站点读取当前站点的 Cookie 、 IndexDB 、 LocalStorage 等数据。</li>
+<li>DOM 层面，同源策略限制了来自不同源的 JavaScript 脚本对当前 DOM 对象读和写的操作。</li>
+<li>网络层面，同源策略限制了通过 XMLHttpRequest 等方式将站点的数据发送给不同源的站点。</li>
+</ul>
+<h4 id="Nginx-解决跨域的原理">Nginx 解决跨域的原理</h4>
+<p>例如：</p>
+<ul>
+<li>前端 server 的域名为： <a target="_blank" rel="noopener" href="http://fe.server.com">fe.server.com</a></li>
+<li>后端服务的域名为： <a target="_blank" rel="noopener" href="http://dev.server.com">dev.server.com</a></li>
+</ul>
+<p>现在我在 <a target="_blank" rel="noopener" href="http://fe.server.com">fe.server.com</a> 对 <a target="_blank" rel="noopener" href="http://dev.server.com">dev.server.com</a> 发起请求一定会出现跨域。<br>
+现在我们只需要启动一个 Nginx 服务器，将 server_name 设置为 <a target="_blank" rel="noopener" href="http://fe.server.com">fe.server.com</a> 然后设置相应的 location 以拦截前端需要跨域的请求，最后将请求代理回 <a target="_blank" rel="noopener" href="http://dev.server.com">dev.server.com</a> 。如下面的配置：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">server <span class="token punctuation">&#123;</span>
+	listen   		 80<span class="token punctuation">;</span>
+	server_name  fe<span class="token punctuation">.</span>server<span class="token punctuation">.</span>com<span class="token punctuation">;</span>
+	location <span class="token operator">/</span> <span class="token punctuation">&#123;</span>
+		proxy_pass dev<span class="token punctuation">.</span>server<span class="token punctuation">.</span>com<span class="token punctuation">;</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这样可以完美绕过浏览器的同源策略： <a target="_blank" rel="noopener" href="http://fe.server.com">fe.server.com</a> 访问 Nginx 的 <a target="_blank" rel="noopener" href="http://fe.server.com">fe.server.com</a> 属于同源访问，而 Nginx 对服务端转发的请求不会触发浏览器的同源策略。</p>
+<h3 id="配置开启-gzip-压缩">配置开启 gzip 压缩</h3>
+<p>GZIP 是规定的三种标准 HTTP 压缩格式之一。目前绝大多数的网站都在使用 GZIP 传输 HTML 、CSS 、 JavaScript 等资源文件。</p>
+<p>对于文本文件， GZiP 的效果非常明显，开启后传输所需流量大约会降至 1/4~1/3 。</p>
+<p>并不是每个浏览器都支持 gzip 的，如何知道客户端是否支持 gzip 呢，请求头中的 Accept-Encoding 来标识对压缩的支持。<br>
+<img src="https://img-blog.csdnimg.cn/2021050809512035.png" alt="在这里插入图片描述"><br>
+启用 gzip 同时需要客户端和服务端的支持，如果客户端支持 gzip 的解析，那么只要服务端能够返回 gzip 的文件就可以启用 gzip 了,我们可以通过 Nginx 的配置来让服务端支持 gzip 。下面的 respone 中 content-encoding:gzip ，指服务端开启了 gzip 的压缩方式。<br>
+<img src="https://img-blog.csdnimg.cn/20210508095129336.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hlbGxvV3VkZQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>
+在 /etc/nginx/conf.d/ 文件夹中新建配置文件 gzip.conf ：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell"><span class="token comment"># # 默认off，是否开启gzip</span>
+gzip on<span class="token punctuation">;</span> 
+<span class="token comment"># 要采用 gzip 压缩的 MIME 文件类型，其中 text/html 被系统强制启用；</span>
+gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript<span class="token punctuation">;</span>
+
+<span class="token comment"># ---- 以上两个参数开启就可以支持Gzip压缩了 ---- #</span>
+
+<span class="token comment"># 默认 off，该模块启用后，Nginx 首先检查是否存在请求静态文件的 gz 结尾的文件，如果有则直接返回该 .gz 文件内容；</span>
+gzip_static on<span class="token punctuation">;</span>
+
+<span class="token comment"># 默认 off，nginx做为反向代理时启用，用于设置启用或禁用从代理服务器上收到相应内容 gzip 压缩；</span>
+gzip_proxied any<span class="token punctuation">;</span>
+
+<span class="token comment"># 用于在响应消息头中添加 Vary：Accept-Encoding，使代理服务器根据请求头中的 Accept-Encoding 识别是否启用 gzip 压缩；</span>
+gzip_vary on<span class="token punctuation">;</span>
+
+<span class="token comment"># gzip 压缩比，压缩级别是 1-9，1 压缩级别最低，9 最高，级别越高压缩率越大，压缩时间越长，建议 4-6；</span>
+gzip_comp_level 6<span class="token punctuation">;</span>
+
+<span class="token comment"># 获取多少内存用于缓存压缩结果，16 8k 表示以 8k*16 为单位获得；</span>
+gzip_buffers 16 8k<span class="token punctuation">;</span>
+
+<span class="token comment"># 允许压缩的页面最小字节数，页面字节数从header头中的 Content-Length 中进行获取。默认值是 0，不管页面多大都压缩。建议设置成大于 1k 的字节数，小于 1k 可能会越压越大；</span>
+<span class="token comment"># gzip_min_length 1k;</span>
+
+<span class="token comment"># 默认 1.1，启用 gzip 所需的 HTTP 最低版本；</span>
+gzip_http_version 1<span class="token punctuation">.</span>1<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>其实也可以通过前端构建工具例如 webpack 、rollup 等在打生产包时就做好 Gzip 压缩，然后放到 Nginx 服务器中，这样可以减少服务器的开销，加快访问速度。</p>
+<p>关于 Nginx 的实际应用就学习到这里，相信通过掌握了 Nginx 核心配置以及实战配置，之后再遇到什么需求，我们也能轻松应对。接下来，让我们再深入一点学习下 Nginx 的架构。</p>
+<h2 id="Nginx-架构">Nginx 架构</h2>
+<h3 id="进程结构">进程结构</h3>
+<p>多进程结构 Nginx 的进程模型图：<br>
+<img src="https://img-blog.csdnimg.cn/202105080951442.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hlbGxvV3VkZQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"><br>
+多进程中的 Nginx 进程架构如下图所示，会有一个父进程（ Master Process ），它会有很多子进程（ Child Processes ）。</p>
+<ul>
+<li>Master Process 用来管理子进程的，其本身并不真正处理用户请求。
+<ul>
+<li>某个子进程 down 掉的话，它会向 Master 进程发送一条消息，表明自己不可用了，此时 Master 进程会去新起一个子进程。</li>
+<li>某个配置文件被修改了 Master 进程会去通知 work 进程获取新的配置信息，这也就是我们所说的热部署。</li>
+</ul>
+</li>
+<li>子进程间是通过共享内存的方式进行通信的。</li>
+</ul>
+<h3 id="配置文件重载原理">配置文件重载原理</h3>
+<p>reload 重载配置文件的流程：</p>
+<ol>
+<li>向 master 进程发送 HUP 信号（ reload 命令）；</li>
+<li>master 进程检查配置语法是否正确；</li>
+<li>master 进程打开监听端口；</li>
+<li>master 进程使用新的配置文件启动新的 worker 子进程；</li>
+<li>master 进程向老的 worker 子进程发送 QUIT 信号；</li>
+<li>老的 worker 进程关闭监听句柄，处理完当前连接后关闭进程；</li>
+<li>整个过程 Nginx 始终处于平稳运行中，实现了平滑升级，用户无感知；</li>
+</ol>
+<h3 id="Nginx-模块化管理机制">Nginx 模块化管理机制</h3>
+<p>Nginx 的内部结构是由核心部分和一系列的功能模块所组成。这样划分是为了使得每个模块的功能相对简单，便于开发，同时也便于对系统进行功能扩展。Nginx 的模块是互相独立的,低耦合高内聚。<br>
+<img src="https://img-blog.csdnimg.cn/20210508095203333.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0hlbGxvV3VkZQ==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/31352437.html">https://blog.mailjob.net/posts/31352437.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Nginx-%E6%A6%82%E8%BF%B0"><span class="toc-text">Nginx 概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Nginx-%E7%89%B9%E7%82%B9"><span class="toc-text">Nginx 特点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Nginx-%E4%BD%9C%E7%94%A8"><span class="toc-text">Nginx 作用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Nginx-%E5%AE%89%E8%A3%85"><span class="toc-text">Nginx 安装</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Nginx-%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-text">Nginx 常用命令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Nginx-%E6%A0%B8%E5%BF%83%E9%85%8D%E7%BD%AE"><span class="toc-text">Nginx 核心配置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84"><span class="toc-text">配置文件结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6-main-%E6%AE%B5%E6%A0%B8%E5%BF%83%E5%8F%82%E6%95%B0"><span class="toc-text">配置文件 main 段核心参数</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#user"><span class="toc-text">user</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#pid"><span class="toc-text">pid</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#worker-rlimit-nofile-number"><span class="toc-text">worker_rlimit_nofile_number</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#worker-rlimit-core"><span class="toc-text">worker_rlimit_core</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#worker-processes-number"><span class="toc-text">worker_processes_number</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#worker-cpu-affinity"><span class="toc-text">worker_cpu_affinity</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#worker-priority"><span class="toc-text">worker_priority</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#worker-shutdown-timeout"><span class="toc-text">worker_shutdown_timeout</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#timer-resolution"><span class="toc-text">timer_resolution</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#daemon"><span class="toc-text">daemon</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6-events-%E6%AE%B5%E6%A0%B8%E5%BF%83%E5%8F%82%E6%95%B0"><span class="toc-text">配置文件 events 段核心参数</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#use"><span class="toc-text">use</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#worker-connections"><span class="toc-text">worker_connections</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#accept-mutex"><span class="toc-text">accept_mutex</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#server-name-%E6%8C%87%E4%BB%A4"><span class="toc-text">server_name 指令</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#root"><span class="toc-text">root</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#alias"><span class="toc-text">alias</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#location"><span class="toc-text">location</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#location-%E4%B8%AD%E7%9A%84%E5%8F%8D%E6%96%9C%E7%BA%BF"><span class="toc-text">location 中的反斜线</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#return"><span class="toc-text">return</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#rewrite"><span class="toc-text">rewrite</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#if-%E6%8C%87%E4%BB%A4"><span class="toc-text">if 指令</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#autoindex"><span class="toc-text">autoindex</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%98%E9%87%8F"><span class="toc-text">变量</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Nginx-%E5%BA%94%E7%94%A8%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5"><span class="toc-text">Nginx 应用核心概念</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AD%A3%E5%90%91%E4%BB%A3%E7%90%86"><span class="toc-text">正向代理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86"><span class="toc-text">反向代理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A8%E9%9D%99%E5%88%86%E7%A6%BB"><span class="toc-text">动静分离</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1"><span class="toc-text">负载均衡</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Nginx-%E5%AE%9E%E6%88%98%E9%85%8D%E7%BD%AE"><span class="toc-text">Nginx 实战配置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#upstream"><span class="toc-text">upstream</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#server"><span class="toc-text">server</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#keepalive"><span class="toc-text">keepalive</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#keepalive-requests"><span class="toc-text">keepalive_requests</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#keepalive-timeout"><span class="toc-text">keepalive_timeout</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E5%AE%9E%E4%BE%8B"><span class="toc-text">配置实例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#proxy-pass"><span class="toc-text">proxy_pass</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86"><span class="toc-text">配置反向代理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1"><span class="toc-text">配置负载均衡</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#hash-%E7%AE%97%E6%B3%95"><span class="toc-text">hash 算法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ip-hash"><span class="toc-text">ip_hash</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9C%80%E5%B0%91%E8%BF%9E%E6%8E%A5%E6%95%B0%E7%AE%97%E6%B3%95"><span class="toc-text">最少连接数算法</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E7%BC%93%E5%AD%98"><span class="toc-text">配置缓存</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#proxy-cache"><span class="toc-text">proxy_cache</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#proxy-cache-path"><span class="toc-text">proxy_cache_path</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#proxy-cache-key"><span class="toc-text">proxy_cache_key</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#proxy-cache-valid"><span class="toc-text">proxy_cache_valid</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#proxy-no-cache"><span class="toc-text">proxy_no_cache</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#proxy-cache-bypass"><span class="toc-text">proxy_cache_bypass</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#upstream-cache-status-%E5%8F%98%E9%87%8F"><span class="toc-text">upstream_cache_status 变量</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E5%AE%9E%E4%BE%8B-2"><span class="toc-text">配置实例</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#HTTPS"><span class="toc-text">HTTPS</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#HTTPS-%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B"><span class="toc-text">HTTPS 工作流程</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E8%AF%81%E4%B9%A6"><span class="toc-text">配置证书</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E8%B7%A8%E5%9F%9F-CORS"><span class="toc-text">配置跨域 CORS</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%B7%A8%E5%9F%9F%E7%9A%84%E5%AE%9A%E4%B9%89"><span class="toc-text">跨域的定义</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%8C%E6%BA%90%E7%9A%84%E5%AE%9A%E4%B9%89"><span class="toc-text">同源的定义</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Nginx-%E8%A7%A3%E5%86%B3%E8%B7%A8%E5%9F%9F%E7%9A%84%E5%8E%9F%E7%90%86"><span class="toc-text">Nginx 解决跨域的原理</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E5%BC%80%E5%90%AF-gzip-%E5%8E%8B%E7%BC%A9"><span class="toc-text">配置开启 gzip 压缩</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Nginx-%E6%9E%B6%E6%9E%84"><span class="toc-text">Nginx 架构</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%9B%E7%A8%8B%E7%BB%93%E6%9E%84"><span class="toc-text">进程结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E9%87%8D%E8%BD%BD%E5%8E%9F%E7%90%86"><span class="toc-text">配置文件重载原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Nginx-%E6%A8%A1%E5%9D%97%E5%8C%96%E7%AE%A1%E7%90%86%E6%9C%BA%E5%88%B6"><span class="toc-text">Nginx 模块化管理机制</span></a></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

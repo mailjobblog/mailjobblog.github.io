@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Mysql 主从复制搭建 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="前言  搭建一个完全新的主从节点，非常容易，直接使用命令就行 但是，当对于一个存在业务的主节点的数据库服务器搭建主从的时候，因为主库存在数据，所以建议你先用热备工具，备份主库的数据，然后把主库的数据恢复到从库中 然后再使用命令，搭建主从  参考文献  主从原理：https:&#x2F;&#x2F;blog.mailjob.net&#x2F;posts&#x2F;3006260634.html 数据库热备份：https:&#x2F;&#x2F;blog.ma">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mysql 主从复制搭建">
+<meta property="og:url" content="https://blog.mailjob.net/posts/3939687293.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="前言  搭建一个完全新的主从节点，非常容易，直接使用命令就行 但是，当对于一个存在业务的主节点的数据库服务器搭建主从的时候，因为主库存在数据，所以建议你先用热备工具，备份主库的数据，然后把主库的数据恢复到从库中 然后再使用命令，搭建主从  参考文献  主从原理：https:&#x2F;&#x2F;blog.mailjob.net&#x2F;posts&#x2F;3006260634.html 数据库热备份：https:&#x2F;&#x2F;blog.ma">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210217230939.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210217230820.png">
+<meta property="article:published_time" content="2021-02-17T12:17:00.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.982Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="mysql">
+<meta property="article:tag" content="高可用">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/oss.github/20210217230939.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Mysql 主从复制搭建
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3939687293.html" class="article-date">
+	  <time datetime="2021-02-17T12:17:00.000Z" itemprop="datePublished">2021-02-17</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/mysql/">mysql</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/mysql/" rel="tag">mysql</a>, <a class="article-tag-none-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/3939687293.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.6k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 7(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="前言">前言</h2>
+<blockquote>
+<p>搭建一个完全新的主从节点，非常容易，直接使用命令就行</p>
+<p>但是，当对于一个存在业务的主节点的数据库服务器搭建主从的时候，因为主库存在数据，所以建议你先用热备工具，备份主库的数据，然后把主库的数据恢复到从库中</p>
+<p>然后再使用命令，搭建主从</p>
+</blockquote>
+<h2 id="参考文献">参考文献</h2>
+<blockquote>
+<p>主从原理：<a href="https://blog.mailjob.net/posts/3006260634.html">https://blog.mailjob.net/posts/3006260634.html</a></p>
+<p>数据库热备份：<a href="https://blog.mailjob.net/posts/3523564565.html">https://blog.mailjob.net/posts/3523564565.html</a></p>
+</blockquote>
+<h2 id="安装mysql服务">安装mysql服务</h2>
+<blockquote>
+<p>因为我只有一个服务器，所以这里我采用docker去安装mysql服务</p>
+</blockquote>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 拉取 mysql 5.7 镜像</span>
+<span class="token function">docker</span> pull mysql:5.7<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>复制过程中binlog建议使用row格式，其他格式可能会造成主从数据不一致的情况</p>
+<p>对于从服务器，最好在配置文件，配置禁止写操作</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 在宿主机 mysql1（master） 中创建配置文件, 以备后面创建配置文件映射之用</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos ~<span class="token punctuation">]</span><span class="token comment"># vim /data/mysql_master_slave/mysql1/conf/my.cnf</span>
+<span class="token comment"># 写入以下内容</span>
+<span class="token punctuation">[</span>mysqld<span class="token punctuation">]</span>
+server-id<span class="token operator">=</span><span class="token number">1</span> <span class="token comment"># 设置server_id,注意要唯一</span>
+log-bin<span class="token operator">=</span>mysql-slave-bin <span class="token comment"># 开启二进制日志功能，以备Slave作为其它Slave的Master时使用</span>
+character-set-server<span class="token operator">=</span>utf8
+<span class="token punctuation">[</span>client<span class="token punctuation">]</span>
+default-character-set<span class="token operator">=</span>utf8
+<span class="token punctuation">[</span>mysql<span class="token punctuation">]</span>
+default-character-set<span class="token operator">=</span>utf8
+
+<span class="token comment"># 在宿主机 mysql2（slave） 中创建配置文件</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos ~<span class="token punctuation">]</span><span class="token comment"># vim /data/mysql_master_slave/mysql2/conf/my.cnf</span>
+<span class="token comment"># 写入以下内容</span>
+<span class="token punctuation">[</span>mysqld<span class="token punctuation">]</span>
+server-id<span class="token operator">=</span><span class="token number">2</span> <span class="token comment"># 设置server_id,注意要唯一</span>
+log-bin<span class="token operator">=</span>mysql-slave-bin <span class="token comment"># 开启二进制日志功能，以备Slave作为其它Slave的Master时使用</span>
+<span class="token assign-left variable">relay_log</span><span class="token operator">=</span>edu-mysql-relay-bin <span class="token comment"># relay_log配置中继日志</span>
+character-set-server<span class="token operator">=</span>utf8
+<span class="token punctuation">[</span>client<span class="token punctuation">]</span>
+default-character-set<span class="token operator">=</span>utf8
+<span class="token punctuation">[</span>mysql<span class="token punctuation">]</span>
+default-character-set<span class="token operator">=</span>utf8<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 创建 mysql1 容器</span>
+<span class="token function">docker</span> run <span class="token parameter variable">-p</span> <span class="token number">33061</span>:3306 <span class="token parameter variable">--name</span> mysql1 <span class="token punctuation">\</span>
+<span class="token parameter variable">-v</span> /data/mysql_master_slave/mysql1/conf/my.cnf:/etc/mysql/my.cnf <span class="token punctuation">\</span>
+<span class="token parameter variable">-v</span> /data/mysql_master_slave/mysql1/conf:/etc/mysql <span class="token punctuation">\</span>
+<span class="token parameter variable">-v</span> /data/mysql_master_slave/mysql1/logs:/var/log/mysql <span class="token punctuation">\</span>
+<span class="token parameter variable">-v</span> /data/mysql_master_slave/mysql1/data:/var/lib/mysql <span class="token punctuation">\</span>
+<span class="token parameter variable">-e</span> <span class="token assign-left variable">MYSQL_ROOT_PASSWORD</span><span class="token operator">=</span>root <span class="token punctuation">\</span>
+<span class="token parameter variable">-d</span> mysql:5.7
+
+<span class="token comment"># 创建 mysql2 容器</span>
+<span class="token function">docker</span> run <span class="token parameter variable">-p</span> <span class="token number">33062</span>:3306 <span class="token parameter variable">--name</span> mysql2 <span class="token punctuation">\</span>
+<span class="token parameter variable">-v</span> /data/mysql_master_slave/mysql2/conf/my.cnf:/etc/mysql/my.cnf <span class="token punctuation">\</span>
+<span class="token parameter variable">-v</span> /data/mysql_master_slave/mysql2/conf:/etc/mysql <span class="token punctuation">\</span>
+<span class="token parameter variable">-v</span> /data/mysql_master_slave/mysql2/logs:/var/log/mysql <span class="token punctuation">\</span>
+<span class="token parameter variable">-v</span> /data/mysql_master_slave/mysql2/data:/var/lib/mysql <span class="token punctuation">\</span>
+<span class="token parameter variable">-e</span> <span class="token assign-left variable">MYSQL_ROOT_PASSWORD</span><span class="token operator">=</span>root <span class="token punctuation">\</span>
+<span class="token parameter variable">-d</span> mysql:5.7
+
+<span class="token comment"># 查看得到容器ip信息</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos ~<span class="token punctuation">]</span><span class="token comment"># docker container inspect mysql1 mysql2 | grep IPAddress</span>
+            <span class="token string">"SecondaryIPAddresses"</span><span class="token builtin class-name">:</span> null,
+            <span class="token string">"IPAddress"</span><span class="token builtin class-name">:</span> <span class="token string">"172.17.0.2"</span>,
+                    <span class="token string">"IPAddress"</span><span class="token builtin class-name">:</span> <span class="token string">"172.17.0.2"</span>,
+            <span class="token string">"SecondaryIPAddresses"</span><span class="token builtin class-name">:</span> null,
+            <span class="token string">"IPAddress"</span><span class="token builtin class-name">:</span> <span class="token string">"172.17.0.3"</span>,
+                    <span class="token string">"IPAddress"</span><span class="token builtin class-name">:</span> <span class="token string">"172.17.0.3"</span>,<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>–name：容器名，此处命名为 <code>mysql1</code> 。后面我还要创建一个 <code>mysql2</code> 作为从节点</li>
+<li>-e：配置信息，此处配置mysql的root用户的登陆密码</li>
+<li>-p：端口映射，此处映射 主机3306端口 到 容器的3306端口</li>
+<li>-d：后台运行容器，保证在退出终端后容器继续运行</li>
+<li>-v：主机和容器的目录映射关系，&quot;:&quot;前为主机目录，之后为容器目录</li>
+</ul>
+<p><strong>主库对从库进行账号授权</strong>：</p>
+<blockquote>
+<p><strong>Tips:</strong></p>
+<p>建议在授权该账户的时候，对从库也授权同样的账号和密码，在日后用第三方工具对于数据一致性进行管理的时候，比较方便！</p>
+</blockquote>
+<pre class="line-numbers language-none"><code class="language-none"># 进入 mysql1 容器
+docker exec -it mysql1 &#x2F;bin&#x2F;bash
+# 连接mysql服务
+mysql -uroot -proot
+# 授权一个账号
+mysql&gt; GRANT REPLICATION SLAVE ON *.* to &#39;slave&#39;@&#39;%&#39; identified by &#39;slave&#39;;
+Query OK, 0 rows affected, 1 warning (0.00 sec)<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>所以依据上面的演示，我建立两个mysql服务节点</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>容器名称</th>
+<th>版本</th>
+<th>IP</th>
+<th>端口</th>
+<th>root账号密码</th>
+<th>slave账号密码</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>mysql1（主）</td>
+<td>5.7</td>
+<td>172.17.0.2</td>
+<td>33061-&gt;3306</td>
+<td>root  root</td>
+<td>slave  slave</td>
+</tr>
+<tr>
+<td>mysql2（从）</td>
+<td>5.7</td>
+<td>172.17.0.3</td>
+<td>33062-&gt;3306</td>
+<td>root  root</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="开始搭建主从复制">开始搭建主从复制</h2>
+<p><strong>查看 mysql1 （master）状态</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">mysql&gt; show master status;
++------------------+----------+--------------+------------------+-------------------+
+| File             | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
++------------------+----------+--------------+------------------+-------------------+
+| mysql-bin.000002 |      893 |              |                  |                   |
++------------------+----------+--------------+------------------+-------------------+
+1 row in set (0.00 sec)<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>配置 mysql2（slave）的从服务</strong></p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql<span class="token operator">></span> change master <span class="token keyword">to</span> master_host<span class="token operator">=</span><span class="token string">'172.17.0.2'</span><span class="token punctuation">,</span>master_port<span class="token operator">=</span><span class="token number">3306</span><span class="token punctuation">,</span>master_user<span class="token operator">=</span><span class="token string">'slave'</span><span class="token punctuation">,</span>master_password<span class="token operator">=</span><span class="token string">'slave'</span><span class="token punctuation">,</span>master_log_file<span class="token operator">=</span><span class="token string">'mysqlbin.000002'</span><span class="token punctuation">,</span>master_log_pos<span class="token operator">=</span><span class="token number">1061</span><span class="token punctuation">;</span>
+
+<span class="token comment">//启动从服务器复制功能</span>
+mysql<span class="token operator">></span><span class="token keyword">start</span> slave<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>查看是否配置成功</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">mysql&gt; show slave status \G;
+
+Slave_IO_Running: Yes
+Slave_SQL_Running: Yes
+都是yes就说明成功了<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><img src="http://img.github.mailjob.net/oss.github/20210217230939.png" alt=""></p>
+<h4 id="遇到的问题：">遇到的问题：</h4>
+<p><strong>1、Slave_SQL_Running = no</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">请重复执行以下内容，直至 yes
+mysql&gt;stop slave;
+mysql&gt;set GLOBAL SQL_SLAVE_SKIP_COUNTER&#x3D;1; # 跳过复制错误
+mysql&gt;start slave;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>2、Slave_IO_Running= no</strong></p>
+<p>a、先开始我以为是 <code>auto.cnf</code> 中的 <code>uuid</code> 一样导致的，我用的是docker部署服务，是不是我复用容器导致的。但是我查看后，发现 uuid 并不一致，所以先排除 uuid 冲突问题</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token comment"># 也可用此方法查看 uuid 情况</span>
+mysql<span class="token operator">></span> <span class="token keyword">show</span> variables <span class="token operator">like</span> <span class="token string">'%uuid%'</span><span class="token punctuation">;</span>
+<span class="token operator">+</span><span class="token comment">---------------+--------------------------------------+</span>
+<span class="token operator">|</span> Variable_name <span class="token operator">|</span> <span class="token keyword">Value</span>                                <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">---------------+--------------------------------------+</span>
+<span class="token operator">|</span> server_uuid   <span class="token operator">|</span> e9b4346e<span class="token operator">-</span><span class="token number">7122</span><span class="token operator">-</span><span class="token number">11</span>eb<span class="token operator">-</span><span class="token number">8772</span><span class="token operator">-</span><span class="token number">0242</span>ac110002 <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">---------------+--------------------------------------+</span>
+<span class="token number">1</span> <span class="token keyword">row</span> <span class="token operator">in</span> <span class="token keyword">set</span> <span class="token punctuation">(</span><span class="token number">0.00</span> sec<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>b，在从节点，查看主从信息，看到了 1236 的错误信息</p>
+<pre class="line-numbers language-none"><code class="language-none">mysql&gt; show slave status \G;
+
+Last_IO_Error: Got fatal error 1236 from master when reading data from binary log: &#39;Could not find first log file name in binary log index file&#39;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>c、接着我查看容器的日志，也看到了同样的错误</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@VM-0-15-centos data<span class="token punctuation">]</span><span class="token comment"># docker logs -f mysql2</span>
+
+<span class="token comment"># 得到如下错误信息</span>
+<span class="token number">2021</span>-02-17T14:53:03.499426Z <span class="token number">7</span> <span class="token punctuation">[</span>ERROR<span class="token punctuation">]</span> Slave I/O <span class="token keyword">for</span> channel <span class="token string">''</span><span class="token builtin class-name">:</span> Got fatal error <span class="token number">1236</span> from master when reading data from binary log: <span class="token string">'Could not find first log file name in binary log index file'</span>, Error_code: <span class="token number">1236</span>
+<span class="token number">2021</span>-02-17T14:53:03.499432Z <span class="token number">7</span> <span class="token punctuation">[</span>Note<span class="token punctuation">]</span> Slave I/O thread exiting <span class="token keyword">for</span> channel <span class="token string">''</span>, <span class="token builtin class-name">read</span> up to log <span class="token string">'mysqlbin.000002'</span>, position <span class="token number">1061</span>
+
+<span class="token comment"># 然后我这样解决</span>
+stop slave<span class="token punctuation">;</span>
+reset slave<span class="token punctuation">;</span>
+start slave<span class="token punctuation">;</span>
+
+<span class="token comment"># 非常魔幻，两个关键参数都变成了 yes ，都好了</span>
+<span class="token comment"># 查看资料得知，出现这个问题是不正常先重启数据库或者断电</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>可视化测试</strong></p>
+<blockquote>
+<p>创建数据库，创建表，添加数据，均正常同步</p>
+</blockquote>
+<p><img src="http://img.github.mailjob.net/oss.github/20210217230820.png" alt=""></p>
+<h2 id="其他问题">其他问题</h2>
+<h4 id="1、如何查看-binlog-日志是否开启">1、如何查看 binlog 日志是否开启</h4>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">mysql<span class="token operator">></span> show global variables like <span class="token string">'%log_bin%'</span><span class="token punctuation">;</span>
++---------------------------------+--------------------------------+
+<span class="token operator">|</span> Variable_name                   <span class="token operator">|</span> Value                          <span class="token operator">|</span>
++---------------------------------+--------------------------------+
+<span class="token operator">|</span> log_bin                         <span class="token operator">|</span> ON                             <span class="token operator">|</span>
+<span class="token operator">|</span> log_bin_basename                <span class="token operator">|</span> /var/lib/mysql/mysql-bin       <span class="token operator">|</span>
+<span class="token operator">|</span> log_bin_index                   <span class="token operator">|</span> /var/lib/mysql/mysql-bin.index <span class="token operator">|</span>
+<span class="token operator">|</span> log_bin_trust_function_creators <span class="token operator">|</span> OFF                            <span class="token operator">|</span>
+<span class="token operator">|</span> log_bin_use_v1_row_events       <span class="token operator">|</span> OFF                            <span class="token operator">|</span>
++---------------------------------+--------------------------------+
+<span class="token number">5</span> rows <span class="token keyword">in</span> <span class="token builtin class-name">set</span> <span class="token punctuation">(</span><span class="token number">0.00</span> sec<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="2、对于使用-docker-部署mysql主从的要注意">2、对于使用 docker 部署mysql主从的要注意</h4>
+<p>我在上面 run 容器的时候，只是指定了数据卷和配置文件，但是没有指定ip</p>
+<p>这就存在一个问题，服务器重启或者docker重启的时候，或许会导致容器的ip发生变化，那么slave库就无法根据ip连接到master节点了</p>
+<p>所以在用 docker 做主从的时候，要指定一个网桥，然后根据网桥给定的ip段，再给定 ip 地址，这样再重启的时候，ip信息就不会发生变化了</p>
+<h4 id="3、查看-server-id-情况">3、查看 server_id 情况</h4>
+<blockquote>
+<p>要求是，server_id 不同</p>
+</blockquote>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql<span class="token operator">></span> <span class="token keyword">show</span> variables <span class="token operator">like</span> <span class="token string">'%server_id%'</span><span class="token punctuation">;</span>
+<span class="token operator">+</span><span class="token comment">----------------+-------+</span>
+<span class="token operator">|</span> Variable_name  <span class="token operator">|</span> <span class="token keyword">Value</span> <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">----------------+-------+</span>
+<span class="token operator">|</span> server_id      <span class="token operator">|</span> <span class="token number">1</span>     <span class="token operator">|</span>
+<span class="token operator">|</span> server_id_bits <span class="token operator">|</span> <span class="token number">32</span>    <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">----------------+-------+</span>
+<span class="token number">2</span> <span class="token keyword">rows</span> <span class="token operator">in</span> <span class="token keyword">set</span> <span class="token punctuation">(</span><span class="token number">0.00</span> sec<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/3939687293.html">https://blog.mailjob.net/posts/3939687293.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85mysql%E6%9C%8D%E5%8A%A1"><span class="toc-text">安装mysql服务</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%80%E5%A7%8B%E6%90%AD%E5%BB%BA%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6"><span class="toc-text">开始搭建主从复制</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%81%87%E5%88%B0%E7%9A%84%E9%97%AE%E9%A2%98%EF%BC%9A"><span class="toc-text">遇到的问题：</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B6%E4%BB%96%E9%97%AE%E9%A2%98"><span class="toc-text">其他问题</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E3%80%81%E5%A6%82%E4%BD%95%E6%9F%A5%E7%9C%8B-binlog-%E6%97%A5%E5%BF%97%E6%98%AF%E5%90%A6%E5%BC%80%E5%90%AF"><span class="toc-text">1、如何查看 binlog 日志是否开启</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E3%80%81%E5%AF%B9%E4%BA%8E%E4%BD%BF%E7%94%A8-docker-%E9%83%A8%E7%BD%B2mysql%E4%B8%BB%E4%BB%8E%E7%9A%84%E8%A6%81%E6%B3%A8%E6%84%8F"><span class="toc-text">2、对于使用 docker 部署mysql主从的要注意</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3%E3%80%81%E6%9F%A5%E7%9C%8B-server-id-%E6%83%85%E5%86%B5"><span class="toc-text">3、查看 server_id 情况</span></a></li></ol></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

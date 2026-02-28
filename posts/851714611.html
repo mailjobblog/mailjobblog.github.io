@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Elasticsearch 可视化工具的安装 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="前言 在 【Elasticsearch 的安装】文章中，解决了 es 工具的基本安装问题。在本文中，探讨对于 es 工具的两个可视化的管理工具的使用，分别是es官方出品的Kibana，还有号称做集群比较厉害的 Elasticsearch-head 参考文献 Kibana(ES可视化管理)下载地址：https:&#x2F;&#x2F;www.elastic.co&#x2F;cn&#x2F;downloads&#x2F;kibana kibana配置">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Elasticsearch 可视化工具的安装">
+<meta property="og:url" content="https://blog.mailjob.net/posts/851714611.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="前言 在 【Elasticsearch 的安装】文章中，解决了 es 工具的基本安装问题。在本文中，探讨对于 es 工具的两个可视化的管理工具的使用，分别是es官方出品的Kibana，还有号称做集群比较厉害的 Elasticsearch-head 参考文献 Kibana(ES可视化管理)下载地址：https:&#x2F;&#x2F;www.elastic.co&#x2F;cn&#x2F;downloads&#x2F;kibana kibana配置">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210221232216.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210221235112.png">
+<meta property="article:published_time" content="2021-02-21T11:32:33.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.978Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="es">
+<meta property="article:tag" content="middle">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/oss.github/20210221232216.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Elasticsearch 可视化工具的安装
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/851714611.html" class="article-date">
+	  <time datetime="2021-02-21T11:32:33.000Z" itemprop="datePublished">2021-02-21</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/es/">es</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/es/" rel="tag">es</a>, <a class="article-tag-none-link" href="/tags/middle/" rel="tag">middle</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/851714611.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.3k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 5(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="前言">前言</h2>
+<p>在 【Elasticsearch 的安装】文章中，解决了 es 工具的基本安装问题。在本文中，探讨对于 es 工具的两个可视化的管理工具的使用，分别是es官方出品的Kibana，还有号称做集群比较厉害的 Elasticsearch-head</p>
+<h2 id="参考文献">参考文献</h2>
+<p>Kibana(ES可视化管理)下载地址：<a target="_blank" rel="noopener" href="https://www.elastic.co/cn/downloads/kibana">https://www.elastic.co/cn/downloads/kibana</a></p>
+<p>kibana配置文件详解：<a target="_blank" rel="noopener" href="https://blog.csdn.net/cb2474600377/article/details/108884414">https://blog.csdn.net/cb2474600377/article/details/108884414</a></p>
+<p>ES-head(ES可视化管理)：<a target="_blank" rel="noopener" href="https://github.com/mobz/elasticsearch-head">https://github.com/mobz/elasticsearch-head</a></p>
+<h2 id="安装Kibana">安装Kibana</h2>
+<p>Kibana 是为 Elasticsearch设计的开源分析和可视化平台。你可以使用 Kibana 来搜索，查看存储在Elasticsearch 索引中的数据并与之交互。你可以很容易实现高级的数据分析和可视化，以图表的形式展现出来。</p>
+<h4 id="1、安装nodejs环境">1、安装nodejs环境</h4>
+<p>因为该软件需要 <code>node</code> 和 <code>npm</code> 的支持，所以要先安装 <code>nodejs</code> 环境，此处略去安装过程。。。</p>
+<h4 id="2、下载kibana环境-注意这里要和es的软件版本一致">2、下载kibana环境 (注意这里要和es的软件版本一致)</h4>
+<pre class="line-numbers language-none"><code class="language-none">wget https:&#x2F;&#x2F;artifacts.elastic.co&#x2F;downloads&#x2F;kibana&#x2F;kibana-7.11.1-linux-x86_64.tar.gz<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h4 id="3、解压并移动到安装目录">3、解压并移动到安装目录</h4>
+<pre class="line-numbers language-none"><code class="language-none">tar -zxvf kibana-7.11.1-linux-x86_64.tar.gz
+mv kibana-7.11.1-linux-x86_64 &#x2F;usr&#x2F;local&#x2F;kibana<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<h4 id="4、进行相关配置">4、进行相关配置</h4>
+<p><strong>4.1、配置访问路由</strong></p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token comment"># vim 打开 kibana 的配置文件</span>
+vim /usr/local/kibana/config/kibana.yml
+
+<span class="token comment"># 做出如下配置</span>
+<span class="token key atrule">server.port</span><span class="token punctuation">:</span> <span class="token number">5601</span> <span class="token comment"># kibana 的端口</span>
+<span class="token key atrule">server.host</span><span class="token punctuation">:</span> <span class="token string">"0.0.0.0"</span> <span class="token comment"># 表示允许所有的ip访问kibana</span>
+<span class="token comment"># 表示es的集群地址，此处把服务转发到了本机的 9200 端口服务，即es服务</span>
+<span class="token key atrule">elasticsearch.hosts</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">"http://127.0.0.1:9200/"</span><span class="token punctuation">]</span>
+<span class="token comment"># es服务地址，单个的话，可用此参数配置</span>
+<span class="token comment"># elasticsearch.url: "http://127.0.0.1:9200"</span>
+<span class="token comment"># 中文支持</span>
+<span class="token key atrule">i18n.locale</span><span class="token punctuation">:</span> <span class="token string">"zh-CN"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>4.2、为kibana配置linux用户</strong></p>
+<blockquote>
+<p>和 Elasticsearch 一样，kibana 的启动，也需要独立的 linux 用户进行启动</p>
+</blockquote>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 添加linux用户</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos config<span class="token punctuation">]</span><span class="token comment"># useradd kibana</span>
+<span class="token comment"># 为该用户设置密码</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos config<span class="token punctuation">]</span><span class="token comment"># passwd kibana</span>
+Changing password <span class="token keyword">for</span> user es.
+New password: 
+BAD PASSWORD: The password is shorter than <span class="token number">8</span> characters
+Retype new password: 
+passwd: all authentication tokens updated successfully.
+<span class="token comment"># 将 kibana 服务的权限给予该linux用户</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos config<span class="token punctuation">]</span><span class="token comment"># chown -R kibana /usr/local/kibana</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>4.3、防火墙授权访问端口-5601</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 在 root 用户下，开发kibana的端口5601</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos root<span class="token punctuation">]</span><span class="token comment"># firewall-cmd --permanent --add-port=5601/tcp</span>
+<span class="token comment"># 平滑重载防火墙</span>
+firewall-cmd <span class="token parameter variable">--reload</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>4.4、软件启动</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 进入到软件目录</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos kibana<span class="token punctuation">]</span><span class="token comment"># cd /usr/local/kibana</span>
+<span class="token comment"># 启动软件</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos kibana<span class="token punctuation">]</span><span class="token comment"># ./bin/kibana</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p><strong>Tips</strong></p>
+<p>此处启动后，如果 ctrl+c 结束后，kibana服务将会关闭，所以启动的时候，请加入 <code>&amp;</code> ，表示以守护进程的方式启动 es 服务，用 <code>ps -aux | grep kibana</code> 建仓 kibana 的服务状态</p>
+</blockquote>
+<p><strong>4.5、网页访问</strong></p>
+<p>然后再浏览器输入服务器的 <code>IP</code> + <code>端口(默认：5601)</code>  就可以看到是否成功了</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210221232216.png" alt="image-20210221232214223"></p>
+<h4 id="安装Sense">安装Sense</h4>
+<p>Sense 是一个 <a target="_blank" rel="noopener" href="https://www.elastic.co/guide/en/kibana/4.6/index.html">Kibana</a> 应用 它提供交互式的控制台，通过你的浏览器直接向 Elasticsearch 提交请求。 这本书的在线版本包含有一个 View in Sense 的链接，里面有许多代码示例。当点击的时候，它会打开一个代码示例的Sense控制台。 你不必安装 Sense，但是它允许你在本地的 Elasticsearch 集群上测试示例代码，从而使更具有交互性。</p>
+<p><strong>1、在 Kibana 目录下运行下面的命令，下载并安装 Sense app</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># linux 执行</span>
+./bin/kibana plugin <span class="token parameter variable">--install</span> elastic/sense 
+
+Windows上面执行: <span class="token variable"><span class="token variable">`</span>bin<span class="token punctuation">\</span>kibana.bat plugin <span class="token parameter variable">--install</span> elastic/sense<span class="token variable">`</span></span> <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>NOTE：你可以直接从这里 <a target="_blank" rel="noopener" href="https://download.elastic.co/elastic/sense/sense-latest.tar.gz">https://download.elastic.co/elastic/sense/sense-latest.tar.gz</a> 下载 Sense 离线安装可以查看这里 <a target="_blank" rel="noopener" href="https://www.elastic.co/guide/en/sense/current/installing.html#manual_download">install it on an offline machine</a> 。</p>
+<p><strong>2、启动 Kibana</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">./bin/kibana <span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>3、测试</strong></p>
+<p>在你的浏览器中打开 Sense: <code>http://localhost:5601/app/sense</code></p>
+<h2 id="安装ES-head">安装ES-head</h2>
+<blockquote>
+<p>Elasticsearch-head 是 ES 集群管理工具、数据可视化、增删改查工具</p>
+</blockquote>
+<h5 id="1、安装nodejs环境-2">1、安装nodejs环境</h5>
+<p>和上文中的 <code>Kibana</code> 软件一样，该软件也需要 <code>node</code> 和 <code>npm</code> 的支持，所以要先安装 <code>nodejs</code> 环境，此处略去安装过程。。。</p>
+<h5 id="2、下载软件">2、下载软件</h5>
+<pre class="line-numbers language-none"><code class="language-none">wget https:&#x2F;&#x2F;github.com&#x2F;mobz&#x2F;elasticsearch-head&#x2F;archive&#x2F;master.zip<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h5 id="3、解压并移动到安装目录-2">3、解压并移动到安装目录</h5>
+<pre class="line-numbers language-none"><code class="language-none">unzip elasticsearch-head.zip
+mv elasticsearch-head &#x2F;usr&#x2F;local&#x2F;es-head<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<h5 id="4、npm安装依赖">4、npm安装依赖</h5>
+<p>安装后面可能会出现异常，但是不会影响操作</p>
+<pre class="line-numbers language-none"><code class="language-none"># 进入软件安装目录
+[root@VM-0-15-centos home]# cd &#x2F;usr&#x2F;local&#x2F;es-head&#x2F;
+# 安装依赖
+[root@VM-0-15-centos es-head]# npm install<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="5、解决npm项目跨域问题">5、解决npm项目跨域问题</h5>
+<p>进入 elasticsearch 的配置文件（es代表elasticsearch软件的安装目录）</p>
+<pre class="line-numbers language-none"><code class="language-none">[root@VM-0-15-centos home]# vim &#x2F;usr&#x2F;local&#x2F;es&#x2F;config&#x2F;elasticsearch.yml<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>在<code>elasticsearch.yml</code>配置文件中配置跨域</p>
+<pre class="line-numbers language-none"><code class="language-none">http.cors.enabled: true # elasticsearch中启用CORS
+http.cors.allow-origin: &quot;*&quot; # 允许访问的IP地址段，* 为所有IP都可以访问<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>配置完成后，<code>重启es</code>服务。</p>
+<h5 id="6、防火墙授权访问端口-9100">6、防火墙授权访问端口-9100</h5>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 开放 9100 端口</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos root<span class="token punctuation">]</span><span class="token comment"># firewall-cmd --permanent --add-port=9100/tcp</span>
+<span class="token comment"># 平滑重载防火墙</span>
+firewall-cmd <span class="token parameter variable">--reload</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="7、软件启动">7、软件启动</h5>
+<p>在elasticsearch-head目录下执行如下命令启动项目</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">npm</span> run start<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h5 id="8、网页访问">8、网页访问</h5>
+<p>然后再浏览器输入服务器的 <code>IP</code> + <code>端口(默认：9100)</code>  就可以看到是否成功了</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210221235112.png" alt="image-20210221235109472"></p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/851714611.html">https://blog.mailjob.net/posts/851714611.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85Kibana"><span class="toc-text">安装Kibana</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E3%80%81%E5%AE%89%E8%A3%85nodejs%E7%8E%AF%E5%A2%83"><span class="toc-text">1、安装nodejs环境</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E3%80%81%E4%B8%8B%E8%BD%BDkibana%E7%8E%AF%E5%A2%83-%E6%B3%A8%E6%84%8F%E8%BF%99%E9%87%8C%E8%A6%81%E5%92%8Ces%E7%9A%84%E8%BD%AF%E4%BB%B6%E7%89%88%E6%9C%AC%E4%B8%80%E8%87%B4"><span class="toc-text">2、下载kibana环境 (注意这里要和es的软件版本一致)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3%E3%80%81%E8%A7%A3%E5%8E%8B%E5%B9%B6%E7%A7%BB%E5%8A%A8%E5%88%B0%E5%AE%89%E8%A3%85%E7%9B%AE%E5%BD%95"><span class="toc-text">3、解压并移动到安装目录</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4%E3%80%81%E8%BF%9B%E8%A1%8C%E7%9B%B8%E5%85%B3%E9%85%8D%E7%BD%AE"><span class="toc-text">4、进行相关配置</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%89%E8%A3%85Sense"><span class="toc-text">安装Sense</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85ES-head"><span class="toc-text">安装ES-head</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#1%E3%80%81%E5%AE%89%E8%A3%85nodejs%E7%8E%AF%E5%A2%83-2"><span class="toc-text">1、安装nodejs环境</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2%E3%80%81%E4%B8%8B%E8%BD%BD%E8%BD%AF%E4%BB%B6"><span class="toc-text">2、下载软件</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3%E3%80%81%E8%A7%A3%E5%8E%8B%E5%B9%B6%E7%A7%BB%E5%8A%A8%E5%88%B0%E5%AE%89%E8%A3%85%E7%9B%AE%E5%BD%95-2"><span class="toc-text">3、解压并移动到安装目录</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#4%E3%80%81npm%E5%AE%89%E8%A3%85%E4%BE%9D%E8%B5%96"><span class="toc-text">4、npm安装依赖</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#5%E3%80%81%E8%A7%A3%E5%86%B3npm%E9%A1%B9%E7%9B%AE%E8%B7%A8%E5%9F%9F%E9%97%AE%E9%A2%98"><span class="toc-text">5、解决npm项目跨域问题</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#6%E3%80%81%E9%98%B2%E7%81%AB%E5%A2%99%E6%8E%88%E6%9D%83%E8%AE%BF%E9%97%AE%E7%AB%AF%E5%8F%A3-9100"><span class="toc-text">6、防火墙授权访问端口-9100</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#7%E3%80%81%E8%BD%AF%E4%BB%B6%E5%90%AF%E5%8A%A8"><span class="toc-text">7、软件启动</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#8%E3%80%81%E7%BD%91%E9%A1%B5%E8%AE%BF%E9%97%AE"><span class="toc-text">8、网页访问</span></a></li></ol></li></ol></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

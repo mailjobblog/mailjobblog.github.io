@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>解决Github访问慢的问题 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="参考文献  Github520：https:&#x2F;&#x2F;github.com&#x2F;521xueweihan&#x2F;GitHub520 SwitchHosts：https:&#x2F;&#x2F;github.com&#x2F;oldj&#x2F;SwitchHosts&#x2F;releases  众所周知Github在国内的访问速度一直都不怎么样，主要的原因是DNS解析太慢了，也就是从github.com获取IP的过程太慢了，因此，一种最有效的办法是直接修改本地">
+<meta property="og:type" content="article">
+<meta property="og:title" content="解决Github访问慢的问题">
+<meta property="og:url" content="https://blog.mailjob.net/posts/1482114423.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="参考文献  Github520：https:&#x2F;&#x2F;github.com&#x2F;521xueweihan&#x2F;GitHub520 SwitchHosts：https:&#x2F;&#x2F;github.com&#x2F;oldj&#x2F;SwitchHosts&#x2F;releases  众所周知Github在国内的访问速度一直都不怎么样，主要的原因是DNS解析太慢了，也就是从github.com获取IP的过程太慢了，因此，一种最有效的办法是直接修改本地">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/20210412114422.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20210412114446.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20210412114458.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20210412114510.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20210412114516.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20210412114528">
+<meta property="og:image" content="http://img.github.mailjob.net/20210412114533.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20210412114540.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20210412114546.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20210412114555.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20210412114607.png">
+<meta property="article:published_time" content="2021-04-12T07:27:26.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.977Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="blog">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/20210412114422.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            解决Github访问慢的问题
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/1482114423.html" class="article-date">
+	  <time datetime="2021-04-12T07:27:26.000Z" itemprop="datePublished">2021-04-12</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/blog/">blog</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/blog/" rel="tag">blog</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/1482114423.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 830(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 3(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="参考文献">参考文献</h2>
+<blockquote>
+<p>Github520：<a target="_blank" rel="noopener" href="https://github.com/521xueweihan/GitHub520">https://github.com/521xueweihan/GitHub520</a></p>
+<p>SwitchHosts：<a target="_blank" rel="noopener" href="https://github.com/oldj/SwitchHosts/releases">https://github.com/oldj/SwitchHosts/releases</a></p>
+</blockquote>
+<p>众所周知<code>Github</code>在国内的访问速度一直都不怎么样，主要的原因是<code>DNS</code>解析太慢了，也就是从<code>github.com</code>获取<code>IP</code>的过程太慢了，因此，一种最有效的办法是直接修改本地<code>Hosts</code>，饶过<code>DNS</code>解析。</p>
+<p>这也是本文的出发点，虽然，这样的文章网上有很多，百度一搜出来基本上都是如下的套路：</p>
+<ul>
+<li>通过<code>IP</code>解析网站得到<code>github.com</code>的<code>IP</code>/直接给出某个<code>IP</code></li>
+<li>修改本地<code>Hosts</code></li>
+<li>刷新缓存</li>
+</ul>
+<p>当然，这样最大的一个坏处是当<code>IP</code>更新的时候每次都需要去修改<code>Hosts</code>，非常麻烦。受到该仓库的启发，本文提供了一种自动修改的方法，非常方便。</p>
+<p>本文主要分成两个部分介绍：</p>
+<ul>
+<li>手动修改<code>Hosts</code></li>
+<li>通过工具自动修改<code>Hosts</code></li>
+</ul>
+<p>首先看一下第一部分。</p>
+<h2 id="2-手动修改Hosts">2 手动修改Hosts</h2>
+<h3 id="2-1-修改Hosts"><strong>2.1 修改Hosts</strong></h3>
+<p>首先打开该仓库：</p>
+<p><img src="http://img.github.mailjob.net/20210412114422.png" alt="图片"></p>
+<p>复制其中的内容到<code>Hosts</code>文件中，各大平台<code>Hosts</code>文件位置如下：</p>
+<ul>
+<li><code>Windows</code>：<code>C:\Windows\System32\drivers\etc\hosts</code></li>
+<li><code>Linux</code>：<code>/etc/hosts</code></li>
+<li><code>Mac</code>：<code>/etc/hosts</code></li>
+<li><code>Android</code>：<code>/system/etc/hosts</code></li>
+<li><code>iOS</code>：<code>/etc/hosts</code></li>
+</ul>
+<p>根据对应平台修改上述的文件，添加内容到<code>Hosts</code>末尾即可。</p>
+<h3 id="2-2-使Hosts生效"><strong>2.2 使Hosts生效</strong></h3>
+<p>大部分情况下修改完<code>Hosts</code>文件后直接生效，如果不生效，可以尝试手动刷新<code>DNS</code>缓存，具体如下：</p>
+<ul>
+<li><code>Windows</code>：打开<code>cmd</code>，输入<code>ipconfig /flushdns</code></li>
+<li><code>Linux</code>：<code>sudo rcnscd restart</code></li>
+<li><code>Mac</code>：<code>sudo killall -HUP mDNSResponder</code></li>
+</ul>
+<p>如果不生效可以尝试重启机器。</p>
+<h2 id="3-自动方式（推荐）">3 自动方式（推荐）</h2>
+<p>上面的方式需要手动修改<code>Hosts</code>文件，非常麻烦，这里推荐一种自动修改的方式。<br>
+在此之前需要一个工具：<code>SwitchHosts</code>。</p>
+<h3 id="3-1-SwitchHosts安装">3.1 SwitchHosts安装</h3>
+<p>官方仓库在此处，直接到<code>Release</code>下载即可。</p>
+<p><img src="http://img.github.mailjob.net/20210412114446.png" alt="图片"></p>
+<p>或者从软件包仓库安装，以笔者的<code>Manjaro</code>为例：</p>
+<pre class="line-numbers language-none"><code class="language-none">paru -S switchhosts-bin<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="3-2-配置">3.2 配置</h3>
+<p>打开后，点击左下角的加号按钮，添加一个新的规则：</p>
+<p><img src="http://img.github.mailjob.net/20210412114458.png" alt="图片"></p>
+<p>内容如下：</p>
+<ul>
+<li>标题：随便</li>
+<li>类型：<code>Remote</code></li>
+<li><code>URL</code>：<code>https://cdn.jsdelivr.net/gh/521xueweihan/GitHub520@main/hosts</code></li>
+<li>自动刷新时间：第一次添加可以先选择<code>1 minute</code>，有了规则以后，就可以选择<code>1 hour</code></li>
+</ul>
+<p>配置好后就可以看到了：</p>
+<p><img src="http://img.github.mailjob.net/20210412114510.png" alt="图片"></p>
+<h3 id="3-3-一个小问题">3.3 一个小问题</h3>
+<p>笔者在实测的时候发现如果直接通过启动菜单启动<code>SwitchHosts</code>，添加新的规则老是失败：</p>
+<p><img src="http://img.github.mailjob.net/20210412114516.png" alt="图片"></p>
+<p>无论输入的是用户的密码还是<code>root</code>的密码都不行。</p>
+<p>于是笔者找了一下启动命令，直接<code>sudo</code>启动：</p>
+<pre class="line-numbers language-none"><code class="language-none">sudo switchhosts<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><img src="http://img.github.mailjob.net/20210412114528" alt="图片"></p>
+<p>启动失败，按照提示加上<code>--no-sandbox</code>（这是一个<code>eletron</code>的参数）：</p>
+<pre class="line-numbers language-none"><code class="language-none">sudo switchhosts --no-sandbox<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>需要注意在启动之前需要把原来普通模式启动的<code>SwitchHosts</code>先退出了，不然会提示端口占用：</p>
+<p><img src="http://img.github.mailjob.net/20210412114533.png" alt="图片"></p>
+<p>启动之后就可以直接修改<code>Hosts</code>而不需要密码了。</p>
+<p>另外这里有一个小细节就是两种模式下（普通模式/<code>sudo</code>模式）启动的图标不一样：</p>
+<p><img src="http://img.github.mailjob.net/20210412114540.png" alt="图片"></p>
+<p><img src="http://img.github.mailjob.net/20210412114546.png" alt="图片"></p>
+<h2 id="4-效果">4 效果</h2>
+<p>配置好<code>DNS</code>后应该能正常访问<code>Github</code>上的图片了：</p>
+<p><img src="http://img.github.mailjob.net/20210412114555.png" alt="图片"></p>
+<h2 id="5-后记">5 后记</h2>
+<p>通过上面的配置<code>DNS</code>方法应该就可以顺利访问<code>Github</code>了，此外，该仓库还介绍了另一种自动配置<code>DNS</code>的方式：<code>AdGuard Home</code>：</p>
+<p><img src="http://img.github.mailjob.net/20210412114607.png" alt="图片"></p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/1482114423.html">https://blog.mailjob.net/posts/1482114423.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E6%89%8B%E5%8A%A8%E4%BF%AE%E6%94%B9Hosts"><span class="toc-text">2 手动修改Hosts</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E4%BF%AE%E6%94%B9Hosts"><span class="toc-text">2.1 修改Hosts</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E4%BD%BFHosts%E7%94%9F%E6%95%88"><span class="toc-text">2.2 使Hosts生效</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E8%87%AA%E5%8A%A8%E6%96%B9%E5%BC%8F%EF%BC%88%E6%8E%A8%E8%8D%90%EF%BC%89"><span class="toc-text">3 自动方式（推荐）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-SwitchHosts%E5%AE%89%E8%A3%85"><span class="toc-text">3.1 SwitchHosts安装</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E9%85%8D%E7%BD%AE"><span class="toc-text">3.2 配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E4%B8%80%E4%B8%AA%E5%B0%8F%E9%97%AE%E9%A2%98"><span class="toc-text">3.3 一个小问题</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E6%95%88%E6%9E%9C"><span class="toc-text">4 效果</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-%E5%90%8E%E8%AE%B0"><span class="toc-text">5 后记</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

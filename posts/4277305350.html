@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Go深入理解Map | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="哈希表的意义不言而喻，它能提供 O(1) 复杂度的读写性能，所以主流编程语言中都内置有哈希表。 哈希表的关键在于哈希函数， 好的哈希函数能减少哈希碰撞，提供最优秀的读写性能。 哈希碰撞 因为没有完美的哈希函数， 所以哈希碰撞不可避免，一般有开放寻址法和拉链法，其中拉链法是主流  开放寻址法：当向哈希表写入新的数据时，如果发生了冲突，就会将键值对写入到下一个索引不为空的位置    拉链法：拉链法一般">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go深入理解Map">
+<meta property="og:url" content="https://blog.mailjob.net/posts/4277305350.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="哈希表的意义不言而喻，它能提供 O(1) 复杂度的读写性能，所以主流编程语言中都内置有哈希表。 哈希表的关键在于哈希函数， 好的哈希函数能减少哈希碰撞，提供最优秀的读写性能。 哈希碰撞 因为没有完美的哈希函数， 所以哈希碰撞不可避免，一般有开放寻址法和拉链法，其中拉链法是主流  开放寻址法：当向哈希表写入新的数据时，如果发生了冲突，就会将键值对写入到下一个索引不为空的位置    拉链法：拉链法一般">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/20211125125520.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211125125524.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211125125528.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211125125532.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211125125536.png">
+<meta property="article:published_time" content="2021-11-17T04:48:30.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.980Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="go">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/20211125125520.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Go深入理解Map
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/4277305350.html" class="article-date">
+	  <time datetime="2021-11-17T04:48:30.000Z" itemprop="datePublished">2021-11-17</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/go/">go</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/go/" rel="tag">go</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/4277305350.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 920(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 3(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <p>哈希表的意义不言而喻，它能提供 O(1) 复杂度的读写性能，所以主流编程语言中都内置有哈希表。</p>
+<p>哈希表的关键在于哈希函数， 好的哈希函数能减少哈希碰撞，提供最优秀的读写性能。</p>
+<h2 id="哈希碰撞">哈希碰撞</h2>
+<p>因为没有完美的哈希函数， 所以哈希碰撞不可避免，一般有开放寻址法和拉链法，其中拉链法是主流</p>
+<ul>
+<li>开放寻址法：当向哈希表写入新的数据时，如果发生了冲突，就会将键值对写入到下一个索引不为空的位置</li>
+</ul>
+<p><img src="http://img.github.mailjob.net/20211125125520.png" alt="image"></p>
+<ul>
+<li>拉链法：拉链法一般使用数组和链表组成，数据经过哈希函数得到一个桶时，先遍历桶中的链表，存在相同的键值对，则更新，不存在则在链表末尾追加新键值对</li>
+</ul>
+<p><img src="http://img.github.mailjob.net/20211125125524.png" alt="image"></p>
+<h2 id="Go-表示哈希表的数据结构">Go 表示哈希表的数据结构</h2>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> hmap <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+  <span class="token comment">// 表示哈希表中元素的数量</span>
+	count     <span class="token builtin">int</span>
+  flags     <span class="token builtin">uint8</span>
+  
+  <span class="token comment">// 表示哈希表中桶的数量， len(buckets) = 2^B</span>
+	B         <span class="token builtin">uint8</span>
+  noverflow <span class="token builtin">uint16</span>
+  
+  <span class="token comment">// hash函数的种子</span>
+  hash0     <span class="token builtin">uint32</span>
+
+	buckets    unsafe<span class="token punctuation">.</span>Pointer
+  
+  <span class="token comment">// 用于在扩容时保存之前 buckets</span>
+  <span class="token comment">// 因为每次扩容都是2的倍数，所以 bucket = 2oldbuckets</span>
+	oldbuckets unsafe<span class="token punctuation">.</span>Pointer
+	nevacuate  <span class="token builtin">uintptr</span>
+
+	extra <span class="token operator">*</span>mapextra
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">type</span> mapextra <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+	overflow    <span class="token operator">*</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>bmap
+	oldoverflow <span class="token operator">*</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>bmap
+	nextOverflow <span class="token operator">*</span>bmap
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><img src="http://img.github.mailjob.net/20211125125528.png" alt="image"></p>
+<p>哈希表 hmap 的桶是 bmap，每个 bmap 都能存储 8 个键值对，单个桶装满时会使用 nextOverflow 桶存储溢出的数据</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> bmap <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+	<span class="token comment">// 存储了键的哈希的高 8 位</span>
+  <span class="token comment">// 通过比较不同键的哈希的高 8 位可以减少访问键值对次数以提高性能</span>
+  tophash <span class="token punctuation">[</span>bucketCnt<span class="token punctuation">]</span><span class="token builtin">uint8</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="访问-map-中的数据">访问 map 中的数据</h2>
+<p><img src="http://img.github.mailjob.net/20211125125532.png" alt="image"></p>
+<p>如上图所示，每一个桶都是一整片的内存空间，当发现桶中的 tophash 与传入键的 tophash 匹配之后，我们会通过指针和偏移量获取哈希中存储的键 keys[0] 并与 key 比较，如果两者相同就会获取目标值的指针 values[0] 并返回</p>
+<h2 id="向-map-写入数据">向 map 写入数据</h2>
+<p><img src="http://img.github.mailjob.net/20211125125536.png" alt="image"></p>
+<p>函数会根据传入的键拿到对应的哈希和桶，通过遍历比较桶中存储的 tophash 和键的哈希，如果找到了相同结果就会返回目标位置的地址，获得目标地址之后会通过算术计算寻址获得键值对 k 和 val， 如果当前键值对在哈希中不存在，哈希会为新键值对规划存储的内存地址，这期间只会返回内存地址，真正的赋值操作是在编译期间插入的。</p>
+<pre><code>00018 (+5) CALL runtime.mapassign_fast64(SB)
+00020 (5) MOVQ 24(SP), DI               ;; DI = &amp;value
+00026 (5) LEAQ go.string.&quot;88&quot;(SB), AX   ;; AX = &amp;&quot;88&quot;
+00027 (5) MOVQ AX, (DI)                 ;; *DI = AX
+</code></pre>
+<p>我们通过 LEAQ 指令将字符串的地址存储到寄存器 AX 中，MOVQ 指令将字符串 “88” 存储到了目标地址上完成了这次哈希的写入</p>
+<h2 id="扩容">扩容</h2>
+<p>随着哈希表中元素的逐渐增加，哈希表的性能会逐渐恶化，当装载因子 &gt; 6.5 时， 或者 哈希表创建了太多的溢出桶， 会触发扩容</p>
+<blockquote>
+<p>装载因子 = 元素数量 / 桶数量</p>
+</blockquote>
+<p>哈希表在扩容的过程中会创建一组新桶和溢出桶，随后将原油的桶数组设置到 oldbuckets 上，将新桶设置到 buckets 上，新计算旧桶内元素的哈希到新桶上，</p>
+<p>在扩容期间访问哈希表时会使用旧桶，整个期间元素再分配的过程也是在调用写操作时增量进行的，不会造成性能的瞬时巨大抖动</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/4277305350.html">https://blog.mailjob.net/posts/4277305350.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%93%88%E5%B8%8C%E7%A2%B0%E6%92%9E"><span class="toc-text">哈希碰撞</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Go-%E8%A1%A8%E7%A4%BA%E5%93%88%E5%B8%8C%E8%A1%A8%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="toc-text">Go 表示哈希表的数据结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BF%E9%97%AE-map-%E4%B8%AD%E7%9A%84%E6%95%B0%E6%8D%AE"><span class="toc-text">访问 map 中的数据</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%91-map-%E5%86%99%E5%85%A5%E6%95%B0%E6%8D%AE"><span class="toc-text">向 map 写入数据</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%A9%E5%AE%B9"><span class="toc-text">扩容</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

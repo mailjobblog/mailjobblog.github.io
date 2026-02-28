@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Mysql Haproxy 实现高可用 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="前言  在以前的文章中，搭建了 mysql 的主从复制。但是如果数据库的从服务发生故障，那么 read 业务就会瘫痪 所以在此文中，我们探讨一个高可用的解决方案，当某一个从节点发生故障后，可以把 read 业务迅速切换到可用的数据库从服务器中  参考文献  Haproxy 教程文档：http:&#x2F;&#x2F;www.yunweipai.com&#x2F;35237.html 演示架构图简版（思维导图）：https:&#x2F;&#x2F;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mysql Haproxy 实现高可用">
+<meta property="og:url" content="https://blog.mailjob.net/posts/2638475365.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="前言  在以前的文章中，搭建了 mysql 的主从复制。但是如果数据库的从服务发生故障，那么 read 业务就会瘫痪 所以在此文中，我们探讨一个高可用的解决方案，当某一个从节点发生故障后，可以把 read 业务迅速切换到可用的数据库从服务器中  参考文献  Haproxy 教程文档：http:&#x2F;&#x2F;www.yunweipai.com&#x2F;35237.html 演示架构图简版（思维导图）：https:&#x2F;&#x2F;">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210219180645.png">
+<meta property="article:published_time" content="2021-02-19T08:07:17.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.982Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="mysql">
+<meta property="article:tag" content="高可用">
+<meta property="article:tag" content="haproxy">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/oss.github/20210219180645.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Mysql Haproxy 实现高可用
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/2638475365.html" class="article-date">
+	  <time datetime="2021-02-19T08:07:17.000Z" itemprop="datePublished">2021-02-19</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/mysql/">mysql</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/haproxy/" rel="tag">haproxy</a>, <a class="article-tag-none-link" href="/tags/mysql/" rel="tag">mysql</a>, <a class="article-tag-none-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/2638475365.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 2.3k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 9(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="前言">前言</h2>
+<blockquote>
+<p>在以前的文章中，搭建了 mysql 的主从复制。但是如果数据库的从服务发生故障，那么 read 业务就会瘫痪</p>
+<p>所以在此文中，我们探讨一个高可用的解决方案，当某一个从节点发生故障后，可以把 read 业务迅速切换到可用的数据库从服务器中</p>
+</blockquote>
+<h2 id="参考文献">参考文献</h2>
+<blockquote>
+<p>Haproxy 教程文档：<a target="_blank" rel="noopener" href="http://www.yunweipai.com/35237.html">http://www.yunweipai.com/35237.html</a></p>
+<p>演示架构图简版（思维导图）：<a target="_blank" rel="noopener" href="https://kdocs.cn/l/spPGtmcDDnOx">https://kdocs.cn/l/spPGtmcDDnOx</a></p>
+</blockquote>
+<h2 id="图示说明">图示说明</h2>
+<p><img src="http://img.github.mailjob.net/oss.github/20210219180645.png" alt=""></p>
+<p><strong>前期准备，需要服务器4台</strong>：</p>
+<blockquote>
+<p>server1：做 haproxy 服务器，监控 mysql-slave  的状态，保障 slave 数据库的可用性<br>
+server2：做master主数据库服务器<br>
+server3：做slave从数据库服务器<br>
+server4：做slave从数据库服务器</p>
+</blockquote>
+<p>haproxy 服务会根据 slave 数据库服务器的可用性选择服务</p>
+<h2 id="haproxy介绍与配置">haproxy介绍与配置</h2>
+<h3 id="haproxy介绍">haproxy介绍</h3>
+<p>HAProxy 是一个使用C语言编写的自由及开放源代码软件，其提供高可用性、负载均衡，以及基于 TCP 和 HTTP 的应用程序代理。</p>
+<blockquote>
+<ul>
+<li>HAProxy 特别适用于那些负载特大的 web 站点，这些站点通常又需要会话保持或七层处理。</li>
+<li>HAProxy 运行在当前的硬件上，完全可以支持数以万计的并发连接。并且它的运行模式使得它可以很简单安全的整合进您当前的架构中， 同时可以保护你的 web 服务器不被暴露到网络上。</li>
+<li>HAProxy 实现了一种事件驱动，单一进程模型，此模型支持非常大的并发连接数。多进程或多线程模型受内存限制 、系统调度器限制以及无处不在的锁限制，很少能处理数千并发连接。事件驱动模型因为在有更好的资源和时间管理的用户空间 (User-Space) 实现所有这些任务，所以没有这些问题。此模型的弊端是，在多核系统上，这些程序通常扩展性较差。这就是为什么他们必须进行优化以使每个 CPU 时间片 Cycle 做更多的工作。</li>
+<li>相较与 Nginx，HAProxy 更专注与反向代理，因此它可以支持更多的选项，更精细的控制，更多的健康状态检测机制和负载均衡算法。</li>
+<li>包括 GitHub、Bitbucket、Stack Overflow、Reddit、Tumblr、Twitter 和 Tuenti 在内的知名网站，及亚马逊网络服务系统都使用了 HAProxy</li>
+</ul>
+</blockquote>
+<p><strong>Haproxy的特性</strong>：</p>
+<pre class="line-numbers language-none"><code class="language-none">1. 可靠性与稳定性都非常出色，可与硬件级设备媲美。
+2. 支持连接拒绝，可以用于防止 DDoS 攻击
+3. 支持长连接、短连接和日志功能，可根据需要灵活配置
+4. 路由 HTTP 请求到后端服务器,基于 cookie 作会话绑定；同时支持通过获取指定的 url 来检测后端服务器的状态
+5. HAProxy 还拥有功能强大的 ACL 支持，可灵活配置路由功能，实现动静分离，在架构设计与实现上带来很大方便
+6. 可支持四层和七层负载均衡，几乎能为所有服务常见的提供负载均衡功能
+7. 拥有功能强大的后端服务器的状态监控 web 页面，可以实时了解设备的运行状态 ，还可实现设备上下线等简单操作。
+8. 支持多种负载均衡调度算法，并且也支持 session 保持。
+9. Haproxy 七层负载均衡模式下，负载均衡与客户端及后端的服务器会分别建立一次 TCP连接，而在四层负载均衡模式下(DR)，仅建立一次 TCP 连接；七层负载均衡对负载均衡设备的要求更高，处理能力也低于四层负载均衡<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>haproxy 的配置文件由两部分组成</strong>：</p>
+<ol>
+<li>全局设定（global settings）</li>
+<li>对代理的设定（proxies）</li>
+</ol>
+<blockquote>
+<p>全局设定</p>
+<p>global settings：主要用于定义 haproxy 进程管理安全及性能相关的参数</p>
+</blockquote>
+<blockquote>
+<p>代理设定</p>
+<p>proxies 共分为4段：defaults，frontend，backend，listen</p>
+</blockquote>
+<pre class="line-numbers language-none"><code class="language-none">proxies：代理相关的配置可以有如下几个配置端组成
+defaults：为除了 global 以外的其它配置段提供默认参数，默认配置参数可由下一个 “defaults” 重新设定。
+frontend：定义一系列监听的套接字，这些套接字可接受客户端请求并与之建立连接。
+backend：定义 “后端” 服务器，前端代理服务器将会把客户端的请求调度至这些服务器。
+listen：定义监听的套接字和后端的服务器。类似于将 frontend 和 backend 段放在一起
+所有代理的名称只能使用大写字母、小写字母、数字、-(中线)、_(下划线)、.(点号)和:(冒号)。此外，ACL 名称会区分字母大小写。<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="配置文件详细介绍">配置文件详细介绍</h3>
+<pre class="line-numbers language-none"><code class="language-none">global
+    log 127.0.0.1 local0                                        # 定义全局的 syslog 服务器，最多可定义2个,格式：log &lt;address&gt; &lt;facility&gt; [max level [min level]]
+    chroot &#x2F;var&#x2F;lib&#x2F;haproxy                                     # 修改 haproxy 的工作目录至指定的目录并在放弃权限之前执行，保证haproxy的安全,使用配置文件默认值即可
+    pidfile &#x2F;var&#x2F;run&#x2F;haproxy.pid
+    maxconn 10000                                               # 设定每个haproxy进程所接受的最大并发连接数，其等同于命令行选项“-n”；“ulimit -n”自动计算的结果正是参照此参数设定的；
+    user haproxy                                                # 以指定的 user 运行haproxy，建议使用专用于运行 haproxy 的 user, 以免因权限问题带来风险；
+    group haproxy                                               # 以指定的 group 运行haproxy，建议使用专用于运行 haproxy 的 group， 以免因权限问题带来风险；
+    daemon                                                      # 让 haproxy 以守护进程的方式工作于后台，其等同于 “-D” 选项的功能， 当然，也可以在命令行中以 “-db” 选项将其禁用；
+    ulimit-n 100000                                             # 设定每进程所能够打开的最大文件描述符数目，默认情况下其会自动进行计算，因此不推荐修改此选项；Linux默认单进程打开文件数为1024个
+    stats socket &#x2F;var&#x2F;lib&#x2F;haproxy&#x2F;stats level admin process 1   # 开启一个 socket 管理接口
+    nbproc 12                                                   # 指定启动的 haproxy 进程个数，只能用于守护进程模式的 haproxy；默认只启动一个进程，
+    cpu-map 1 0                                                 # 绑定 cpu,和 nbproc 数量相对。进程号从1开始，cpu 核数从0开始；
+
+defaults
+    log global
+    option tcplog                                               # 启用日志记录；tcplog 请求；
+    option dontlognull                                          # 日志中将不会记录空连接；
+    retries 3                                                   # 定义连接后端服务器的失败重连次数
+    timeout connect 2s                                          # 定义 haproxy 将客户端请求转发至后端服务器所等待的超时时长
+    timeout client 3600s                                        # 客户端非活动状态的超时时长
+    timeout server 3600s                                        # 客户端与服务器端建立连接后，等待服务器端的超时时长
+    maxconn 10000                                               # 默认和前段的最大连接数，但不能超过 global 中的 maxconn 限制数
+
+listen admin_stats                                              # 开启一个统计报告服务
+    bind *:1080                                                 # 监听1080端口
+    mode http                                                   # 基于http协议
+    maxconn 10
+    stats refresh 10s                                           # 统计页面自动刷新时间间隔
+    stats uri &#x2F;haproxy                                          # url 地址
+    stats realm Haproxy                                         # 统计页面密码框上提示文本
+    stats auth admin:admin                                      # 账号：密码
+    stats hide-version                                          # 隐藏统计报告版本信息
+    stats admin if TRUE                                         # 在制定条件下开启admin 功能
+
+frontend haproxy                                                # 前端应用
+    bind *:40000                                                # 端口
+    mode tcp                                                    # tcp 模式
+    default_backend tidb                                        # 此前端对应的后端应用
+
+backend tidb                                                    # 后端应用
+    balance leastconn                                           # balance 基于最少连接数
+    mode tcp                                                    # tcp 模式
+    # acl internal_networks src 192.168.0.0&#x2F;16 172.16.0.0&#x2F;12 10.0.0.0&#x2F;8 127.0.0.1  定义一条ACL，ACL是根据数据包的指定属性以指定表达式计算出的true&#x2F;false值。
+    # tcp-request content reject if ! internal_networks
+    # option mysql-check user haproxy post-41
+    server tidb1 10.0.1.4:4000 check                            # 后端应用地址，代理将会将对应客户端的请求转发至这些服务器。
+    server tidb2 10.0.1.10:4000 check<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="Haproxy-搭建">Haproxy  搭建</h2>
+<table>
+<thead>
+<tr>
+<th>服务器名称</th>
+<th>IP</th>
+<th>操作系统</th>
+<th>安装服务</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mysql-Master</td>
+<td>192.168.29.105</td>
+<td>CentOS7.1</td>
+<td>mysql</td>
+</tr>
+<tr>
+<td>Mysql-Slave1</td>
+<td>192.168.29.106</td>
+<td>CentOS7.1</td>
+<td>mysql</td>
+</tr>
+<tr>
+<td>Mysql-Slave2</td>
+<td>192.168.29.107</td>
+<td>CentOS7.1</td>
+<td>mysql</td>
+</tr>
+<tr>
+<td>Haproxy</td>
+<td>192.168.29.108</td>
+<td>Centos7.1</td>
+<td>haproxy</td>
+</tr>
+</tbody>
+</table>
+<h3 id="1、建立mysql主从复制">1、建立mysql主从复制</h3>
+<blockquote>
+<p>首先要对于，mysql 的 master 和 slave 建立主从复制关系</p>
+<p>此处略去 。 。 。</p>
+</blockquote>
+<h3 id="2、安装-haproxy-软件">2、安装 <code>haproxy</code> 软件</h3>
+<p><strong>2.1、yum 安装</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">yum install -y haproxy<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>2.2、配置haproxy配置文件，目录：<code>/etc/haproxy/haproxy.cfg</code></strong></p>
+<pre class="line-numbers language-none"><code class="language-none">global
+    log         127.0.0.1 local2
+    chroot      &#x2F;var&#x2F;lib&#x2F;haproxy
+    pidfile     &#x2F;var&#x2F;run&#x2F;haproxy.pid
+    maxconn     4000
+    user        haproxy
+    group       haproxy
+    daemon
+    stats socket &#x2F;var&#x2F;lib&#x2F;haproxy&#x2F;stats
+
+defaults
+    mode                   tcp
+    log                     global
+    option                  tcplog
+    option                  dontlognull
+    option http-server-close
+    option                  redispatch
+    retries                 3
+    timeout http-request    10s
+    timeout queue           1m
+    timeout connect         10s
+    timeout client          1m
+    timeout server          1m
+    timeout http-keep-alive 10s
+    timeout check           10s
+    maxconn                 3000
+
+frontend    mysql
+    bind        0.0.0.0:3307
+    mode       tcp
+    log             global
+    default_backend         mysql_server
+
+backend     mysql_server
+    balance     roundrobin
+    # 配置 mysql 从节点服务
+    server  mysql1 192.168.199.106:3306 check inter 5s rise 2 fall 3
+    server  mysql2 192.168.199.107:3306 check inter 5s rise 2 fall 3
+
+# 可视化面板配置
+listen stats
+    mode http
+    bind 0.0.0.0:1080
+    stats enable
+    stats hide-version
+    stats uri &#x2F;haproxyadmin?stats
+    stats realm Haproxy\ Statistics
+    stats auth admin:admin
+    stats admin if TRUE<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>2.3、启动haproxy负载均衡</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">.&#x2F;usr&#x2F;sbin&#x2F;haproxy -f &#x2F;etc&#x2F;haproxy&#x2F;haproxy.cfg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/2638475365.html">https://blog.mailjob.net/posts/2638475365.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%BE%E7%A4%BA%E8%AF%B4%E6%98%8E"><span class="toc-text">图示说明</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#haproxy%E4%BB%8B%E7%BB%8D%E4%B8%8E%E9%85%8D%E7%BD%AE"><span class="toc-text">haproxy介绍与配置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#haproxy%E4%BB%8B%E7%BB%8D"><span class="toc-text">haproxy介绍</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E8%AF%A6%E7%BB%86%E4%BB%8B%E7%BB%8D"><span class="toc-text">配置文件详细介绍</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Haproxy-%E6%90%AD%E5%BB%BA"><span class="toc-text">Haproxy  搭建</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81%E5%BB%BA%E7%AB%8Bmysql%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6"><span class="toc-text">1、建立mysql主从复制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81%E5%AE%89%E8%A3%85-haproxy-%E8%BD%AF%E4%BB%B6"><span class="toc-text">2、安装 haproxy 软件</span></a></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Elasticsearch 基础使用 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="前言 本文中，对于 Elasticsearch、kibana、Elasticsearch-head的基本使用，做一个演示 参考文献 ES官方文档：https:&#x2F;&#x2F;www.elastic.co&#x2F;guide&#x2F;cn&#x2F;elasticsearch&#x2F;guide&#x2F;current&#x2F;index-doc.html    DB Elasticsearch     数据库(database) 索引(indices)">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Elasticsearch 基础使用">
+<meta property="og:url" content="https://blog.mailjob.net/posts/1687587448.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="前言 本文中，对于 Elasticsearch、kibana、Elasticsearch-head的基本使用，做一个演示 参考文献 ES官方文档：https:&#x2F;&#x2F;www.elastic.co&#x2F;guide&#x2F;cn&#x2F;elasticsearch&#x2F;guide&#x2F;current&#x2F;index-doc.html    DB Elasticsearch     数据库(database) 索引(indices)">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210222135941.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210222143309.png">
+<meta property="article:published_time" content="2021-02-22T04:50:31.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.979Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="es">
+<meta property="article:tag" content="middle">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/oss.github/20210222135941.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Elasticsearch 基础使用
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/1687587448.html" class="article-date">
+	  <time datetime="2021-02-22T04:50:31.000Z" itemprop="datePublished">2021-02-22</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/es/">es</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/es/" rel="tag">es</a>, <a class="article-tag-none-link" href="/tags/middle/" rel="tag">middle</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/1687587448.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 597(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 3(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="前言">前言</h2>
+<p>本文中，对于 Elasticsearch、kibana、Elasticsearch-head的基本使用，做一个演示</p>
+<h2 id="参考文献">参考文献</h2>
+<p>ES官方文档：<a target="_blank" rel="noopener" href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/index-doc.html">https://www.elastic.co/guide/cn/elasticsearch/guide/current/index-doc.html</a></p>
+<table>
+<thead>
+<tr>
+<th>DB</th>
+<th>Elasticsearch</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>数据库(database)</td>
+<td>索引(indices)</td>
+</tr>
+<tr>
+<td>表(tables)</td>
+<td>类型(types)</td>
+</tr>
+<tr>
+<td>行(rows)</td>
+<td>文档(documents)</td>
+</tr>
+<tr>
+<td>字段(columns)</td>
+<td>字段(fields)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="CURD预览">CURD预览</h2>
+<table>
+<thead>
+<tr>
+<th>示例名称</th>
+<th>请求类型</th>
+<th>路由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>新建索引</td>
+<td>PUT</td>
+<td>/{index}/{type}/{id}</td>
+</tr>
+<tr>
+<td>查询索引</td>
+<td>GET</td>
+<td>/{index}/{type}/{id}</td>
+</tr>
+<tr>
+<td>更新索引</td>
+<td>POST</td>
+<td>/{index}/{type}/{id}</td>
+</tr>
+<tr>
+<td>删除索引</td>
+<td>DELETE</td>
+<td>/{index}/{type}/{id}</td>
+</tr>
+</tbody>
+</table>
+<p><strong>路由</strong></p>
+<p>一个文档的 <code>_index</code> 、 <code>_type</code> 和 <code>_id</code> 唯一标识一个文档。 我们可以提供自定义的 <code>_id</code> 值，或者让 <code>index</code> API 自动生成。举个例子，如果我们的索引称为 <code>website</code> ，类型称为 <code>blog</code> ，并且选择 <code>123</code> 作为 ID ，那么索引请求应该是下面这样：</p>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json">PUT /website/blog/<span class="token number">123</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token property">"title"</span><span class="token operator">:</span> <span class="token string">"My first blog entry"</span><span class="token punctuation">,</span>
+  <span class="token property">"text"</span><span class="token operator">:</span>  <span class="token string">"Just trying this out..."</span><span class="token punctuation">,</span>
+  <span class="token property">"date"</span><span class="token operator">:</span>  <span class="token string">"2014/01/01"</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="kibana使用">kibana使用</h2>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json"># 创建
+PUT /mailjob/blog/<span class="token number">789</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token property">"title"</span><span class="token operator">:</span> <span class="token string">"libin"</span><span class="token punctuation">,</span>
+  <span class="token property">"text"</span><span class="token operator">:</span>  <span class="token string">"this is blog"</span>
+<span class="token punctuation">&#125;</span>
+# 查询
+GET /mailjob/blog/<span class="token number">789</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token property">"title"</span><span class="token operator">:</span> <span class="token string">"libin"</span><span class="token punctuation">,</span>
+  <span class="token property">"text"</span><span class="token operator">:</span>  <span class="token string">"this is blog"</span>
+<span class="token punctuation">&#125;</span>
+# 更新
+PUT /mailjob/blog/<span class="token number">789</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token property">"title"</span><span class="token operator">:</span> <span class="token string">"啦啦啦啦啦"</span>
+<span class="token punctuation">&#125;</span>
+# 删除
+DELETE /mailjob/blog/<span class="token number">789</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token property">"text"</span><span class="token operator">:</span>  <span class="token string">"this is blog"</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><img src="http://img.github.mailjob.net/oss.github/20210222135941.png" alt="image-20210222135938862"></p>
+<h2 id="Elasticsearch-head使用">Elasticsearch-head使用</h2>
+<p><img src="http://img.github.mailjob.net/oss.github/20210222143309.png" alt="image-20210222143306455"></p>
+<h2 id="Elasticsearch在linux使用">Elasticsearch在linux使用</h2>
+<p><strong>查询</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@VM-0-15-centos home<span class="token punctuation">]</span><span class="token comment"># curl -X GET 'http://127.0.0.1:9200/mailjob/blog/789'</span>
+<span class="token punctuation">&#123;</span><span class="token string">"_index"</span><span class="token builtin class-name">:</span><span class="token string">"mailjob"</span>,<span class="token string">"_type"</span><span class="token builtin class-name">:</span><span class="token string">"blog"</span>,<span class="token string">"_id"</span><span class="token builtin class-name">:</span><span class="token string">"789"</span>,<span class="token string">"_version"</span>:1,<span class="token string">"_seq_no"</span>:8,<span class="token string">"_primary_term"</span>:1,<span class="token string">"found"</span>:true,<span class="token string">"_source"</span>:<span class="token punctuation">&#123;</span>
+  <span class="token string">"title"</span><span class="token builtin class-name">:</span> <span class="token string">"libin"</span>,
+  <span class="token string">"text"</span><span class="token builtin class-name">:</span>  <span class="token string">"this is blog"</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>更新</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@VM-0-15-centos home<span class="token punctuation">]</span><span class="token comment"># curl -H 'Content-Type: application/json' -X POST 'http://127.0.0.1:9200/mailjob/blog/789' -d'&#123;"title": "libin"&#125;'</span>
+<span class="token punctuation">&#123;</span><span class="token string">"_index"</span><span class="token builtin class-name">:</span><span class="token string">"mailjob"</span>,<span class="token string">"_type"</span><span class="token builtin class-name">:</span><span class="token string">"blog"</span>,<span class="token string">"_id"</span><span class="token builtin class-name">:</span><span class="token string">"789"</span>,<span class="token string">"_version"</span>:2,<span class="token string">"result"</span><span class="token builtin class-name">:</span><span class="token string">"updated"</span>,<span class="token string">"_shards"</span>:<span class="token punctuation">&#123;</span><span class="token string">"total"</span>:2,<span class="token string">"successful"</span>:1,<span class="token string">"failed"</span>:0<span class="token punctuation">&#125;</span>,<span class="token string">"_seq_no"</span>:9,<span class="token string">"_primary_term"</span>:1<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<h2 id="ik分词器测试">ik分词器测试</h2>
+<p>IK提供了两个分词算法：ik_smart 和 ik_max_word，其中 ik_smart 为最少切分，ik_max_word为最细 粒度划分</p>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json">GET _analyze
+<span class="token punctuation">&#123;</span>
+  <span class="token property">"analyzer"</span> <span class="token operator">:</span> <span class="token string">"standard"</span><span class="token punctuation">,</span>  
+  <span class="token property">"text"</span> <span class="token operator">:</span> <span class="token string">"es插件来了"</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token punctuation">&#123;</span>
+  <span class="token property">"tokens"</span> <span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token property">"token"</span> <span class="token operator">:</span> <span class="token string">"es"</span><span class="token punctuation">,</span>
+      <span class="token property">"start_offset"</span> <span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+      <span class="token property">"end_offset"</span> <span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+      <span class="token property">"type"</span> <span class="token operator">:</span> <span class="token string">"&lt;ALPHANUM>"</span><span class="token punctuation">,</span>
+      <span class="token property">"position"</span> <span class="token operator">:</span> <span class="token number">0</span>
+    <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token property">"token"</span> <span class="token operator">:</span> <span class="token string">"插"</span><span class="token punctuation">,</span>
+      <span class="token property">"start_offset"</span> <span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+      <span class="token property">"end_offset"</span> <span class="token operator">:</span> <span class="token number">3</span><span class="token punctuation">,</span>
+      <span class="token property">"type"</span> <span class="token operator">:</span> <span class="token string">"&lt;IDEOGRAPHIC>"</span><span class="token punctuation">,</span>
+      <span class="token property">"position"</span> <span class="token operator">:</span> <span class="token number">1</span>
+    <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token property">"token"</span> <span class="token operator">:</span> <span class="token string">"件"</span><span class="token punctuation">,</span>
+      <span class="token property">"start_offset"</span> <span class="token operator">:</span> <span class="token number">3</span><span class="token punctuation">,</span>
+      <span class="token property">"end_offset"</span> <span class="token operator">:</span> <span class="token number">4</span><span class="token punctuation">,</span>
+      <span class="token property">"type"</span> <span class="token operator">:</span> <span class="token string">"&lt;IDEOGRAPHIC>"</span><span class="token punctuation">,</span>
+      <span class="token property">"position"</span> <span class="token operator">:</span> <span class="token number">2</span>
+    <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token property">"token"</span> <span class="token operator">:</span> <span class="token string">"来"</span><span class="token punctuation">,</span>
+      <span class="token property">"start_offset"</span> <span class="token operator">:</span> <span class="token number">4</span><span class="token punctuation">,</span>
+      <span class="token property">"end_offset"</span> <span class="token operator">:</span> <span class="token number">5</span><span class="token punctuation">,</span>
+      <span class="token property">"type"</span> <span class="token operator">:</span> <span class="token string">"&lt;IDEOGRAPHIC>"</span><span class="token punctuation">,</span>
+      <span class="token property">"position"</span> <span class="token operator">:</span> <span class="token number">3</span>
+    <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token property">"token"</span> <span class="token operator">:</span> <span class="token string">"了"</span><span class="token punctuation">,</span>
+      <span class="token property">"start_offset"</span> <span class="token operator">:</span> <span class="token number">5</span><span class="token punctuation">,</span>
+      <span class="token property">"end_offset"</span> <span class="token operator">:</span> <span class="token number">6</span><span class="token punctuation">,</span>
+      <span class="token property">"type"</span> <span class="token operator">:</span> <span class="token string">"&lt;IDEOGRAPHIC>"</span><span class="token punctuation">,</span>
+      <span class="token property">"position"</span> <span class="token operator">:</span> <span class="token number">4</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json">GET _analyze
+<span class="token punctuation">&#123;</span>
+  <span class="token property">"analyzer"</span> <span class="token operator">:</span> <span class="token string">"ik_smart"</span><span class="token punctuation">,</span>  
+  <span class="token property">"text"</span> <span class="token operator">:</span> <span class="token string">"es插件来了"</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token punctuation">&#123;</span>
+  <span class="token property">"tokens"</span> <span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token property">"token"</span> <span class="token operator">:</span> <span class="token string">"es"</span><span class="token punctuation">,</span>
+      <span class="token property">"start_offset"</span> <span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+      <span class="token property">"end_offset"</span> <span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+      <span class="token property">"type"</span> <span class="token operator">:</span> <span class="token string">"ENGLISH"</span><span class="token punctuation">,</span>
+      <span class="token property">"position"</span> <span class="token operator">:</span> <span class="token number">0</span>
+    <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token property">"token"</span> <span class="token operator">:</span> <span class="token string">"插件"</span><span class="token punctuation">,</span>
+      <span class="token property">"start_offset"</span> <span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+      <span class="token property">"end_offset"</span> <span class="token operator">:</span> <span class="token number">4</span><span class="token punctuation">,</span>
+      <span class="token property">"type"</span> <span class="token operator">:</span> <span class="token string">"CN_WORD"</span><span class="token punctuation">,</span>
+      <span class="token property">"position"</span> <span class="token operator">:</span> <span class="token number">1</span>
+    <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token property">"token"</span> <span class="token operator">:</span> <span class="token string">"来了"</span><span class="token punctuation">,</span>
+      <span class="token property">"start_offset"</span> <span class="token operator">:</span> <span class="token number">4</span><span class="token punctuation">,</span>
+      <span class="token property">"end_offset"</span> <span class="token operator">:</span> <span class="token number">6</span><span class="token punctuation">,</span>
+      <span class="token property">"type"</span> <span class="token operator">:</span> <span class="token string">"CN_WORD"</span><span class="token punctuation">,</span>
+      <span class="token property">"position"</span> <span class="token operator">:</span> <span class="token number">2</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json">GET _analyze
+<span class="token punctuation">&#123;</span>
+  <span class="token property">"analyzer"</span> <span class="token operator">:</span> <span class="token string">"ik_max_word"</span><span class="token punctuation">,</span>  
+  <span class="token property">"text"</span> <span class="token operator">:</span> <span class="token string">"es插件来了"</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token punctuation">&#123;</span>
+  <span class="token property">"tokens"</span> <span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token property">"token"</span> <span class="token operator">:</span> <span class="token string">"es"</span><span class="token punctuation">,</span>
+      <span class="token property">"start_offset"</span> <span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+      <span class="token property">"end_offset"</span> <span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+      <span class="token property">"type"</span> <span class="token operator">:</span> <span class="token string">"ENGLISH"</span><span class="token punctuation">,</span>
+      <span class="token property">"position"</span> <span class="token operator">:</span> <span class="token number">0</span>
+    <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token property">"token"</span> <span class="token operator">:</span> <span class="token string">"插件"</span><span class="token punctuation">,</span>
+      <span class="token property">"start_offset"</span> <span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+      <span class="token property">"end_offset"</span> <span class="token operator">:</span> <span class="token number">4</span><span class="token punctuation">,</span>
+      <span class="token property">"type"</span> <span class="token operator">:</span> <span class="token string">"CN_WORD"</span><span class="token punctuation">,</span>
+      <span class="token property">"position"</span> <span class="token operator">:</span> <span class="token number">1</span>
+    <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token property">"token"</span> <span class="token operator">:</span> <span class="token string">"来了"</span><span class="token punctuation">,</span>
+      <span class="token property">"start_offset"</span> <span class="token operator">:</span> <span class="token number">4</span><span class="token punctuation">,</span>
+      <span class="token property">"end_offset"</span> <span class="token operator">:</span> <span class="token number">6</span><span class="token punctuation">,</span>
+      <span class="token property">"type"</span> <span class="token operator">:</span> <span class="token string">"CN_WORD"</span><span class="token punctuation">,</span>
+      <span class="token property">"position"</span> <span class="token operator">:</span> <span class="token number">2</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/1687587448.html">https://blog.mailjob.net/posts/1687587448.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CURD%E9%A2%84%E8%A7%88"><span class="toc-text">CURD预览</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#kibana%E4%BD%BF%E7%94%A8"><span class="toc-text">kibana使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Elasticsearch-head%E4%BD%BF%E7%94%A8"><span class="toc-text">Elasticsearch-head使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Elasticsearch%E5%9C%A8linux%E4%BD%BF%E7%94%A8"><span class="toc-text">Elasticsearch在linux使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ik%E5%88%86%E8%AF%8D%E5%99%A8%E6%B5%8B%E8%AF%95"><span class="toc-text">ik分词器测试</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

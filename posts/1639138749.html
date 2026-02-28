@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Redis数据类型Zset（有序集合） | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="相关链接  Redis 常用命令，思维导图： https:&#x2F;&#x2F;www.kdocs.cn&#x2F;view&#x2F;l&#x2F;ss49IFenIOSm  zset&#96;是&#96;Redis&#96;提供的一个非常特别的数据结构，常用作排行榜等功能，以用户&#96;id&#96;为&#96;value&#96;，关注时间或者分数作为&#96;score&#96;进行排序。与其他数据结构相似，&#96;zset&amp;#96">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis数据类型Zset（有序集合）">
+<meta property="og:url" content="https://blog.mailjob.net/posts/1639138749.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="相关链接  Redis 常用命令，思维导图： https:&#x2F;&#x2F;www.kdocs.cn&#x2F;view&#x2F;l&#x2F;ss49IFenIOSm  zset&#96;是&#96;Redis&#96;提供的一个非常特别的数据结构，常用作排行榜等功能，以用户&#96;id&#96;为&#96;value&#96;，关注时间或者分数作为&#96;score&#96;进行排序。与其他数据结构相似，&#96;zset&amp;#96">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/img_convert/fdccf504a3482e7a788025fc9069d918.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/img_convert/94c871fe5911f11832b22b3223f26017.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/img_convert/a582eba624d3494076b0e060497ca159.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/img_convert/57cee78d90f9b66f25729ada192d80b4.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/img_convert/cf955fc314efff8d8984443f4456bf3d.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/img_convert/7bf2d823a8b54474340c07980107e1a0.png">
+<meta property="article:published_time" content="2021-01-19T13:55:16.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.986Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="redis">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/img_convert/fdccf504a3482e7a788025fc9069d918.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Redis数据类型Zset（有序集合）
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/1639138749.html" class="article-date">
+	  <time datetime="2021-01-19T13:55:16.000Z" itemprop="datePublished">2021-01-19</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/redis/" rel="tag">redis</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/1639138749.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.5k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 5(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h1 id="相关链接">相关链接</h1>
+<blockquote>
+<p>Redis 常用命令，思维导图： <a target="_blank" rel="noopener" href="https://www.kdocs.cn/view/l/ss49IFenIOSm">https://www.kdocs.cn/view/l/ss49IFenIOSm</a></p>
+</blockquote>
+<pre class="line-numbers language-none"><code class="language-none">zset&#96;是&#96;Redis&#96;提供的一个非常特别的数据结构，常用作排行榜等功能，以用户&#96;id&#96;为&#96;value&#96;，关注时间或者分数作为&#96;score&#96;进行排序。与其他数据结构相似，&#96;zset&#96;也有两种不同的实现，分别是&#96;zipList&#96;和&#96;skipList<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h2 id="底层实现">底层实现</h2>
+<p>zset 存储示意图：每个 value 后面都携带一个分数，然后用作排序</p>
+<p><img src="https://img-blog.csdnimg.cn/img_convert/fdccf504a3482e7a788025fc9069d918.png" alt="img"></p>
+<p>跳表(skip List)是一种随机化的数据结构，基于并联的链表，实现简单，插入、删除、查找的复杂度均为O(logN)。简单说来跳表也是链表的一种，只不过它在链表的基础上增加了跳跃功能，正是这个跳跃的功能，使得在查找元素时，跳表能够提供O(logN)的时间复杂度。</p>
+<p>看一个有序链表，如下图（最左侧的灰色节点表示一个空的头结点）：</p>
+<p><a target="_blank" rel="noopener" href="http://zhangtielei.com/assets/photos_redis/skiplist/sorted_linked_list.png"><img src="https://img-blog.csdnimg.cn/img_convert/94c871fe5911f11832b22b3223f26017.png" alt="有序链表结构图"></a></p>
+<p>在这样一个链表中，如果我们要查找某个数据，那么需要从头开始逐个进行比较，直到找到包含数据的那个节点，或者找到第一个比给定数据大的节点为止（没找到）。也就是说，时间复杂度为O(n)。同样，当我们要插入新数据的时候，也要经历同样的查找过程，从而确定插入位置。</p>
+<p>假如我们每相邻两个节点增加一个指针，让指针指向下下个节点，如下图：</p>
+<p><a target="_blank" rel="noopener" href="http://zhangtielei.com/assets/photos_redis/skiplist/skip2node_linked_list.png"><img src="https://img-blog.csdnimg.cn/img_convert/a582eba624d3494076b0e060497ca159.png" alt="每两个节点增加一个跳跃指针的有序链表"></a></p>
+<p>这样所有新增加的指针连成了一个新的链表，但它包含的节点个数只有原来的一半。现在当我们想查找数据的时候，可以先沿着这个新链表进行查找。当碰到比待查数据大的节点时，再回到原来的链表中进行查找。比如，我们想查找23，查找的路径是沿着下图中标红的指针所指向的方向进行的：</p>
+<p><a target="_blank" rel="noopener" href="http://zhangtielei.com/assets/photos_redis/skiplist/search_path_on_skip2node_list.png"><img src="https://img-blog.csdnimg.cn/img_convert/57cee78d90f9b66f25729ada192d80b4.png" alt="一个搜索路径的例子"></a></p>
+<ul>
+<li>23首先和7比较，再和19比较，比它们都大，继续向后比较。</li>
+<li>但23和26比较的时候，比26要小，因此回到下面的链表（原链表），与22比较。</li>
+<li>23比22要大，沿下面的指针继续向后和26比较。23比26小，说明待查数据23在原链表中不存在，而且它的插入位置应该在22和26之间。</li>
+</ul>
+<h2 id="将压缩链表和跳跃链表作一个对比吧">将压缩链表和跳跃链表作一个对比吧</h2>
+<p><img src="https://img-blog.csdnimg.cn/img_convert/cf955fc314efff8d8984443f4456bf3d.png" alt="img"></p>
+<h2 id="List-Set-Zset-对比">List Set Zset 对比</h2>
+<table>
+<thead>
+<tr>
+<th><strong>数据结果</strong></th>
+<th><strong>是否允许重复元素</strong></th>
+<th><strong>是否有序</strong></th>
+<th><strong>有序实现方式</strong></th>
+<th><strong>应用场景</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>列表 List</td>
+<td>是</td>
+<td>是</td>
+<td>索引下标</td>
+<td>时间轴、消息队列</td>
+</tr>
+<tr>
+<td>集合 Set</td>
+<td>否</td>
+<td>否</td>
+<td>无</td>
+<td>标签、社交</td>
+</tr>
+<tr>
+<td>有序集合 Zset</td>
+<td>否</td>
+<td>是</td>
+<td>分值</td>
+<td>排行榜，社交</td>
+</tr>
+</tbody>
+</table>
+<h2 id="应用场景-学习总结">应用场景 &amp; 学习总结</h2>
+<p>Redis zset 和 set 一样也是string类型元素的集合，且<strong>不允许重复的成员</strong>。</p>
+<p>不同的是每个元素都会关联一个double类型的分数。redis正是通过分数来为集合中的成员进行从小到大的排序。</p>
+<p>zset的成员是唯一的,但分数(score)却可以重复。</p>
+<p>使用场景：</p>
+<p>1、根据时间排序的新闻列表等，</p>
+<p>2、 阅读排行榜</p>
+<h2 id="常用命令">常用命令</h2>
+<p><img src="https://img-blog.csdnimg.cn/img_convert/7bf2d823a8b54474340c07980107e1a0.png" alt="img"></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">zadd key score member<span class="token punctuation">[</span><span class="token punctuation">&#123;</span>score member<span class="token punctuation">&#125;</span><span class="token punctuation">..</span>.<span class="token punctuation">]</span>
+--- 创建或设置指定key对应的有序集合，根据每个值对应的score来排名，升序。例如有命令 zadd key1 <span class="token number">10</span> A <span class="token number">20</span> B <span class="token number">30</span> D <span class="token number">40</span> C<span class="token punctuation">;</span>那么真实排名是 A B D C
+ 
+zrem key member
+--- 删除指定key对应的集合中的member元素
+ 
+zcard key
+--- 返回指定key对应的有序集合的元素数量
+ 
+zincrby key increment member
+--- 将指定key对应的集合中的member元素对应的分值递增加 increment
+ 
+zcount key min max
+--- 返回指定key对应的有序集合中，分值在min~max之间的元素个数
+ 
+zrank key member
+--- 返回指定key对应的有序集合中，指定元素member在集合中排名，从0开始切分值是从小到大升序
+ 
+zscore key member
+--- 返回指定key中的集合中指定member元素对应的分值
+ 
+zrange key min max <span class="token punctuation">[</span>withscores<span class="token punctuation">]</span>
+--- 返回指定key对应的有序集合中，索引在min~max之间的元素信息，如果带上 withscores 属性的话，可以将分值也带出来
+ 
+zrevrank key member
+--- 返回指定key对应的集合中，指定member在其中的排名，注意排名从0开始且按照分值从大到小降序
+ 
+zrevrange key start end <span class="token punctuation">[</span>withscores<span class="token punctuation">]</span>
+--- 指定key对应的集合中，分值在 start~end之间的降序，加上 withscores 的话可以将分值以及value都显示出来
+ 
+zrangebyscore key start end <span class="token punctuation">[</span>withscores<span class="token punctuation">]</span>
+--- 同 zrange命令不同的是，zrange命令是索引在startend范围的查询，而zrangebyscore命令是根据分值在startend之间的查询且升序展示
+ 
+zrevrangebyscore key max min <span class="token punctuation">[</span>withscores<span class="token punctuation">]</span>
+ 
+--- 同zrangebyscore命令不同的是，zrangebyscores是根据分值从小到大升序展示，而zrevrangebyscore命令是从max到min降序展示
+ 
+zremrangebyrank key start end
+--- 移除指定key对应集合中索引在start~end之间<span class="token punctuation">(</span>包括start和end本身<span class="token punctuation">)</span>的元素
+ 
+zremrangebyscore by min max
+--- 同zremrangebyrank命令类似，不同的该命令是删除分值在min~max之间的元素
+ 
+zinterstore desk-key key-count key<span class="token punctuation">..</span>.
+--- 获取指定数量的key的交集。例如有 key1:<span class="token punctuation">&#123;</span><span class="token number">10</span>:A,20:B,30:C<span class="token punctuation">&#125;</span>,key2<span class="token punctuation">&#123;</span><span class="token number">40</span>:B,50:C,60:D<span class="token punctuation">&#125;</span>,那么命令 zinterstore key3 <span class="token number">2</span> key1 key2 意思就是 将key1 key2这两个集合的交集 赋给key3，如何获取key1与key2的交集呢。 key1中存在 A B C,key2中存在 B C D,那么交集就是 B 和 C，且 B与C对应的score也会叠加，即 key3<span class="token punctuation">&#123;</span>B:20+40<span class="token operator">=</span><span class="token number">60</span>,C:30+50<span class="token operator">=</span><span class="token number">80</span><span class="token punctuation">&#125;</span>
+ 
+zunionstore desk-key key-count key<span class="token punctuation">..</span>.
+--- 获取指定数量key的并集，例如有 key1<span class="token punctuation">&#123;</span><span class="token number">10</span>:A,20:B,30:C<span class="token punctuation">&#125;</span>,key2<span class="token punctuation">&#123;</span><span class="token number">40</span>:B,50:C,60:D<span class="token punctuation">&#125;</span>,可以看出 A和D不是key1与key2共有的，但是并集中只要存在就会记录进去，然后B与C是共有的，即 并集的结果就是 key3<span class="token punctuation">&#123;</span><span class="token number">10</span>:A,B:60,D:60,C:80<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/1639138749.html">https://blog.mailjob.net/posts/1639138749.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E9%93%BE%E6%8E%A5"><span class="toc-text">相关链接</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0"><span class="toc-text">底层实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%86%E5%8E%8B%E7%BC%A9%E9%93%BE%E8%A1%A8%E5%92%8C%E8%B7%B3%E8%B7%83%E9%93%BE%E8%A1%A8%E4%BD%9C%E4%B8%80%E4%B8%AA%E5%AF%B9%E6%AF%94%E5%90%A7"><span class="toc-text">将压缩链表和跳跃链表作一个对比吧</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#List-Set-Zset-%E5%AF%B9%E6%AF%94"><span class="toc-text">List Set Zset 对比</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF-%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93"><span class="toc-text">应用场景 &amp; 学习总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-text">常用命令</span></a></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

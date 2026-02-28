@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Mysql 用 Keepalived 和 Haproxy 实现高可用 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="前言  在上文中 【Mysql 高可用 Haproxy】，曾经探讨过一个mysql高可用的方案。但是该方案存在一个致命性的问题 就是，如果 Haproxy 如果发生故障，那么这个服务整体就瘫痪了。 本文接着探讨一种mysql的高可用方案，即使用 Keepalived 检测服务器的状态 ，来进行故障转移  参考文献  Keepalived 下载：https:&#x2F;&#x2F;www.keepalived.org&#x2F;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mysql 用 Keepalived 和 Haproxy 实现高可用">
+<meta property="og:url" content="https://blog.mailjob.net/posts/2867048371.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="前言  在上文中 【Mysql 高可用 Haproxy】，曾经探讨过一个mysql高可用的方案。但是该方案存在一个致命性的问题 就是，如果 Haproxy 如果发生故障，那么这个服务整体就瘫痪了。 本文接着探讨一种mysql的高可用方案，即使用 Keepalived 检测服务器的状态 ，来进行故障转移  参考文献  Keepalived 下载：https:&#x2F;&#x2F;www.keepalived.org&#x2F;">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210219180742.png">
+<meta property="article:published_time" content="2021-02-19T08:07:39.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.982Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="mysql">
+<meta property="article:tag" content="高可用">
+<meta property="article:tag" content="haproxy">
+<meta property="article:tag" content="keepalived">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/oss.github/20210219180742.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Mysql 用 Keepalived 和 Haproxy 实现高可用
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/2867048371.html" class="article-date">
+	  <time datetime="2021-02-19T08:07:39.000Z" itemprop="datePublished">2021-02-19</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/mysql/">mysql</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/haproxy/" rel="tag">haproxy</a>, <a class="article-tag-none-link" href="/tags/keepalived/" rel="tag">keepalived</a>, <a class="article-tag-none-link" href="/tags/mysql/" rel="tag">mysql</a>, <a class="article-tag-none-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/2867048371.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.6k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 7(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="前言">前言</h2>
+<blockquote>
+<p>在上文中 【Mysql 高可用 Haproxy】，曾经探讨过一个mysql高可用的方案。但是该方案存在一个致命性的问题</p>
+<p>就是，如果 <code>Haproxy</code> 如果发生故障，那么这个服务整体就瘫痪了。</p>
+<p>本文接着探讨一种mysql的高可用方案，即使用 <code>Keepalived</code> 检测服务器的状态 ，来进行故障转移</p>
+</blockquote>
+<h2 id="参考文献">参考文献</h2>
+<blockquote>
+<p>Keepalived 下载：<a target="_blank" rel="noopener" href="https://www.keepalived.org/download.html">https://www.keepalived.org/download.html</a></p>
+<p>Keepalived 教程文档：<a target="_blank" rel="noopener" href="http://www.yunweipai.com/35361.html">http://www.yunweipai.com/35361.html</a></p>
+<p>Keepalived 学习博文：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/clsn/p/8052649.html">https://www.cnblogs.com/clsn/p/8052649.html</a></p>
+<p>演示架构图简版（思维导图）：<a target="_blank" rel="noopener" href="https://kdocs.cn/l/sgVGyjR4O590">https://kdocs.cn/l/sgVGyjR4O590</a></p>
+</blockquote>
+<h2 id="图示说明">图示说明</h2>
+<p><img src="http://img.github.mailjob.net/oss.github/20210219180742.png" alt="image-20210219180739694"></p>
+<p><strong>前期准备，需要服务器5台</strong>：</p>
+<blockquote>
+<p>server1：安装keepalived1+haproxy1进行服务监控和服务处理<br>
+server2：安装keepalived2+haproxy2进行备用的服务监控和服务处理<br>
+server3：做master主数据库服务器<br>
+server4：做slave从数据库服务器<br>
+server5：做slave从数据库服务器</p>
+</blockquote>
+<p><strong>图示架构说明</strong>：</p>
+<p>1、首先建立两个 keepalived 服务器，然后这两个服务会虚拟出来一个相同的ip。当k1发生故障的时候，这个ip会漂移到 keepalived2，完成故障转移<br>
+2、keeplived 会根据 haproxy 服务器的可用性选择服务进行连接<br>
+3、haproxy 服务会根据 slave 数据库服务器的可用性选择服务</p>
+<h2 id="keeplived介绍与配置">keeplived介绍与配置</h2>
+<h3 id="Keepalived介绍">Keepalived介绍</h3>
+<p>Keepalived的作用是检测服务器的状态，如果有一台服务器宕机，或工作出现故障，Keepalived将检测到，并将有故障的服务器从系统中剔除，同时使用其它服务器代替该服务器的工作，当服务器工作 正常后Keepalived自动将服务器加入到服务器群中，这些工作全部自动完成，不需要人工干涉，需要人工做的只是修复故障的服务器。</p>
+<h3 id="Keepalived安装">Keepalived安装</h3>
+<p>安装Keepalived需要的扩展</p>
+<pre class="line-numbers language-none"><code class="language-none"># 依赖安装
+[root@localhost keepalived]# yum install gcc gcc-c++ openssl openssl-devel
+# 软件下载
+[root@localhost home]# wget https:&#x2F;&#x2F;www.keepalived.org&#x2F;software&#x2F;keepalived-1.2.18.tar.gz<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>解压Keepalived并安装</p>
+<pre class="line-numbers language-none"><code class="language-none">[root@localhost home]# tar -zxvf keepalived-1.2.18.tar.gz
+[root@localhost home]# cd keepalived-1.2.18
+[root@localhost keepalived-1.2.18]# .&#x2F;configure --prefix&#x3D;&#x2F;usr&#x2F;local&#x2F;keepalived
+[root@localhost keepalived-1.2.18]# make &amp;&amp; make install<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>将 keepalived 安装成 Linux 系统服务</p>
+<p>因为没有使用 keepalived 的默认路径安装（默认是/usr/local） ,安装完成之后，需要做一些工作 复制默认配置文件到默认路径</p>
+<pre class="line-numbers language-none"><code class="language-none">[root@localhost keepalived-1.2.18]# mkdir &#x2F;etc&#x2F;keepalived
+[root@localhost keepalived-1.2.18]# cp &#x2F;usr&#x2F;local&#x2F;keepalived&#x2F;etc&#x2F;keepalived&#x2F;keepalived.conf &#x2F;etc&#x2F;keepalived&#x2F;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>复制 keepalived 服务脚本到默认的地址</p>
+<pre class="line-numbers language-none"><code class="language-none">[root@localhost keepalived-1.2.18]# cp &#x2F;usr&#x2F;local&#x2F;keepalived&#x2F;etc&#x2F;rc.d&#x2F;init.d&#x2F;keepalived &#x2F;etc&#x2F;init.d&#x2F;
+[root@localhost keepalived-1.2.18]# cp &#x2F;usr&#x2F;local&#x2F;keepalived&#x2F;etc&#x2F;sysconfig&#x2F;keepalived &#x2F;etc&#x2F;sysconfig&#x2F;
+[root@localhost keepalived-1.2.18]# ln -s &#x2F;usr&#x2F;local&#x2F;keepalived&#x2F;sbin&#x2F;keepalived &#x2F;usr&#x2F;sbin&#x2F;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>设置 keepalived 服务开机启动</p>
+<pre class="line-numbers language-none"><code class="language-none">[root@localhost keepalived-1.2.18]# chkconfig keepalived on<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h2 id="mysql高可用搭建">mysql高可用搭建</h2>
+<h3 id="Keepalived配置">Keepalived配置</h3>
+<blockquote>
+<p>keepalived主机配置</p>
+</blockquote>
+<pre class="line-numbers language-none"><code class="language-none">! Configuration File for keepalived
+global_defs &#123;
+    router_id LVS_MASTER
+&#125;
+
+vrrp_script chk_haproxy &#123;
+    script &quot;&#x2F;etc&#x2F;keepalived&#x2F;haproxy_check.sh&quot; ## 检测 haproxy 状态的脚本路径
+    interval 2 ## 检测时间间隔
+    weight 2 ## 如果条件成立，权重+2
+&#125;
+
+vrrp_instance VI_1 &#123;
+    state MASTER
+    interface ens33
+    virtual_router_id 79 # 权重，主的slave建议权重高一些
+    priority 100
+    advert_int 1
+    nopreempt
+    authentication &#123;
+        auth_type PASS
+        auth_pass 1234
+    &#125;
+    virtual_ipaddress &#123;
+        192.168.29.101
+    &#125;
+    track_script &#123;
+        chk_haproxy
+    &#125;
+&#125;
+# 写VIP virtual_server，只配置本地机器
+virtual_server 192.168.29.101 3307 &#123;# 定义虚拟服务器，地址与上面的virtual_ipaddress相同
+    delay_loop 3 # 健康检查时间间隔，3秒
+    lb_algo rr # 负载均衡调度算法：rr|wrr|lc|wlc|sh|dh|lblc
+    lb_kind DR # 负载均衡转发规则：NAT|DR|TUN
+    # persistence_timeout 5 # 会话保持时间5秒，动态服务建议开启
+    protocol TCP # 转发协议protocol，一般有tcp和udp两种
+    real_server 192.168.29.106 3307 &#123;
+        weight 1 # 权重越大负载分越大，0表示失效
+        TCP_CHECK &#123;
+            connect_timeout 3
+            nb_get_retry 3
+            delay_before_retry 3
+            connect_port 3306
+        &#125;
+    &#125;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>Keepalived从机配置</p>
+</blockquote>
+<pre class="line-numbers language-none"><code class="language-none">! Configuration File for keepalived
+global_defs &#123;
+    router_id LVS_MASTER
+&#125;
+
+vrrp_script chk_haproxy &#123;
+    script &quot;&#x2F;etc&#x2F;keepalived&#x2F;haproxy_check.sh&quot; ## 检测 haproxy 状态的脚本路径
+    interval 2 ## 检测时间间隔
+    weight 2 ## 如果条件成立，权重+2
+&#125;
+
+vrrp_instance VI_1 &#123;
+    state BACKUP
+    interface ens33
+    virtual_router_id 79
+    priority 90
+    advert_int 1
+    nopreempt
+    authentication &#123;
+        auth_type PASS
+        auth_pass 1234
+    &#125;
+    virtual_ipaddress &#123;
+        192.168.29.101
+    &#125;
+    track_script &#123;
+        chk_haproxy
+    &#125;
+&#125;
+# 写VIP virtual_server，只配置本地机器
+virtual_server 192.168.29.101 3307 &#123;# 定义虚拟服务器，地址与上面的virtual_ipaddress相同
+    delay_loop 3 # 健康检查时间间隔，3秒
+    lb_algo rr # 负载均衡调度算法：rr|wrr|lc|wlc|sh|dh|lblc
+    lb_kind DR # 负载均衡转发规则：NAT|DR|TUN
+    # persistence_timeout 5 # 会话保持时间5秒，动态服务建议开启
+    protocol TCP # 转发协议protocol，一般有tcp和udp两种
+    real_server 192.168.29.107 3307 &#123;
+        weight 1 # 权重越大负载分越大，0表示失效
+        TCP_CHECK &#123;
+            connect_timeout 3
+            nb_get_retry 3
+            delay_before_retry 3
+            connect_port 3306
+        &#125;
+    &#125;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>haproxy状态检测脚本</p>
+</blockquote>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token shebang important">#!/bin/bash</span>
+<span class="token assign-left variable">START_HAPROXY</span><span class="token operator">=</span><span class="token string">"/usr/sbin/haproxy -f /etc/haproxy/haproxy.cfg"</span> <span class="token comment">#haproxy启动命令</span>
+<span class="token assign-left variable">LOG_FILE</span><span class="token operator">=</span><span class="token string">"/usr/local/keepalived/log/haproxy-check.log"</span> <span class="token comment"># 日志文件</span>
+<span class="token assign-left variable">HAPS</span><span class="token operator">=</span><span class="token variable"><span class="token variable">`</span><span class="token function">ps</span> <span class="token parameter variable">-C</span> haproxy --no-header <span class="token operator">|</span><span class="token function">wc</span> <span class="token parameter variable">-l</span><span class="token variable">`</span></span> <span class="token comment"># 检测haproxy的状态，0代表未启动,1已经启动</span>
+<span class="token function">date</span> <span class="token string">"+%Y-%m-%d %H:%M:%S"</span> <span class="token operator">>></span> <span class="token variable">$LOG_FILE</span> <span class="token comment">#在日志文件当中记录检测时间</span>
+<span class="token builtin class-name">echo</span> <span class="token string">"check haproxy status"</span> <span class="token operator">>></span> <span class="token variable">$LOG_FILE</span> <span class="token comment"># 记录haproxy的状态</span>
+<span class="token keyword">if</span> <span class="token punctuation">[</span> <span class="token variable">$HAPS</span> <span class="token parameter variable">-eq</span> <span class="token number">0</span> <span class="token punctuation">]</span><span class="token punctuation">;</span><span class="token keyword">then</span> <span class="token comment">#执行haproxy判断</span>
+  <span class="token builtin class-name">echo</span> <span class="token variable">$START_HAPROXY</span> <span class="token operator">>></span> <span class="token variable">$LOG_FILE</span> <span class="token comment">#记录启动命令</span>
+  /usr/sbin/haproxy <span class="token parameter variable">-f</span> /etc/haproxy/haproxy.cfg <span class="token comment">#启动haproxy</span>
+  <span class="token function">sleep</span> <span class="token number">3</span>
+  <span class="token keyword">if</span> <span class="token punctuation">[</span> <span class="token variable"><span class="token variable">`</span><span class="token function">ps</span> <span class="token parameter variable">-C</span> haproxy --no-header <span class="token operator">|</span><span class="token function">wc</span> <span class="token parameter variable">-l</span><span class="token variable">`</span></span> <span class="token parameter variable">-eq</span> <span class="token number">0</span> <span class="token punctuation">]</span><span class="token punctuation">;</span><span class="token keyword">then</span>
+    <span class="token builtin class-name">echo</span> <span class="token string">"start haproxy failed, killall keepalived"</span> <span class="token operator">>></span> <span class="token variable">$LOG_FILE</span>
+    <span class="token function">killall</span> keepalived
+    <span class="token function">service</span> keepalived stop
+  <span class="token keyword">fi</span>
+<span class="token keyword">fi</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>haproxy状态检测脚本不执行问题，如果是使用的service keeplived start 或者是 systemctl 方式启动，脚本可能会不执行，可以使用 Keepalived -f /etc/keepalived/keepalived.conf方式启动Keepalived</p>
+<blockquote>
+<p>keepalived配置注意点 - 配置完成但是ip不生效；</p>
+</blockquote>
+<ol>
+<li>查看虚拟机/机器系统时间是否一致</li>
+<li>virtual_router_id路由id不对，不能冲突。可以通过/var/log/messages查看此错误</li>
+</ol>
+<h3 id="测试">测试</h3>
+<p>在本地通过192.168.199.101去连接mysql，查询sever_id,端口使用haproxy定义的3307</p>
+<p>可以看到同样的连接方式，但是查询到的server_id确是不同机器的server_id.</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/2867048371.html">https://blog.mailjob.net/posts/2867048371.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%BE%E7%A4%BA%E8%AF%B4%E6%98%8E"><span class="toc-text">图示说明</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#keeplived%E4%BB%8B%E7%BB%8D%E4%B8%8E%E9%85%8D%E7%BD%AE"><span class="toc-text">keeplived介绍与配置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Keepalived%E4%BB%8B%E7%BB%8D"><span class="toc-text">Keepalived介绍</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Keepalived%E5%AE%89%E8%A3%85"><span class="toc-text">Keepalived安装</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#mysql%E9%AB%98%E5%8F%AF%E7%94%A8%E6%90%AD%E5%BB%BA"><span class="toc-text">mysql高可用搭建</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Keepalived%E9%85%8D%E7%BD%AE"><span class="toc-text">Keepalived配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95"><span class="toc-text">测试</span></a></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

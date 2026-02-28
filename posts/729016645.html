@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Elasticsearch 基本概念 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="前言 对于 es 这个搜索引擎来说，某些数据命名上和mysql的叫法不一样，所以也就存在不同的理解 概念理解 基本命名    DB Elasticsearch     数据库(database) 索引(indices)   表(tables) 类型(types)   行(rows) 文档(documents)   字段(columns) 字段(fields)    elasticsearch(集群">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Elasticsearch 基本概念">
+<meta property="og:url" content="https://blog.mailjob.net/posts/729016645.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="前言 对于 es 这个搜索引擎来说，某些数据命名上和mysql的叫法不一样，所以也就存在不同的理解 概念理解 基本命名    DB Elasticsearch     数据库(database) 索引(indices)   表(tables) 类型(types)   行(rows) 文档(documents)   字段(columns) 字段(fields)    elasticsearch(集群">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210222124657.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210222124710.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210222124732.png">
+<meta property="article:published_time" content="2021-02-22T04:35:13.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.979Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="es">
+<meta property="article:tag" content="middle">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/oss.github/20210222124657.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Elasticsearch 基本概念
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/729016645.html" class="article-date">
+	  <time datetime="2021-02-22T04:35:13.000Z" itemprop="datePublished">2021-02-22</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/es/">es</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/es/" rel="tag">es</a>, <a class="article-tag-none-link" href="/tags/middle/" rel="tag">middle</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/729016645.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.5k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 5(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="前言">前言</h2>
+<p>对于 es 这个搜索引擎来说，某些数据命名上和mysql的叫法不一样，所以也就存在不同的理解</p>
+<h2 id="概念理解">概念理解</h2>
+<h3 id="基本命名">基本命名</h3>
+<table>
+<thead>
+<tr>
+<th>DB</th>
+<th>Elasticsearch</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>数据库(database)</td>
+<td>索引(indices)</td>
+</tr>
+<tr>
+<td>表(tables)</td>
+<td>类型(types)</td>
+</tr>
+<tr>
+<td>行(rows)</td>
+<td>文档(documents)</td>
+</tr>
+<tr>
+<td>字段(columns)</td>
+<td>字段(fields)</td>
+</tr>
+</tbody>
+</table>
+<p>elasticsearch(集群)中可以包含多个索引(数据库)，每个索引中可以包含多个类型(表)，每个类型下又包含多个文档(行)，每个文档中又包含多个字段(列)。</p>
+<h3 id="物理设计">物理设计</h3>
+<p>elasticsearch 在后台把每个索引划分成多个分片，每分分片可以在集群中的不同服务器间迁移。一个人就是一个集群！默认的集群名称就是 elaticsearh</p>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">&#123;</span>
+    <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"node-1"</span><span class="token punctuation">,</span>
+    <span class="token property">"cluster_name"</span><span class="token operator">:</span> <span class="token string">"my-application"</span><span class="token punctuation">,</span>
+    <span class="token property">"cluster_uuid"</span><span class="token operator">:</span> <span class="token string">"yM6l-wYUSQSSwAVaQKhNzA"</span><span class="token punctuation">,</span>
+    <span class="token property">"version"</span><span class="token operator">:</span> <span class="token punctuation">&#123;</span>
+        <span class="token property">"number"</span><span class="token operator">:</span> <span class="token string">"7.6.1"</span><span class="token punctuation">,</span>
+        <span class="token property">"build_flavor"</span><span class="token operator">:</span> <span class="token string">"default"</span><span class="token punctuation">,</span>
+        <span class="token property">"build_type"</span><span class="token operator">:</span> <span class="token string">"tar"</span><span class="token punctuation">,</span>
+        <span class="token property">"build_hash"</span><span class="token operator">:</span> <span class="token string">"aa751e09be0a5072e8570670309b1f12348f023b"</span><span class="token punctuation">,</span>
+        <span class="token property">"build_date"</span><span class="token operator">:</span> <span class="token string">"2020-02-29T00:15:25.529771Z"</span><span class="token punctuation">,</span>
+        <span class="token property">"build_snapshot"</span><span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        <span class="token property">"lucene_version"</span><span class="token operator">:</span> <span class="token string">"8.4.0"</span><span class="token punctuation">,</span>
+        <span class="token property">"minimum_wire_compatibility_version"</span><span class="token operator">:</span> <span class="token string">"6.8.0"</span><span class="token punctuation">,</span>
+        <span class="token property">"minimum_index_compatibility_version"</span><span class="token operator">:</span> <span class="token string">"6.0.0-beta1"</span>
+    <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+    <span class="token property">"tagline"</span><span class="token operator">:</span> <span class="token string">"You Know, for Search"</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="逻辑设计">逻辑设计</h3>
+<p>一个索引类型中，包含多个文档，比如说文档1，文档2。 当我们索引一篇文档时，可以通过这样的一各 顺序找到 它: <code>索引 ▷ 类型 ▷ 文档ID</code> ，通过这个组合我们就能索引到某个具体的文档。 注意:ID不必是整 数，实际上它是个字 符串。</p>
+<h2 id="ES基本概念理解">ES基本概念理解</h2>
+<h3 id="文档">文档</h3>
+<p>就是我们的一条条数据</p>
+<pre class="line-numbers language-none"><code class="language-none">user
+1 zhangsan 18
+2 kuangshen 3<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>之前说elasticsearch是面向文档的，那么就意味着索引和搜索数据的最小单位是文档，elasticsearch 中，文档有几个 重要属性 :</p>
+<ul>
+<li>自我包含，一篇文档同时包含字段和对应的值，也就是同时包含 key:value！</li>
+<li>可以是层次型的，一个文档中包含自文档，复杂的逻辑实体就是这么来的！ {就是一个json对象！ fastjson进行自动转换！}</li>
+<li>灵活的结构，文档不依赖预先定义的模式，我们知道关系型数据库中，要提前定义字段才能使用， 在elasticsearch中，对于字段是非常灵活的，有时候，我们可以忽略该字段，或者动态的添加一个 新的字段。</li>
+</ul>
+<p>尽管我们可以随意的新增或者忽略某个字段，但是，每个字段的类型非常重要，比如一个年龄字段类 型，可以是字符 串也可以是整形。因为elasticsearch会保存字段和类型之间的映射及其他的设置。这种映射具体到每个映射的每种类型，这也是为什么在elasticsearch中，类型有时候也称为映射类型。</p>
+<h3 id="索引">索引</h3>
+<p>就是数据库！</p>
+<p>索引是映射类型的容器，elasticsearch中的索引是一个非常大的文档集合。索引存储了映射类型的字段 和其他设置。 然后它们被存储到了各个分片上了。 我们来研究下分片是如何工作的。</p>
+<p><strong>物理设计 ：节点和分片 如何工作</strong></p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210222124657.png" alt="img"></p>
+<p>一个集群至少有一个节点，而一个节点就是一个elasricsearch进程，节点可以有多个索引默认的，如果 你创建索引，那么索引将会有个5个分片 ( primary shard ,又称主分片 ) 构成的，每一个主分片会有一个 副本 ( replica shard ,又称复制分片 )</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210222124710.png" alt="img"></p>
+<p>上图是一个有3个节点的集群，可以看到主分片和对应的复制分片都不会在同一个节点内，这样有利于某 个节点挂掉 了，数据也不至于丢失。 实际上，一个分片是一个Lucene索引，一个包含倒排索引的文件 目录，倒排索引的结构使 得elasticsearch在不扫描全部文档的情况下，就能告诉你哪些文档包含特定的 关键字。 不过，等等，倒排索引是什 么鬼?</p>
+<h3 id="倒排索引">倒排索引</h3>
+<p>elasticsearch使用的是一种称为倒排索引的结构，采用Lucene倒排索作为底层。这种结构适用于快速的全文搜索， 一个索引由文档中所有不重复的列表构成，对于每一个词，都有一个包含它的文档列表。 例如，现在有两个文档， 每个文档包含如下内容：</p>
+<pre class="line-numbers language-none"><code class="language-none">Study every day, good good up to forever # 文档1包含的内容
+To forever, study every day, good good up # 文档2包含的内容<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>为了创建倒排索引，我们首先要将每个文档拆分成独立的词(或称为词条或者tokens)，然后创建一个包 含所有不重 复的词条的排序列表，然后列出每个词条出现在哪个文档</p>
+<p>现在，我们试图搜索 to forever，只需要查看包含每个词条的文档</p>
+<table>
+<thead>
+<tr>
+<th>term</th>
+<th>doc_1</th>
+<th>doc_2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>to</td>
+<td>√</td>
+<td>×</td>
+</tr>
+<tr>
+<td>forever</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr>
+<td>total</td>
+<td>2</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<p>两个文档都匹配，但是第一个文档比第二个匹配程度更高。如果没有别的条件，现在，这两个包含关键 字的文档都将返回。</p>
+<p>再来看一个示例，比如我们通过博客标签来搜索博客文章。那么倒排索引列表就是这样的一个结构 :</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210222124732.png" alt="img"></p>
+<p>如果要搜索含有 python 标签的文章，那相对于查找所有原始数据而言，查找倒排索引后的数据将会快 的多。只需要 查看标签这一栏，然后获取相关的文章ID即可。完全过滤掉无关的所有数据，提高效率！</p>
+<h3 id="elasticsearch的索引和Lucene的索引对比">elasticsearch的索引和Lucene的索引对比</h3>
+<p>在elasticsearch中， 索引 （库）这个词被频繁使用，这就是术语的使用。 在elasticsearch中，索引被 分为多个分片，每份 分片是一个Lucene的索引。所以一个elasticsearch索引是由多个Lucene索引组成 的。别问为什么，谁让elasticsearch使用Lucene作为底层呢! 如无特指，说起索引都是指elasticsearch 的索引。</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/729016645.html">https://blog.mailjob.net/posts/729016645.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A6%82%E5%BF%B5%E7%90%86%E8%A7%A3"><span class="toc-text">概念理解</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E5%91%BD%E5%90%8D"><span class="toc-text">基本命名</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%89%A9%E7%90%86%E8%AE%BE%E8%AE%A1"><span class="toc-text">物理设计</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%BB%E8%BE%91%E8%AE%BE%E8%AE%A1"><span class="toc-text">逻辑设计</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ES%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E7%90%86%E8%A7%A3"><span class="toc-text">ES基本概念理解</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%87%E6%A1%A3"><span class="toc-text">文档</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B4%A2%E5%BC%95"><span class="toc-text">索引</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95"><span class="toc-text">倒排索引</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#elasticsearch%E7%9A%84%E7%B4%A2%E5%BC%95%E5%92%8CLucene%E7%9A%84%E7%B4%A2%E5%BC%95%E5%AF%B9%E6%AF%94"><span class="toc-text">elasticsearch的索引和Lucene的索引对比</span></a></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

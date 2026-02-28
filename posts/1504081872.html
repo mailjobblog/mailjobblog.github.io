@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>tcp粘包问题解决 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="粘包形成原因 什么是 TCP 粘包？ TCP 粘包是指发送方发送的若干包数据 到 接收方接收时粘成一包，从接收缓冲区看，后一包数据的头紧接着前一包数据的尾。 TCP 出现粘包的原因？ 发送方： 发送方需要等缓冲区满才发送出去，造成粘包 接收方： 接收方不及时接收缓冲区的包，造成多个包接收  粘包代码演示 tcpServer.php &lt;?php echo swoole_get_local_ip">
+<meta property="og:type" content="article">
+<meta property="og:title" content="tcp粘包问题解决">
+<meta property="og:url" content="https://blog.mailjob.net/posts/1504081872.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="粘包形成原因 什么是 TCP 粘包？ TCP 粘包是指发送方发送的若干包数据 到 接收方接收时粘成一包，从接收缓冲区看，后一包数据的头紧接着前一包数据的尾。 TCP 出现粘包的原因？ 发送方： 发送方需要等缓冲区满才发送出去，造成粘包 接收方： 接收方不及时接收缓冲区的包，造成多个包接收  粘包代码演示 tcpServer.php &lt;?php echo swoole_get_local_ip">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210327235557.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210328000341.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210328001323.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210328004108.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210328003329.png">
+<meta property="article:published_time" content="2021-03-27T15:51:52.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.984Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="swoole">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/oss.github/20210327235557.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            tcp粘包问题解决
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/1504081872.html" class="article-date">
+	  <time datetime="2021-03-27T15:51:52.000Z" itemprop="datePublished">2021-03-27</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/php/">php</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/swoole/" rel="tag">swoole</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/1504081872.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 989(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 4(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="粘包形成原因">粘包形成原因</h2>
+<h4 id="什么是-TCP-粘包？">什么是 TCP 粘包？</h4>
+<p>TCP 粘包是指发送方发送的若干包数据 到 接收方接收时粘成一包，从接收缓冲区看，后一包数据的头紧接着前一包数据的尾。</p>
+<h4 id="TCP-出现粘包的原因？">TCP 出现粘包的原因？</h4>
+<p><strong>发送方</strong>：<br>
+发送方需要等缓冲区满才发送出去，造成粘包</p>
+<p><strong>接收方</strong>：<br>
+接收方不及时接收缓冲区的包，造成多个包接收</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210327235557.png" alt="image-20210327235545861"></p>
+<h2 id="粘包代码演示">粘包代码演示</h2>
+<p><strong>tcpServer.php</strong></p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token keyword">echo</span> <span class="token function">swoole_get_local_ip</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'eth0'</span><span class="token punctuation">]</span><span class="token operator">.</span><span class="token string double-quoted-string">":9503\n"</span><span class="token punctuation">;</span>
+<span class="token variable">$server</span> <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name class-name-fully-qualified">Swoole<span class="token punctuation">\</span>Server</span><span class="token punctuation">(</span><span class="token string double-quoted-string">"0.0.0.0"</span><span class="token punctuation">,</span> <span class="token number">9503</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">on</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'connect'</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token variable">$server</span><span class="token punctuation">,</span> <span class="token variable">$fd</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+   <span class="token keyword">echo</span> <span class="token string double-quoted-string">"connection open: <span class="token interpolation"><span class="token punctuation">&#123;</span><span class="token variable">$fd</span><span class="token punctuation">&#125;</span></span>\n"</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">on</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'receive'</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token variable">$server</span><span class="token punctuation">,</span> <span class="token variable">$fd</span><span class="token punctuation">,</span> <span class="token variable">$reactor_id</span><span class="token punctuation">,</span> <span class="token variable">$data</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+   <span class="token keyword">echo</span> <span class="token string double-quoted-string">"接收到信息"</span><span class="token operator">.</span><span class="token variable">$data</span><span class="token operator">.</span><span class="token string double-quoted-string">" \n"</span><span class="token punctuation">;</span>
+    <span class="token variable">$server</span><span class="token operator">-></span><span class="token function">send</span><span class="token punctuation">(</span><span class="token variable">$fd</span><span class="token punctuation">,</span> <span class="token string double-quoted-string">"swoole: <span class="token interpolation"><span class="token punctuation">&#123;</span><span class="token variable">$data</span><span class="token punctuation">&#125;</span></span>"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">on</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'close'</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token variable">$server</span><span class="token punctuation">,</span> <span class="token variable">$fd</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+   <span class="token keyword">echo</span> <span class="token string double-quoted-string">"connection close: <span class="token interpolation"><span class="token punctuation">&#123;</span><span class="token variable">$fd</span><span class="token punctuation">&#125;</span></span>\n"</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>tcpClient.php</strong></p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token variable">$client</span> <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name class-name-fully-qualified">Swoole<span class="token punctuation">\</span>Client</span><span class="token punctuation">(</span><span class="token constant">SWOOLE_SOCK_TCP</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token variable">$client</span><span class="token operator">-></span><span class="token function">connect</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'127.0.0.1'</span><span class="token punctuation">,</span> <span class="token number">9503</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">exit</span><span class="token punctuation">(</span><span class="token string double-quoted-string">"connect failed. Error: <span class="token interpolation"><span class="token punctuation">&#123;</span><span class="token variable">$client</span><span class="token operator">-></span><span class="token property">errCode</span><span class="token punctuation">&#125;</span></span>\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">for</span><span class="token punctuation">(</span><span class="token variable">$i</span><span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span> <span class="token variable">$i</span><span class="token operator">&lt;</span><span class="token number">50</span><span class="token punctuation">;</span> <span class="token variable">$i</span><span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token variable">$client</span><span class="token operator">-></span><span class="token function">send</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'hello_'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token keyword">echo</span> <span class="token variable">$client</span><span class="token operator">-></span><span class="token function">recv</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><img src="http://img.github.mailjob.net/oss.github/20210328000341.png" alt="image-20210328000339499"></p>
+<p><strong>通过截图，可以看出</strong>：</p>
+<p><code>client</code> 每次 <code>send</code> 一个 <code>hello_</code> 字符串以后，<code>server</code> 接收到的字符串粘连在了一起</p>
+<h2 id="解决方案">解决方案</h2>
+<p><strong>1、特殊字符</strong></p>
+<p>根据客户端与服务端相互约定的特殊的符号，对接收的数据进行分割处理</p>
+<p><strong>2、固定包头+包体协议(主流)</strong></p>
+<p>通过与在数据传输之后会在tcp的数据包中携带上数据的长度，然后呢服务端就可以根据这个长度，对于数据进行截取</p>
+<h3 id="特殊字符">特殊字符</h3>
+<h4 id="方案说明">方案说明</h4>
+<p><strong>EOF 结束协议</strong></p>
+<p>通过约定结束符，来确定包数据是否发送完毕。<br>
+开启open_eof_check=true,并用package_eof来设置一个完整数据结尾字符，同时设置自动拆分open_eof_split</p>
+<p><strong>注意</strong>：<br>
+1、要保证业务数据里不能出现package_eof设置的字符，否则将导致数据错误了。<br>
+2、可以手动拆包，去掉open_eof_split,自行 explode(“\r\n”, $data),然后循环发送</p>
+<h4 id="参考文献">参考文献</h4>
+<p>swoole 文档：<a target="_blank" rel="noopener" href="https://wiki.swoole.com/#/server/setting?id=open_eof_check">https://wiki.swoole.com/#/server/setting?id=open_eof_check</a></p>
+<h4 id="代码演示">代码演示</h4>
+<p><strong>tcpServer.php</strong></p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token comment">// var_dump(swoole_get_local_ip());die;</span>
+<span class="token keyword">echo</span> <span class="token function">swoole_get_local_ip</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'eth0'</span><span class="token punctuation">]</span><span class="token operator">.</span><span class="token string double-quoted-string">":9503\n"</span><span class="token punctuation">;</span>
+<span class="token variable">$server</span> <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name class-name-fully-qualified">Swoole<span class="token punctuation">\</span>Server</span><span class="token punctuation">(</span><span class="token string double-quoted-string">"0.0.0.0"</span><span class="token punctuation">,</span> <span class="token number">9503</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment"># swoole 拆包</span>
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">set</span><span class="token punctuation">(</span><span class="token punctuation">[</span>
+   <span class="token string single-quoted-string">'open_eof_check'</span> <span class="token operator">=></span> <span class="token constant boolean">true</span><span class="token punctuation">,</span>   <span class="token comment">//打开EOF检测</span>
+   <span class="token string single-quoted-string">'package_eof'</span>    <span class="token operator">=></span> <span class="token string double-quoted-string">"\r\n"</span><span class="token punctuation">,</span> <span class="token comment">//设置EOF</span>
+<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">on</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'connect'</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token variable">$server</span><span class="token punctuation">,</span> <span class="token variable">$fd</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+   <span class="token keyword">echo</span> <span class="token string double-quoted-string">"connection open: <span class="token interpolation"><span class="token punctuation">&#123;</span><span class="token variable">$fd</span><span class="token punctuation">&#125;</span></span>\n"</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">on</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'receive'</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token variable">$server</span><span class="token punctuation">,</span> <span class="token variable">$fd</span><span class="token punctuation">,</span> <span class="token variable">$reactor_id</span><span class="token punctuation">,</span> <span class="token variable">$data</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+   <span class="token keyword">echo</span> <span class="token string double-quoted-string">"接收到信息"</span><span class="token operator">.</span><span class="token variable">$data</span><span class="token operator">.</span><span class="token string double-quoted-string">" \n"</span><span class="token punctuation">;</span>
+    <span class="token variable">$server</span><span class="token operator">-></span><span class="token function">send</span><span class="token punctuation">(</span><span class="token variable">$fd</span><span class="token punctuation">,</span> <span class="token string double-quoted-string">"swoole: <span class="token interpolation"><span class="token punctuation">&#123;</span><span class="token variable">$data</span><span class="token punctuation">&#125;</span></span>"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    
+    <span class="token comment">// 自己手动拆包</span>
+    <span class="token comment">// var_dump(explode("\r\n", $data));</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">on</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'close'</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token variable">$server</span><span class="token punctuation">,</span> <span class="token variable">$fd</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+   <span class="token keyword">echo</span> <span class="token string double-quoted-string">"connection close: <span class="token interpolation"><span class="token punctuation">&#123;</span><span class="token variable">$fd</span><span class="token punctuation">&#125;</span></span>\n"</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>tcpClient.php</strong></p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token variable">$client</span> <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name class-name-fully-qualified">Swoole<span class="token punctuation">\</span>Client</span><span class="token punctuation">(</span><span class="token constant">SWOOLE_SOCK_TCP</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token variable">$client</span><span class="token operator">-></span><span class="token function">connect</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'127.0.0.1'</span><span class="token punctuation">,</span> <span class="token number">9503</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">exit</span><span class="token punctuation">(</span><span class="token string double-quoted-string">"connect failed. Error: <span class="token interpolation"><span class="token punctuation">&#123;</span><span class="token variable">$client</span><span class="token operator">-></span><span class="token property">errCode</span><span class="token punctuation">&#125;</span></span>\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token variable">$end</span> <span class="token operator">=</span> <span class="token string double-quoted-string">"\r\n"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">for</span><span class="token punctuation">(</span><span class="token variable">$i</span><span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span> <span class="token variable">$i</span><span class="token operator">&lt;</span><span class="token number">50</span><span class="token punctuation">;</span> <span class="token variable">$i</span><span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token variable">$client</span><span class="token operator">-></span><span class="token function">send</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'hello_'</span><span class="token operator">.</span><span class="token variable">$end</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token keyword">echo</span> <span class="token variable">$client</span><span class="token operator">-></span><span class="token function">recv</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><img src="http://img.github.mailjob.net/oss.github/20210328001323.png" alt="image-20210328001322482"></p>
+<h3 id="固定包头-包体协议">固定包头+包体协议</h3>
+<h4 id="方案说明-2">方案说明</h4>
+<p>原理是通过约定数据流的前几个字节来表示一个完整的数据有多长，从第一个数据到达之后，先通过读取固定的几个字节，解出数据包的长度，然后按这个长度继续取出后面的数据，依次循环。</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210328004108.png" alt="image-20210328004101484"></p>
+<h4 id="参考文献-2">参考文献</h4>
+<p>swoole相关配置文档：<a target="_blank" rel="noopener" href="https://wiki.swoole.com/#/server/setting?id=open_length_check">https://wiki.swoole.com/#/server/setting?id=open_length_check</a></p>
+<p>php的pack函数文档：<a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/function.pack.php">https://www.php.net/manual/zh/function.pack.php</a></p>
+<h4 id="代码演示-2">代码演示</h4>
+<p><strong>tcpServer.php</strong></p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token keyword">echo</span> <span class="token function">swoole_get_local_ip</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'eth0'</span><span class="token punctuation">]</span><span class="token operator">.</span><span class="token string double-quoted-string">":9503\n"</span><span class="token punctuation">;</span>
+<span class="token variable">$server</span> <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name class-name-fully-qualified">Swoole<span class="token punctuation">\</span>Server</span><span class="token punctuation">(</span><span class="token string double-quoted-string">"0.0.0.0"</span><span class="token punctuation">,</span> <span class="token number">9503</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">set</span><span class="token punctuation">(</span><span class="token punctuation">[</span>
+  <span class="token string single-quoted-string">'open_length_check'</span>     <span class="token operator">=></span> <span class="token constant boolean">true</span><span class="token punctuation">,</span>
+  <span class="token string single-quoted-string">'package_max_length'</span>    <span class="token operator">=></span> <span class="token number">2</span> <span class="token operator">*</span> <span class="token number">1024</span> <span class="token operator">*</span> <span class="token number">1024</span><span class="token punctuation">,</span>
+  <span class="token string single-quoted-string">'package_length_type'</span>   <span class="token operator">=></span> <span class="token string single-quoted-string">'n'</span><span class="token punctuation">,</span>
+  <span class="token string single-quoted-string">'package_length_offset'</span> <span class="token operator">=></span> <span class="token number">0</span><span class="token punctuation">,</span>
+  <span class="token string single-quoted-string">'package_body_offset'</span>   <span class="token operator">=></span> <span class="token number">2</span> 
+<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">on</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'connect'</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token variable">$server</span><span class="token punctuation">,</span> <span class="token variable">$fd</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+   <span class="token keyword">echo</span> <span class="token string double-quoted-string">"connection open: <span class="token interpolation"><span class="token punctuation">&#123;</span><span class="token variable">$fd</span><span class="token punctuation">&#125;</span></span>\n"</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">on</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'receive'</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token variable">$server</span><span class="token punctuation">,</span> <span class="token variable">$fd</span><span class="token punctuation">,</span> <span class="token variable">$reactor_id</span><span class="token punctuation">,</span> <span class="token variable">$data</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+   <span class="token keyword">echo</span> <span class="token string double-quoted-string">"接收到信息"</span><span class="token operator">.</span><span class="token variable">$data</span><span class="token operator">.</span><span class="token string double-quoted-string">" \n"</span><span class="token punctuation">;</span>
+    <span class="token variable">$server</span><span class="token operator">-></span><span class="token function">send</span><span class="token punctuation">(</span><span class="token variable">$fd</span><span class="token punctuation">,</span> <span class="token string double-quoted-string">"swoole: <span class="token interpolation"><span class="token punctuation">&#123;</span><span class="token variable">$data</span><span class="token punctuation">&#125;</span></span>"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">on</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'close'</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token variable">$server</span><span class="token punctuation">,</span> <span class="token variable">$fd</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+   <span class="token keyword">echo</span> <span class="token string double-quoted-string">"connection close: <span class="token interpolation"><span class="token punctuation">&#123;</span><span class="token variable">$fd</span><span class="token punctuation">&#125;</span></span>\n"</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+
+<span class="token comment">## 用php方法解包</span>
+<span class="token comment">// $server->on('receive', function ($server, $fd, $reactor_id, $data) &#123;</span>
+<span class="token comment">//     $fooLen = unpack("n", substr($data, 0, 2))[1];</span>
+<span class="token comment">//     // 得到真正的数据</span>
+<span class="token comment">//     $context = substr($data, 2, $fooLen);</span>
+<span class="token comment">//     var_dump($context);</span>
+<span class="token comment">//     $server->send($fd, "Swoole: ok");</span>
+<span class="token comment">//  &#125;);</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>tcpClient.php</strong></p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token variable">$client</span> <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name class-name-fully-qualified">Swoole<span class="token punctuation">\</span>Client</span><span class="token punctuation">(</span><span class="token constant">SWOOLE_SOCK_TCP</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token variable">$client</span><span class="token operator">-></span><span class="token function">connect</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'127.0.0.1'</span><span class="token punctuation">,</span> <span class="token number">9503</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">exit</span><span class="token punctuation">(</span><span class="token string double-quoted-string">"connect failed. Error: <span class="token interpolation"><span class="token punctuation">&#123;</span><span class="token variable">$client</span><span class="token operator">-></span><span class="token property">errCode</span><span class="token punctuation">&#125;</span></span>\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">for</span><span class="token punctuation">(</span><span class="token variable">$i</span><span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span> <span class="token variable">$i</span><span class="token operator">&lt;</span><span class="token number">50</span><span class="token punctuation">;</span> <span class="token variable">$i</span><span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token variable">$context</span> <span class="token operator">=</span> <span class="token string single-quoted-string">'123'</span><span class="token punctuation">;</span>
+    <span class="token comment">// 利用pack打包长度</span>
+    <span class="token variable">$len</span> <span class="token operator">=</span> <span class="token function">pack</span><span class="token punctuation">(</span><span class="token string double-quoted-string">"n"</span><span class="token punctuation">,</span> <span class="token function">strlen</span><span class="token punctuation">(</span><span class="token variable">$context</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// 组包</span>
+    <span class="token variable">$send</span> <span class="token operator">=</span> <span class="token variable">$len</span> <span class="token operator">.</span> <span class="token variable">$context</span><span class="token punctuation">;</span>
+    <span class="token comment">// 发送</span>
+    <span class="token variable">$client</span><span class="token operator">-></span><span class="token function">send</span><span class="token punctuation">(</span><span class="token variable">$send</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+<span class="token punctuation">&#125;</span>
+<span class="token keyword">echo</span> <span class="token variable">$client</span><span class="token operator">-></span><span class="token function">recv</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><img src="http://img.github.mailjob.net/oss.github/20210328003329.png" alt="image-20210328003318912"></p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/1504081872.html">https://blog.mailjob.net/posts/1504081872.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%B2%98%E5%8C%85%E5%BD%A2%E6%88%90%E5%8E%9F%E5%9B%A0"><span class="toc-text">粘包形成原因</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-TCP-%E7%B2%98%E5%8C%85%EF%BC%9F"><span class="toc-text">什么是 TCP 粘包？</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#TCP-%E5%87%BA%E7%8E%B0%E7%B2%98%E5%8C%85%E7%9A%84%E5%8E%9F%E5%9B%A0%EF%BC%9F"><span class="toc-text">TCP 出现粘包的原因？</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%B2%98%E5%8C%85%E4%BB%A3%E7%A0%81%E6%BC%94%E7%A4%BA"><span class="toc-text">粘包代码演示</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="toc-text">解决方案</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%89%B9%E6%AE%8A%E5%AD%97%E7%AC%A6"><span class="toc-text">特殊字符</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%96%B9%E6%A1%88%E8%AF%B4%E6%98%8E"><span class="toc-text">方案说明</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E6%BC%94%E7%A4%BA"><span class="toc-text">代码演示</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%BA%E5%AE%9A%E5%8C%85%E5%A4%B4-%E5%8C%85%E4%BD%93%E5%8D%8F%E8%AE%AE"><span class="toc-text">固定包头+包体协议</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%96%B9%E6%A1%88%E8%AF%B4%E6%98%8E-2"><span class="toc-text">方案说明</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE-2"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E6%BC%94%E7%A4%BA-2"><span class="toc-text">代码演示</span></a></li></ol></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

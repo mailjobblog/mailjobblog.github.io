@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Redis集群哈希槽数据分片 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="相关链接 CRC16算法源码：https:&#x2F;&#x2F;github.com&#x2F;redis&#x2F;redis&#x2F;blob&#x2F;6.0&#x2F;src&#x2F;crc16.c 一致性hash算法原理：https:&#x2F;&#x2F;www.cnblogs.com&#x2F;lpfuture&#x2F;p&#x2F;5796398.html 概念理解 Redis 集群没有使用一致性hash, 而是引入了哈希槽的概念。 Redis 集群有16384个哈希槽,每个key通过CRC16校验后">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis集群哈希槽数据分片">
+<meta property="og:url" content="https://blog.mailjob.net/posts/2893278639.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="相关链接 CRC16算法源码：https:&#x2F;&#x2F;github.com&#x2F;redis&#x2F;redis&#x2F;blob&#x2F;6.0&#x2F;src&#x2F;crc16.c 一致性hash算法原理：https:&#x2F;&#x2F;www.cnblogs.com&#x2F;lpfuture&#x2F;p&#x2F;5796398.html 概念理解 Redis 集群没有使用一致性hash, 而是引入了哈希槽的概念。 Redis 集群有16384个哈希槽,每个key通过CRC16校验后">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210208231809.png">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210208231940.png">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210208232054.png">
+<meta property="article:published_time" content="2021-02-08T14:43:02.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.987Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="redis">
+<meta property="article:tag" content="高可用">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210208231809.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Redis集群哈希槽数据分片
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/2893278639.html" class="article-date">
+	  <time datetime="2021-02-08T14:43:02.000Z" itemprop="datePublished">2021-02-08</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/redis/" rel="tag">redis</a>, <a class="article-tag-none-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/2893278639.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 993(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 3(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="相关链接">相关链接</h2>
+<p>CRC16算法源码：<a target="_blank" rel="noopener" href="https://github.com/redis/redis/blob/6.0/src/crc16.c">https://github.com/redis/redis/blob/6.0/src/crc16.c</a></p>
+<p>一致性hash算法原理：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/lpfuture/p/5796398.html">https://www.cnblogs.com/lpfuture/p/5796398.html</a></p>
+<h2 id="概念理解">概念理解</h2>
+<p>Redis 集群没有使用一致性hash, 而是引入了哈希槽的概念。</p>
+<p>Redis 集群有16384个哈希槽,每个key通过CRC16校验后对16384取模来决定放置哪个槽.</p>
+<p>集群的每个节点负责一部分hash槽。这种结构很容易添加或者删除节点，并且无论是添加删除或者修改某一个节点，都不会造成集群不可用的状态。</p>
+<blockquote>
+<p>使用哈希槽的好处就在于可以方便的添加或移除节点。</p>
+<p>当需要增加节点时，只需要把其他节点的某些哈希槽挪到新节点就可以了；</p>
+<p>当需要移除节点时，只需要把移除节点上的哈希槽挪到其他节点就行了；</p>
+<p>在这一点上，我们以后新增或移除节点的时候不用先停掉所有的 redis 服务</p>
+</blockquote>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210208231809.png" alt="img"></p>
+<p>当前集群有3个节点,槽默认是平均分的:<br>
+节点 A （6381）包含 0 到 5499号哈希槽.<br>
+节点 B （6382）包含5500 到 10999 号哈希槽.<br>
+节点 C （6383）包含11000 到 16383号哈希槽.</p>
+<h2 id="数据迁移">数据迁移</h2>
+<p>数据迁移可以理解为slot(槽)和key的迁移，这个功能很重要，极大地方便了集群做线性扩展，以及实现平滑的扩容或缩容。</p>
+<p>现在要将Master A节点中编号为1、2、3的slot迁移到Master B节点中，在slot迁移的中间状态下，slot 1、2、3在Master A节点的状态表现为MIGRATING（迁移）,在Master B节点的状态表现为IMPORTING（入口）。</p>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210208231940.png" alt="img"></p>
+<p>此时并不刷新node的映射关系</p>
+<p>IMPORTING状态</p>
+<p>被迁移slot 在目标Master B节点中出现的一种状态，准备迁移slot从Mater A到Master B的时候，被迁移slot的状态首先变为IMPORTING状态。</p>
+<h3 id="键空间迁移">键空间迁移</h3>
+<p>键空间迁移是指当满足了slot迁移前提的情况下，通过相关命令将slot 1、2、3中的键空间从Master A节点转移到Master B节点。此时刷新node的映射关系。</p>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210208232054.png" alt="img"></p>
+<p>复制&amp;高可用：集群的节点内置了复制和高可用特性。</p>
+<h3 id="特点：">特点：</h3>
+<p>1、节点自动发现<br>
+2、slave-&gt;master 选举,集群容错<br>
+3、Hot resharding:在线分片<br>
+4、基于配置(nodes-port.conf)的集群管理<br>
+5、客户端与redis节点直连、不需要中间proxy层.<br>
+6、所有的redis节点彼此互联(PING-PONG机制),内部使用二进制协议优化传输速度和带宽.</p>
+<h2 id="相关问题">相关问题</h2>
+<p><strong>1、用了哈希槽的概念，而没有用一致性哈希算法，不都是哈希么？这样做的原因是为什么呢？</strong><br>
+Redis Cluster是自己做的crc16的简单hash算法，没有用一致性hash。Redis的作者认为它的crc16(key) mod 16384的效果已经不错了，虽然没有一致性hash灵活，但实现很简单，节点增删时处理起来也很方便。</p>
+<p><strong>2、为了动态增删节点的时候，不至于丢失数据么？</strong><br>
+节点增删时不丢失数据和hash算法没什么关系，不丢失数据要求的是一份数据有多个副本。</p>
+<p><strong>3、还有集群总共有2的14次方，16384个哈希槽，那么每一个哈希槽中存的key 和 value是什么？</strong><br>
+当你往Redis Cluster中加入一个Key时，会根据crc16(key) mod 16384计算这个key应该分布到哪个hash slot中，一个hash slot中会有很多key和value。你可以理解成表的分区，使用单节点时的redis时只有一个表，所有的key都放在这个表里；改用Redis Cluster以后会自动为你生成16384个分区表，你insert数据时会根据上面的简单算法来决定你的key应该存在哪个分区，每个分区里有很多key。</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/2893278639.html">https://blog.mailjob.net/posts/2893278639.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E9%93%BE%E6%8E%A5"><span class="toc-text">相关链接</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A6%82%E5%BF%B5%E7%90%86%E8%A7%A3"><span class="toc-text">概念理解</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E8%BF%81%E7%A7%BB"><span class="toc-text">数据迁移</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%94%AE%E7%A9%BA%E9%97%B4%E8%BF%81%E7%A7%BB"><span class="toc-text">键空间迁移</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%89%B9%E7%82%B9%EF%BC%9A"><span class="toc-text">特点：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E9%97%AE%E9%A2%98"><span class="toc-text">相关问题</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

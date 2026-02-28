@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Docker安装php扩展常见的几种方式总结 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="常见安装方式  通过pecl方式安装 通过php 容器中自带的几个特殊命令来安装，这些特殊命令可以在Dockerfile中的RUN命令中进行使用。 下载安装扩展，或者复制进容器安装扩展  通过pecl方式安装 pecl软件地址：http:&#x2F;&#x2F;pecl.php.net&#x2F; 因为一些扩展并不包含在 PHP 源码文件中，所有需要使用 PECL（PHP 的扩展库仓库，通过 PEAR 打包）。用 pecl i">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Docker安装php扩展常见的几种方式总结">
+<meta property="og:url" content="https://blog.mailjob.net/posts/3712804477.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="常见安装方式  通过pecl方式安装 通过php 容器中自带的几个特殊命令来安装，这些特殊命令可以在Dockerfile中的RUN命令中进行使用。 下载安装扩展，或者复制进容器安装扩展  通过pecl方式安装 pecl软件地址：http:&#x2F;&#x2F;pecl.php.net&#x2F; 因为一些扩展并不包含在 PHP 源码文件中，所有需要使用 PECL（PHP 的扩展库仓库，通过 PEAR 打包）。用 pecl i">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-05-19T01:57:29.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.978Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="docker">
+<meta property="article:tag" content="php">
+<meta name="twitter:card" content="summary">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Docker安装php扩展常见的几种方式总结
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3712804477.html" class="article-date">
+	  <time datetime="2021-05-19T01:57:29.000Z" itemprop="datePublished">2021-05-19</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/docker/">docker</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/docker/" rel="tag">docker</a>, <a class="article-tag-none-link" href="/tags/php/" rel="tag">php</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/3712804477.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.7k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 8(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="常见安装方式">常见安装方式</h2>
+<ol>
+<li>通过pecl方式安装</li>
+<li>通过php 容器中自带的几个特殊命令来安装，这些特殊命令可以在Dockerfile中的RUN命令中进行使用。</li>
+<li>下载安装扩展，或者复制进容器安装扩展</li>
+</ol>
+<h2 id="通过pecl方式安装">通过pecl方式安装</h2>
+<p><strong>pecl软件地址</strong>：<a target="_blank" rel="noopener" href="http://pecl.php.net/">http://pecl.php.net/</a></p>
+<p>因为一些扩展并不包含在 PHP 源码文件中，所有需要使用 PECL（PHP 的扩展库仓库，通过 PEAR 打包）。用 pecl install 安装扩展，然后再用官方提供的 docker-php-ext-enable 快捷脚本来启用扩展，如下示例</p>
+<pre class="line-numbers language-docker" data-language="docker"><code class="language-docker"><span class="token instruction"><span class="token keyword">FROM</span> php:7.1-fpm</span>
+<span class="token instruction"><span class="token keyword">RUN</span> apt-get update <span class="token operator">\</span>
+	<span class="token comment"># 手动安装依赖</span>
+	&amp;&amp; apt-get install -y libmemcached-dev zlib1g-dev <span class="token operator">\</span>
+	<span class="token comment"># 安装需要的扩展</span>
+   &amp;&amp; pecl install memcached-2.2.0 <span class="token operator">\</span>
+   <span class="token comment"># 启用扩展</span>
+   &amp;&amp; docker-php-ext-enable memcached</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="通过几个特殊命令安装">通过几个特殊命令安装</h2>
+<ul>
+<li>docker-php-source</li>
+<li>docker-php-ext-install</li>
+<li>docker-php-ext-enable</li>
+<li>docker-php-ext-configure</li>
+</ul>
+<h3 id="演示这三个命令的作用">演示这三个命令的作用</h3>
+<p>都是在PHP容器中进行演示的，PHP容器启动太简单，不作过多介绍</p>
+<h4 id="docker-php-source">docker-php-source</h4>
+<p>此命令，实际上就是在PHP容器中创建一个/usr/src/php的目录，里面放了一些自带的文件而已。我们就把它当作一个从互联网中下载下来的PHP扩展源码的存放目录即可。事实上，所有PHP扩展源码扩展存放的路径： /usr/src/php/ext 里面。</p>
+<p><strong>格式</strong>：</p>
+<pre class="line-numbers language-docker" data-language="docker"><code class="language-docker">docker-php-source extract | delete<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>参数说明</strong>：<br>
+* extract : 创建并初始化 /usr/src/php目录<br>
+* delete : 删除 /usr/src/php目录</p>
+<p><strong>案例</strong>：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">root@803cbcf702a4:/usr/src<span class="token comment"># ls -l</span>
+total <span class="token number">11896</span> <span class="token comment">#此时，并没有php目录</span>
+-rw-r--r-- <span class="token number">1</span> root root <span class="token number">12176404</span> Jun <span class="token number">28</span> 03:23 php.tar.xz
+-rw-r--r-- <span class="token number">1</span> root root      <span class="token number">801</span> Jun <span class="token number">28</span> 03:23 php.tar.xz.asc
+
+root@803cbcf702a4:/usr/src<span class="token comment"># docker-php-source extract</span>
+root@803cbcf702a4:/usr/src<span class="token comment"># ls -l</span>
+total <span class="token number">11900</span> <span class="token comment">#此时，生产了php目录，里面还有一些文件，由于篇幅问题，就不进去查看了</span>
+drwxr-xr-x <span class="token number">14</span> root root     <span class="token number">4096</span> Aug  <span class="token number">9</span> 09:01 php
+-rw-r--r--  <span class="token number">1</span> root root <span class="token number">12176404</span> Jun <span class="token number">28</span> 03:23 php.tar.xz
+-rw-r--r--  <span class="token number">1</span> root root      <span class="token number">801</span> Jun <span class="token number">28</span> 03:23 php.tar.xz.asc
+
+root@803cbcf702a4:/usr/src<span class="token comment"># docker-php-source delete</span>
+root@803cbcf702a4:/usr/src<span class="token comment"># ls -l</span>
+total <span class="token number">11896</span> <span class="token comment">#此时，将已创建 php 目录给删除了</span>
+-rw-r--r-- <span class="token number">1</span> root root <span class="token number">12176404</span> Jun <span class="token number">28</span> 03:23 php.tar.xz
+-rw-r--r-- <span class="token number">1</span> root root      <span class="token number">801</span> Jun <span class="token number">28</span> 03:23 php.tar.xz.asc
+
+root@803cbcf702a4:/usr/src<span class="token comment">#</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="docker-php-ext-enable">docker-php-ext-enable</h4>
+<p>这个命令，就是用来启动 <strong>PHP扩展</strong> 的。我们使用pecl安装PHP扩展的时候，默认是没有启动这个扩展的，如果想要使用这个扩展必须要在php.ini这个配置文件中去配置一下才能使用这个PHP扩展。而 docker-php-ext-enable 这个命令则是自动给我们来启动PHP扩展的，不需要你去php.ini这个配置文件中去配置。<br>
+<strong>案例</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 查看现有可以启动的扩展</span>
+root@517b9c67507a:/usr/local/etc/php<span class="token comment"># ls /usr/local/lib/php/extensions/no-debug-non-zts-20170718/</span>
+opcache.so  redis.so  sodium.so
+root@517b9c67507a:/usr/local/etc/php<span class="token comment">#</span>
+
+<span class="token comment"># 查看redis 扩展是否可以启动</span>
+root@517b9c67507a:/usr/local/etc/php<span class="token comment"># php -m | grep redis</span>
+root@517b9c67507a:/usr/local/etc/php<span class="token comment">#</span>
+
+<span class="token comment"># 启动 redis 扩展</span>
+root@517b9c67507a:/usr/local/etc/php<span class="token comment"># docker-php-ext-enable redis</span>
+<span class="token comment"># 启动 成功</span>
+root@517b9c67507a:/usr/local/etc/php<span class="token comment"># php -m | grep redis</span>
+redis
+root@517b9c67507a:/usr/local/etc/php<span class="token comment">#</span>
+
+<span class="token comment">#说明，php容器中默认是没有php.ini配置文件的,加载原理如下所示</span>
+
+root@517b9c67507a:/usr/local/etc/php<span class="token comment"># php -i | grep -A 5 php.ini</span>
+Configuration File <span class="token punctuation">(</span>php.ini<span class="token punctuation">)</span> Path <span class="token operator">=</span><span class="token operator">></span> /usr/local/etc/php
+Loaded Configuration File <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">(</span>none<span class="token punctuation">)</span>
+<span class="token comment"># 核心是 /usr/local/etc/php/conf.d 目录下的扩展配置文件</span>
+Scan this <span class="token function">dir</span> <span class="token keyword">for</span> additional .ini files <span class="token operator">=</span><span class="token operator">></span> /usr/local/etc/php/conf.d
+Additional .ini files parsed <span class="token operator">=</span><span class="token operator">></span> /usr/local/etc/php/conf.d/docker-php-ext-redis.ini,
+/usr/local/etc/php/conf.d/docker-php-ext-sodium.ini
+
+root@517b9c67507a:/usr/local/etc/php<span class="token comment">#</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="docker-php-ext-install">docker-php-ext-install</h4>
+<p>这个命令，是用来安装并启动<strong>PHP扩展</strong>的。<br>
+命令格式：<br>
+docker-php-ext-install “源码包目录名”</p>
+<p>注意点：</p>
+<ul>
+<li>“源码包“需要放在 /usr/src/php/ext 下</li>
+<li>默认情况下，PHP容器没有 /usr/src/php这个目录，需要使用 docker-php-source extract来生成。</li>
+<li>docker-php-ext-install 安装的扩展在安装完成后，会自动调用docker-php-ext-enable来启动安装的扩展。</li>
+<li>卸载扩展，直接删除/usr/local/etc/php/conf.d 对应的配置文件即可。</li>
+</ul>
+<p><strong>案例</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 卸载redis 扩展</span>
+root@803cbcf702a4:/usr/local<span class="token comment"># rm -rf /usr/local/etc/php/conf.d/docker-php-ext-redis.ini</span>
+root@803cbcf702a4:/usr/local<span class="token comment"># php -m </span>
+<span class="token punctuation">[</span>PHP Modules<span class="token punctuation">]</span>
+Core
+ctype
+<span class="token function">curl</span>
+<span class="token function">date</span>
+dom
+fileinfo
+filter
+<span class="token function">ftp</span>
+<span class="token builtin class-name">hash</span>
+<span class="token function">iconv</span>
+json
+libxml
+mbstring
+mysqlnd
+openssl
+pcre
+PDO
+pdo_sqlite
+Phar
+posix
+readline
+Reflection
+session
+SimpleXML
+sodium
+SPL
+sqlite3
+standard
+tokenizer
+xml
+xmlreader
+xmlwriter
+zlib
+
+<span class="token punctuation">[</span>Zend Modules<span class="token punctuation">]</span>
+
+root@803cbcf702a4:/usr/local<span class="token comment">#</span>
+
+<span class="token comment">#PHP容器默认是没有redis扩展的。所以我们通过docker-php-ext-install安装redis扩展</span>
+
+root@803cbcf702a4:/<span class="token comment"># curl -L -o /tmp/reids.tar.gz https://codeload.github.com/phpredis/phpredis/tar.gz/5.0.2</span>
+
+root@803cbcf702a4:/<span class="token comment"># cd /tmp</span>
+root@517b9c67507a:/tmp<span class="token comment"># tar -xzf reids.tar.gz</span>
+root@517b9c67507a:/tmp<span class="token comment"># ls</span>
+phpredis-5.0.2	reids.tar.gz
+root@517b9c67507a:/tmp<span class="token comment"># docker-php-source extract</span>
+root@517b9c67507a:/tmp<span class="token comment"># mv phpredis-5.0.2 /usr/src/php/ext/phpredis</span>
+
+<span class="token comment">#检查移过去的插件源码包是否存在</span>
+root@517b9c67507a:/tmp<span class="token comment"># ls -l /usr/src/php/ext | grep redis</span>
+drwxrwxr-x  <span class="token number">6</span> root root <span class="token number">4096</span> Jul <span class="token number">29</span> <span class="token number">15</span>:04 phpredis
+root@517b9c67507a:/tmp<span class="token comment"># docker-php-ext-install phpredis</span>
+
+<span class="token comment"># 检查redis 扩展是否已经安装上</span>
+root@517b9c67507a:/tmp<span class="token comment"># php -m | grep redis</span>
+redis
+root@517b9c67507a:/tmp<span class="token comment">#</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="docker-php-ext-configure">docker-php-ext-configure</h4>
+<p>docker-php-ext-configure 一般都是需要跟 docker-php-ext-install搭配使用的。它的作用就是，当你安装扩展的时候，需要自定义配置时，就可以使用它来帮你做到。</p>
+<p><strong>案例</strong></p>
+<pre class="line-numbers language-docker" data-language="docker"><code class="language-docker"><span class="token instruction"><span class="token keyword">FROM</span> php:7.1-fpm</span>
+<span class="token instruction"><span class="token keyword">RUN</span> apt-get update <span class="token operator">\</span>
+	<span class="token comment"># 相关依赖必须手动安装</span>
+	&amp;&amp; apt-get install -y <span class="token operator">\</span>
+        libfreetype6-dev <span class="token operator">\</span>
+        libjpeg62-turbo-dev <span class="token operator">\</span>
+        libmcrypt-dev <span class="token operator">\</span>
+        libpng-dev <span class="token operator">\</span>
+    <span class="token comment"># 安装扩展</span>
+    &amp;&amp; docker-php-ext-install -j$(nproc) iconv mcrypt <span class="token operator">\</span>
+    <span class="token comment"># 如果安装的扩展需要自定义配置时</span>
+    &amp;&amp; docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ <span class="token operator">\</span>
+    &amp;&amp; docker-php-ext-install -j$(nproc) gd</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="下载安装扩展">下载安装扩展</h2>
+<p>一些既不在 PHP 源码包，也不再 PECL 扩展仓库中的扩展，可以通过下载扩展程序源码，编译安装的方式安装，如下示例：</p>
+<pre class="line-numbers language-docker" data-language="docker"><code class="language-docker"><span class="token instruction"><span class="token keyword">FROM</span> php:5.6-apache</span>
+<span class="token instruction"><span class="token keyword">RUN</span> curl -fsSL <span class="token string">'https://xcache.lighttpd.net/pub/Releases/3.2.0/xcache-3.2.0.tar.gz'</span> -o xcache.tar.gz <span class="token operator">\</span>
+    &amp;&amp; mkdir -p xcache <span class="token operator">\</span>
+    &amp;&amp; tar -xf xcache.tar.gz -C xcache --strip-components=1 <span class="token operator">\</span>
+    &amp;&amp; rm xcache.tar.gz <span class="token operator">\</span>
+    &amp;&amp; ( <span class="token operator">\</span>
+        cd xcache <span class="token operator">\</span>
+        &amp;&amp; phpize <span class="token operator">\</span>
+        &amp;&amp; ./configure --enable-xcache <span class="token operator">\</span>
+        &amp;&amp; make -j$(nproc) <span class="token operator">\</span>
+        &amp;&amp; make install <span class="token operator">\</span>
+    ) <span class="token operator">\</span>
+    &amp;&amp; rm -r xcache <span class="token operator">\</span>
+    &amp;&amp; docker-php-ext-enable xcache</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>注意：官方提供的 docker-php-ext-* 脚本接受任意的绝对路径（不支持相对路径，以便与系统内置的扩展程序进行区分），所以，上面的例子也可以这样写：</p>
+<pre class="line-numbers language-docker" data-language="docker"><code class="language-docker"><span class="token instruction"><span class="token keyword">FROM</span> php:5.6-apache</span>
+<span class="token instruction"><span class="token keyword">RUN</span> curl -fsSL <span class="token string">'https://xcache.lighttpd.net/pub/Releases/3.2.0/xcache-3.2.0.tar.gz'</span> -o xcache.tar.gz <span class="token operator">\</span>
+    &amp;&amp; mkdir -p /tmp/xcache <span class="token operator">\</span>
+    &amp;&amp; tar -xf xcache.tar.gz -C /tmp/xcache --strip-components=1 <span class="token operator">\</span>
+    &amp;&amp; rm xcache.tar.gz <span class="token operator">\</span>
+    &amp;&amp; docker-php-ext-configure /tmp/xcache --enable-xcache <span class="token operator">\</span>
+    &amp;&amp; docker-php-ext-install /tmp/xcache <span class="token operator">\</span>
+    &amp;&amp; rm -r /tmp/xcache</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/3712804477.html">https://blog.mailjob.net/posts/3712804477.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E5%AE%89%E8%A3%85%E6%96%B9%E5%BC%8F"><span class="toc-text">常见安装方式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%9A%E8%BF%87pecl%E6%96%B9%E5%BC%8F%E5%AE%89%E8%A3%85"><span class="toc-text">通过pecl方式安装</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%9A%E8%BF%87%E5%87%A0%E4%B8%AA%E7%89%B9%E6%AE%8A%E5%91%BD%E4%BB%A4%E5%AE%89%E8%A3%85"><span class="toc-text">通过几个特殊命令安装</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%BC%94%E7%A4%BA%E8%BF%99%E4%B8%89%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E4%BD%9C%E7%94%A8"><span class="toc-text">演示这三个命令的作用</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#docker-php-source"><span class="toc-text">docker-php-source</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#docker-php-ext-enable"><span class="toc-text">docker-php-ext-enable</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#docker-php-ext-install"><span class="toc-text">docker-php-ext-install</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#docker-php-ext-configure"><span class="toc-text">docker-php-ext-configure</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8B%E8%BD%BD%E5%AE%89%E8%A3%85%E6%89%A9%E5%B1%95"><span class="toc-text">下载安装扩展</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

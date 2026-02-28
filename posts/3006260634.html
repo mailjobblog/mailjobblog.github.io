@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Mysql 主从复制原理 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="相关链接  MySQL 官网主从复制：https:&#x2F;&#x2F;dev.mysql.com&#x2F;doc&#x2F;refman&#x2F;5.7&#x2F;en&#x2F;replication.html 优秀博文：https:&#x2F;&#x2F;blog.csdn.net&#x2F;yhl_jxy&#x2F;article&#x2F;details&#x2F;112486032  主从形式   一主一从 主主复制 一主多从—扩展系统读取的性能，因为读是在从库读取的； 多主一从—5.7开始支持 联级复制—">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mysql 主从复制原理">
+<meta property="og:url" content="https://blog.mailjob.net/posts/3006260634.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="相关链接  MySQL 官网主从复制：https:&#x2F;&#x2F;dev.mysql.com&#x2F;doc&#x2F;refman&#x2F;5.7&#x2F;en&#x2F;replication.html 优秀博文：https:&#x2F;&#x2F;blog.csdn.net&#x2F;yhl_jxy&#x2F;article&#x2F;details&#x2F;112486032  主从形式   一主一从 主主复制 一主多从—扩展系统读取的性能，因为读是在从库读取的； 多主一从—5.7开始支持 联级复制—">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210217145630.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210217145921.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210303133358.jpeg">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210116174643794.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lobF9qeHk=,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210116181008129.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lobF9qeHk=,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210116181133569.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lobF9qeHk=,size_16,color_FFFFFF,t_70">
+<meta property="article:published_time" content="2021-02-17T06:54:59.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.982Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="mysql">
+<meta property="article:tag" content="高可用">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/oss.github/20210217145630.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Mysql 主从复制原理
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3006260634.html" class="article-date">
+	  <time datetime="2021-02-17T06:54:59.000Z" itemprop="datePublished">2021-02-17</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/mysql/">mysql</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/mysql/" rel="tag">mysql</a>, <a class="article-tag-none-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/3006260634.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.1k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 4(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="相关链接">相关链接</h2>
+<blockquote>
+<p>MySQL 官网主从复制：<a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/5.7/en/replication.html">https://dev.mysql.com/doc/refman/5.7/en/replication.html</a></p>
+<p>优秀博文：<a target="_blank" rel="noopener" href="https://blog.csdn.net/yhl_jxy/article/details/112486032">https://blog.csdn.net/yhl_jxy/article/details/112486032</a></p>
+</blockquote>
+<h3 id="主从形式">主从形式</h3>
+<blockquote>
+<ul>
+<li>一主一从</li>
+<li>主主复制</li>
+<li>一主多从—扩展系统读取的性能，因为读是在从库读取的；</li>
+<li>多主一从—5.7开始支持</li>
+<li>联级复制—</li>
+</ul>
+</blockquote>
+<p><img src="http://img.github.mailjob.net/oss.github/20210217145630.png" alt="img"></p>
+<h3 id="用途及条件">用途及条件</h3>
+<blockquote>
+<ul>
+<li>实时灾备，用于故障切换</li>
+<li>读写分离，提供查询服务</li>
+<li>备份，避免影响业务</li>
+</ul>
+</blockquote>
+<h3 id="主从部署必要条件：">主从部署必要条件：</h3>
+<blockquote>
+<ul>
+<li>主库开启binlog日志（设置log-bin参数）</li>
+<li>主从server-id不同</li>
+<li>从库服务器能连通主库</li>
+</ul>
+</blockquote>
+<h2 id="原理">原理</h2>
+<p><img src="http://img.github.mailjob.net/oss.github/20210217145921.png" alt="img"></p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210303133358.jpeg" alt="105353509.jpg"></p>
+<p><strong>过程描述</strong></p>
+<blockquote>
+<p>从库生成两个线程，一个 <code>I/O 线程</code>（I/O thread），一个 <code>SQL 线程</code>（SQL thread）；</p>
+<p>从库 I/O 线程连接主库发送请求到主库（传 pos，binlog event等参数），主库会生成一个 <code>log dump 线程</code>（dump thread），检查 <code>binlog event</code>，</p>
+<p>根据从库要求，将 <code>binlog</code> 发送给 从库 I/O 线程，从库 I/O 线程将 <code>binlog</code> 写入 <code>relay log</code>（中继日志），</p>
+<p>从库的 SQL 线程，会读取 <code>relay log</code> 文件中的日志，并解析成具体操作执行，实现主从最终数据一致；</p>
+</blockquote>
+<p><strong>概括</strong></p>
+<p>默认 MySQL 异步复制模式下，binlog 不是主库 dump thread 主动传给从库的，是从库 I/O 线程连接主库告诉主库发到什么 pos 的 binglog 给从库，</p>
+<p>主库收到后，检查 binlog event，按需发送 binlog 给从库。这样处理是因为可能从库有多个，处理速度和性能不一样，从库根据自身情况</p>
+<p>去触发获取 binlog 处理，各个从库互不影响，跟主库保持最终数据一致性</p>
+<h2 id="主从复制方式">主从复制方式</h2>
+<h4 id="1、异步复制">1、异步复制</h4>
+<p>异步复制是 MySQL 默认的方式。在异步复制下，主库不会主动的向从库发送 binlog，而是等待从库的 I/O 线程建立连接，</p>
+<p>从库 I/O 线程请求主库二进制日志事件（传pos等），然后主库创建<code>dump</code>线程，检查自己的 binlog event，</p>
+<p>将对应位置的 binlog 发送给从库 I/O 线程，从库 I/O 线程将接收到的 binlog 写入到 relay log（中继日志） 中，从库开启 SQL 线程从</p>
+<p>relay log 中刷入到从库磁盘，完成主从异步复制操作。</p>
+<p><img src="https://img-blog.csdnimg.cn/20210116174643794.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lobF9qeHk=,size_16,color_FFFFFF,t_70" alt="img"></p>
+<p><strong>主库处理用户请求</strong>和<strong>主从复制</strong>是两个完全异步化的过程。</p>
+<h4 id="2、同步复制">2、同步复制</h4>
+<p>同步模式则是，主库执行一个事务，那么主库必须等待所有的从库全部执行完事务返回 commit 之后才能给客户端返回成功。</p>
+<p><img src="https://img-blog.csdnimg.cn/20210116181008129.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lobF9qeHk=,size_16,color_FFFFFF,t_70" alt="img"></p>
+<p>主库会直接提交事务，而不是等待所有从库返回之后再提交。MySQL只是延迟了对客户端的返回，并没有延后事务的提交。</p>
+<p>同步模式性能会大打折扣，它把客户端的请求和主从复制耦合在了一起，如果有某个从库复制线程执行的慢，那么对客户端的响应也会慢很多。</p>
+<h4 id="3、半同步复制">3、半同步复制</h4>
+<p>半同步相对于同步的区别在于，同步复制需要等待所有的从库 commit，而半同步只需要一个从库 commit 就可以返回了。</p>
+<p>如果超过默认的时间仍然没有从库 commit，就会切换为异步模式再提交。客户端也不会一直去等待了。</p>
+<p><img src="https://img-blog.csdnimg.cn/20210116181133569.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3lobF9qeHk=,size_16,color_FFFFFF,t_70" alt="img"></p>
+<p>因为即使后面主库宕机了，也能至少保证有一个从库节点是可以用的，此外还减少了同步时的等待时间。</p>
+<h4 id="4、并行复制">4、并行复制</h4>
+<p>MySQL 并行复制</p>
+<ul>
+<li>社区版5.6中新增</li>
+<li>并行是指从库 SQL 线程负责转发到 多个 worker 线程去处理日志</li>
+<li>库级别并行应用 binlog，同一个库数据更改还是串行的(5.7版并行复制基于事务组)，一个事务发送到一个 worker 线程执行</li>
+</ul>
+<p>设置</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">set</span> <span class="token keyword">global</span> slave_parallel_workers<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>设置 sql 线程数为10。</p>
+<h2 id="问题及解决方法">问题及解决方法</h2>
+<p><strong>1、主库宕机后，数据可能丢失</strong><br>
+半同步复制（解决数据丢失的问题）</p>
+<p><strong>2、从库只有一个 sql Thread，主库写压力大，复制很可能延时</strong><br>
+并行复制（解决从库复制延迟的问题）</p>
+<p><strong>3、第一次搭建主从，数据库不存在问题</strong><br>
+这个一般是第一次搭建主从的时候，从库存在的问题。需要从主库把数据复制过去，然后在从库恢复即可</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/3006260634.html">https://blog.mailjob.net/posts/3006260634.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E9%93%BE%E6%8E%A5"><span class="toc-text">相关链接</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BB%E4%BB%8E%E5%BD%A2%E5%BC%8F"><span class="toc-text">主从形式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%94%A8%E9%80%94%E5%8F%8A%E6%9D%A1%E4%BB%B6"><span class="toc-text">用途及条件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BB%E4%BB%8E%E9%83%A8%E7%BD%B2%E5%BF%85%E8%A6%81%E6%9D%A1%E4%BB%B6%EF%BC%9A"><span class="toc-text">主从部署必要条件：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8E%9F%E7%90%86"><span class="toc-text">原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E6%96%B9%E5%BC%8F"><span class="toc-text">主从复制方式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E3%80%81%E5%BC%82%E6%AD%A5%E5%A4%8D%E5%88%B6"><span class="toc-text">1、异步复制</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E3%80%81%E5%90%8C%E6%AD%A5%E5%A4%8D%E5%88%B6"><span class="toc-text">2、同步复制</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3%E3%80%81%E5%8D%8A%E5%90%8C%E6%AD%A5%E5%A4%8D%E5%88%B6"><span class="toc-text">3、半同步复制</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4%E3%80%81%E5%B9%B6%E8%A1%8C%E5%A4%8D%E5%88%B6"><span class="toc-text">4、并行复制</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98%E5%8F%8A%E8%A7%A3%E5%86%B3%E6%96%B9%E6%B3%95"><span class="toc-text">问题及解决方法</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

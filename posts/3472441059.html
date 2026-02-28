@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Go 单元测试 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="go test工具 Go语言中的测试依赖go test命令。编写测试代码和编写普通的Go代码过程是类似的，并不需要学习新的语法、规则或工具。 go test命令是一个按照一定约定和组织的测试代码的驱动程序。在包目录内，所有以xxx_test.go为后缀名的源代码文件都是go test测试的一部分，不会被go build编译到最终的可执行文件中。 在xxx_test.go文件中有三种类型的函数，单元">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go 单元测试">
+<meta property="og:url" content="https://blog.mailjob.net/posts/3472441059.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="go test工具 Go语言中的测试依赖go test命令。编写测试代码和编写普通的Go代码过程是类似的，并不需要学习新的语法、规则或工具。 go test命令是一个按照一定约定和组织的测试代码的驱动程序。在包目录内，所有以xxx_test.go为后缀名的源代码文件都是go test测试的一部分，不会被go build编译到最终的可执行文件中。 在xxx_test.go文件中有三种类型的函数，单元">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/20211102160749.png">
+<meta property="article:published_time" content="2021-11-02T05:19:05.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.979Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="go">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/20211102160749.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Go 单元测试
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3472441059.html" class="article-date">
+	  <time datetime="2021-11-02T05:19:05.000Z" itemprop="datePublished">2021-11-02</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/go/">go</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/go/" rel="tag">go</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/3472441059.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 5.3k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 22(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="go-test工具">go test工具</h2>
+<p>Go语言中的测试依赖<code>go test</code>命令。编写测试代码和编写普通的Go代码过程是类似的，并不需要学习新的语法、规则或工具。</p>
+<p>go test命令是一个按照一定约定和组织的测试代码的驱动程序。在包目录内，所有以<code>xxx_test.go</code>为后缀名的源代码文件都是<code>go test</code>测试的一部分，不会被<code>go build</code>编译到最终的可执行文件中。</p>
+<p>在<code>xxx_test.go</code>文件中有三种类型的函数，单元测试函数、基准测试函数和示例函数。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">类型</th>
+<th style="text-align:center">格式</th>
+<th style="text-align:center">作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">测试函数</td>
+<td style="text-align:center">函数名前缀为Test</td>
+<td style="text-align:center">测试程序的一些逻辑行为是否正确</td>
+</tr>
+<tr>
+<td style="text-align:center">基准函数</td>
+<td style="text-align:center">函数名前缀为Benchmark</td>
+<td style="text-align:center">测试函数的性能</td>
+</tr>
+<tr>
+<td style="text-align:center">示例函数</td>
+<td style="text-align:center">函数名前缀为Example</td>
+<td style="text-align:center">为文档提供示例文档</td>
+</tr>
+</tbody>
+</table>
+<p><code>go test</code>命令会遍历所有的<code>xxx_test.go</code>文件中符合上述命名规则的函数，然后生成一个临时的main包用于调用相应的测试函数，然后构建并运行、报告测试结果，最后清理测试中生成的临时文件。</p>
+<h2 id="单元测试函数Test">单元测试函数Test</h2>
+<h3 id="格式">格式</h3>
+<p>每个测试函数必须导入<code>testing</code>包，测试函数的基本格式（签名）如下：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">TestName</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+    <span class="token comment">// ...</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>测试函数的名字必须以<code>Test</code>开头，可选的后缀名必须以大写字母开头，举几个例子：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">TestAdd</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span><span class="token punctuation">&#123;</span> <span class="token operator">...</span> <span class="token punctuation">&#125;</span>
+<span class="token keyword">func</span> <span class="token function">TestSum</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span><span class="token punctuation">&#123;</span> <span class="token operator">...</span> <span class="token punctuation">&#125;</span>
+<span class="token keyword">func</span> <span class="token function">TestLog</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span><span class="token punctuation">&#123;</span> <span class="token operator">...</span> <span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>其中参数<code>t</code>用于报告测试失败和附加的日志信息。 <code>testing.T</code>的拥有的方法如下：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>T<span class="token punctuation">)</span> <span class="token function">Cleanup</span><span class="token punctuation">(</span><span class="token keyword">func</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>T<span class="token punctuation">)</span> <span class="token function">Error</span><span class="token punctuation">(</span>args <span class="token operator">...</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>T<span class="token punctuation">)</span> <span class="token function">Errorf</span><span class="token punctuation">(</span>format <span class="token builtin">string</span><span class="token punctuation">,</span> args <span class="token operator">...</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>T<span class="token punctuation">)</span> <span class="token function">Fail</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>T<span class="token punctuation">)</span> <span class="token function">FailNow</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>T<span class="token punctuation">)</span> <span class="token function">Failed</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">bool</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>T<span class="token punctuation">)</span> <span class="token function">Fatal</span><span class="token punctuation">(</span>args <span class="token operator">...</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>T<span class="token punctuation">)</span> <span class="token function">Fatalf</span><span class="token punctuation">(</span>format <span class="token builtin">string</span><span class="token punctuation">,</span> args <span class="token operator">...</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>T<span class="token punctuation">)</span> <span class="token function">Helper</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>T<span class="token punctuation">)</span> <span class="token function">Log</span><span class="token punctuation">(</span>args <span class="token operator">...</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>T<span class="token punctuation">)</span> <span class="token function">Logf</span><span class="token punctuation">(</span>format <span class="token builtin">string</span><span class="token punctuation">,</span> args <span class="token operator">...</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>T<span class="token punctuation">)</span> <span class="token function">Name</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>T<span class="token punctuation">)</span> <span class="token function">Skip</span><span class="token punctuation">(</span>args <span class="token operator">...</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>T<span class="token punctuation">)</span> <span class="token function">SkipNow</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>T<span class="token punctuation">)</span> <span class="token function">Skipf</span><span class="token punctuation">(</span>format <span class="token builtin">string</span><span class="token punctuation">,</span> args <span class="token operator">...</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>T<span class="token punctuation">)</span> <span class="token function">Skipped</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">bool</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>T<span class="token punctuation">)</span> <span class="token function">TempDir</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="单元测试示例">单元测试示例</h3>
+<p>单元组件可以是函数、结构体、方法和最终用户可能依赖的任意东西。总之我们需要确保这些组件是能够正常运行的。单元测试是一些利用各种方法测试单元组件的程序，它会将结果与预期输出进行比较。</p>
+<p>我在 <code>factorial.go</code> 中定义了一个 <code>Factorial</code> 函数，具体实现如下：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// Fact 定义返回的结构体</span>
+<span class="token keyword">type</span> Fact <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+	ret <span class="token builtin">int</span>
+	nums <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// Factorial 计算给定数字的阶乘</span>
+<span class="token keyword">func</span> <span class="token function">Factorial</span><span class="token punctuation">(</span>x <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token operator">*</span>Fact <span class="token punctuation">&#123;</span>
+	<span class="token keyword">var</span> factS <span class="token operator">=</span> <span class="token function">new</span><span class="token punctuation">(</span>Fact<span class="token punctuation">)</span>
+	<span class="token keyword">return</span> <span class="token function">operation</span><span class="token punctuation">(</span>x<span class="token punctuation">,</span>factS<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// 递归运算</span>
+<span class="token keyword">func</span> <span class="token function">operation</span><span class="token punctuation">(</span>x <span class="token builtin">int</span><span class="token punctuation">,</span> factS <span class="token operator">*</span>Fact<span class="token punctuation">)</span> <span class="token operator">*</span>Fact <span class="token punctuation">&#123;</span>
+	factS<span class="token punctuation">.</span>nums <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>factS<span class="token punctuation">.</span>nums<span class="token punctuation">,</span> x<span class="token punctuation">)</span>
+	<span class="token keyword">if</span> x <span class="token operator">==</span> <span class="token number">1</span> <span class="token punctuation">&#123;</span>
+		factS<span class="token punctuation">.</span>ret <span class="token operator">=</span> x
+		<span class="token keyword">return</span> factS
+	<span class="token punctuation">&#125;</span>
+	factS<span class="token punctuation">.</span>ret <span class="token operator">=</span> x <span class="token operator">*</span> <span class="token function">operation</span><span class="token punctuation">(</span>x<span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> factS<span class="token punctuation">)</span><span class="token punctuation">.</span>ret
+	<span class="token keyword">return</span> factS
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在同级目录下，我们创建一个<code>factorial_test.go</code>的测试文件，并定义一个测试函数如下：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">TestFactorial</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token comment">// 程序输出的结果</span>
+	got <span class="token operator">:=</span> <span class="token function">Factorial</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span>
+
+	<span class="token comment">// 期望的结果</span>
+	want <span class="token operator">:=</span> <span class="token operator">&amp;</span>Fact<span class="token punctuation">&#123;</span>
+		ret<span class="token punctuation">:</span>  <span class="token number">120</span><span class="token punctuation">,</span>
+		nums<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">&#123;</span><span class="token number">5</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token comment">// 因为struct不能比较直接，借助反射包中的方法比较</span>
+	<span class="token keyword">if</span> <span class="token operator">!</span>reflect<span class="token punctuation">.</span><span class="token function">DeepEqual</span><span class="token punctuation">(</span>want<span class="token punctuation">,</span> got<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		<span class="token comment">// 测试失败输出错误提示</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"expected:%v, got:%v"</span><span class="token punctuation">,</span> want<span class="token punctuation">,</span> got<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在当前路径下执行<code>go test</code>命令，可以看到输出结果如下：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">shell <span class="token operator">></span> go <span class="token builtin class-name">test</span>
+PASS
+ok      go_study/22.unit_test   <span class="token number">0</span>.564s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<h5 id="go-test-v">go test -v</h5>
+<p>我们再往<code>factorial_test.go</code>文件中添加一个测试用例：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 这里给到一个错误的结果，测试错误情况</span>
+<span class="token keyword">func</span> <span class="token function">TestFactEr</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	got <span class="token operator">:=</span> <span class="token function">Factorial</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>
+	want <span class="token operator">:=</span> <span class="token operator">&amp;</span>Fact<span class="token punctuation">&#123;</span>
+		ret<span class="token punctuation">:</span>  <span class="token number">6</span><span class="token punctuation">,</span>
+		nums<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">&#123;</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+	<span class="token punctuation">&#125;</span>
+	<span class="token keyword">if</span> <span class="token operator">!</span>reflect<span class="token punctuation">.</span><span class="token function">DeepEqual</span><span class="token punctuation">(</span>want<span class="token punctuation">,</span> got<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"expected:%v, got:%v"</span><span class="token punctuation">,</span> want<span class="token punctuation">,</span> got<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>现在我们有多个测试用例了，为了能更好的在输出结果中看到每个测试用例的执行情况，我们可以为<code>go test</code>命令添加<code>-v</code>参数，让它输出完整的测试结果。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">shell<span class="token operator">></span> go <span class="token builtin class-name">test</span> <span class="token parameter variable">-v</span>
+<span class="token operator">==</span><span class="token operator">=</span> RUN   TestFactorial
+--- PASS: TestFactorial <span class="token punctuation">(</span><span class="token number">0</span>.00s<span class="token punctuation">)</span>
+<span class="token operator">==</span><span class="token operator">=</span> RUN   TestFactEr
+    factorial_test.go:38: expected:<span class="token operator">&amp;</span><span class="token punctuation">&#123;</span><span class="token number">666</span> <span class="token punctuation">[</span><span class="token number">2</span> <span class="token number">2</span> <span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">&#125;</span>, got:<span class="token operator">&amp;</span><span class="token punctuation">&#123;</span><span class="token number">6</span> <span class="token punctuation">[</span><span class="token number">3</span> <span class="token number">2</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">&#125;</span>
+--- FAIL: TestFactEr <span class="token punctuation">(</span><span class="token number">0</span>.00s<span class="token punctuation">)</span>
+FAIL
+<span class="token builtin class-name">exit</span> status <span class="token number">1</span>
+FAIL    go_study/22.unit_test   <span class="token number">0</span>.096s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>从上面的输出结果我们能清楚的看到是<code>TestFactEr</code>这个测试用例没有测试通过。</p>
+<h5 id="go-test-run">go test -run</h5>
+<p>在执行<code>go test</code>命令的时候可以添加<code>-run</code>参数，它对应一个正则表达式，只有函数名匹配上的测试函数才会被<code>go test</code>命令执行。</p>
+<p>例如通过给<code>go test</code>添加 <code>-run=Sep</code> 参数来告诉它本次测试只运行<code>TestFactorial</code>这个测试用例：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">shell<span class="token operator">></span> go <span class="token builtin class-name">test</span> <span class="token parameter variable">-run</span><span class="token operator">=</span>TestFactorial <span class="token parameter variable">-v</span>
+<span class="token operator">==</span><span class="token operator">=</span> RUN   TestFactorial
+--- PASS: TestFactorial <span class="token punctuation">(</span><span class="token number">0</span>.00s<span class="token punctuation">)</span>
+PASS
+ok      go_study/22.unit_test   <span class="token number">0</span>.099s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="回归测试">回归测试</h5>
+<p>我们修改了代码之后仅仅执行那些失败的测试用例或新引入的测试用例是错误且危险的，正确的做法应该是完整运行所有的测试用例，保证不会因为修改代码而引入新的问题。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">shell<span class="token operator">></span> go <span class="token builtin class-name">test</span> <span class="token parameter variable">-v</span>
+<span class="token operator">==</span><span class="token operator">=</span> RUN   TestFactorial
+--- PASS: TestFactorial <span class="token punctuation">(</span><span class="token number">0</span>.00s<span class="token punctuation">)</span>
+<span class="token operator">==</span><span class="token operator">=</span> RUN   TestFactEr
+--- PASS: TestFactEr <span class="token punctuation">(</span><span class="token number">0</span>.00s<span class="token punctuation">)</span>
+PASS
+ok      go_study/22.unit_test   <span class="token number">0</span>.539s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>测试结果表明我们的单元测试全部通过。</p>
+<p>通过这个示例我们可以看到，有了单元测试就能够在代码改动后快速进行回归测试，极大地提高开发效率并保证代码的质量。</p>
+<h5 id="跳过某些测试用例">跳过某些测试用例</h5>
+<p>为了节省时间支持在单元测试时跳过某些耗时的测试用例。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">TestTimeConsuming</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> testing<span class="token punctuation">.</span><span class="token function">Short</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        t<span class="token punctuation">.</span><span class="token function">Skip</span><span class="token punctuation">(</span><span class="token string">"short模式下会跳过该测试用例"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token operator">...</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>当执行<code>go test -short</code>时就不会执行上面的<code>TestTimeConsuming</code>测试用例。</p>
+<h5 id="子测试">子测试</h5>
+<p>在上面的示例中我们为每一个测试数据编写了一个测试函数，而通常单元测试中需要多组测试数据保证测试的效果。<code>Go1.7+</code>中新增了子测试，支持在测试函数中使用<code>t.Run</code>执行一组测试用例，这样就不需要为不同的测试数据定义多个测试函数了。</p>
+<blockquote>
+<p>表格驱动测试不是工具、包或其他任何东西，它只是编写更清晰测试的一种方式和视角。<br>
+使用表格驱动测试能够很方便的维护多个测试用例，避免在编写单元测试时频繁的复制粘贴。<br>
+表格驱动测试的步骤通常是定义一个测试用例表格，然后遍历表格，并使用<code>t.Run</code>对每个条目执行必要的测试。</p>
+</blockquote>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">TestXXX</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+  t<span class="token punctuation">.</span><span class="token function">Run</span><span class="token punctuation">(</span><span class="token string">"case1"</span><span class="token punctuation">,</span> <span class="token keyword">func</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span><span class="token punctuation">&#123;</span><span class="token operator">...</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+  t<span class="token punctuation">.</span><span class="token function">Run</span><span class="token punctuation">(</span><span class="token string">"case2"</span><span class="token punctuation">,</span> <span class="token keyword">func</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span><span class="token punctuation">&#123;</span><span class="token operator">...</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+  t<span class="token punctuation">.</span><span class="token function">Run</span><span class="token punctuation">(</span><span class="token string">"case3"</span><span class="token punctuation">,</span> <span class="token keyword">func</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span><span class="token punctuation">&#123;</span><span class="token operator">...</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>测试演示：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">TestFactGroup</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span>  <span class="token punctuation">&#123;</span>
+	t<span class="token punctuation">.</span><span class="token function">Parallel</span><span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token comment">// 将 TLog 标记为能够与其他测试并行运行</span>
+
+	<span class="token comment">// 定义测试表格</span>
+	testCases <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">struct</span><span class="token punctuation">&#123;</span>
+		testName <span class="token builtin">string</span>
+		input <span class="token builtin">int</span>
+		output <span class="token operator">*</span>Fact
+	<span class="token punctuation">&#125;</span><span class="token punctuation">&#123;</span>
+		<span class="token punctuation">&#123;</span><span class="token string">"case1"</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>Fact<span class="token punctuation">&#123;</span>ret<span class="token punctuation">:</span>  <span class="token number">120</span><span class="token punctuation">,</span> nums<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">&#123;</span><span class="token number">5</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+		<span class="token punctuation">&#123;</span><span class="token string">"case2"</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>Fact<span class="token punctuation">&#123;</span>ret<span class="token punctuation">:</span>  <span class="token number">6</span><span class="token punctuation">,</span> nums<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">&#123;</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token comment">// 运行子测试代码</span>
+	<span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span>tt <span class="token operator">:=</span> <span class="token keyword">range</span> testCases <span class="token punctuation">&#123;</span>
+		tt <span class="token operator">:=</span> tt
+		t<span class="token punctuation">.</span><span class="token function">Run</span><span class="token punctuation">(</span>tt<span class="token punctuation">.</span>testName<span class="token punctuation">,</span> <span class="token keyword">func</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+			t<span class="token punctuation">.</span><span class="token function">Parallel</span><span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token comment">// 将每个测试用例标记为能够彼此并行运行</span>
+			got <span class="token operator">:=</span> <span class="token function">Factorial</span><span class="token punctuation">(</span>tt<span class="token punctuation">.</span>input<span class="token punctuation">)</span>
+			<span class="token keyword">if</span> <span class="token operator">!</span>reflect<span class="token punctuation">.</span><span class="token function">DeepEqual</span><span class="token punctuation">(</span>tt<span class="token punctuation">.</span>output<span class="token punctuation">,</span> got<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+				t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"expected:%v, got:%v"</span><span class="token punctuation">,</span> tt<span class="token punctuation">.</span>output<span class="token punctuation">,</span> got<span class="token punctuation">)</span>
+			<span class="token punctuation">&#125;</span>
+		<span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在终端执行<code>go test -v</code>，会得到如下测试输出结果：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">shell<span class="token operator">></span> go <span class="token builtin class-name">test</span> <span class="token parameter variable">-v</span>
+<span class="token operator">==</span><span class="token operator">=</span> RUN   TestFactGroup
+<span class="token operator">==</span><span class="token operator">=</span> RUN   TestFactGroup/case1
+<span class="token operator">==</span><span class="token operator">=</span> RUN   TestFactGroup/case2
+--- PASS: TestFactGroup <span class="token punctuation">(</span><span class="token number">0</span>.00s<span class="token punctuation">)</span>
+    --- PASS: TestFactGroup/case1 <span class="token punctuation">(</span><span class="token number">0</span>.00s<span class="token punctuation">)</span>
+    --- PASS: TestFactGroup/case2 <span class="token punctuation">(</span><span class="token number">0</span>.00s<span class="token punctuation">)</span>
+PASS
+ok      go_study/22.unit_test   <span class="token number">0</span>.405s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="并行测试">并行测试</h5>
+<p>表格驱动测试中通常会定义比较多的测试用例，而Go语言又天生支持并发，所以很容易发挥自身并发优势将表格驱动测试并行化。 想要在单元测试过程中使用并行测试，可以像下面的代码示例中那样通过添加<code>t.Parallel()</code>来实现。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">t<span class="token punctuation">.</span><span class="token function">Parallel</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>这样我们执行<code>go test -v</code>的时候就会看到每个测试用例并不是按照我们定义的顺序执行，而是互相并行了。</p>
+<h5 id="使用工具生成测试代码">使用工具生成测试代码</h5>
+<p>社区里有很多自动生成表格驱动测试函数的工具，比如<a target="_blank" rel="noopener" href="https://github.com/cweill/gotests">gotests</a>等，很多编辑器如Goland也支持快速生成测试文件。这里简单演示一下<code>gotests</code>的使用。</p>
+<p>安装</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">go get github.com/cweill/gotests/<span class="token punctuation">..</span>.<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>执行</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">gotests <span class="token parameter variable">-all</span> <span class="token parameter variable">-w</span> factorial.go<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>上面的命令表示，为<code>split.go</code>文件的所有函数生成测试代码至<code>split_test.go</code>文件（目录下如果事先存在这个文件就不再生成）。</p>
+<p>生成的测试代码大致如下：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">Test_operation</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">type</span> args <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+		x     <span class="token builtin">int</span>
+		factS <span class="token operator">*</span>Fact
+	<span class="token punctuation">&#125;</span>
+	tests <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+		name <span class="token builtin">string</span>
+		args args
+		want <span class="token operator">*</span>Fact
+	<span class="token punctuation">&#125;</span><span class="token punctuation">&#123;</span>
+		<span class="token comment">// TODO: Add test cases.</span>
+	<span class="token punctuation">&#125;</span>
+	<span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> tt <span class="token operator">:=</span> <span class="token keyword">range</span> tests <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Run</span><span class="token punctuation">(</span>tt<span class="token punctuation">.</span>name<span class="token punctuation">,</span> <span class="token keyword">func</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+			<span class="token keyword">if</span> got <span class="token operator">:=</span> <span class="token function">operation</span><span class="token punctuation">(</span>tt<span class="token punctuation">.</span>args<span class="token punctuation">.</span>x<span class="token punctuation">,</span> tt<span class="token punctuation">.</span>args<span class="token punctuation">.</span>factS<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token operator">!</span>reflect<span class="token punctuation">.</span><span class="token function">DeepEqual</span><span class="token punctuation">(</span>got<span class="token punctuation">,</span> tt<span class="token punctuation">.</span>want<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+				t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"operation() = %v, want %v"</span><span class="token punctuation">,</span> got<span class="token punctuation">,</span> tt<span class="token punctuation">.</span>want<span class="token punctuation">)</span>
+			<span class="token punctuation">&#125;</span>
+		<span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="测试覆盖率">测试覆盖率</h5>
+<p>测试覆盖率是指代码被测试套件覆盖的百分比。通常我们使用的都是语句的覆盖率，也就是在测试中至少被运行一次的代码占总代码的比例。在公司内部一般会要求测试覆盖率达到80%左右。</p>
+<p>Go提供内置功能来检查你的代码覆盖率，即使用<code>go test -cover</code>来查看测试覆盖率。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">shell<span class="token operator">></span> go <span class="token builtin class-name">test</span> <span class="token parameter variable">-cover</span>
+PASS
+coverage: <span class="token number">100.0</span>% of statements
+ok      go_study/22.unit_test   <span class="token number">0</span>.291s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>从上面的结果可以看到我们的测试用例覆盖了<code>100%</code>的代码。</p>
+<p>Go还提供了一个额外的<code>-coverprofile</code>参数，用来将覆盖率相关的记录信息输出到一个文件。例如：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">shell<span class="token operator">></span> go <span class="token builtin class-name">test</span> <span class="token parameter variable">-cover</span> <span class="token parameter variable">-coverprofile</span><span class="token operator">=</span>file.out
+PASS
+coverage: <span class="token number">100.0</span>% of statements
+ok      go_study/22.unit_test   <span class="token number">0</span>.180s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>上面的命令会将覆盖率相关的信息输出到当前文件夹下面的<code>c.out</code>文件中。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">❯ tree <span class="token builtin class-name">.</span>
+<span class="token builtin class-name">.</span>
+├── file.out
+├── factorial.go
+└── factorial_test.go<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>然后我们执行<code>go tool cover -html=file.out</code>，使用<code>cover</code>工具来处理生成的记录信息，该命令会打开本地的浏览器窗口生成一个HTML报告。</p>
+<p><img src="http://img.github.mailjob.net/20211102160749.png" alt="image-20211102160747032"></p>
+<h4 id="testify-assert">testify/assert</h4>
+<p><a target="_blank" rel="noopener" href="https://github.com/stretchr/testify">testify</a>是一个社区非常流行的Go单元测试工具包，其中使用最多的功能就是它提供的断言工具——<code>testify/assert</code>或<code>testify/require</code>。</p>
+<p>安装：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">go get github.com/stretchr/testify<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>我们在写单元测试的时候，通常需要使用断言来校验测试结果，但是由于Go语言官方没有提供断言，所以我们会写出很多的<code>if...else...</code>语句。而<code>testify/assert</code>为我们提供了很多常用的断言函数，并且能够输出友好、易于阅读的错误描述信息。</p>
+<p>比如我们之前在<code>TestSplit</code>测试函数中就使用了<code>reflect.DeepEqual</code>来判断期望结果与实际结果是否一致。</p>
+<p><code>testify/assert</code>提供了非常多的断言函数，这里没办法一一列举出来，大家可以查看<a target="_blank" rel="noopener" href="https://pkg.go.dev/github.com/stretchr/testify/assert#pkg-functions">官方文档</a>了解。</p>
+<p><code>testify/require</code>拥有<code>testify/assert</code>所有断言函数，它们的唯一区别就是——<code>testify/require</code>遇到失败的用例会立即终止本次测试。</p>
+<p>此外，<code>testify</code>包还提供了<a target="_blank" rel="noopener" href="https://pkg.go.dev/github.com/stretchr/testify/mock">mock</a>、<a target="_blank" rel="noopener" href="https://pkg.go.dev/github.com/stretchr/testify/http">http</a>等其他测试工具。</p>
+<h2 id="单元基准测试Benchmark">单元基准测试Benchmark</h2>
+<h3 id="格式：">格式：</h3>
+<p>基准测试就是在一定的工作负载之下检测程序性能的一种方法。基准测试的基本格式如下：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">BenchmarkName</span><span class="token punctuation">(</span>b <span class="token operator">*</span>testing<span class="token punctuation">.</span>B<span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+    <span class="token comment">// ...</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>基准测试以<code>Benchmark</code>为前缀，需要一个<code>*testing.B</code>类型的参数b，基准测试必须要执行<code>b.N</code>次，这样的测试才有对照性，<code>b.N</code>的值是系统根据实际情况去调整的，从而保证测试的稳定性。 <code>testing.B</code>拥有的方法如下：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">Error</span><span class="token punctuation">(</span>args <span class="token operator">...</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">Errorf</span><span class="token punctuation">(</span>format <span class="token builtin">string</span><span class="token punctuation">,</span> args <span class="token operator">...</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">Fail</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">FailNow</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">Failed</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">bool</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">Fatal</span><span class="token punctuation">(</span>args <span class="token operator">...</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">Fatalf</span><span class="token punctuation">(</span>format <span class="token builtin">string</span><span class="token punctuation">,</span> args <span class="token operator">...</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">Log</span><span class="token punctuation">(</span>args <span class="token operator">...</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">Logf</span><span class="token punctuation">(</span>format <span class="token builtin">string</span><span class="token punctuation">,</span> args <span class="token operator">...</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">Name</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>b <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">ReportAllocs</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>b <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">ResetTimer</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>b <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">Run</span><span class="token punctuation">(</span>name <span class="token builtin">string</span><span class="token punctuation">,</span> f <span class="token keyword">func</span><span class="token punctuation">(</span>b <span class="token operator">*</span>B<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token builtin">bool</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>b <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">RunParallel</span><span class="token punctuation">(</span>body <span class="token keyword">func</span><span class="token punctuation">(</span><span class="token operator">*</span>PB<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>b <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">SetBytes</span><span class="token punctuation">(</span>n <span class="token builtin">int64</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>b <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">SetParallelism</span><span class="token punctuation">(</span>p <span class="token builtin">int</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">Skip</span><span class="token punctuation">(</span>args <span class="token operator">...</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">SkipNow</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">Skipf</span><span class="token punctuation">(</span>format <span class="token builtin">string</span><span class="token punctuation">,</span> args <span class="token operator">...</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">Skipped</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">bool</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>b <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">StartTimer</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>b <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">StopTimer</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="示例：">示例：</h3>
+<p>我们为 <code>factorial.go</code> 中的 <code>Factorial</code> 方法便携基准测试代码：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">BenchmarkFactorial</span><span class="token punctuation">(</span>b <span class="token operator">*</span>testing<span class="token punctuation">.</span>B<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> b<span class="token punctuation">.</span>N<span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">&#123;</span>
+		<span class="token function">Factorial</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>基准测试并不会默认执行，需要增加<code>-bench</code>参数，所以我们通过执行<code>go test -bench=Split</code>命令执行基准测试，输出结果如下：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">shell<span class="token operator">></span> go <span class="token builtin class-name">test</span> <span class="token parameter variable">-bench</span><span class="token operator">=</span>Factorial
+goos: darwin
+goarch: amd64
+pkg: go_study/22.unit_test
+cpu: Intel<span class="token punctuation">(</span>R<span class="token punctuation">)</span> Core<span class="token punctuation">(</span>TM<span class="token punctuation">)</span> i5-7360U CPU @ <span class="token number">2</span>.30GHz
+BenchmarkFactorial-4     <span class="token number">6067362</span>               <span class="token number">198.5</span> ns/op
+PASS
+ok      go_study/22.unit_test   <span class="token number">1</span>.605s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>其中<code>BenchmarkSplit-4</code>表示对Factorial函数进行基准测试，数字<code>4</code>表示<code>GOMAXPROCS</code>的值，这个对于并发基准测试很重要。<code>6067362</code>和<code>198.5ns/op</code>表示每次调用<code>Factorial</code>函数耗时<code>198.05ns</code>，这个结果是<code>6067362</code>次调用的平均值。</p>
+<p>我们还可以为基准测试添加<code>-benchmem</code>参数，来获得内存分配的统计数据。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">shell<span class="token operator">></span> go <span class="token builtin class-name">test</span> <span class="token parameter variable">-bench</span><span class="token operator">=</span>Factorial <span class="token parameter variable">-benchmem</span>
+goos: darwin
+goarch: amd64
+pkg: go_study/22.unit_test
+cpu: Intel<span class="token punctuation">(</span>R<span class="token punctuation">)</span> Core<span class="token punctuation">(</span>TM<span class="token punctuation">)</span> i5-7360U CPU @ <span class="token number">2</span>.30GHz
+BenchmarkFactorial-4     <span class="token number">5139259</span>               <span class="token number">198.6</span> ns/op           <span class="token number">248</span> B/op          <span class="token number">5</span> allocs/op
+PASS
+ok      go_study/22.unit_test   <span class="token number">1</span>.383s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>其中，<code>248 B/op</code>表示每次操作内存分配了112字节，<code>5 allocs/op</code>则表示每次操作进行了5次内存分配。</p>
+<h5 id="性能比较函数">性能比较函数</h5>
+<p>上面的基准测试只能得到给定操作的绝对耗时，但是在很多性能问题是发生在两个不同操作之间的相对耗时，比如同一个函数处理1000个元素的耗时与处理1万甚至100万个元素的耗时的差别是多少？再或者对于同一个任务究竟使用哪种算法性能最佳？我们通常需要对两个不同算法的实现使用相同的输入来进行基准比较测试。</p>
+<p>性能比较函数通常是一个带有参数的函数，被多个不同的Benchmark函数传入不同的值来调用。举个例子如下：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">benchmark</span><span class="token punctuation">(</span>b <span class="token operator">*</span>testing<span class="token punctuation">.</span>B<span class="token punctuation">,</span> size <span class="token builtin">int</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span><span class="token comment">/* ... */</span><span class="token punctuation">&#125;</span>
+<span class="token keyword">func</span> <span class="token function">Benchmark10</span><span class="token punctuation">(</span>b <span class="token operator">*</span>testing<span class="token punctuation">.</span>B<span class="token punctuation">)</span><span class="token punctuation">&#123;</span> <span class="token function">benchmark</span><span class="token punctuation">(</span>b<span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span> <span class="token punctuation">&#125;</span>
+<span class="token keyword">func</span> <span class="token function">Benchmark100</span><span class="token punctuation">(</span>b <span class="token operator">*</span>testing<span class="token punctuation">.</span>B<span class="token punctuation">)</span><span class="token punctuation">&#123;</span> <span class="token function">benchmark</span><span class="token punctuation">(</span>b<span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">)</span> <span class="token punctuation">&#125;</span>
+<span class="token keyword">func</span> <span class="token function">Benchmark1000</span><span class="token punctuation">(</span>b <span class="token operator">*</span>testing<span class="token punctuation">.</span>B<span class="token punctuation">)</span><span class="token punctuation">&#123;</span> <span class="token function">benchmark</span><span class="token punctuation">(</span>b<span class="token punctuation">,</span> <span class="token number">1000</span><span class="token punctuation">)</span> <span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>编写一个性能比较测试函数如下：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">shell<span class="token operator">></span> go <span class="token builtin class-name">test</span> <span class="token parameter variable">-bench</span><span class="token operator">=</span>.
+goos: darwin
+goarch: amd64
+pkg: go_study/22.unit_test
+cpu: Intel<span class="token punctuation">(</span>R<span class="token punctuation">)</span> Core<span class="token punctuation">(</span>TM<span class="token punctuation">)</span> i5-7360U CPU @ <span class="token number">2</span>.30GHz
+BenchmarkFactorial-4     <span class="token number">6278547</span>               <span class="token number">189.5</span> ns/op
+BenchmarkFact1-4        <span class="token number">50307910</span>                <span class="token number">22.53</span> ns/op
+BenchmarkFact5-4         <span class="token number">8841597</span>               <span class="token number">133.6</span> ns/op
+BenchmarkFact10-4        <span class="token number">6290251</span>               <span class="token number">199.7</span> ns/op
+BenchmarkFact50-4        <span class="token number">2198989</span>               <span class="token number">534.9</span> ns/op
+BenchmarkFact100-4       <span class="token number">1257559</span>               <span class="token number">955.7</span> ns/op
+PASS
+ok      go_study/22.unit_test   <span class="token number">9</span>.797s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里需要注意的是，默认情况下，每个基准测试至少运行1秒。如果在Benchmark函数返回时没有到1秒，则b.N的值会按1,2,5,10,20,50，…增加，并且函数再次运行。</p>
+<p>所以如果函数的运行接近1秒，则测试出的数据可能不准确。像这种情况下我们应该可以使用<code>-benchtime</code>标志增加最小基准时间，以产生更准确的结果。例如：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">shell<span class="token operator">></span> go <span class="token builtin class-name">test</span> <span class="token parameter variable">-bench</span><span class="token operator">=</span>Fact50 <span class="token parameter variable">-benchtime</span><span class="token operator">=</span>20s
+goos: darwin
+goarch: amd64
+pkg: go_study/22.unit_test
+cpu: Intel<span class="token punctuation">(</span>R<span class="token punctuation">)</span> Core<span class="token punctuation">(</span>TM<span class="token punctuation">)</span> i5-7360U CPU @ <span class="token number">2</span>.30GHz
+BenchmarkFact50-4       <span class="token number">42403383</span>               <span class="token number">557.6</span> ns/op
+PASS
+ok      go_study/22.unit_test   <span class="token number">24</span>.516s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="重置时间">重置时间</h5>
+<p><code>b.ResetTimer</code>之前的处理不会放到执行时间里，也不会输出到报告中，所以可以在之前做一些不计划作为测试报告的操作。例如：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">BenchmarkFactorial</span><span class="token punctuation">(</span>b <span class="token operator">*</span>testing<span class="token punctuation">.</span>B<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span><span class="token number">5</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span> <span class="token comment">// 假设需要做一些耗时的无关操作</span>
+	b<span class="token punctuation">.</span><span class="token function">ResetTimer</span><span class="token punctuation">(</span><span class="token punctuation">)</span>              <span class="token comment">// 重置计时器</span>
+	<span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> b<span class="token punctuation">.</span>N<span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">&#123;</span>
+		<span class="token function">Factorial</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="并行测试-2">并行测试</h5>
+<p>格式：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>b <span class="token operator">*</span>B<span class="token punctuation">)</span> <span class="token function">RunParallel</span><span class="token punctuation">(</span>body <span class="token keyword">func</span><span class="token punctuation">(</span><span class="token operator">*</span>PB<span class="token punctuation">)</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><code>RunParallel</code>会创建出多个<code>goroutine</code>，并将<code>b.N</code>分配给这些<code>goroutine</code>执行， 其中<code>goroutine</code>数量的默认值为<code>GOMAXPROCS</code>。</p>
+<p>用户如果想要增加非CPU受限（non-CPU-bound）基准测试的并行性， 那么可以在<code>RunParallel</code>之前调用<code>SetParallelism</code> 。</p>
+<p><code>RunParallel</code>通常会与<code>-cpu</code>标志一同使用。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">shell<span class="token operator">></span> <span class="token keyword">go</span> test <span class="token operator">-</span>bench<span class="token operator">=</span><span class="token punctuation">.</span> 
+goos<span class="token punctuation">:</span> darwin
+goarch<span class="token punctuation">:</span> amd64
+pkg<span class="token punctuation">:</span> go_study<span class="token operator">/</span><span class="token number">22</span><span class="token punctuation">.</span>unit_test
+cpu<span class="token punctuation">:</span> <span class="token function">Intel</span><span class="token punctuation">(</span>R<span class="token punctuation">)</span> <span class="token function">Core</span><span class="token punctuation">(</span>TM<span class="token punctuation">)</span> i5<span class="token operator">-</span>7360U CPU @ <span class="token number">2</span><span class="token punctuation">.</span>30GHz
+BenchmarkFactorialParallel<span class="token operator">-</span><span class="token number">4</span>     <span class="token number">9344024</span>               <span class="token number">132.3</span> ns<span class="token operator">/</span>op
+PASS
+ok      go_study<span class="token operator">/</span><span class="token number">22</span><span class="token punctuation">.</span>unit_test   <span class="token number">1</span><span class="token punctuation">.</span>658s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>还可以通过在测试命令后添加<code>-cpu</code>参数如<code>go test -bench=. -cpu 1</code>来指定使用的CPU数量。</p>
+<h4 id="Setup与TearDown">Setup与TearDown</h4>
+<p>测试程序有时需要在测试之前进行额外的设置（setup）或在测试之后进行拆卸（teardown）。</p>
+<p>setUp()函数是在众多函数或者说是在一个类里面最先被调用的函数，而且每执行完一个函数都要从setUp()调用开始后再执行下一个函数，有几个函数就调用他几次，与位置无关，随便放在那里都是他先被调用。</p>
+<p>tearDown(）函数是在众多函数执行完后他才被执行，意思就是不管这个类里面有多少函数，他总是最后一个被执行的，与位置无关，放在那里都行，最后不管测试函数是否执行成功都执行<code>tearDown()</code>方法；如果<code>setUp()</code>方法失败，则认为这个测试项目失败，不会执行测试函数也不执行<code>tearDown()</code>方法。</p>
+<h5 id="TestMain">TestMain</h5>
+<p>通过在<code>*_test.go</code>文件中定义<code>TestMain</code>函数来可以在测试之前进行额外的设置（setup）或在测试之后进行拆卸（teardown）操作。</p>
+<p>如果测试文件包含函数:<code>func TestMain(m *testing.M)</code>那么生成的测试会先调用 TestMain(m)，然后再运行具体测试。<code>TestMain</code>运行在主<code>goroutine</code>中, 可以在调用 <code>m.Run</code>前后做任何设置（setup）和拆卸（teardown）。退出测试的时候应该使用<code>m.Run</code>的返回值作为参数调用<code>os.Exit</code>。</p>
+<p>一个使用<code>TestMain</code>来设置Setup和TearDown的示例如下：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">TestMain</span><span class="token punctuation">(</span>m <span class="token operator">*</span>testing<span class="token punctuation">.</span>M<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"write setup code here..."</span><span class="token punctuation">)</span> <span class="token comment">// 测试之前的做一些设置</span>
+	<span class="token comment">// 如果 TestMain 使用了 flags，这里应该加上flag.Parse()</span>
+	retCode <span class="token operator">:=</span> m<span class="token punctuation">.</span><span class="token function">Run</span><span class="token punctuation">(</span><span class="token punctuation">)</span>                         <span class="token comment">// 执行测试</span>
+	fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"write teardown code here..."</span><span class="token punctuation">)</span> <span class="token comment">// 测试之后做一些拆卸工作</span>
+	os<span class="token punctuation">.</span><span class="token function">Exit</span><span class="token punctuation">(</span>retCode<span class="token punctuation">)</span>                           <span class="token comment">// 退出测试</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>需要注意的是：在调用<code>TestMain</code>时, <code>flag.Parse</code>并没有被调用。所以如果<code>TestMain</code> 依赖于command-line标志 (包括 testing 包的标记), 则应该显示的调用<code>flag.Parse</code>。</p>
+<h5 id="子测试的Setup与Teardown">子测试的Setup与Teardown</h5>
+<p>有时候我们可能需要为每个测试集设置Setup与Teardown，也有可能需要为每个子测试设置Setup与Teardown。下面我们定义两个函数工具函数如下：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 测试集的Setup与Teardown</span>
+<span class="token keyword">func</span> <span class="token function">setupFactsTest</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token keyword">func</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	t<span class="token punctuation">.</span><span class="token function">Log</span><span class="token punctuation">(</span><span class="token string">"如有需要在此执行:Setup"</span><span class="token punctuation">)</span>
+	<span class="token keyword">return</span> <span class="token keyword">func</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Log</span><span class="token punctuation">(</span><span class="token string">"如有需要在此执行:Setup"</span><span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// 子测试的Setup与Teardown</span>
+<span class="token keyword">func</span> <span class="token function">downFactsTest</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token keyword">func</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	t<span class="token punctuation">.</span><span class="token function">Log</span><span class="token punctuation">(</span><span class="token string">"如有需要在此执行:Teardown"</span><span class="token punctuation">)</span>
+	<span class="token keyword">return</span> <span class="token keyword">func</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Log</span><span class="token punctuation">(</span><span class="token string">"如有需要在此执行:Teardown"</span><span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>测试代码如下：</p>
+<p><strong>执行顺序如下：setUp —&gt; case1 —&gt; setUp —&gt; case2 —&gt; tearDown</strong></p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">TestFactsGroup</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span>  <span class="token punctuation">&#123;</span>
+	t<span class="token punctuation">.</span><span class="token function">Parallel</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	<span class="token comment">// 定义测试表格</span>
+	testCases <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">struct</span><span class="token punctuation">&#123;</span>
+		testName <span class="token builtin">string</span>
+		input <span class="token builtin">int</span>
+		output <span class="token operator">*</span>Fact
+	<span class="token punctuation">&#125;</span><span class="token punctuation">&#123;</span>
+		<span class="token punctuation">&#123;</span><span class="token string">"case1"</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>Fact<span class="token punctuation">&#123;</span>ret<span class="token punctuation">:</span>  <span class="token number">120</span><span class="token punctuation">,</span> nums<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">&#123;</span><span class="token number">5</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+		<span class="token punctuation">&#123;</span><span class="token string">"case2"</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>Fact<span class="token punctuation">&#123;</span>ret<span class="token punctuation">:</span>  <span class="token number">6</span><span class="token punctuation">,</span> nums<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">&#123;</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+	<span class="token punctuation">&#125;</span>
+
+	setupTest <span class="token operator">:=</span> <span class="token function">setupFactsTest</span><span class="token punctuation">(</span>t<span class="token punctuation">)</span>
+	<span class="token keyword">defer</span> <span class="token function">setupTest</span><span class="token punctuation">(</span>t<span class="token punctuation">)</span>            <span class="token comment">// 测试之前执行setup操作</span>
+
+	<span class="token comment">// 运行子测试代码</span>
+	<span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span>tt <span class="token operator">:=</span> <span class="token keyword">range</span> testCases <span class="token punctuation">&#123;</span>
+		tt <span class="token operator">:=</span> tt
+		t<span class="token punctuation">.</span><span class="token function">Run</span><span class="token punctuation">(</span>tt<span class="token punctuation">.</span>testName<span class="token punctuation">,</span> <span class="token keyword">func</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+			t<span class="token punctuation">.</span><span class="token function">Parallel</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+			downTest <span class="token operator">:=</span> <span class="token function">downFactsTest</span><span class="token punctuation">(</span>t<span class="token punctuation">)</span>
+			<span class="token keyword">defer</span> <span class="token function">downTest</span><span class="token punctuation">(</span>t<span class="token punctuation">)</span> <span class="token comment">// 测试之后执行testdown操作</span>
+
+			got <span class="token operator">:=</span> <span class="token function">Factorial</span><span class="token punctuation">(</span>tt<span class="token punctuation">.</span>input<span class="token punctuation">)</span>
+			<span class="token keyword">if</span> <span class="token operator">!</span>reflect<span class="token punctuation">.</span><span class="token function">DeepEqual</span><span class="token punctuation">(</span>tt<span class="token punctuation">.</span>output<span class="token punctuation">,</span> got<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+				t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"expected:%v, got:%v"</span><span class="token punctuation">,</span> tt<span class="token punctuation">.</span>output<span class="token punctuation">,</span> got<span class="token punctuation">)</span>
+			<span class="token punctuation">&#125;</span>
+		<span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>测试结果如下：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">libin@bogon <span class="token number">22</span>.unit_test % go <span class="token builtin class-name">test</span> <span class="token parameter variable">-v</span> <span class="token parameter variable">-run</span><span class="token operator">=</span>TestFactsGroup
+<span class="token operator">==</span><span class="token operator">=</span> RUN   TestFactsGroup
+<span class="token operator">==</span><span class="token operator">=</span> PAUSE TestFactsGroup
+<span class="token operator">==</span><span class="token operator">=</span> CONT  TestFactsGroup
+    factorial_test.go:97: 如有需要在此执行:Setup
+<span class="token operator">==</span><span class="token operator">=</span> RUN   TestFactsGroup/case1
+<span class="token operator">==</span><span class="token operator">=</span> PAUSE TestFactsGroup/case1
+<span class="token operator">==</span><span class="token operator">=</span> RUN   TestFactsGroup/case2
+<span class="token operator">==</span><span class="token operator">=</span> PAUSE TestFactsGroup/case2
+<span class="token operator">==</span><span class="token operator">=</span> CONT  TestFactsGroup
+    factorial_test.go:99: 如有需要在此执行:Setup
+<span class="token operator">==</span><span class="token operator">=</span> CONT  TestFactsGroup/case1
+<span class="token operator">==</span><span class="token operator">=</span> CONT  TestFactsGroup/case2
+<span class="token operator">==</span><span class="token operator">=</span> CONT  TestFactsGroup/case1
+    factorial_test.go:105: 如有需要在此执行:Teardown
+<span class="token operator">==</span><span class="token operator">=</span> CONT  TestFactsGroup/case2
+    factorial_test.go:105: 如有需要在此执行:Teardown
+    factorial_test.go:107: 如有需要在此执行:Teardown
+<span class="token operator">==</span><span class="token operator">=</span> CONT  TestFactsGroup/case1
+    factorial_test.go:107: 如有需要在此执行:Teardown
+--- PASS: TestFactsGroup <span class="token punctuation">(</span><span class="token number">0</span>.00s<span class="token punctuation">)</span>
+    --- PASS: TestFactsGroup/case1 <span class="token punctuation">(</span><span class="token number">0</span>.00s<span class="token punctuation">)</span>
+    --- PASS: TestFactsGroup/case2 <span class="token punctuation">(</span><span class="token number">0</span>.00s<span class="token punctuation">)</span>
+PASS
+ok      go_study/22.unit_test   <span class="token number">0</span>.554s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="单元示例函数Example">单元示例函数Example</h2>
+<h3 id="格式-2">格式</h3>
+<p>被<code>go test</code>特殊对待的第三种函数就是示例函数，它们的函数名以<code>Example</code>为前缀。它们既没有参数也没有返回值。标准格式如下：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">ExampleName</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// ...</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<h3 id="示例">示例</h3>
+<pre class="line-numbers language-none"><code class="language-none">func ExampleFactorial() &#123;
+	fmt.Println(unittest.Factorial(5))
+
+	&#x2F;&#x2F; Output:&amp;Fact&#123;ret:120, nums:[]int&#123;5,4,3,2,1&#125;&#125;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>为你的代码编写示例代码有如下三个用处：</p>
+<ol>
+<li>
+<p>示例函数能够作为文档直接使用，例如基于web的<code>godoc</code>中能把示例函数与对应的函数或包相关联。</p>
+</li>
+<li>
+<p>示例函数只要包含了<code>// Output:</code>也是可以通过<code>go test</code>运行的可执行测试。</p>
+</li>
+</ol>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">shell<span class="token operator">></span> go <span class="token builtin class-name">test</span> <span class="token parameter variable">-run</span> Example
+PASS
+ok      go_study/22.unit_test       <span class="token number">0</span>.006s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<ol start="3">
+<li>示例函数提供了可以直接运行的示例代码，可以直接在<code>golang.org</code>的<code>godoc</code>文档服务器上使用<code>Go Playground</code>运行示例代码。</li>
+</ol>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/3472441059.html">https://blog.mailjob.net/posts/3472441059.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#go-test%E5%B7%A5%E5%85%B7"><span class="toc-text">go test工具</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95%E5%87%BD%E6%95%B0Test"><span class="toc-text">单元测试函数Test</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%BC%E5%BC%8F"><span class="toc-text">格式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95%E7%A4%BA%E4%BE%8B"><span class="toc-text">单元测试示例</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#go-test-v"><span class="toc-text">go test -v</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#go-test-run"><span class="toc-text">go test -run</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%9B%9E%E5%BD%92%E6%B5%8B%E8%AF%95"><span class="toc-text">回归测试</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%B7%B3%E8%BF%87%E6%9F%90%E4%BA%9B%E6%B5%8B%E8%AF%95%E7%94%A8%E4%BE%8B"><span class="toc-text">跳过某些测试用例</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%AD%90%E6%B5%8B%E8%AF%95"><span class="toc-text">子测试</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%B9%B6%E8%A1%8C%E6%B5%8B%E8%AF%95"><span class="toc-text">并行测试</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E5%B7%A5%E5%85%B7%E7%94%9F%E6%88%90%E6%B5%8B%E8%AF%95%E4%BB%A3%E7%A0%81"><span class="toc-text">使用工具生成测试代码</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E8%A6%86%E7%9B%96%E7%8E%87"><span class="toc-text">测试覆盖率</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#testify-assert"><span class="toc-text">testify&#x2F;assert</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%95%E5%85%83%E5%9F%BA%E5%87%86%E6%B5%8B%E8%AF%95Benchmark"><span class="toc-text">单元基准测试Benchmark</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%BC%E5%BC%8F%EF%BC%9A"><span class="toc-text">格式：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A4%BA%E4%BE%8B%EF%BC%9A"><span class="toc-text">示例：</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%80%A7%E8%83%BD%E6%AF%94%E8%BE%83%E5%87%BD%E6%95%B0"><span class="toc-text">性能比较函数</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%87%8D%E7%BD%AE%E6%97%B6%E9%97%B4"><span class="toc-text">重置时间</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%B9%B6%E8%A1%8C%E6%B5%8B%E8%AF%95-2"><span class="toc-text">并行测试</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Setup%E4%B8%8ETearDown"><span class="toc-text">Setup与TearDown</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#TestMain"><span class="toc-text">TestMain</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%AD%90%E6%B5%8B%E8%AF%95%E7%9A%84Setup%E4%B8%8ETeardown"><span class="toc-text">子测试的Setup与Teardown</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%95%E5%85%83%E7%A4%BA%E4%BE%8B%E5%87%BD%E6%95%B0Example"><span class="toc-text">单元示例函数Example</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%BC%E5%BC%8F-2"><span class="toc-text">格式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A4%BA%E4%BE%8B"><span class="toc-text">示例</span></a></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

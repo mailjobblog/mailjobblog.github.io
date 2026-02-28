@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Redis-lua脚本 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="相关链接 lua调试：http:&#x2F;&#x2F;redis.cn&#x2F;topics&#x2F;ldb.html  Lua脚本优势 1、减少网络开销：可以将多个请求通过脚本的形式一次发送，减少网络时延和请求次数。 2、原子性的操作：Redis会将整个脚本作为一个整体执行，中间不会被其他命令插入。因此在编写脚本的过程中无需担心会出现竞态条件，无需使用事务。 3、代码复用：客户端发送的脚步会永久存在redis中，这样，其他客户">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis-lua脚本">
+<meta property="og:url" content="https://blog.mailjob.net/posts/4012986220.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="相关链接 lua调试：http:&#x2F;&#x2F;redis.cn&#x2F;topics&#x2F;ldb.html  Lua脚本优势 1、减少网络开销：可以将多个请求通过脚本的形式一次发送，减少网络时延和请求次数。 2、原子性的操作：Redis会将整个脚本作为一个整体执行，中间不会被其他命令插入。因此在编写脚本的过程中无需担心会出现竞态条件，无需使用事务。 3、代码复用：客户端发送的脚步会永久存在redis中，这样，其他客户">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/img_convert/e7f1d51211ab0bd20dd3e4166d71b649.png">
+<meta property="article:published_time" content="2021-01-19T13:56:55.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.986Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="redis">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/img_convert/e7f1d51211ab0bd20dd3e4166d71b649.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Redis-lua脚本
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/4012986220.html" class="article-date">
+	  <time datetime="2021-01-19T13:56:55.000Z" itemprop="datePublished">2021-01-19</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/redis/" rel="tag">redis</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/4012986220.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.3k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 5(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <meta name="referrer" content="no-referrer"/>
+<h2 id="相关链接">相关链接</h2>
+<p>lua调试：<a target="_blank" rel="noopener" href="http://redis.cn/topics/ldb.html">http://redis.cn/topics/ldb.html</a></p>
+<p><img src="https://img-blog.csdnimg.cn/img_convert/e7f1d51211ab0bd20dd3e4166d71b649.png" alt="img"></p>
+<h2 id="Lua脚本优势">Lua脚本优势</h2>
+<p>1、减少网络开销：可以将多个请求通过脚本的形式一次发送，减少网络时延和请求次数。<br>
+2、原子性的操作：Redis会将整个脚本作为一个整体执行，中间不会被其他命令插入。因此在编写脚本的过程中无需担心会出现竞态条件，无需使用事务。<br>
+3、代码复用：客户端发送的脚步会永久存在redis中，这样，其他客户端可以复用这一脚本来完成相同的逻辑。<br>
+4、速度快：见 与其它语言的性能比较, 还有一个 JIT编译器可以显著地提高多数任务的性能; 对于那些仍然对性能不满意的人, 可以把关键部分使用C实现, 然后与其集成, 这样还可以享受其它方面的好处。<br>
+5、可以移植：只要是有ANSI C 编译器的平台都可以编译，你可以看到它可以在几乎所有的平台上运行:从 Windows 到Linux，同样Mac平台也没问题, 再到移动平台、游戏主机，甚至浏览器也可以完美使用 (翻译成JavaScript).<br>
+6、源码小巧：20000行C代码，可以编译进182K的可执行文件，加载快，运行快。</p>
+<h2 id="lua-脚本">lua 脚本</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">数据类型</th>
+<th style="text-align:left">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">nil</td>
+<td style="text-align:left">这个最简单，只有值nil属于该类，表示一个无效值（在条件表达式中相当于false）。</td>
+</tr>
+<tr>
+<td style="text-align:left">boolean</td>
+<td style="text-align:left">包含两个值：false和true。</td>
+</tr>
+<tr>
+<td style="text-align:left">number</td>
+<td style="text-align:left">表示双精度类型的实浮点数。</td>
+</tr>
+<tr>
+<td style="text-align:left">string</td>
+<td style="text-align:left">字符串由一对双引号或单引号来表示。</td>
+</tr>
+<tr>
+<td style="text-align:left">function</td>
+<td style="text-align:left">由 C 或 Lua 编写的函数</td>
+</tr>
+<tr>
+<td style="text-align:left">userdata</td>
+<td style="text-align:left">表示任意存储在变量中的C数据结构</td>
+</tr>
+<tr>
+<td style="text-align:left">thread</td>
+<td style="text-align:left">表示执行的独立线路，用于执行协同程序</td>
+</tr>
+<tr>
+<td style="text-align:left">table</td>
+<td style="text-align:left">Lua 中的表（table）其实是一个&quot;关联数组&quot;（associative arrays），数组的索引可以是数字或者是字符串。在 Lua 里，table 的创建是通过&quot;构造表达式&quot;来完成，最简单构造表达式是{}，用来创建一个空表 local tbl1 = {}。</td>
+</tr>
+</tbody>
+</table>
+<p>Lua的变量分为全局变量和局部变量。全局变量无需声明就可以直接使用，默认值是nil。如:</p>
+<pre class="line-numbers language-none"><code class="language-none">a &#x3D; 5      -- 为全局变量a赋值
+print(b)   -- 无需声明即可使用，默认是nil
+a &#x3D; nil    -- 删除全局变量a的方法是将其赋值为nil，全局变量没有声明和未声明之分，只有nil和非nil的区别<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>而在Redis脚本中不能使用全局变量，只允许使用局部变量以防止脚本之间相互影响。用 local 显示声明为局部变量。</p>
+<pre class="line-numbers language-none"><code class="language-none">local c    -- 声明一个局部变量，默认值是nil
+local d&#x3D;1  -- 声明一个局部变量d并赋值为1
+local e,f  -- 可以同时声明多个局部变量<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>同时声明一个存储函数的局部变量的方法为：</p>
+<pre class="line-numbers language-none"><code class="language-none">local say_hi &#x3D; function()
+    print &#39;hi&#39;
+end<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>变量名必须是非数字开头，只能包含字母、数字和下划线，区分大小写。变量名不能与Lua的保留关键字相同。 局部变量的作用域为从声明开始到所在层的语句块末尾，比如:</p>
+<pre class="line-numbers language-lua" data-language="lua"><code class="language-lua"><span class="token keyword">local</span> x<span class="token operator">=</span><span class="token number">10</span>
+<span class="token keyword">if</span> <span class="token keyword">true</span> <span class="token keyword">then</span>
+  <span class="token keyword">local</span> x<span class="token operator">=</span>x<span class="token operator">+</span><span class="token number">1</span>
+  <span class="token function">print</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span>
+  <span class="token keyword">do</span>
+    <span class="token keyword">local</span> x<span class="token operator">=</span>x<span class="token operator">+</span>!
+    <span class="token function">print</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span>
+  <span class="token keyword">end</span>
+<span class="token keyword">end</span>
+<span class="token function">print</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="命令格式">命令格式</h2>
+<p>Redis 提供了 EVAL（直接执行脚本） 和 EVALSHA（执行 SHA1 值的脚本） 这两个命令，可以使用内置的 Lua 解析器执行 Lua 脚本。语法格式为：</p>
+<ul>
+<li><strong><a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000018641753#">*<em>EVAL*</em></a> *<em>script numkeys key [key …] arg [arg …]*</em></strong></li>
+<li><strong><a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000018641753#">*<em>EVALSHA*</em></a> *<em>sha1 numkeys key [key …] arg [arg …]*</em></strong></li>
+</ul>
+<p>参数说明：</p>
+<ul>
+<li>script / sha1：EVAL 命令的第一个参数为需要执行的 Lua 脚本字符，EVALSHA 命令的一个参数为 Lua 脚本的 <a target="_blank" rel="noopener" href="https://redis.io/commands/eval#bandwidth-and-evalsha">SHA1 值</a></li>
+<li>numkeys：表示 key 的个数</li>
+<li>key [key …]：从第三个参数开始算起，表示在脚本中所用到的那些 Redis 键（key），这些键名参数可以在 Lua 中通过全局数组 KYES[i] 访问</li>
+<li>arg [arg …]：附加参数，在 Lua 中通过全局数组 ARGV[i] 访问</li>
+</ul>
+<p>EVAL 命令的使用示例：</p>
+<pre class="line-numbers language-none"><code class="language-none">&gt; EVAL &quot;return &#123;KEYS[1],KEYS[2],ARGV[1],ARGV[2]&#125;&quot; 2 key1 key2 first second
+1) &quot;key1&quot;
+2) &quot;key2&quot;
+3) &quot;first&quot;
+4) &quot;second&quot;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>每次使用 EVAL 命令都会传递需执行的 Lua 脚本内容，这样增加了宽带的浪费。Redis 内部会永久保存被运行在脚本缓存中，所以使用 EVALSHA（建议使用） 命令就可以根据脚本 SHA1 值执行对应的 Lua 脚本。</p>
+<pre class="line-numbers language-none"><code class="language-none">&gt; SCRIPT LOAD &quot;return &#39;hello&#39;&quot;
+&quot;1b936e3fe509bcbc9cd0664897bbe8fd0cac101b&quot;
+&gt; EVALSHA 1b936e3fe509bcbc9cd0664897bbe8fd0cac101b 0
+&quot;hello&quot;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="批量HGETTALL">批量HGETTALL</h3>
+<p>这个例子演示通过 Lua 实现批量 HGETALL</p>
+<pre class="line-numbers language-lua" data-language="lua"><code class="language-lua"><span class="token comment">-- KEYS为uid数组</span>
+<span class="token keyword">local</span> users <span class="token operator">=</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+<span class="token keyword">for</span> i<span class="token punctuation">,</span>uid <span class="token keyword">in</span> <span class="token function">ipairs</span><span class="token punctuation">(</span>KEYS<span class="token punctuation">)</span> <span class="token keyword">do</span>
+    <span class="token keyword">local</span> user <span class="token operator">=</span> redis<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string">'hgetall'</span><span class="token punctuation">,</span> uid<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> user <span class="token operator">~=</span> <span class="token keyword">nil</span> <span class="token keyword">then</span>
+        table<span class="token punctuation">.</span><span class="token function">insert</span><span class="token punctuation">(</span>users<span class="token punctuation">,</span> i<span class="token punctuation">,</span> user<span class="token punctuation">)</span>
+    <span class="token keyword">end</span>
+<span class="token keyword">end</span>
+<span class="token keyword">return</span> users<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="应用场景">应用场景</h2>
+<p>1、防止<strong>DDOS防护</strong>：限制n秒内同IP的访问次数</p>
+<p>2、游戏热更新</p>
+<h2 id="laravel-用例测试">laravel 用例测试</h2>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token comment">/**
+     * 修改人员
+     * 
+     * @param level 用户等级标识
+     * @param int suid 原始值
+     * @param int euid 修改值
+     */</span>
+    <span class="token keyword">public</span> <span class="token keyword">function</span> <span class="token function-definition function">updateUser</span><span class="token punctuation">(</span><span class="token variable">$level</span><span class="token punctuation">,</span> <span class="token keyword type-hint">int</span> <span class="token variable">$suid</span><span class="token punctuation">,</span> <span class="token keyword type-hint">int</span> <span class="token variable">$euid</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+        <span class="token variable">$key</span> <span class="token operator">=</span> <span class="token variable">$this</span><span class="token operator">-></span><span class="token property">processUserKey</span> <span class="token operator">.</span> <span class="token string single-quoted-string">':'</span> <span class="token operator">.</span> <span class="token variable">$level</span><span class="token punctuation">;</span>
+        <span class="token variable">$script</span> <span class="token operator">=</span> <span class="token operator">&lt;&lt;</span><span class="token operator">&lt;</span><span class="token constant">LUA_SCRIPT</span>
+        local delete <span class="token operator">=</span> redis<span class="token operator">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'srem'</span><span class="token punctuation">,</span> <span class="token constant">KEYS</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token constant">ARGV</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        local insert <span class="token operator">=</span> redis<span class="token operator">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'sadd'</span><span class="token punctuation">,</span> <span class="token constant">KEYS</span><span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token constant">ARGV</span><span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>delete <span class="token operator">==</span> <span class="token number">1</span> <span class="token keyword">and</span> insert<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">1</span> 
+        then
+            <span class="token keyword">return</span> <span class="token number">1</span>
+        <span class="token keyword">else</span>
+            <span class="token keyword">return</span> <span class="token number">0</span>
+        end
+        <span class="token constant">LUA_SCRIPT</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token class-name static-context">Redis</span><span class="token operator">::</span><span class="token function">eval</span><span class="token punctuation">(</span><span class="token variable">$script</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token variable">$key</span><span class="token punctuation">,</span> <span class="token variable">$key</span><span class="token punctuation">,</span> <span class="token variable">$suid</span><span class="token punctuation">,</span> <span class="token variable">$euid</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/4012986220.html">https://blog.mailjob.net/posts/4012986220.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E9%93%BE%E6%8E%A5"><span class="toc-text">相关链接</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Lua%E8%84%9A%E6%9C%AC%E4%BC%98%E5%8A%BF"><span class="toc-text">Lua脚本优势</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#lua-%E8%84%9A%E6%9C%AC"><span class="toc-text">lua 脚本</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%91%BD%E4%BB%A4%E6%A0%BC%E5%BC%8F"><span class="toc-text">命令格式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%B9%E9%87%8FHGETTALL"><span class="toc-text">批量HGETTALL</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">应用场景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#laravel-%E7%94%A8%E4%BE%8B%E6%B5%8B%E8%AF%95"><span class="toc-text">laravel 用例测试</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>解决项目部署CORS跨域问题 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="CORS问题 CORS 跨域问题的产生原因 CORS（Cross-Origin Resource Sharing）是一种机制，允许从一个域（源）请求来自不同域（源）的资源。现代浏览器出于安全考虑，限制网页的 AJAX 请求，禁止前端脚本访问不同域的资源。这种安全策略称为同源策略（Same-Origin Policy），它限制了不同源（包括协议、域名和端口）的交互。CORS 的出现是为了在特定情况下">
+<meta property="og:type" content="article">
+<meta property="og:title" content="解决项目部署CORS跨域问题">
+<meta property="og:url" content="https://blog.mailjob.net/posts/2084750826.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="CORS问题 CORS 跨域问题的产生原因 CORS（Cross-Origin Resource Sharing）是一种机制，允许从一个域（源）请求来自不同域（源）的资源。现代浏览器出于安全考虑，限制网页的 AJAX 请求，禁止前端脚本访问不同域的资源。这种安全策略称为同源策略（Same-Origin Policy），它限制了不同源（包括协议、域名和端口）的交互。CORS 的出现是为了在特定情况下">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-10-09T09:17:57.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.980Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="php">
+<meta property="article:tag" content="linux">
+<meta name="twitter:card" content="summary">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            解决项目部署CORS跨域问题
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/2084750826.html" class="article-date">
+	  <time datetime="2024-10-09T09:17:57.000Z" itemprop="datePublished">2024-10-09</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/linux/">linux</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/linux/" rel="tag">linux</a>, <a class="article-tag-none-link" href="/tags/php/" rel="tag">php</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/2084750826.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.6k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 6(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="CORS问题">CORS问题</h2>
+<h3 id="CORS-跨域问题的产生原因">CORS 跨域问题的产生原因</h3>
+<p>CORS（Cross-Origin Resource Sharing）是一种机制，允许从一个域（源）请求来自不同域（源）的资源。现代浏览器出于安全考虑，限制网页的 AJAX 请求，禁止前端脚本访问不同域的资源。这种安全策略称为同源策略（Same-Origin Policy），它限制了不同源（包括协议、域名和端口）的交互。CORS 的出现是为了在特定情况下允许跨源请求，增强了 Web 应用的灵活性。</p>
+<h3 id="如何解决-CORS-跨域问题">如何解决 CORS 跨域问题</h3>
+<p><strong>1. CORS 头部配置</strong>：通过设置 HTTP 响应头来告知浏览器允许跨域请求。常见的头部包括：</p>
+<ul>
+<li><code>Access-Control-Allow-Origin</code>: 指定允许哪些域进行请求，可以是具体的域名或 <code>*</code>（允许所有域）。</li>
+<li><code>Access-Control-Allow-Methods</code>: 指定允许的 HTTP 方法，如 <code>GET</code>、<code>POST</code> 等。</li>
+<li><code>Access-Control-Allow-Headers</code>: 指定允许的请求头。</li>
+<li><code>Access-Control-Max-Age</code>: 指定预检请求的缓存时间。</li>
+</ul>
+<p><strong>2. 代理服务器</strong>：通过设置一个同域的代理服务器，将跨域请求转发到目标域。这种方法常用于开发环境。</p>
+<p><strong>3. JSONP</strong>：通过 <code>&lt;script&gt;</code> 标签的跨域特性，获取数据。此方法仅支持 <code>GET</code> 请求，已经逐渐被 CORS 取代。</p>
+<h3 id="CORS配置详解">CORS配置详解</h3>
+<p>CORS 头部是服务器响应中包含的一组 HTTP 头，用于控制哪些来源的请求被允许，如何处理跨域请求。以下是常见的 CORS 头部配置项及其含义：</p>
+<ol>
+<li>Access-Control-Allow-Origin</li>
+</ol>
+<ul>
+<li><strong>说明</strong>：指定哪些源可以访问资源。</li>
+<li><strong>可配置值</strong>：
+<ul>
+<li>特定的域名，例如 <code>https://www.example.com</code>，表示仅允许该域的请求。</li>
+<li><code>*</code>，表示允许所有域进行请求（不推荐用于敏感数据）。</li>
+</ul>
+</li>
+<li><strong>示例</strong>：<pre class="line-numbers language-http" data-language="http"><code class="language-http"><span class="token header"><span class="token header-name keyword">Access-Control-Allow-Origin</span><span class="token punctuation">:</span> <span class="token header-value">https://www.example.com</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+</li>
+</ul>
+<ol start="2">
+<li>Access-Control-Allow-Methods</li>
+</ol>
+<ul>
+<li><strong>说明</strong>：指定允许的 HTTP 方法，表示客户端可以使用哪些 HTTP 方法来访问资源。</li>
+<li><strong>可配置值</strong>：可以是任意 HTTP 方法，如 <code>GET</code>、<code>POST</code>、<code>PUT</code>、<code>DELETE</code>、<code>OPTIONS</code> 等，多个方法用逗号分隔。</li>
+<li><strong>示例</strong>：<pre class="line-numbers language-http" data-language="http"><code class="language-http"><span class="token header"><span class="token header-name keyword">Access-Control-Allow-Methods</span><span class="token punctuation">:</span> <span class="token header-value">GET, POST, OPTIONS</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+</li>
+</ul>
+<ol start="3">
+<li>Access-Control-Allow-Headers</li>
+</ol>
+<ul>
+<li><strong>说明</strong>：指定哪些请求头可以被客户端发送。</li>
+<li><strong>可配置值</strong>：可以是任意请求头，例如 <code>Content-Type</code>、<code>Authorization</code>、<code>X-Custom-Header</code> 等，多个头部用逗号分隔。</li>
+<li><strong>示例</strong>：<pre class="line-numbers language-http" data-language="http"><code class="language-http"><span class="token header"><span class="token header-name keyword">Access-Control-Allow-Headers</span><span class="token punctuation">:</span> <span class="token header-value">Content-Type, Authorization</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+</li>
+</ul>
+<ol start="4">
+<li>Access-Control-Expose-Headers</li>
+</ol>
+<ul>
+<li><strong>说明</strong>：指定哪些响应头可以被浏览器访问，浏览器默认只允许访问 <code>Cache-Control</code>、<code>Content-Language</code>、<code>Content-Type</code>、<code>Expires</code>、<code>Last-Modified</code> 和 <code>Pragma</code> 等标准响应头。</li>
+<li><strong>可配置值</strong>：可以列出多个响应头。</li>
+<li><strong>示例</strong>：<pre class="line-numbers language-http" data-language="http"><code class="language-http"><span class="token header"><span class="token header-name keyword">Access-Control-Expose-Headers</span><span class="token punctuation">:</span> <span class="token header-value">X-Custom-Header</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+</li>
+</ul>
+<ol start="5">
+<li>Access-Control-Max-Age</li>
+</ol>
+<ul>
+<li><strong>说明</strong>：指定预检请求的缓存时间（以秒为单位），在此时间内，浏览器可以直接使用相同的请求，而无需再次发送预检请求。</li>
+<li><strong>可配置值</strong>：任意正整数，表示缓存时间。</li>
+<li><strong>示例</strong>：<pre class="line-numbers language-http" data-language="http"><code class="language-http"><span class="token header"><span class="token header-name keyword">Access-Control-Max-Age</span><span class="token punctuation">:</span> <span class="token header-value">86400  # 24小时</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+</li>
+</ul>
+<ol start="6">
+<li>Access-Control-Allow-Credentials</li>
+</ol>
+<ul>
+<li><strong>说明</strong>：指示是否允许浏览器发送凭据（如 Cookies 和 HTTP 认证信息）到跨域请求的服务器。</li>
+<li><strong>可配置值</strong>：
+<ul>
+<li><code>true</code>，表示允许发送凭据。</li>
+<li><code>false</code>，表示不允许。</li>
+</ul>
+</li>
+<li><strong>示例</strong>：<pre class="line-numbers language-http" data-language="http"><code class="language-http"><span class="token header"><span class="token header-name keyword">Access-Control-Allow-Credentials</span><span class="token punctuation">:</span> <span class="token header-value">true</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+</li>
+</ul>
+<ol start="7">
+<li>Access-Control-Request-Method</li>
+</ol>
+<ul>
+<li><strong>说明</strong>：在预检请求中使用，指示实际请求所使用的 HTTP 方法。</li>
+<li><strong>示例</strong>：<pre class="line-numbers language-http" data-language="http"><code class="language-http"><span class="token header"><span class="token header-name keyword">Access-Control-Request-Method</span><span class="token punctuation">:</span> <span class="token header-value">POST</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+</li>
+</ul>
+<ol start="8">
+<li>Access-Control-Request-Headers</li>
+</ol>
+<ul>
+<li><strong>说明</strong>：在预检请求中使用，指示实际请求所使用的请求头。</li>
+<li><strong>示例</strong>：<pre class="line-numbers language-http" data-language="http"><code class="language-http"><span class="token header"><span class="token header-name keyword">Access-Control-Request-Headers</span><span class="token punctuation">:</span> <span class="token header-value">Content-Type, Authorization</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+</li>
+</ul>
+<h2 id="不同部署方案CORS问题解决">不同部署方案CORS问题解决</h2>
+<h3 id="同域名下项目部署">同域名下项目部署</h3>
+<p>如果前端和后端共用一个域名（例如 <code>https://www.example.com</code>），则不需要 CORS 的额外配置。前端可以直接访问后端 API，只需确保 API 路由的正确设置。</p>
+<h4 id="前端项目配置">前端项目配置</h4>
+<h5 id="前端项目（Vue-3）">前端项目（Vue 3）</h5>
+<p>在 Vue 3 项目中，你可以直接调用后端 API。例如，使用 <code>axios</code> 发起请求：</p>
+<pre class="line-numbers language-vue" data-language="vue"><code class="language-vue">import axios from &#39;axios&#39;;
+
+axios.get(&#39;&#x2F;api&#x2F;data&#39;)
+    .then(response &#x3D;&gt; &#123;
+        console.log(response.data);
+    &#125;)
+    .catch(error &#x3D;&gt; &#123;
+        console.error(error);
+    &#125;);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="前端项目Nginx配置">前端项目Nginx配置</h5>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx"><span class="token directive"><span class="token keyword">server</span></span> <span class="token punctuation">&#123;</span>
+    <span class="token directive"><span class="token keyword">listen</span> <span class="token number">80</span></span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">server_name</span> www.example.com</span><span class="token punctuation">;</span>
+
+    <span class="token comment"># 前端项目的配置</span>
+    <span class="token directive"><span class="token keyword">location</span> /</span> <span class="token punctuation">&#123;</span>
+        <span class="token directive"><span class="token keyword">root</span> /path/to/vue/dist</span><span class="token punctuation">;</span>  <span class="token comment"># Vue 生成的静态文件路径</span>
+        <span class="token directive"><span class="token keyword">try_files</span> <span class="token variable">$uri</span> <span class="token variable">$uri</span>/ /index.html</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment"># 后端 API 的配置</span>
+    <span class="token directive"><span class="token keyword">location</span> /api/</span> <span class="token punctuation">&#123;</span>
+        <span class="token directive"><span class="token keyword">proxy_pass</span> http://127.0.0.1:8000</span><span class="token punctuation">;</span>  <span class="token comment"># 假设 后端项目 运行在 8000 端口</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> Host <span class="token variable">$host</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Real-IP <span class="token variable">$remote_addr</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Forwarded-For <span class="token variable">$proxy_add_x_forwarded_for</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Forwarded-Proto <span class="token variable">$scheme</span></span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+  
+  	<span class="token comment"># 以下省略 ...</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="总结">总结</h5>
+<ol>
+<li>
+<p><strong>前端</strong>（Vue 3）和 <strong>后端</strong>（Laravel）在同一域名下运行，因此不需要 CORS 配置。</p>
+</li>
+<li>
+<p><strong>Nginx</strong> 配置中，前端和后端通过不同的请求路径（如 <code>/</code> 和 <code>/api/</code>）进行区分。所有以 <code>/api/</code> 开头的请求将被代理到后端 Laravel 应用。</p>
+</li>
+</ol>
+<h3 id="不同域名下项目部署">不同域名下项目部署</h3>
+<p>当前端和后端位于不同域名（例如前端 <code>https://www.example.com</code>，后端 <code>https://api.example.com</code>）时，就需要进行 CORS 配置。</p>
+<h4 id="后端项目配置">后端项目配置</h4>
+<h5 id="后端项目（PHP）">后端项目（PHP）</h5>
+<p>在 PHP 后端中，你可以通过设置响应头来解决 CORS：</p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token comment">// index.php</span>
+<span class="token function">header</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'Access-Control-Allow-Origin: https://www.example.com'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">header</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'Access-Control-Allow-Methods: GET, POST, OPTIONS'</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 如果运行所有，则配置为 *</span>
+<span class="token function">header</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'Access-Control-Allow-Headers: Origin, Content-Type, Accept, Authorization'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// header('Content-Type: application/json');</span>
+
+<span class="token variable">$data</span> <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token string single-quoted-string">'message'</span> <span class="token operator">=></span> <span class="token string single-quoted-string">'Hello from API!'</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token keyword">echo</span> <span class="token function">json_encode</span><span class="token punctuation">(</span><span class="token variable">$data</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="后端项目Nginx配置">后端项目Nginx配置</h5>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx"><span class="token directive"><span class="token keyword">server</span></span> <span class="token punctuation">&#123;</span>
+    <span class="token directive"><span class="token keyword">listen</span> <span class="token number">80</span></span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">server_name</span> api.example.com</span><span class="token punctuation">;</span>
+
+    <span class="token directive"><span class="token keyword">location</span> /</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment"># CORS配置...</span>
+        <span class="token directive"><span class="token keyword">add_header</span> <span class="token string">'Access-Control-Allow-Origin'</span> <span class="token string">'https://www.example.com'</span></span><span class="token punctuation">;</span> <span class="token comment"># 允许前端域名访问</span>
+        <span class="token directive"><span class="token keyword">add_header</span> <span class="token string">'Access-Control-Allow-Methods'</span> <span class="token string">'GET, POST, OPTIONS'</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">add_header</span> <span class="token string">'Access-Control-Allow-Headers'</span> <span class="token string">'Origin, Content-Type, Accept, Authorization'</span></span><span class="token punctuation">;</span>
+        
+        <span class="token comment"># 处理预检请求</span>
+        <span class="token directive"><span class="token keyword">if</span> (<span class="token variable">$request_method</span> = <span class="token string">'OPTIONS'</span>)</span> <span class="token punctuation">&#123;</span>
+            <span class="token directive"><span class="token keyword">add_header</span> <span class="token string">'Access-Control-Max-Age'</span> <span class="token number">86400</span></span><span class="token punctuation">;</span>
+            <span class="token directive"><span class="token keyword">add_header</span> <span class="token string">'Content-Length'</span> <span class="token number">0</span></span><span class="token punctuation">;</span>
+            <span class="token directive"><span class="token keyword">return</span> <span class="token number">204</span></span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+
+        <span class="token comment"># 其他配置...</span>
+    <span class="token punctuation">&#125;</span>
+  
+  	<span class="token comment"># 以下省略 ...</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="前端项目配置-2">前端项目配置</h4>
+<h5 id="前端项目（Vue-3）-2">前端项目（Vue 3）</h5>
+<pre class="line-numbers language-vue" data-language="vue"><code class="language-vue">import axios from &#39;axios&#39;;
+
+axios.get(&#39;https:&#x2F;&#x2F;api.example.com&#x2F;api.php&#39;)
+    .then(response &#x3D;&gt; &#123;
+        console.log(response.data);
+    &#125;)
+    .catch(error &#x3D;&gt; &#123;
+        console.error(error);
+    &#125;);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="前端项目Nginx配置-2">前端项目Nginx配置</h5>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx"><span class="token directive"><span class="token keyword">server</span></span> <span class="token punctuation">&#123;</span>
+    <span class="token directive"><span class="token keyword">listen</span> <span class="token number">80</span></span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">server_name</span> www.example.com</span><span class="token punctuation">;</span>
+
+    <span class="token directive"><span class="token keyword">location</span> /</span> <span class="token punctuation">&#123;</span>
+        <span class="token directive"><span class="token keyword">root</span> /path/to/vue/dist</span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">try_files</span> <span class="token variable">$uri</span> <span class="token variable">$uri</span>/ /index.html</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+  
+  	<span class="token comment"># 以下省略 ...</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="总结-2">总结</h2>
+<p>CORS 是一种用于解决跨域请求的机制。根据不同的需求，开发者可以选择不同的方案来处理跨域问题：</p>
+<ul>
+<li>同域名的前端和后端之间无需 CORS 配置。</li>
+<li>不同域名之间的请求需要通过设置 CORS 头部来允许访问。</li>
+<li>配置 Nginx 时，要根据请求路径区分前端和后端的处理。</li>
+</ul>
+<p>通过以上配置和理解，开发者可以有效解决跨域问题，实现前后端的顺利交互。</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/2084750826.html">https://blog.mailjob.net/posts/2084750826.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#CORS%E9%97%AE%E9%A2%98"><span class="toc-text">CORS问题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#CORS-%E8%B7%A8%E5%9F%9F%E9%97%AE%E9%A2%98%E7%9A%84%E4%BA%A7%E7%94%9F%E5%8E%9F%E5%9B%A0"><span class="toc-text">CORS 跨域问题的产生原因</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3-CORS-%E8%B7%A8%E5%9F%9F%E9%97%AE%E9%A2%98"><span class="toc-text">如何解决 CORS 跨域问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CORS%E9%85%8D%E7%BD%AE%E8%AF%A6%E8%A7%A3"><span class="toc-text">CORS配置详解</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8D%E5%90%8C%E9%83%A8%E7%BD%B2%E6%96%B9%E6%A1%88CORS%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3"><span class="toc-text">不同部署方案CORS问题解决</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%8C%E5%9F%9F%E5%90%8D%E4%B8%8B%E9%A1%B9%E7%9B%AE%E9%83%A8%E7%BD%B2"><span class="toc-text">同域名下项目部署</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%89%8D%E7%AB%AF%E9%A1%B9%E7%9B%AE%E9%85%8D%E7%BD%AE"><span class="toc-text">前端项目配置</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%89%8D%E7%AB%AF%E9%A1%B9%E7%9B%AE%EF%BC%88Vue-3%EF%BC%89"><span class="toc-text">前端项目（Vue 3）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%89%8D%E7%AB%AF%E9%A1%B9%E7%9B%AENginx%E9%85%8D%E7%BD%AE"><span class="toc-text">前端项目Nginx配置</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8D%E5%90%8C%E5%9F%9F%E5%90%8D%E4%B8%8B%E9%A1%B9%E7%9B%AE%E9%83%A8%E7%BD%B2"><span class="toc-text">不同域名下项目部署</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%8E%E7%AB%AF%E9%A1%B9%E7%9B%AE%E9%85%8D%E7%BD%AE"><span class="toc-text">后端项目配置</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%90%8E%E7%AB%AF%E9%A1%B9%E7%9B%AE%EF%BC%88PHP%EF%BC%89"><span class="toc-text">后端项目（PHP）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%90%8E%E7%AB%AF%E9%A1%B9%E7%9B%AENginx%E9%85%8D%E7%BD%AE"><span class="toc-text">后端项目Nginx配置</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%89%8D%E7%AB%AF%E9%A1%B9%E7%9B%AE%E9%85%8D%E7%BD%AE-2"><span class="toc-text">前端项目配置</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%89%8D%E7%AB%AF%E9%A1%B9%E7%9B%AE%EF%BC%88Vue-3%EF%BC%89-2"><span class="toc-text">前端项目（Vue 3）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%89%8D%E7%AB%AF%E9%A1%B9%E7%9B%AENginx%E9%85%8D%E7%BD%AE-2"><span class="toc-text">前端项目Nginx配置</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93-2"><span class="toc-text">总结</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

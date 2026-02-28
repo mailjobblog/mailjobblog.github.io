@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>如何用go实现一个ORM | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="为了提高开发效率和质量，我们常常需要ORM来帮助我们快速实现持久层增删改查API，目前go语言实现的ORM有很多种，他们都有自己的优劣点，有的实现简单，有的功能复杂，有的API十分优雅。在使用了多个类似的工具之后，总是会发现某些点无法满足解决我们生产环境中碰到的实际问题，比如无法集成公司内部的监控，Trace组件，没有database层的超时设置，没有熔断等，所以有必要公司自己内部实现一款满足我们">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何用go实现一个ORM">
+<meta property="og:url" content="https://blog.mailjob.net/posts/1696354643.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="为了提高开发效率和质量，我们常常需要ORM来帮助我们快速实现持久层增删改查API，目前go语言实现的ORM有很多种，他们都有自己的优劣点，有的实现简单，有的功能复杂，有的API十分优雅。在使用了多个类似的工具之后，总是会发现某些点无法满足解决我们生产环境中碰到的实际问题，比如无法集成公司内部的监控，Trace组件，没有database层的超时设置，没有熔断等，所以有必要公司自己内部实现一款满足我们">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/202302221448782.png">
+<meta property="og:image" content="http://img.github.mailjob.net/202302221448335.png">
+<meta property="og:image" content="http://img.github.mailjob.net/202302221448220.png">
+<meta property="og:image" content="http://img.github.mailjob.net/202302221448957.png">
+<meta property="article:published_time" content="2023-02-22T06:32:00.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.979Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="go">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/202302221448782.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            如何用go实现一个ORM
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/1696354643.html" class="article-date">
+	  <time datetime="2023-02-22T06:32:00.000Z" itemprop="datePublished">2023-02-22</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/go/">go</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/go/" rel="tag">go</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/1696354643.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 3.8k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 16(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <p>为了提高开发效率和质量，我们常常需要ORM来帮助我们快速实现持久层增删改查API，目前go语言实现的ORM有很多种，他们都有自己的优劣点，有的实现简单，有的功能复杂，有的API十分优雅。在使用了多个类似的工具之后，总是会发现某些点无法满足解决我们生产环境中碰到的实际问题，比如无法集成公司内部的监控，Trace组件，没有database层的超时设置，没有熔断等，所以有必要公司自己内部实现一款满足我们可自定义开发的ORM，好用的生产工具常常能够对生产力产生飞跃式的提升。</p>
+<h2 id="为什么需要ORM">为什么需要ORM</h2>
+<h3 id="直接使用database-sql的痛点">直接使用database/sql的痛点</h3>
+<p>首先看看用database/sql如何查询数据库<br>
+我们用user表来做例子，一般的工作流程是先做技术方案，其中排在比较前面的是数据库表的设计，大部分公司应该有严格的数据库权限控制，不会给线上程序使用比较危险的操作权限，比如创建删除数据库，表，删除数据等。<br>
+表结构如下：</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token identifier"><span class="token punctuation">`</span>user<span class="token punctuation">`</span></span> <span class="token punctuation">(</span>
+  <span class="token identifier"><span class="token punctuation">`</span>id<span class="token punctuation">`</span></span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span> <span class="token keyword">unsigned</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span> <span class="token keyword">AUTO_INCREMENT</span> <span class="token keyword">COMMENT</span> <span class="token string">'id'</span><span class="token punctuation">,</span>
+  <span class="token identifier"><span class="token punctuation">`</span>name<span class="token punctuation">`</span></span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span> <span class="token keyword">COMMENT</span> <span class="token string">'名称'</span><span class="token punctuation">,</span>
+  <span class="token identifier"><span class="token punctuation">`</span>age<span class="token punctuation">`</span></span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token number">11</span><span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span> <span class="token keyword">DEFAULT</span> <span class="token string">'0'</span> <span class="token keyword">COMMENT</span> <span class="token string">'年龄'</span><span class="token punctuation">,</span>
+  <span class="token identifier"><span class="token punctuation">`</span>ctime<span class="token punctuation">`</span></span> <span class="token keyword">datetime</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span> <span class="token keyword">DEFAULT</span> <span class="token keyword">CURRENT_TIMESTAMP</span> <span class="token keyword">COMMENT</span> <span class="token string">'创建时间'</span><span class="token punctuation">,</span>
+  <span class="token identifier"><span class="token punctuation">`</span>mtime<span class="token punctuation">`</span></span> <span class="token keyword">datetime</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span> <span class="token keyword">DEFAULT</span> <span class="token keyword">CURRENT_TIMESTAMP</span> <span class="token keyword">COMMENT</span> <span class="token string">'更新时间'</span><span class="token punctuation">,</span>
+  <span class="token keyword">PRIMARY</span> <span class="token keyword">KEY</span> <span class="token punctuation">(</span><span class="token identifier"><span class="token punctuation">`</span>id<span class="token punctuation">`</span></span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">)</span> <span class="token keyword">ENGINE</span><span class="token operator">=</span><span class="token keyword">InnoDB</span>  <span class="token keyword">DEFAULT</span> <span class="token keyword">CHARSET</span><span class="token operator">=</span>utf8mb4<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>首先我们要写出和表结构对应的结构体User，如果你足够勤奋和努力，相应的json tag 和注释都可以写上，这个过程无聊且重复，因为在设计表结构的时候你已经写过一遍了。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> User <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    Id    <span class="token builtin">int64</span>     <span class="token string">`json:"id"`</span>   
+    Name  <span class="token builtin">string</span>    <span class="token string">`json:"name"`</span>
+    Age   <span class="token builtin">int64</span>    
+    Ctime time<span class="token punctuation">.</span>Time
+    Mtime time<span class="token punctuation">.</span>Time  <span class="token comment">// 更新时间</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>定义好结构体，我们写一个查询年龄在20以下且按照id字段顺序排序的前20名用户的 go代码</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">FindUsers</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>User<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    rows<span class="token punctuation">,</span> err <span class="token operator">:=</span> db<span class="token punctuation">.</span><span class="token function">QueryContext</span><span class="token punctuation">(</span>ctx<span class="token punctuation">,</span> <span class="token string">"SELECT `id`,`name`,`age`,`ctime`,`mtime` FROM user WHERE `age`&lt;? ORDER BY `id` LIMIT 20 "</span><span class="token punctuation">,</span> <span class="token number">20</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> err
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">defer</span> rows<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    result <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>User<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+    <span class="token keyword">for</span> rows<span class="token punctuation">.</span><span class="token function">Next</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        a <span class="token operator">:=</span> <span class="token operator">&amp;</span>User<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+        <span class="token keyword">if</span> err <span class="token operator">:=</span> rows<span class="token punctuation">.</span><span class="token function">Scan</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>a<span class="token punctuation">.</span>Id<span class="token punctuation">,</span> <span class="token operator">&amp;</span>a<span class="token punctuation">.</span>Name<span class="token punctuation">,</span> <span class="token operator">&amp;</span>a<span class="token punctuation">.</span>Age<span class="token punctuation">,</span> <span class="token operator">&amp;</span>a<span class="token punctuation">.</span>Ctime<span class="token punctuation">,</span> <span class="token operator">&amp;</span>a<span class="token punctuation">.</span>Mtime<span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> err
+        <span class="token punctuation">&#125;</span>
+        result <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>result<span class="token punctuation">,</span> a<span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">if</span> rows<span class="token punctuation">.</span><span class="token function">Err</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> rows<span class="token punctuation">.</span><span class="token function">Err</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">return</span> result<span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>当我们写少量这样的代码的时候我们可能还觉得轻松，但是当你业务工期排的很紧，并且要写大量的定制化查询的时候，这样的重复代码会越来越多。<br>
+上面的的代码我们发现有这么几个问题：</p>
+<ol>
+<li>SQL 语句是硬编码在程序里面的，当我需要增加查询条件的时候我需要另外再写一个方法，整个方法需要拷贝一份，很不灵活。</li>
+<li>在查询表所有字段的情况下，第2行下面的代码都是一样重复的，不管sql语句后面的条件是怎么样的。</li>
+<li>我们发现第1行SQL语句编写和rows.Scan()那行，写的枯燥层度是和表字段的数量成正比的，如果一个表有50个字段或者100个字段，手写是非常乏味的。</li>
+<li>在开发过程中rows.Close() 和 rows.Err()忘记写是常见的错误。</li>
+</ol>
+<p>我们总结出来用database/sql标准库开发的痛点：</p>
+<h4 id="开发效率很低">开发效率很低</h4>
+<p>很显然写上面的那种代码是很耗费时间的，因为手误容易写错，无可避免要增加自测的时间。如果上面的结构体User、 查询方法FindUsers() 代码能够自动生成，那么那将会极大的提高开发效率并且减少human error的发生从而提高开发质量。</p>
+<h4 id="心智负担很重">心智负担很重</h4>
+<p>如果一个开发人员把大量的时间花在这些代码上，那么他其实是在浪费自己的时间，不管在工作中还是在个人项目中，应该把重点花在架构设计，业务逻辑设计，困难点攻坚上面，去探索和开拓自己没有经验的领域，这块Dao层的代码最好在10分钟内完成。</p>
+<h2 id="ORM的核心组成">ORM的核心组成</h2>
+<p>明白了上面的痛点，为了开发工作更舒服，更高效，我们尝试着自己去开发一个ORM，核心的地方在于两个方面：</p>
+<p><img src="http://img.github.mailjob.net/202302221448782.png" alt="图片"></p>
+<ol>
+<li>
+<p>SQLBuilder：SQL语句要非硬编码，通过某种链式调用构造器帮助我构建SQL语句。</p>
+</li>
+<li>
+<p>Scanner：从数据库返回的数据可以自动映射赋值到结构体中。</p>
+</li>
+</ol>
+<h3 id="SQL-SelectBuilder">SQL SelectBuilder</h3>
+<p>我们尝试做个简略版的查询语句构造器,最终我们要达到如下图所示的效果。</p>
+<p><img src="http://img.github.mailjob.net/202302221448335.png" alt="图片"></p>
+<p>我们可以通过和SQL关键字同名的方法来表达SQL语句的固有关键字，通过go方法参数来设置其中动态变化的元素，这样链式调用和写SQL语句的思维顺序是一致的，只不过我们之前通过硬编码的方式变成了方法调用。</p>
+<p>具体代码如下：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">
+<span class="token keyword">type</span> SelectBuilder <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    builder   <span class="token operator">*</span>strings<span class="token punctuation">.</span>Builder
+    column    <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span>
+    tableName <span class="token builtin">string</span>
+    where     <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">func</span><span class="token punctuation">(</span>s <span class="token operator">*</span>SelectBuilder<span class="token punctuation">)</span>
+    args      <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+    orderby   <span class="token builtin">string</span>
+    offset    <span class="token operator">*</span><span class="token builtin">int64</span>
+    limit     <span class="token operator">*</span><span class="token builtin">int64</span>
+<span class="token punctuation">&#125;</span>
+ 
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s <span class="token operator">*</span>SelectBuilder<span class="token punctuation">)</span> <span class="token function">Select</span><span class="token punctuation">(</span>field <span class="token operator">...</span><span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">*</span>SelectBuilder <span class="token punctuation">&#123;</span>
+    s<span class="token punctuation">.</span>column <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>s<span class="token punctuation">.</span>column<span class="token punctuation">,</span> field<span class="token operator">...</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> s
+<span class="token punctuation">&#125;</span>
+ 
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s <span class="token operator">*</span>SelectBuilder<span class="token punctuation">)</span> <span class="token function">From</span><span class="token punctuation">(</span>name <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">*</span>SelectBuilder <span class="token punctuation">&#123;</span>
+    s<span class="token punctuation">.</span>tabelName <span class="token operator">=</span> name
+    <span class="token keyword">return</span> s
+<span class="token punctuation">&#125;</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s <span class="token operator">*</span>SelectBuilder<span class="token punctuation">)</span> <span class="token function">Where</span><span class="token punctuation">(</span>f <span class="token operator">...</span><span class="token keyword">func</span><span class="token punctuation">(</span>s <span class="token operator">*</span>SelectBuilder<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">*</span>SelectBuilder <span class="token punctuation">&#123;</span>
+    s<span class="token punctuation">.</span>where <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>s<span class="token punctuation">.</span>where<span class="token punctuation">,</span> f<span class="token operator">...</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> s
+<span class="token punctuation">&#125;</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s <span class="token operator">*</span>SelectBuilder<span class="token punctuation">)</span> <span class="token function">OrderBy</span><span class="token punctuation">(</span>field <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">*</span>SelectBuilder <span class="token punctuation">&#123;</span>
+    s<span class="token punctuation">.</span>orderby <span class="token operator">=</span> field
+    <span class="token keyword">return</span> s
+<span class="token punctuation">&#125;</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s <span class="token operator">*</span>SelectBuilder<span class="token punctuation">)</span> <span class="token function">Limit</span><span class="token punctuation">(</span>offset<span class="token punctuation">,</span> limit <span class="token builtin">int64</span><span class="token punctuation">)</span> <span class="token operator">*</span>SelectBuilder <span class="token punctuation">&#123;</span>
+    s<span class="token punctuation">.</span>offset <span class="token operator">=</span> <span class="token operator">&amp;</span>offset
+    s<span class="token punctuation">.</span>limit <span class="token operator">=</span> <span class="token operator">&amp;</span>limit
+    <span class="token keyword">return</span> s
+<span class="token punctuation">&#125;</span>
+<span class="token keyword">func</span> <span class="token function">GT</span><span class="token punctuation">(</span>field <span class="token builtin">string</span><span class="token punctuation">,</span> arg <span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span> <span class="token keyword">func</span><span class="token punctuation">(</span>s <span class="token operator">*</span>SelectBuilder<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> <span class="token keyword">func</span><span class="token punctuation">(</span>s <span class="token operator">*</span>SelectBuilder<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        s<span class="token punctuation">.</span>builder<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">"`"</span> <span class="token operator">+</span> field <span class="token operator">+</span> <span class="token string">"`"</span> <span class="token operator">+</span> <span class="token string">" > ?"</span><span class="token punctuation">)</span>
+        s<span class="token punctuation">.</span>args <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>s<span class="token punctuation">.</span>args<span class="token punctuation">,</span> arg<span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s <span class="token operator">*</span>SelectBuilder<span class="token punctuation">)</span> <span class="token function">Query</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    s<span class="token punctuation">.</span>builder<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">"SELECT "</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> k<span class="token punctuation">,</span> v <span class="token operator">:=</span> <span class="token keyword">range</span> s<span class="token punctuation">.</span>column <span class="token punctuation">&#123;</span>
+        <span class="token keyword">if</span> k <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+            s<span class="token punctuation">.</span>builder<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">","</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+        s<span class="token punctuation">.</span>builder<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">"`"</span> <span class="token operator">+</span> v <span class="token operator">+</span> <span class="token string">"`"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+    s<span class="token punctuation">.</span>builder<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">" FROM "</span><span class="token punctuation">)</span>
+    s<span class="token punctuation">.</span>builder<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">"`"</span> <span class="token operator">+</span> s<span class="token punctuation">.</span>tableName <span class="token operator">+</span> <span class="token string">"` "</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token function">len</span><span class="token punctuation">(</span>s<span class="token punctuation">.</span>where<span class="token punctuation">)</span> <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+        s<span class="token punctuation">.</span>builder<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">"WHERE "</span><span class="token punctuation">)</span>
+        <span class="token keyword">for</span> k<span class="token punctuation">,</span> f <span class="token operator">:=</span> <span class="token keyword">range</span> s<span class="token punctuation">.</span>where <span class="token punctuation">&#123;</span>
+            <span class="token keyword">if</span> k <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+                s<span class="token punctuation">.</span>builder<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">" AND "</span><span class="token punctuation">)</span>
+            <span class="token punctuation">&#125;</span>
+            <span class="token function">f</span><span class="token punctuation">(</span>s<span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">if</span> s<span class="token punctuation">.</span>orderby <span class="token operator">!=</span> <span class="token string">""</span> <span class="token punctuation">&#123;</span>
+        s<span class="token punctuation">.</span>builder<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">" ORDER BY "</span> <span class="token operator">+</span> s<span class="token punctuation">.</span>orderby<span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">if</span> s<span class="token punctuation">.</span>limit <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+        s<span class="token punctuation">.</span>builder<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">" LIMIT "</span><span class="token punctuation">)</span>
+        s<span class="token punctuation">.</span>builder<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span>strconv<span class="token punctuation">.</span><span class="token function">FormatInt</span><span class="token punctuation">(</span><span class="token operator">*</span>s<span class="token punctuation">.</span>limit<span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">if</span> s<span class="token punctuation">.</span>offset <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+        s<span class="token punctuation">.</span>builder<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">" OFFSET "</span><span class="token punctuation">)</span>
+        s<span class="token punctuation">.</span>builder<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span>strconv<span class="token punctuation">.</span><span class="token function">FormatInt</span><span class="token punctuation">(</span><span class="token operator">*</span>s<span class="token punctuation">.</span>offset<span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">return</span> s<span class="token punctuation">.</span>builder<span class="token punctuation">.</span><span class="token function">String</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> s<span class="token punctuation">.</span>args
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ol>
+<li>通过结构体上的方法调用返回自身，使其具有链式调用能力，并通过方法调用设置结构体中的值，用以构成SQL语句需要的元素。</li>
+<li>SelectBuilder 包含性能较高的strings.Builder 来拼接字符串。</li>
+<li>Query()方法构建出真正的SQL语句，返回包含占位符的SQL语句和args参数。</li>
+<li>[]func(s *SelectBuilder)通过函数数组来创建查询条件，可以通过函数调用的顺序和层级来生成 AND OR这种有嵌套关系的查询条件子句。</li>
+<li>Where() 传入的是查询条件函数，为可变参数列表，查询条件之间默认是AND关系。</li>
+</ol>
+<p>外部使用起来效果：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">b <span class="token operator">:=</span> SelectBuilder<span class="token punctuation">&#123;</span>builder<span class="token punctuation">:</span> <span class="token operator">&amp;</span>strings<span class="token punctuation">.</span>Builder<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+sql<span class="token punctuation">,</span> args <span class="token operator">:=</span> b<span class="token punctuation">.</span>
+    <span class="token function">Select</span><span class="token punctuation">(</span><span class="token string">"id"</span><span class="token punctuation">,</span> <span class="token string">"name"</span><span class="token punctuation">,</span> <span class="token string">"age"</span><span class="token punctuation">,</span> <span class="token string">"ctime"</span><span class="token punctuation">,</span> <span class="token string">"mtime"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>
+    <span class="token function">From</span><span class="token punctuation">(</span><span class="token string">"user"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>
+    <span class="token function">Where</span><span class="token punctuation">(</span><span class="token function">GT</span><span class="token punctuation">(</span><span class="token string">"id"</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">GT</span><span class="token punctuation">(</span><span class="token string">"age"</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>
+    <span class="token function">OrderBy</span><span class="token punctuation">(</span><span class="token string">"id"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>
+    <span class="token function">Limit</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">20</span><span class="token punctuation">)</span><span class="token punctuation">.</span>
+    <span class="token function">Query</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="Scanner的实现">Scanner的实现</h3>
+<p>顾名思义Scanner的作用就是把查询结果设置到对应的go对象上去，完成关系和对象的映射，关键核心就是通过反射获知传入对象的类型和字段类型，通过反射创建对象和值，并通过golang结构体的字段后面的tag来和查询结果的表头一一对应，达到动态给结构字段赋值的能力。</p>
+<p><img src="http://img.github.mailjob.net/202302221448220.png" alt="图片"></p>
+<p>具体实现如下：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">ScanSlice</span><span class="token punctuation">(</span>rows <span class="token operator">*</span>sql<span class="token punctuation">.</span>Rows<span class="token punctuation">,</span> dst <span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">defer</span> rows<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token comment">// dst的地址</span>
+    val <span class="token operator">:=</span> reflect<span class="token punctuation">.</span><span class="token function">ValueOf</span><span class="token punctuation">(</span>dst<span class="token punctuation">)</span> <span class="token comment">//  &amp;[]*main.User</span>
+    <span class="token comment">// 判断是否是指针类型，go是值传递，只有传指针才能让更改生效</span>
+    <span class="token keyword">if</span> val<span class="token punctuation">.</span><span class="token function">Kind</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!=</span> reflect<span class="token punctuation">.</span>Ptr <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> errors<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span><span class="token string">"dst not a pointer"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">// 指针指向的Value</span>
+    val <span class="token operator">=</span> reflect<span class="token punctuation">.</span><span class="token function">Indirect</span><span class="token punctuation">(</span>val<span class="token punctuation">)</span> <span class="token comment">// []*main.User</span>
+    <span class="token keyword">if</span> val<span class="token punctuation">.</span><span class="token function">Kind</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!=</span> reflect<span class="token punctuation">.</span>Slice <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> errors<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span><span class="token string">"dst not a pointer to slice"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">// 获取slice中的类型</span>
+    struPointer <span class="token operator">:=</span> val<span class="token punctuation">.</span><span class="token function">Type</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Elem</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment">// *main.User</span>
+    <span class="token comment">// 指针指向的类型 具体结构体</span>
+    stru <span class="token operator">:=</span> struPointer<span class="token punctuation">.</span><span class="token function">Elem</span><span class="token punctuation">(</span><span class="token punctuation">)</span>      <span class="token comment">//  main.User</span>
+ 
+    cols<span class="token punctuation">,</span> err <span class="token operator">:=</span> rows<span class="token punctuation">.</span><span class="token function">Columns</span><span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token comment">// [id,name,age,ctime,mtime]</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> err
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">// 判断查询的字段数是否大于 结构体的字段数</span>
+    <span class="token keyword">if</span> stru<span class="token punctuation">.</span><span class="token function">NumField</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;</span> <span class="token function">len</span><span class="token punctuation">(</span>cols<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token comment">// 5,5</span>
+        <span class="token keyword">return</span> errors<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span><span class="token string">"NumField and cols not match"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">//结构体的json tag的value对应字段在结构体中的index</span>
+    tagIdx <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token comment">//map tag -> field idx</span>
+    <span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> stru<span class="token punctuation">.</span><span class="token function">NumField</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">&#123;</span>
+        tagname <span class="token operator">:=</span> stru<span class="token punctuation">.</span><span class="token function">Field</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">.</span>Tag<span class="token punctuation">.</span><span class="token function">Get</span><span class="token punctuation">(</span><span class="token string">"json"</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> tagname <span class="token operator">!=</span> <span class="token string">""</span> <span class="token punctuation">&#123;</span>
+            tagIdx<span class="token punctuation">[</span>tagname<span class="token punctuation">]</span> <span class="token operator">=</span> i
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+    resultType <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span>reflect<span class="token punctuation">.</span>Type<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token function">len</span><span class="token punctuation">(</span>cols<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment">// [int64,string,int64,time.Time,time.Time]</span>
+    index <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token function">len</span><span class="token punctuation">(</span>cols<span class="token punctuation">)</span><span class="token punctuation">)</span>               <span class="token comment">// [0,1,2,3,4,5]</span>
+    <span class="token comment">// 查找和列名相对应的结构体jsontag name的字段类型，保存类型和序号到resultType和index中</span>
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> v <span class="token operator">:=</span> <span class="token keyword">range</span> cols <span class="token punctuation">&#123;</span>
+        <span class="token keyword">if</span> i<span class="token punctuation">,</span> ok <span class="token operator">:=</span> tagIdx<span class="token punctuation">[</span>v<span class="token punctuation">]</span><span class="token punctuation">;</span> ok <span class="token punctuation">&#123;</span>
+            resultType <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>resultType<span class="token punctuation">,</span> stru<span class="token punctuation">.</span><span class="token function">Field</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">.</span>Type<span class="token punctuation">)</span>
+            index <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>index<span class="token punctuation">,</span> i<span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">for</span> rows<span class="token punctuation">.</span><span class="token function">Next</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">// 创建结构体指针,获取指针指向的对象</span>
+        obj <span class="token operator">:=</span> reflect<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span>stru<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Elem</span><span class="token punctuation">(</span><span class="token punctuation">)</span>                   <span class="token comment">// main.User</span>
+        result <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token function">len</span><span class="token punctuation">(</span>resultType<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment">//[]</span>
+        <span class="token comment">// 创建结构体字段类型实例的指针,并转化为interface&#123;&#125; 类型</span>
+        <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> v <span class="token operator">:=</span> <span class="token keyword">range</span> resultType <span class="token punctuation">&#123;</span>
+            result <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>result<span class="token punctuation">,</span> reflect<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span>v<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Interface</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment">// *Int64 ,*string ....</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token comment">// 扫描结果</span>
+        err <span class="token operator">:=</span> rows<span class="token punctuation">.</span><span class="token function">Scan</span><span class="token punctuation">(</span>result<span class="token operator">...</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">return</span> err
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">for</span> i<span class="token punctuation">,</span> v <span class="token operator">:=</span> <span class="token keyword">range</span> result <span class="token punctuation">&#123;</span>
+            <span class="token comment">// 找到对应的结构体index</span>
+            fieldIndex <span class="token operator">:=</span> index<span class="token punctuation">[</span>i<span class="token punctuation">]</span>
+            <span class="token comment">// 把scan 后的值通过反射得到指针指向的value，赋值给对应的结构体字段</span>
+            obj<span class="token punctuation">.</span><span class="token function">Field</span><span class="token punctuation">(</span>fieldIndex<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Set</span><span class="token punctuation">(</span>reflect<span class="token punctuation">.</span><span class="token function">ValueOf</span><span class="token punctuation">(</span>v<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Elem</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment">// 给obj 的每个字段赋值</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token comment">// append 到slice</span>
+        vv <span class="token operator">:=</span> reflect<span class="token punctuation">.</span><span class="token function">Append</span><span class="token punctuation">(</span>val<span class="token punctuation">,</span> obj<span class="token punctuation">.</span><span class="token function">Addr</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment">// append到 []*main.User, maybe addr change</span>
+        val<span class="token punctuation">.</span><span class="token function">Set</span><span class="token punctuation">(</span>vv<span class="token punctuation">)</span>                           <span class="token comment">// []*main.User</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">return</span> rows<span class="token punctuation">.</span><span class="token function">Err</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>通过反射赋值流程，如果想知道具体的实现细节可以仔细阅读上面代码里面的注释</p>
+<p><img src="http://img.github.mailjob.net/202302221448957.png" alt="图片"></p>
+<ol>
+<li>以上主要的思想就是通过reflect包来获取传入dst的Slice类型，并通过反射创建其包含的对象，具体的步骤和解释请仔细阅读注释和图例。</li>
+<li>通过指定的json tag 可以把查询结果和结构体字段mapping起来，即使查询语句中字段不按照表结构顺序。</li>
+<li>ScanSlice是通用的Scanner。</li>
+<li>使用反射创建对象明显创建了多余的对象，没有传统的方式赋值高效，但是换来的巨大的灵活性在某些场景下是值得的。</li>
+</ol>
+<p>有了SQLBuilder和Scanner 我们就可以这样写查询函数了：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">FindUserReflect</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>User<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    b <span class="token operator">:=</span> SelectBuilder<span class="token punctuation">&#123;</span>builder<span class="token punctuation">:</span> <span class="token operator">&amp;</span>strings<span class="token punctuation">.</span>Builder<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+    sql<span class="token punctuation">,</span> args <span class="token operator">:=</span> b<span class="token punctuation">.</span>
+        <span class="token function">Select</span><span class="token punctuation">(</span><span class="token string">"id"</span><span class="token punctuation">,</span> <span class="token string">"name"</span><span class="token punctuation">,</span> <span class="token string">"age"</span><span class="token punctuation">,</span> <span class="token string">"ctime"</span><span class="token punctuation">,</span> <span class="token string">"mtime"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>
+        <span class="token function">From</span><span class="token punctuation">(</span><span class="token string">"user"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>
+        <span class="token function">Where</span><span class="token punctuation">(</span><span class="token function">GT</span><span class="token punctuation">(</span><span class="token string">"id"</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">GT</span><span class="token punctuation">(</span><span class="token string">"age"</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>
+        <span class="token function">OrderBy</span><span class="token punctuation">(</span><span class="token string">"id"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>
+        <span class="token function">Limit</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">20</span><span class="token punctuation">)</span><span class="token punctuation">.</span>
+        <span class="token function">Query</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+     
+    rows<span class="token punctuation">,</span> err <span class="token operator">:=</span> db<span class="token punctuation">.</span><span class="token function">QueryContext</span><span class="token punctuation">(</span>ctx<span class="token punctuation">,</span> sql<span class="token punctuation">,</span> args<span class="token operator">...</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> err
+    <span class="token punctuation">&#125;</span>
+    result <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>User<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+    err <span class="token operator">=</span> <span class="token function">ScanSlice</span><span class="token punctuation">(</span>rows<span class="token punctuation">,</span> <span class="token operator">&amp;</span>result<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> err
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">return</span> result<span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>生成的查询SQL语句和args如下：</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">SELECT</span> <span class="token identifier"><span class="token punctuation">`</span>id<span class="token punctuation">`</span></span><span class="token punctuation">,</span><span class="token identifier"><span class="token punctuation">`</span>name<span class="token punctuation">`</span></span><span class="token punctuation">,</span><span class="token identifier"><span class="token punctuation">`</span>age<span class="token punctuation">`</span></span><span class="token punctuation">,</span><span class="token identifier"><span class="token punctuation">`</span>ctime<span class="token punctuation">`</span></span><span class="token punctuation">,</span><span class="token identifier"><span class="token punctuation">`</span>mtime<span class="token punctuation">`</span></span> <span class="token keyword">FROM</span> <span class="token identifier"><span class="token punctuation">`</span>user<span class="token punctuation">`</span></span> <span class="token keyword">WHERE</span> <span class="token identifier"><span class="token punctuation">`</span>id<span class="token punctuation">`</span></span> <span class="token operator">></span> ? <span class="token operator">AND</span> <span class="token identifier"><span class="token punctuation">`</span>age<span class="token punctuation">`</span></span> <span class="token operator">></span> ? <span class="token keyword">ORDER</span> <span class="token keyword">BY</span> id <span class="token keyword">LIMIT</span> <span class="token number">20</span> <span class="token keyword">OFFSET</span> <span class="token number">0</span>  <span class="token punctuation">[</span><span class="token number">0</span> <span class="token number">0</span><span class="token punctuation">]</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h2 id="自动生成">自动生成</h2>
+<p>通过上面的使用的例子来看，我们的工作轻松了不少：</p>
+<ul>
+<li>第一：SQL语句不需要硬编码了；</li>
+<li>第二：Scan不需要写大量结构体字段和的乏味的重复代码。</li>
+</ul>
+<p>着实帮我们省了很大的麻烦。但是查询字段还需要我们自己手写，像这种</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token function">Select</span><span class="token punctuation">(</span><span class="token string">"id"</span><span class="token punctuation">,</span> <span class="token string">"name"</span><span class="token punctuation">,</span> <span class="token string">"age"</span><span class="token punctuation">,</span> <span class="token string">"ctime"</span><span class="token punctuation">,</span> <span class="token string">"mtime"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>其中传入的字段需要我们硬编码，我们可不可以再进一步，通过表结构定义来生成我们的golang结构体呢？答案是肯定的，要实现这一步我们需要一个SQL语句的<strong>解析器</strong>（<a target="_blank" rel="noopener" href="https://github.com/xwb1989/sqlparser">https://github.com/xwb1989/sqlparser</a>)，把SQL DDL语句解析成go语言中如下的Table对象，其所包含的表名，列名、列类型、注释等都能获取到，再通过这些对象和写好的模板代码来生成我们实际业务使用的代码。</li>
+</ul>
+<p>Table对象如下：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">
+<span class="token keyword">type</span> Table <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    TableName   <span class="token builtin">string</span>    <span class="token comment">// table name</span>
+    GoTableName <span class="token builtin">string</span>    <span class="token comment">// go struct name</span>
+    PackageName <span class="token builtin">string</span>    <span class="token comment">// package name</span>
+    Fields      <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>Column <span class="token comment">// columns</span>
+<span class="token punctuation">&#125;</span>
+<span class="token keyword">type</span> Column <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    ColumnName    <span class="token builtin">string</span> <span class="token comment">// column_name</span>
+    ColumnType    <span class="token builtin">string</span> <span class="token comment">// column_type</span>
+    ColumnComment <span class="token builtin">string</span> <span class="token comment">// column_comment</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>使用以上Table对象的模板代码：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span><span class="token punctuation">.</span>GoTableName<span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span> <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span><span class="token operator">-</span> <span class="token keyword">range</span> <span class="token punctuation">.</span>Fields <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> <span class="token punctuation">.</span>GoColumnName <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span>  <span class="token punctuation">.</span>GoColumnType <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span> <span class="token string">`json:"&#123;&#123; .ColumnName &#125;&#125;"`</span> <span class="token comment">// &#123;&#123; .ColumnComment &#125;&#125;</span>
+    <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span><span class="token operator">-</span> end<span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token keyword">const</span> <span class="token punctuation">(</span>
+    table <span class="token operator">=</span> <span class="token string">"&#123;&#123;.TableName&#125;&#125;"</span>
+    <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span><span class="token operator">-</span> <span class="token keyword">range</span> <span class="token punctuation">.</span>Fields<span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> <span class="token punctuation">.</span>GoColumnName<span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span> <span class="token operator">=</span> <span class="token string">"&#123;&#123;.ColumnName&#125;&#125;"</span> 
+    <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span><span class="token operator">-</span> end <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+<span class="token punctuation">)</span>
+<span class="token keyword">var</span> columns <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">&#123;</span>
+    <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span><span class="token operator">-</span> <span class="token keyword">range</span> <span class="token punctuation">.</span>Fields<span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span> <span class="token punctuation">.</span>GoColumnName<span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+    <span class="token punctuation">&#123;</span><span class="token punctuation">&#123;</span><span class="token operator">-</span> end <span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>通过上面的模板我们用user表的建表SQL语句生成如下代码：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> User <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    Id    <span class="token builtin">int64</span>     <span class="token string">`json:"id"`</span>    <span class="token comment">// id字段</span>
+    Name  <span class="token builtin">string</span>    <span class="token string">`json:"name"`</span>  <span class="token comment">// 名称</span>
+    Age   <span class="token builtin">int64</span>     <span class="token string">`json:"age"`</span>   <span class="token comment">// 年龄</span>
+    Ctime time<span class="token punctuation">.</span>Time <span class="token string">`json:"ctime"`</span> <span class="token comment">// 创建时间</span>
+    Mtime time<span class="token punctuation">.</span>Time <span class="token string">`json:"mtime"`</span> <span class="token comment">// 更新时间</span>
+<span class="token punctuation">&#125;</span>
+<span class="token keyword">const</span> <span class="token punctuation">(</span>
+    table <span class="token operator">=</span> <span class="token string">"user"</span>
+    Id <span class="token operator">=</span> <span class="token string">"id"</span>
+    Name <span class="token operator">=</span> <span class="token string">"name"</span>
+    Age <span class="token operator">=</span> <span class="token string">"age"</span>
+    Ctime <span class="token operator">=</span> <span class="token string">"ctime"</span>
+    Mtime <span class="token operator">=</span> <span class="token string">"mtime"</span>
+<span class="token punctuation">)</span>
+<span class="token keyword">var</span> Columns <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">&#123;</span><span class="token string">"id"</span><span class="token punctuation">,</span><span class="token string">"name"</span><span class="token punctuation">,</span><span class="token string">"age"</span><span class="token punctuation">,</span><span class="token string">"ctime"</span><span class="token punctuation">,</span><span class="token string">"mtime"</span><span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>那么我们在查询的时候就可以这样使用</p>
+<pre class="line-numbers language-none"><code class="language-none">Select(Columns...)<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>通过模板自动生成代码，可以大大的减轻开发编码负担，使我们从繁重的代码中解放出来。</p>
+<h2 id="reflect真的有必要吗？">reflect真的有必要吗？</h2>
+<p>由于我们SELECT时选择查找的字段和顺序是不固定的，我们有可能 SELECT id, name, age FROM user，也可能 SELECT name, id FROM user，有很大的任意性，这种情况使用反射出来的结构体tag和查询的列名来确定映射关系是必须的。但是有一种情况我们不需要用到反射，而且是一种最常用的情况，即：查询的字段名和表结构的列名一致，且顺序一致。这时候我们可以这么写，通过DeepEqual来判断查询字段和表结构字段是否一致且顺序一致来决定是否通过反射还是通过传统方法来创建对象。用传统方式创建对象（如下图第12行）令我们编码痛苦，不过可以通过模板来自动生成下面的代码，以避免手写，这样既灵活方便好用，性能又没有损耗，看起来是一个比较完美的解决方案。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">FindUserNoReflect</span><span class="token punctuation">(</span>b <span class="token operator">*</span>SelectBuilder<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>User<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    sql<span class="token punctuation">,</span> args <span class="token operator">:=</span> b<span class="token punctuation">.</span><span class="token function">Query</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    rows<span class="token punctuation">,</span> err <span class="token operator">:=</span> db<span class="token punctuation">.</span><span class="token function">QueryContext</span><span class="token punctuation">(</span>ctx<span class="token punctuation">,</span> sql<span class="token punctuation">,</span> args<span class="token operator">...</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> err
+    <span class="token punctuation">&#125;</span>
+    result <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>User<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+    <span class="token keyword">if</span> <span class="token function">DeepEqual</span><span class="token punctuation">(</span>b<span class="token punctuation">.</span>column<span class="token punctuation">,</span> Columns<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">defer</span> rows<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">for</span> rows<span class="token punctuation">.</span><span class="token function">Next</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            a <span class="token operator">:=</span> <span class="token operator">&amp;</span>User<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+            <span class="token keyword">if</span> err <span class="token operator">:=</span> rows<span class="token punctuation">.</span><span class="token function">Scan</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>a<span class="token punctuation">.</span>Id<span class="token punctuation">,</span> <span class="token operator">&amp;</span>a<span class="token punctuation">.</span>Name<span class="token punctuation">,</span> <span class="token operator">&amp;</span>a<span class="token punctuation">.</span>Age<span class="token punctuation">,</span> <span class="token operator">&amp;</span>a<span class="token punctuation">.</span>Ctime<span class="token punctuation">,</span> <span class="token operator">&amp;</span>a<span class="token punctuation">.</span>Mtime<span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+                <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> err
+            <span class="token punctuation">&#125;</span>
+            result <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>result<span class="token punctuation">,</span> a<span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">if</span> rows<span class="token punctuation">.</span><span class="token function">Err</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> rows<span class="token punctuation">.</span><span class="token function">Err</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">return</span> result<span class="token punctuation">,</span> <span class="token boolean">nil</span>
+    <span class="token punctuation">&#125;</span>
+    err <span class="token operator">=</span> <span class="token function">ScanSlice</span><span class="token punctuation">(</span>rows<span class="token punctuation">,</span> <span class="token operator">&amp;</span>result<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> err
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">return</span> result<span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="总结与展望">总结与展望</h2>
+<h3 id="总结">总结</h3>
+<ol>
+<li>通过database/sql 库开发有较大痛点，ORM就是为了解决以上问题而生，其存在是有意义的。</li>
+<li>ORM 两个关键的部分是SQLBuilder和Scanner的实现。</li>
+<li>ORM Scanner 使用反射创建对象在性能上肯定会有一定的损失，但是带来极大的灵活性,同时在查询全表字段这种特殊情况下规避使用反射来提高性能。</li>
+</ol>
+<h3 id="展望">展望</h3>
+<p>通过表结构，我们可以生成对应的结构体和持久层增删改查代码，我们再往前扩展一步，能否通过表结构生成的proto格式的message，以及一些常用的CRUD GRPC rpc接口定义。通过工具，我们甚至可以把前端的代码都生成好，实现半自动化编程。我想这个是值得期待的。</p>
+<h2 id="参考资料">参考资料</h2>
+<p><a target="_blank" rel="noopener" href="https://github.com/ent/ent">https://github.com/ent/ent</a></p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/1696354643.html">https://blog.mailjob.net/posts/1696354643.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81ORM"><span class="toc-text">为什么需要ORM</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%9B%B4%E6%8E%A5%E4%BD%BF%E7%94%A8database-sql%E7%9A%84%E7%97%9B%E7%82%B9"><span class="toc-text">直接使用database&#x2F;sql的痛点</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BC%80%E5%8F%91%E6%95%88%E7%8E%87%E5%BE%88%E4%BD%8E"><span class="toc-text">开发效率很低</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BF%83%E6%99%BA%E8%B4%9F%E6%8B%85%E5%BE%88%E9%87%8D"><span class="toc-text">心智负担很重</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ORM%E7%9A%84%E6%A0%B8%E5%BF%83%E7%BB%84%E6%88%90"><span class="toc-text">ORM的核心组成</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#SQL-SelectBuilder"><span class="toc-text">SQL SelectBuilder</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Scanner%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-text">Scanner的实现</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%87%AA%E5%8A%A8%E7%94%9F%E6%88%90"><span class="toc-text">自动生成</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#reflect%E7%9C%9F%E7%9A%84%E6%9C%89%E5%BF%85%E8%A6%81%E5%90%97%EF%BC%9F"><span class="toc-text">reflect真的有必要吗？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93%E4%B8%8E%E5%B1%95%E6%9C%9B"><span class="toc-text">总结与展望</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B1%95%E6%9C%9B"><span class="toc-text">展望</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

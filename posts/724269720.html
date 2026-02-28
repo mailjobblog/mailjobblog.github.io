@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>PHP实现IO非阻塞模型(no-blocking) | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="参考文献 5种IO模型：https:&#x2F;&#x2F;blog.mailjob.net&#x2F;posts&#x2F;3565199751.html github代码下载：https:&#x2F;&#x2F;github.com&#x2F;mailjobblog&#x2F;dev_php_io&#x2F;tree&#x2F;master&#x2F;test&#x2F;noblocking 函数（stream_set_blocking）：https:&#x2F;&#x2F;php.golaravel.com&#x2F;function.s">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PHP实现IO非阻塞模型(no-blocking)">
+<meta property="og:url" content="https://blog.mailjob.net/posts/724269720.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="参考文献 5种IO模型：https:&#x2F;&#x2F;blog.mailjob.net&#x2F;posts&#x2F;3565199751.html github代码下载：https:&#x2F;&#x2F;github.com&#x2F;mailjobblog&#x2F;dev_php_io&#x2F;tree&#x2F;master&#x2F;test&#x2F;noblocking 函数（stream_set_blocking）：https:&#x2F;&#x2F;php.golaravel.com&#x2F;function.s">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210425224727.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210425230808.png">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210425232605.png">
+<meta property="article:published_time" content="2021-04-25T14:43:46.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.984Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="swoole">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/oss.github/20210425224727.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            PHP实现IO非阻塞模型(no-blocking)
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/724269720.html" class="article-date">
+	  <time datetime="2021-04-25T14:43:46.000Z" itemprop="datePublished">2021-04-25</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/php/">php</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/swoole/" rel="tag">swoole</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/724269720.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 662(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 2(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="参考文献">参考文献</h2>
+<p>5种IO模型：<a href="https://blog.mailjob.net/posts/3565199751.html">https://blog.mailjob.net/posts/3565199751.html</a></p>
+<p>github代码下载：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/dev_php_io/tree/master/test/noblocking">https://github.com/mailjobblog/dev_php_io/tree/master/test/noblocking</a></p>
+<p>函数（stream_set_blocking）：<a target="_blank" rel="noopener" href="https://php.golaravel.com/function.stream-set-blocking.html">https://php.golaravel.com/function.stream-set-blocking.html</a></p>
+<p>函数（feof）：<a target="_blank" rel="noopener" href="https://php.golaravel.com/function.feof.html">https://php.golaravel.com/function.feof.html</a></p>
+<p>函数（stream_select）：<a target="_blank" rel="noopener" href="https://php.golaravel.com/function.stream-select.html">https://php.golaravel.com/function.stream-select.html</a></p>
+<h2 id="IO非阻塞模型原理">IO非阻塞模型原理</h2>
+<p>非阻塞IO发出read请求后发现数据没准备好，会继续往下执行，此时应用程序会不断轮询polling内核询问数据是否准备好，当数据没有准备好时，内核立即返回EWOULDBLOCK错误。直到数据被拷贝到应用程序缓冲区，read请求才获取到结果。并且你要注意！这里最后一次 read 调用获取数据的过程，是一个同步的过程，是需要等待的过程。这里的同步指的是<strong>内核态的数据拷贝到用户程序的缓存区这个过程</strong>。</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210425224727.png" alt="图片"></p>
+<h2 id="原生php代码演示">原生php代码演示</h2>
+<h3 id="代码">代码</h3>
+<p><strong>server.php</strong></p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token keyword">require</span> <span class="token constant">__DIR__</span><span class="token operator">.</span><span class="token string double-quoted-string">"/../../vendor/autoload.php"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">use</span> <span class="token package">DevPhpIO<span class="token punctuation">\</span>Blocking<span class="token punctuation">\</span>Worker</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span> <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Worker</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'0.0.0.0'</span><span class="token punctuation">,</span><span class="token number">9500</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">on</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'connect'</span><span class="token punctuation">,</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token variable">$server</span><span class="token punctuation">,</span><span class="token variable">$client</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+    <span class="token function">dd</span><span class="token punctuation">(</span><span class="token variable">$client</span><span class="token punctuation">,</span><span class="token string single-quoted-string">'连接成功'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">on</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'receive'</span><span class="token punctuation">,</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token variable">$server</span><span class="token punctuation">,</span><span class="token variable">$client</span><span class="token punctuation">,</span><span class="token variable">$data</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+    <span class="token function">dd</span><span class="token punctuation">(</span><span class="token variable">$data</span><span class="token punctuation">,</span><span class="token string single-quoted-string">'处理client的数据'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">sleep</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 进行阻塞，方便演示</span>
+    <span class="token variable">$server</span><span class="token operator">-></span><span class="token function">send</span><span class="token punctuation">(</span><span class="token variable">$client</span><span class="token punctuation">,</span> <span class="token string double-quoted-string">"hello i’m is server"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token variable">$server</span><span class="token operator">-></span><span class="token function">close</span><span class="token punctuation">(</span><span class="token variable">$client</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">on</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'close'</span><span class="token punctuation">,</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token variable">$server</span><span class="token punctuation">,</span><span class="token variable">$client</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+    <span class="token function">dd</span><span class="token punctuation">(</span><span class="token variable">$client</span><span class="token punctuation">,</span><span class="token string single-quoted-string">'连接断开'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$server</span><span class="token operator">-></span><span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>client.php</strong></p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token keyword">require</span> <span class="token constant">__DIR__</span><span class="token operator">.</span><span class="token string double-quoted-string">"/../../vendor/autoload.php"</span><span class="token punctuation">;</span>
+
+<span class="token variable">$fp</span> <span class="token operator">=</span> <span class="token function">stream_socket_client</span><span class="token punctuation">(</span><span class="token string double-quoted-string">"tcp://127.0.0.1:9500"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">//设置套接字为非阻塞模型</span>
+<span class="token function">stream_set_blocking</span><span class="token punctuation">(</span><span class="token variable">$fp</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token function">fwrite</span><span class="token punctuation">(</span><span class="token variable">$fp</span><span class="token punctuation">,</span><span class="token string single-quoted-string">'hello NO-blocking'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$time</span> <span class="token operator">=</span> <span class="token function">time</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">echo</span> <span class="token function">fread</span><span class="token punctuation">(</span><span class="token variable">$fp</span><span class="token punctuation">,</span><span class="token number">65535</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">echo</span> <span class="token string double-quoted-string">"\n此处执行其他业务代码\r\n"</span><span class="token punctuation">;</span>
+
+<span class="token variable">$m</span> <span class="token operator">=</span> <span class="token function">time</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token variable">$time</span><span class="token punctuation">;</span>
+
+<span class="token keyword">echo</span> <span class="token string double-quoted-string">"执行时间"</span> <span class="token operator">.</span> <span class="token variable">$m</span> <span class="token operator">.</span> <span class="token string double-quoted-string">"秒钟\n"</span><span class="token punctuation">;</span>
+
+<span class="token comment">// # 1</span>
+<span class="token comment">// 用 feof 判断是否到达结尾的位置，如果到达，则跳出输出服务端返回的结果</span>
+<span class="token comment">// while(!feof($fp))&#123;</span>
+<span class="token comment">//  sleep(1);</span>
+<span class="token comment">//  var_dump(fread($fp,65535));</span>
+<span class="token comment">// &#125;</span>
+
+<span class="token comment">// # 2</span>
+<span class="token comment">// 用 stream_select 去循环遍历server的读写状态</span>
+<span class="token comment">// while(!feof($fp))&#123;</span>
+<span class="token comment">//   sleep(1);</span>
+<span class="token comment">//   $read[] = $fp;</span>
+<span class="token comment">//   stream_select($read, $write, $error, 1);</span>
+<span class="token comment">//   var_dump($read);</span>
+<span class="token comment">//   var_dump(fread($fp,65535));</span>
+<span class="token comment">// &#125;</span>
+
+<span class="token function">fclose</span><span class="token punctuation">(</span><span class="token variable">$fp</span><span class="token punctuation">)</span><span class="token punctuation">;</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>Tips:</strong></p>
+<p>和 <code>php阻塞模型</code> 相比，该模型代码中，在 <code>client.php</code> 中增加了 <code>stream_set_blocking($fp, 0);</code> 进而达到了，不等待服务端返回结果，而直接进行下一步处理的过程。</p>
+<h3 id="测试">测试</h3>
+<p>测试后发现，虽然服务端阻塞了 <code>5s</code> ，但是该模型，并不需要等待阻塞，而直接返回结果。</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210425230808.png" alt="image-20210425230806578"></p>
+<p>上面的测试，虽然解决了，阻塞问题，但是又带来了一个新的问题，就是对于 <code>server</code> 返回的结果，无法拿到，所以根据上面的代码，打开 <code>#1</code> 的代码注释快，然后进行了如下的测试：</p>
+<p>用 <code>feof</code> 判断是否到了指针的结束位置，如果到达了指针的结束位置，则输出 <code>server</code> 反馈的值。</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210425232605.png" alt="image-20210425232603592"></p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/724269720.html">https://blog.mailjob.net/posts/724269720.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#IO%E9%9D%9E%E9%98%BB%E5%A1%9E%E6%A8%A1%E5%9E%8B%E5%8E%9F%E7%90%86"><span class="toc-text">IO非阻塞模型原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8E%9F%E7%94%9Fphp%E4%BB%A3%E7%A0%81%E6%BC%94%E7%A4%BA"><span class="toc-text">原生php代码演示</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81"><span class="toc-text">代码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95"><span class="toc-text">测试</span></a></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

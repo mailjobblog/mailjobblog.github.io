@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>redis内存淘汰策略 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="相关链接 redis LRU策略分析：https:&#x2F;&#x2F;www.cnblogs.com&#x2F;linxiyue&#x2F;p&#x2F;10945216.html redis LFU策略分析：https:&#x2F;&#x2F;www.cnblogs.com&#x2F;linxiyue&#x2F;p&#x2F;10955533.html redis LRU伪代码演示：https:&#x2F;&#x2F;github.com&#x2F;mailjobblog&#x2F;dev_redis&#x2F;blob&#x2F;master&#x2F;L">
+<meta property="og:type" content="article">
+<meta property="og:title" content="redis内存淘汰策略">
+<meta property="og:url" content="https://blog.mailjob.net/posts/2661519066.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="相关链接 redis LRU策略分析：https:&#x2F;&#x2F;www.cnblogs.com&#x2F;linxiyue&#x2F;p&#x2F;10945216.html redis LFU策略分析：https:&#x2F;&#x2F;www.cnblogs.com&#x2F;linxiyue&#x2F;p&#x2F;10955533.html redis LRU伪代码演示：https:&#x2F;&#x2F;github.com&#x2F;mailjobblog&#x2F;dev_redis&#x2F;blob&#x2F;master&#x2F;L">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210303213326.jpg">
+<meta property="article:published_time" content="2021-01-24T03:17:50.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.986Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="redis">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/oss.github/20210303213326.jpg">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            redis内存淘汰策略
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/2661519066.html" class="article-date">
+	  <time datetime="2021-01-24T03:17:50.000Z" itemprop="datePublished">2021-01-24</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/redis/" rel="tag">redis</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/2661519066.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.2k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 4(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="相关链接">相关链接</h2>
+<p>redis LRU策略分析：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/linxiyue/p/10945216.html">https://www.cnblogs.com/linxiyue/p/10945216.html</a></p>
+<p>redis LFU策略分析：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/linxiyue/p/10955533.html">https://www.cnblogs.com/linxiyue/p/10955533.html</a></p>
+<p>redis LRU伪代码演示：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/dev_redis/blob/master/LRU/LRU_Cache.php">https://github.com/mailjobblog/dev_redis/blob/master/LRU/LRU_Cache.php</a></p>
+<h2 id="内存淘汰策略">内存淘汰策略</h2>
+<ol>
+<li>noeviction：当内存使用超过配置的时候会返回错误，不会驱逐任何键</li>
+<li><code>allkeys-lru</code>：加入键的时候，如果过限，首先通过<code>LRU算法驱逐最久没有使用的键</code></li>
+<li><code>volatile-lru</code>：加入键的时候如果过限，首先从设置了过期时间的键集合中<code>驱逐最久没有使用的键</code></li>
+<li>allkeys-random：加入键的时候如果过限，从所有key随机删除</li>
+<li>volatile-random：加入键的时候如果过限，从过期键的集合中随机驱逐</li>
+<li>volatile-ttl：从配置了过期时间的键中驱逐马上就要过期的键</li>
+<li><code>volatile-lfu</code>：从所有配置了过期时间的键中<code>驱逐使用频率最少的键</code></li>
+<li><code>allkeys-lfu</code>：从<code>所有键中驱逐使用频率最少的键</code></li>
+</ol>
+<h2 id="LRU和LFU的区别">LRU和LFU的区别</h2>
+<p>LRU是最近最少使用页面置换算法(Least Recently Used),也就是首先<strong>淘汰最长时间未被使用的页面!</strong></p>
+<p>LFU是最近最不常用页面置换算法(Least Frequently Used),也就是淘汰<strong>一定时期内被访问次数最少的页!</strong></p>
+<h2 id="LRU">LRU</h2>
+<p>举例如下的访问模式，A每5s访问一次，B每2s访问一次，C与D每10s访问一次，<code>|</code>代表计算空闲时间的截止点：</p>
+<pre class="line-numbers language-none"><code class="language-none">~~~~~A~~~~~A~~~~~A~~~~A~~~~~A~~~~~A~~|
+~~B~~B~~B~~B~~B~~B~~B~~B~~B~~B~~B~~B~|
+~~~~~~~~~~C~~~~~~~~~C~~~~~~~~~C~~~~~~|
+~~~~~D~~~~~~~~~~D~~~~~~~~~D~~~~~~~~~D|<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>在很长时期内</strong>、可以看到，<code>LRU</code>对于A、B、C工作的很好，完美预测了将来被访问到的概率B&gt;A&gt;C，但对于D却预测了最少的空闲时间。</p>
+<p>但是，总体来说，<code>LRU</code>算法已经是一个性能足够好的算法了</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210303213326.jpg" alt=""></p>
+<h4 id="图解说明">图解说明</h4>
+<ul>
+<li>新数据插入到链表头部</li>
+<li>每当缓存命中（即缓存数据被访问），则将数据移到链表头部</li>
+<li>当链表满的时候，将链表尾部的数据丢弃</li>
+</ul>
+<h4 id="LRU-Cache具备的操作：">LRU Cache具备的操作：</h4>
+<ul>
+<li>set(key,value)：如果key在hashmap中存在，则先重置对应的value值，然后获取对应的节点cur，将cur节点从链表删除，并移动到链表的头部；若果key在hashmap不存在，则新建一个节点，并将节点放到链表的头部。当Cache存满的时候，将链表最后一个节点删除即可。</li>
+<li>get(key)：如果key在hashmap中存在，则把对应的节点放到链表头部，并返回对应的value值；如果不存在，则返回-1。</li>
+</ul>
+<h4 id="LRU配置参数">LRU配置参数</h4>
+<p><code>Redis</code>配置中和<code>LRU</code>有关的有三个：</p>
+<ul>
+<li><code>maxmemory</code>: 配置<code>Redis</code>存储数据时指定限制的内存大小，比如<code>100m</code>。当缓存消耗的内存超过这个数值时, 将触发数据淘汰。该数据配置为0时，表示缓存的数据量没有限制, 即LRU功能不生效。64位的系统默认值为0，32位的系统默认内存限制为3GB</li>
+<li><code>maxmemory_policy</code>: 触发数据淘汰后的淘汰策略</li>
+<li><code>maxmemory_samples</code>: 随机采样的精度，也就是随即取出key的数目。该数值配置越大, 越接近于真实的LRU算法，但是数值越大，相应消耗也变高，对性能有一定影响，样本值默认为5。</li>
+</ul>
+<h2 id="LFU">LFU</h2>
+<p><strong>示例图展示</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">~~~~~A~~~~~A~~~~~A~~~~A~~~~~A~~~~~A~~|
+~~B~~B~~B~~B~~B~~B~~B~~B~~B~~B~~B~~B~|
+~~~~~~~~~~C~~~~~~~~~C~~~~~~~~~C~~~~~~|
+~~~~~D~~~~~~~~~~D~~~~~~~~~D~~~~~~~~~D|<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在上面的情况中，<strong>在一定时期内</strong>，根据访问频繁情况，可以确定保留优先级：B&gt;A&gt;C=D。</p>
+<h4 id="LFU配置">LFU配置</h4>
+<p><code>Redis</code>4.0之后为<code>maxmemory_policy</code>淘汰策略添加了两个<code>LFU</code>模式：</p>
+<ul>
+<li><code>volatile-lfu</code>：对有过期时间的key采用<code>LFU</code>淘汰算法</li>
+<li><code>allkeys-lfu</code>：对全部key采用<code>LFU</code>淘汰算法</li>
+</ul>
+<p>还有2个配置可以调整<code>LFU</code>算法：</p>
+<pre class="line-numbers language-none"><code class="language-none">lfu-log-factor 10
+lfu-decay-time 1<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p><code>lfu-log-factor</code>可以调整计数器<code>counter</code>的增长速度，<code>lfu-log-factor</code>越大，<code>counter</code>增长的越慢。</p>
+<p><code>lfu-decay-time</code>是一个以分钟为单位的数值，可以调整<code>counter</code>的减少速度</p>
+<h2 id="内存淘汰策略的选择">内存淘汰策略的选择</h2>
+<p><strong>个人观点</strong></p>
+<p>我们在选择使用淘汰策略的时候可以根据访问key的方式来选择不同的淘汰策略</p>
+<p>1、当我们redis中的key基本上都有用到，也就是说每个key都有周期性访问到，那就可以选择使用random策略</p>
+<p>2、当我们redis中的key部分是我们经常访问的，部分是非经常访问的就可以考虑使用LRU和LFU策略</p>
+<p>3、当我们想根据时间长久淘汰超时数据时，就选用ttl</p>
+<p>4、我们根据我们的需要是否有要长久保存的key来选择volatile或者是all，如果有需要长久保存的key，则使用volatile，否则可以使用all全表扫描</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/2661519066.html">https://blog.mailjob.net/posts/2661519066.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E9%93%BE%E6%8E%A5"><span class="toc-text">相关链接</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5"><span class="toc-text">内存淘汰策略</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LRU%E5%92%8CLFU%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-text">LRU和LFU的区别</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LRU"><span class="toc-text">LRU</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9B%BE%E8%A7%A3%E8%AF%B4%E6%98%8E"><span class="toc-text">图解说明</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#LRU-Cache%E5%85%B7%E5%A4%87%E7%9A%84%E6%93%8D%E4%BD%9C%EF%BC%9A"><span class="toc-text">LRU Cache具备的操作：</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#LRU%E9%85%8D%E7%BD%AE%E5%8F%82%E6%95%B0"><span class="toc-text">LRU配置参数</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LFU"><span class="toc-text">LFU</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#LFU%E9%85%8D%E7%BD%AE"><span class="toc-text">LFU配置</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5%E7%9A%84%E9%80%89%E6%8B%A9"><span class="toc-text">内存淘汰策略的选择</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

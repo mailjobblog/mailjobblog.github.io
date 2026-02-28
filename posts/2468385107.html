@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Redis数据类型String | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="相关链接  Redis 常用命令，思维导图：https:&#x2F;&#x2F;www.kdocs.cn&#x2F;view&#x2F;l&#x2F;ss49IFenIOSm SDS数据格式：https:&#x2F;&#x2F;redisbook.readthedocs.io&#x2F;en&#x2F;latest&#x2F;internal-datastruct&#x2F;sds.html  String string类型在redis中是最常见的类型，value存储最大数据量为512M，可以存放jso">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis数据类型String">
+<meta property="og:url" content="https://blog.mailjob.net/posts/2468385107.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="相关链接  Redis 常用命令，思维导图：https:&#x2F;&#x2F;www.kdocs.cn&#x2F;view&#x2F;l&#x2F;ss49IFenIOSm SDS数据格式：https:&#x2F;&#x2F;redisbook.readthedocs.io&#x2F;en&#x2F;latest&#x2F;internal-datastruct&#x2F;sds.html  String string类型在redis中是最常见的类型，value存储最大数据量为512M，可以存放jso">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/img_convert/9b0ff41b608ea962c9f2db76503a152c.png">
+<meta property="article:published_time" content="2021-01-19T13:54:43.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.986Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="redis">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/img_convert/9b0ff41b608ea962c9f2db76503a152c.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Redis数据类型String
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/2468385107.html" class="article-date">
+	  <time datetime="2021-01-19T13:54:43.000Z" itemprop="datePublished">2021-01-19</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/redis/" rel="tag">redis</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/2468385107.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 2.6k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 10(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <meta name="referrer" content="no-referrer"/>
+<h1 id="相关链接">相关链接</h1>
+<blockquote>
+<p>Redis 常用命令，思维导图：<a target="_blank" rel="noopener" href="https://www.kdocs.cn/view/l/ss49IFenIOSm">https://www.kdocs.cn/view/l/ss49IFenIOSm</a></p>
+<p>SDS数据格式：<a target="_blank" rel="noopener" href="https://redisbook.readthedocs.io/en/latest/internal-datastruct/sds.html">https://redisbook.readthedocs.io/en/latest/internal-datastruct/sds.html</a></p>
+</blockquote>
+<h1 id="String">String</h1>
+<p>string类型在redis中是最常见的类型，value存储最大数据量为512M，可以存放json数据，图像数据等等</p>
+<h2 id="String-底层实现">String 底层实现</h2>
+<p>Redis中，默认以SDS作为自己的字符串表示。只有在一些字符串不可能出现变化的地方使用C字符串。</p>
+<p>SDS源码定义如下：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">struct</span> <span class="token class-name">sdshdr</span><span class="token punctuation">&#123;</span>    
+  <span class="token comment">// 用于记录buf数组中使用的字节的数目</span>
+  <span class="token comment">// 和SDS存储的字符串的长度相等  </span>
+	<span class="token keyword">int</span> len<span class="token punctuation">;</span>    
+  <span class="token comment">// 用于记录buf数组中没有使用的字节的数目   </span>
+	<span class="token keyword">int</span> free<span class="token punctuation">;</span>    
+  <span class="token comment">// 字节数组，用于储存字符串</span>
+	<span class="token keyword">char</span> buf<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token comment">//buf的大小等于len+free+1，其中多余的1个字节是用来存储’\0’的（‘\0’ 在c语言中占用一个字节的内存空间，也代表结束）。</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>SDS除了用来保存数据库中的字符串之外，SDS还被用作缓冲区（buffer），如AOF模块中的AOF缓冲区，以及客户端状态中的输入缓冲区</p>
+<p>SDS 的存储示例：</p>
+<p><img src="https://img-blog.csdnimg.cn/img_convert/9b0ff41b608ea962c9f2db76503a152c.png" alt="img"></p>
+<h3 id="使用SDS而不使用c语言的string的好处：">使用SDS而不使用c语言的string的好处：</h3>
+<p>1、常数复杂度获取字符串长度：</p>
+<p>SDS:只需要访问SDS的len属性就能得到字符串的长度，复杂度为O(1)。</p>
+<p>2、杜绝缓冲区溢出：</p>
+<p>Redis是C语言编写的，并没有方便的数据类型来进行内存的分配和释放（C++ STL String），必须手动进行内存分配和释放。</p>
+<p>对于字符串的拼接、复制等操作，C语言开发者必须确保目标字符串的空间足够大，不然就会出现溢出的情况。</p>
+<p>当使用SDS的API对字符串进行修改的时候，</p>
+<ul>
+<li>API内部第一步会检测字符串的大小是否满足。</li>
+<li>如果空间已经满足要求，那么就像C语言一样操作即可。如果不满足，则拓展buf的空间</li>
+<li>之后再进行操作。每次操作之后，len和free的值会做相应的修改。</li>
+</ul>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">扩展buf空间策略： 
+
+修改之后总长度len&lt;1MB: 总空间为2*len+1; 
+修改之后总长度len>=1MB: 总空间为len+1MB+1。 
+换句话说，预分配的空间上限是1MB，尽量为len。<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>3、减少修改字符串时带来的内存重分配次数</p>
+<p>当执行字符串长度缩短的操作的时候，SDS并不直接重新分配多出来的字节，而是修改len和free的值（len相应减小，free相应增大，buf的空间大小不变化），避免内存重分配。</p>
+<p>SDS也提供直接释放未使用空间的API，在需要的时候，也能真正的释放掉多余的空间。</p>
+<p>4、二进制安全</p>
+<p>C字符串除了末尾之外不能出现空字符，否则会被程序认为是字符串的结尾。这就使得C字符串只能存储文本数据，而不能保存图像，音频等二进制数据</p>
+<p>使用SDS就不需要依赖控制符，而是用len来指定存储数据的大小，所有的SDS API都会以处理二进制的方式来处理SDS的buf的数据。程序不会对buf的数据做任何限制、过滤或假设，数据写入的时候是什么，读取的时候依然不变。</p>
+<h3 id="总结">总结</h3>
+<table>
+<thead>
+<tr>
+<th><strong>C字符串</strong></th>
+<th><strong>SDS</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>获取字符串长度的复杂度为O(N)</td>
+<td>获取字符串长度的复杂度为O(1)</td>
+</tr>
+<tr>
+<td>API是不安全的，可能会造成缓冲区溢出</td>
+<td>API是安全的，不会造成缓冲区溢出</td>
+</tr>
+<tr>
+<td>修改字符串长度N次必然需要执行N次内存重分配</td>
+<td>修改字符串长度N次最多需要执行N次内存重分配</td>
+</tr>
+<tr>
+<td>只能保存文本数据</td>
+<td>可以保存文本或者二进制数据</td>
+</tr>
+<tr>
+<td>可以使用所有库中的函数</td>
+<td>可以使用一部分库的函数</td>
+</tr>
+</tbody>
+</table>
+<h2 id="String应用场景">String应用场景</h2>
+<ol>
+<li>Session + Redis 实现Session共享</li>
+<li>做计数器，计算文档浏览量。INCR article:readcount:{文章id} GET article:readcount:{文章id}</li>
+<li>分布式锁</li>
+</ol>
+<pre class="line-numbers language-none"><code class="language-none">线程1：SETNX product:10001 true&#x2F;&#x2F;返回1代表锁获取成功
+
+线程2：SETNX product:10001 true&#x2F;&#x2F;返回0代表所获取失败<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>为什么不用hash存储呢？</p>
+<p>如果想获取一个对象数据（user1）的name，那么需要把user1的所有数据拿出，在单独获取name；如果用STRING格式，那么只需要取出user:1:name数据即可。</p>
+<h2 id="常用命令的使用">常用命令的使用</h2>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># redis数据写命令Set，相当于数据插入</span>
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> <span class="token builtin class-name">set</span> name zlh   
+<span class="token comment"># 返回值： ok，说明插入成功。如果当前name存在值则覆盖替换原有的value值。</span>
+ 
+<span class="token comment"># redis数据读命令Get，获取数据</span>
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> get name   
+<span class="token comment"># 返回值： "zlh" ,如果当前key没有value值，则返回null</span>
+ 
+<span class="token comment"># redis数据追加命令Append，追加数据</span>
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> append name <span class="token string">' is my friend'</span>   
+<span class="token comment"># 返回值："zlh is my friend"  ，如果当前key的value有值则附加到原有string后面，如果没有则写入。</span>
+ 
+<span class="token comment"># redis数据删除</span>
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span>del name
+ 
+ 
+<span class="token comment"># redis数据读写操作命令GetSet，获取原有value值的同时写入新的value值</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> getset name zlh   
+<span class="token comment"># 返回值："zlh is my friend",这里返回的是原有name的value值，同时又给name的value设置新值zlh。</span>
+<span class="token comment"># 此时name的值真实值为zlh</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> get name  
+<span class="token comment"># 返回值：zlh ，因为上面getset给name的value设置值为zlh。</span>
+ 
+
+ 
+<span class="token comment"># redis数据加法计算命令incr，incrby，</span>
+<span class="token comment"># 数据加法运算,incr为+1内置运算，incrby为+n自设n运算</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> incr name   
+<span class="token comment"># -返回值：“数据不是整型或数据超出64位有符号整形数据范围” ，由于原有name的value为"zlh",所以不能转换为整型，故报异常。</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> incr age   
+<span class="token comment"># # 返回值：1，由于不存在age的key与value值，但是默认age为key值为0进行+1运算。</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> incr age   
+<span class="token comment"># -返回值：2，由于上一行代码给age赋值为1，这里incr命令进行+1运算，故返回值为2。</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> incrby age <span class="token number">10</span>   
+<span class="token comment"># -返回值：12 ，因为原有age是2，这里+10故为12。</span>
+ 
+
+<span class="token comment"># redis数据减法计算命令decr，decrby, </span>
+<span class="token comment"># 数据减法运算，decr为-1内置运算，decrby为减n自设n运算</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> decr name   
+<span class="token comment"># 返回值：“数据不是整型或数据超出64位有符号整形数据范围” ，由于原有name的value为"zlh",所以不能转换为整型，故报异常。</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> decr age  
+<span class="token comment"># 返回自：11，因为原有age的value值为12，这里decr是自减1的意思，故为11。</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> decrby age <span class="token number">10</span>  
+<span class="token comment"># 返回值：1，因为原有age为11，这里-10，故为1。</span>
+ 
+ 
+ 
+<span class="token comment"># redis获取string长度的命令strlen</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> strlen name   
+<span class="token comment"># 返回值：3，因为name的value值为zlh，故长度为3，如果该key或者value不存在，则返回0。</span>
+ 
+<span class="token comment"># redis设置value值并设置过期时间命令setex（单位秒）</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> setex sex <span class="token number">20</span> male   
+<span class="token comment"># -返回值：ok，设置key为sex的value值为male,缓存的过期时间为20s。</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> ddl sex   
+<span class="token comment"># -返回值： 剩余过期时间，0为已过期，-1为永不过期。</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> get sex   
+<span class="token comment"># -返回值：male，说明此时为没有过期，当已经过期此处返回数据为null。</span>
+ 
+ 
+ 
+<span class="token comment"># redis赋值判断原值是否存在，存在不赋值，返回0；不存在才赋值，返回1；命令setnx</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> setnx name Tom  
+<span class="token comment"># -返回值：0，因为name的原有value为zlh，存在值则不赋值。</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> gete name  
+<span class="token comment"># -返回值：zlh，因为有值，故上面赋值为tom失败，返回0。</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> setnx phone <span class="token number">18501733702</span>   
+<span class="token comment"># -返回值：1，赋值成功，因为原来不存在phone的key与value。</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> get phone   
+<span class="token comment"># -返回值：18501733702，说明上面的setnx赋值成功。</span>
+ 
+ 
+ 
+<span class="token comment"># redis字符串替换赋值，从指定位置开始替换，命令setrange</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> setrange phone <span class="token number">9</span> <span class="token number">123</span>   
+<span class="token comment"># 返回值：12，12为字符串长度，11位号码变成了12位。因为从第9位开始替换，替换到原有字符串的最后一位还没有替换完毕，所以在最后面添加啦一位设置为3。</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> get phone  
+<span class="token comment"># -返回值为：185017337123</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> <span class="token builtin class-name">set</span> phone  <span class="token number">1</span>    
+<span class="token comment"># -这里为了下面说下setrange的其他特性，把电话设置为1.</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> setrange phone <span class="token number">3</span> aaa   
+<span class="token comment"># -返回值为：6，因为原有phone的value值为1，不到三位，用0*00替换2位，所以要添加2为才能替换第三位后面的值为aaa。</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> get phone  
+<span class="token comment"># -返回值：1\*00\*00aaa。理解下上面的操作就知道这里为什么是这样的返回值了</span>
+ 
+ 
+ 
+<span class="token comment"># redis截取字符串，从下标为n开始截取到n或n+1，类似c#中的substring，命令getrange</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> <span class="token builtin class-name">set</span> phone <span class="token number">18511112222</span> 
+<span class="token comment"># 方便下面操作</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> getrange phone  <span class="token number">1</span> <span class="token number">5</span>   
+<span class="token comment"># -返回值：85017，因为getrange是从下标为1开始截取截取到下标为5，这里包含下标为5的值。</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> getrange phone  <span class="token number">0</span> <span class="token number">0</span>  
+<span class="token comment"># -返回值:1，从下标为0开始截取，截取到下标为0，包含下标为0。故返回值为1。</span>
+ 
+<span class="token number">127.0</span>.0.1：637<span class="token operator"><span class="token file-descriptor important">9</span>></span> getrange phone <span class="token number">10</span> <span class="token number">13</span>   
+<span class="token comment"># 返回值为：1，此号码下标直到10的11位号码，从10开始截取，截到第13位，后2位不存在忽略，只返回第10位。故返回干净的1。</span>
+ 
+ 
+ 
+<span class="token comment"># redis批量操作修改及读取string数据，</span>
+<span class="token comment"># 命令mget，批量读取，命令mset，批量赋值，</span>
+<span class="token comment"># 命令msetnx，带事务性的赋值，发现有一个key已经存在，所有事务回归，不做赋值处理操作</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> mset name zlh age <span class="token number">30</span>   
+<span class="token comment"># -返回值：ok，这里设置了 key为name和age的value分别为zlh，30</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> mget name zlh      
+<span class="token comment"># 返回值：1>zlh  2>30 </span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> msetnx name Jim address China 
+<span class="token comment"># -返回值为：0，没有做任何修改，因为key(name)已存在。</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> mget name address   
+<span class="token comment"># -返回值：1>zlh  2>null</span>
+<span class="token comment"># -这里看到adress空null，说明 mestnx 事物回归</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> msetnx address China,hobbies sports  
+<span class="token comment"># 返回值为：1，插入成功</span>
+ 
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> mget address hobbies   
+<span class="token comment"># -返回值：1>China   2>sports</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/2468385107.html">https://blog.mailjob.net/posts/2468385107.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E9%93%BE%E6%8E%A5"><span class="toc-text">相关链接</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#String"><span class="toc-text">String</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#String-%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0"><span class="toc-text">String 底层实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8SDS%E8%80%8C%E4%B8%8D%E4%BD%BF%E7%94%A8c%E8%AF%AD%E8%A8%80%E7%9A%84string%E7%9A%84%E5%A5%BD%E5%A4%84%EF%BC%9A"><span class="toc-text">使用SDS而不使用c语言的string的好处：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#String%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">String应用场景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4%E7%9A%84%E4%BD%BF%E7%94%A8"><span class="toc-text">常用命令的使用</span></a></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

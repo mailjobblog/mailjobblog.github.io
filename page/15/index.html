@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="编程知识分享，让学习与工作变得更简单。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="李斌的技术博客">
+<meta property="og:url" content="https://blog.mailjob.net/page/15/index.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="编程知识分享，让学习与工作变得更简单。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端">
+<meta name="twitter:card" content="summary">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    <div class="content article-list">
+    
+        <article class="article border-b border-solid border-gray-200">
+    <div class="article-header mb-4 mt-5">
+        
+    
+        <h1 itemprop="name">
+            <a class="article-title text-lg" href="/posts/95206489.html">Hexo 结合github搭建网站</a>
+        </h1>
+    
+
+
+
+    </div>
+    
+        <div class="article-excerpt text-gray-600 mb-3" itemprop="description">
+            前言
+github-page搭建网站好处
+
+全是静态文件，访问速度快；
+免费方便，不用花一分钱就可以搭建一个网站，不需要服务器不需要后台；
+可以...
+        </div>
+    
+    <p class="article-meta mb-3 text-xs">
+        <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/95206489.html" class="article-date">
+	  <time datetime="2021-01-21T07:00:00.000Z" itemprop="datePublished">2021-01-21</time>
+	</a>
+</span>
+
+        
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/blog/">blog</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/posts/95206489.html#comments" class="article-comment-link">评论</a></span>
+        
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.4k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 5(分)</span>
+    
+
+
+    </p>
+
+</article>
+
+    
+        <article class="article border-b border-solid border-gray-200">
+    <div class="article-header mb-4 mt-5">
+        
+    
+        <h1 itemprop="name">
+            <a class="article-title text-lg" href="/posts/3006805619.html">Hexo管理网站方式二</a>
+        </h1>
+    
+
+
+
+    </div>
+    
+        <div class="article-excerpt text-gray-600 mb-3" itemprop="description">
+            引言
+在 hexo管理网站方式一 文章中，可以看出，用原生的方法来管理博文十分的不便，尤其是博客发布上和文章中的图片资源管理。
+HexoAdmin部署
+
+        </div>
+    
+    <p class="article-meta mb-3 text-xs">
+        <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3006805619.html" class="article-date">
+	  <time datetime="2021-01-21T07:00:00.000Z" itemprop="datePublished">2021-01-21</time>
+	</a>
+</span>
+
+        
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/blog/">blog</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/posts/3006805619.html#comments" class="article-comment-link">评论</a></span>
+        
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 415(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 1(分)</span>
+    
+
+
+    </p>
+
+</article>
+
+    
+        <article class="article border-b border-solid border-gray-200">
+    <div class="article-header mb-4 mt-5">
+        
+    
+        <h1 itemprop="name">
+            <a class="article-title text-lg" href="/posts/2342268925.html">Hexo 避坑指南</a>
+        </h1>
+    
+
+
+
+    </div>
+    
+        <div class="article-excerpt text-gray-600 mb-3" itemprop="description">
+            前言
+该文章是针对于本站博主在 hexo 博客搭建过程中，遇到的一些问题和相应的解决方案的整理
+QA
+引入网络图片无法显示
+在 md 文件的头部加入以下代码...
+        </div>
+    
+    <p class="article-meta mb-3 text-xs">
+        <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/2342268925.html" class="article-date">
+	  <time datetime="2021-01-21T07:00:00.000Z" itemprop="datePublished">2021-01-21</time>
+	</a>
+</span>
+
+        
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/blog/">blog</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/posts/2342268925.html#comments" class="article-comment-link">评论</a></span>
+        
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 374(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 1(分)</span>
+    
+
+
+    </p>
+
+</article>
+
+    
+        <article class="article border-b border-solid border-gray-200">
+    <div class="article-header mb-4 mt-5">
+        
+    
+        <h1 itemprop="name">
+            <a class="article-title text-lg" href="/posts/697305190.html">Hexo 自定义域名</a>
+        </h1>
+    
+
+
+
+    </div>
+    
+        <div class="article-excerpt text-gray-600 mb-3" itemprop="description">
+            绑定自定义的域名
+首先在 github 仓库 的 setting 的 github pages 里面设置你的域名
+
+        </div>
+    
+    <p class="article-meta mb-3 text-xs">
+        <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/697305190.html" class="article-date">
+	  <time datetime="2021-01-21T07:00:00.000Z" itemprop="datePublished">2021-01-21</time>
+	</a>
+</span>
+
+        
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/blog/">blog</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/posts/697305190.html#comments" class="article-comment-link">评论</a></span>
+        
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 271(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 1(分)</span>
+    
+
+
+    </p>
+
+</article>
+
+    
+        <article class="article border-b border-solid border-gray-200">
+    <div class="article-header mb-4 mt-5">
+        
+    
+        <h1 itemprop="name">
+            <a class="article-title text-lg" href="/posts/3930982599.html">Hexo图片上传七牛云</a>
+        </h1>
+    
+
+
+
+    </div>
+    
+        <div class="article-excerpt text-gray-600 mb-3" itemprop="description">
+            引言
+注意：hexo管理网站方式一 和 hexo管理网站方式二 可能需要该文章中的七牛插件文件托管方法。如果你选择是 hexo管理网站方式三 方法管理你的网站，...
+        </div>
+    
+    <p class="article-meta mb-3 text-xs">
+        <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3930982599.html" class="article-date">
+	  <time datetime="2021-01-21T07:00:00.000Z" itemprop="datePublished">2021-01-21</time>
+	</a>
+</span>
+
+        
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/blog/">blog</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/posts/3930982599.html#comments" class="article-comment-link">评论</a></span>
+        
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 869(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 3(分)</span>
+    
+
+
+    </p>
+
+</article>
+
+    
+        <article class="article border-b border-solid border-gray-200">
+    <div class="article-header mb-4 mt-5">
+        
+    
+        <h1 itemprop="name">
+            <a class="article-title text-lg" href="/posts/1388771947.html">Hexo 主题更换</a>
+        </h1>
+    
+
+
+
+    </div>
+    
+        <div class="article-excerpt text-gray-600 mb-3" itemprop="description">
+            hexo 更换主题
+默认主题很丑，那我们别的不做，首先来替换一个好看点的主题。
+这是官方主题：https://hexo.io/themes/
+...
+        </div>
+    
+    <p class="article-meta mb-3 text-xs">
+        <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/1388771947.html" class="article-date">
+	  <time datetime="2021-01-21T07:00:00.000Z" itemprop="datePublished">2021-01-21</time>
+	</a>
+</span>
+
+        
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/blog/">blog</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/posts/1388771947.html#comments" class="article-comment-link">评论</a></span>
+        
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 164(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 1(分)</span>
+    
+
+
+    </p>
+
+</article>
+
+    
+        <article class="article border-b border-solid border-gray-200">
+    <div class="article-header mb-4 mt-5">
+        
+    
+        <h1 itemprop="name">
+            <a class="article-title text-lg" href="/posts/429337628.html">hexo管理网站方式一</a>
+        </h1>
+    
+
+
+
+    </div>
+    
+        <div class="article-excerpt text-gray-600 mb-3" itemprop="description">
+            引言
+对于初始化完成的 hexo 网站项目，你可以采用以下方式对网站进行简单的管理，例如：发布新文章，文章图片添加。
+方法介绍
+文章发布
+在我们放置博客文件的文件夹...
+        </div>
+    
+    <p class="article-meta mb-3 text-xs">
+        <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/429337628.html" class="article-date">
+	  <time datetime="2021-01-21T02:35:01.000Z" itemprop="datePublished">2021-01-21</time>
+	</a>
+</span>
+
+        
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/blog/">blog</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/posts/429337628.html#comments" class="article-comment-link">评论</a></span>
+        
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 262(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 1(分)</span>
+    
+
+
+    </p>
+
+</article>
+
+    
+        <article class="article border-b border-solid border-gray-200">
+    <div class="article-header mb-4 mt-5">
+        
+    
+        <h1 itemprop="name">
+            <a class="article-title text-lg" href="/posts/1298018908.html">Redis事务</a>
+        </h1>
+    
+
+
+
+    </div>
+    
+        <div class="article-excerpt text-gray-600 mb-3" itemprop="description">
+            Redis 事务
+关系型数据中的事务都是原子性的，而redis 的事务是非原子性的。
+Redis事务相关命令：
+
+MULTI ：开启事务，redis会将后续的命令逐...
+        </div>
+    
+    <p class="article-meta mb-3 text-xs">
+        <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/1298018908.html" class="article-date">
+	  <time datetime="2021-01-20T13:56:41.000Z" itemprop="datePublished">2021-01-20</time>
+	</a>
+</span>
+
+        
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+
+        
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/redis/" rel="tag">redis</a>
+  </span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/posts/1298018908.html#comments" class="article-comment-link">评论</a></span>
+        
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 352(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 1(分)</span>
+    
+
+
+    </p>
+
+</article>
+
+    
+        <article class="article border-b border-solid border-gray-200">
+    <div class="article-header mb-4 mt-5">
+        
+    
+        <h1 itemprop="name">
+            <a class="article-title text-lg" href="/posts/283315164.html">Redis日志showlog和管道pileline</a>
+        </h1>
+    
+
+
+
+    </div>
+    
+        <div class="article-excerpt text-gray-600 mb-3" itemprop="description">
+            Redis日志
+slowlog-log-slower-than：指定执行时间超过多少微秒(1秒等于1000000微秒) 的命令请求会被记录到日志上
+slowlog-max-len：指定服务器最多保存多少条慢查询操作
+...
+        </div>
+    
+    <p class="article-meta mb-3 text-xs">
+        <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/283315164.html" class="article-date">
+	  <time datetime="2021-01-20T13:55:55.000Z" itemprop="datePublished">2021-01-20</time>
+	</a>
+</span>
+
+        
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+
+        
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/redis/" rel="tag">redis</a>
+  </span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/posts/283315164.html#comments" class="article-comment-link">评论</a></span>
+        
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 841(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 3(分)</span>
+    
+
+
+    </p>
+
+</article>
+
+    
+        <article class="article border-b border-solid border-gray-200">
+    <div class="article-header mb-4 mt-5">
+        
+    
+        <h1 itemprop="name">
+            <a class="article-title text-lg" href="/posts/7164113.html">Redis布隆过滤器</a>
+        </h1>
+    
+
+
+
+    </div>
+    
+        <div class="article-excerpt text-gray-600 mb-3" itemprop="description">
+            前言
+1、原本有10亿个号码，现在又来了10万个号码，要快速准确判断这10万个号码是否在10亿个号码库中？
+办法一：将10亿个号码存入数据库中，进行数据库查询，准确性有了，但是速度会比较慢。
+办法二：将10亿号码放入内存中，比如Redis...
+        </div>
+    
+    <p class="article-meta mb-3 text-xs">
+        <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/7164113.html" class="article-date">
+	  <time datetime="2021-01-20T13:53:47.000Z" itemprop="datePublished">2021-01-20</time>
+	</a>
+</span>
+
+        
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+
+        
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/redis/" rel="tag">redis</a>, <a class="article-tag-none-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a>
+  </span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/posts/7164113.html#comments" class="article-comment-link">评论</a></span>
+        
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 2.2k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 8(分)</span>
+    
+
+
+    </p>
+
+</article>
+
+    
+</div>
+
+    
+<nav class="pagination bottom-0 px-5 mb-3 absolute w-full inset-x-0" data-stick-bottom>
+    <div class="flex justify-between leading-tight">
+        <span class="pager">
+            
+                <button class="prev">
+                    <a href="/page/14/">
+                        <i class="iconfont icon-angle-left"></i>
+                        上一页
+                    </a>
+                </button>
+            
+            
+                <button class="next">
+                    <a href="/page/16/">
+                        下一页
+                        <i class="iconfont icon-angle-right"></i>
+                    </a>
+                </button>
+            
+        </span>
+        <div class="total-article bar-right">Page 15 of 17</div>
+    </div>
+</nav>
+
+
+</main>
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="widgets">
+        
+            <!-- <div class="widget"> -->
+<!--     <h3 class="widget-title">公告</h3> -->
+<!--     <div class="widget-body"> -->
+<!--         微信公众号：汀风说后端<br> -->
+<!--         <img src="https://img.github.mailjob.net/logo/wechat.mp.tingfeng.jpg" alt="汀风说后端"> -->
+<!--         公众号日常更新：技术干货、工作方案实践、学习资料分享（电子书、视频）、经典面试题解析。<br> -->
+<!--         微信：jefferyjob -->
+<!--     </div> -->
+<!-- </div> -->
+        
+            
+    <div class="widget">
+        <h3 class="widget-title">分类</h3>
+        <div class="widget-body">
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/blog/">blog</a><span class="category-list-count">22</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/design/">design</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/docker/">docker</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/es/">es</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/go/">go</a><span class="category-list-count">21</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/mysql/">mysql</a><span class="category-list-count">27</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/php/">php</a><span class="category-list-count">34</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/rabbitmq/">rabbitmq</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/redis/">redis</a><span class="category-list-count">25</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%AE%97%E6%B3%95/">算法</a><span class="category-list-count">14</span></li></ul>
+        </div>
+    </div>
+
+
+        
+            
+    <div class="widget">
+        
+        <h3 class="widget-title">标签云</h3>
+        
+        <div class="widget-body tagcloud">
+            <a href="/tags/blog/" style="font-size: 13.46px;">blog</a> <a href="/tags/design/" style="font-size: 13.23px;">design</a> <a href="/tags/docker/" style="font-size: 13.23px;">docker</a> <a href="/tags/es/" style="font-size: 13.15px;">es</a> <a href="/tags/etcd/" style="font-size: 13px;">etcd</a> <a href="/tags/go/" style="font-size: 13.77px;">go</a> <a href="/tags/haproxy/" style="font-size: 13.08px;">haproxy</a> <a href="/tags/keepalived/" style="font-size: 13px;">keepalived</a> <a href="/tags/linux/" style="font-size: 13.38px;">linux</a> <a href="/tags/middle/" style="font-size: 13.31px;">middle</a> <a href="/tags/mongodb/" style="font-size: 13px;">mongodb</a> <a href="/tags/mycat/" style="font-size: 13px;">mycat</a> <a href="/tags/mysql/" style="font-size: 14px;">mysql</a> <a href="/tags/nginx/" style="font-size: 13.08px;">nginx</a> <a href="/tags/openresty/" style="font-size: 13px;">openresty</a> <a href="/tags/php/" style="font-size: 13.85px;">php</a> <a href="/tags/rabbitmq/" style="font-size: 13.08px;">rabbitmq</a> <a href="/tags/redis/" style="font-size: 13.92px;">redis</a> <a href="/tags/swoole/" style="font-size: 13.69px;">swoole</a> <a href="/tags/%E7%AE%97%E6%B3%95/" style="font-size: 13.54px;">算法</a> <a href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" style="font-size: 13.62px;">高可用</a>
+        </div>
+    </div>
+
+
+        
+            
+<div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+        <ul class="recent-post-list list-unstyled">
+            
+                <li>
+                    <div class="recent-post">
+<!--                        <p class="item-category">-->
+<!--                            <a class="category-link" href="/categories/blog/">blog</a>-->
+<!--                        </p>-->
+<!--                        <p class="item-title">-->
+<!--                            <a href="/posts/960166209.html" class="title">后台权限设计方案</a>-->
+<!--                        </p>-->
+<!--                        <p class="item-date">-->
+<!--                            <time datetime="2025-12-25T03:37:39.000Z" itemprop="datePublished">2025-12-25</time>-->
+<!--                        </p>-->
+                            <p class="item-title">
+                                <a href="/posts/960166209.html" class="title">后台权限设计方案</a>
+                            </p>
+                    </div>
+                </li>
+            
+                <li>
+                    <div class="recent-post">
+<!--                        <p class="item-category">-->
+<!--                            <a class="category-link" href="/categories/linux/">linux</a>-->
+<!--                        </p>-->
+<!--                        <p class="item-title">-->
+<!--                            <a href="/posts/2084750826.html" class="title">解决项目部署CORS跨域问题</a>-->
+<!--                        </p>-->
+<!--                        <p class="item-date">-->
+<!--                            <time datetime="2024-10-09T09:17:57.000Z" itemprop="datePublished">2024-10-09</time>-->
+<!--                        </p>-->
+                            <p class="item-title">
+                                <a href="/posts/2084750826.html" class="title">解决项目部署CORS跨域问题</a>
+                            </p>
+                    </div>
+                </li>
+            
+                <li>
+                    <div class="recent-post">
+<!--                        <p class="item-category">-->
+<!--                            <a class="category-link" href="/categories/php/">php</a>-->
+<!--                        </p>-->
+<!--                        <p class="item-title">-->
+<!--                            <a href="/posts/4100310017.html" class="title">Laravel全局处理数据库异常回滚</a>-->
+<!--                        </p>-->
+<!--                        <p class="item-date">-->
+<!--                            <time datetime="2023-07-28T10:51:47.000Z" itemprop="datePublished">2023-07-28</time>-->
+<!--                        </p>-->
+                            <p class="item-title">
+                                <a href="/posts/4100310017.html" class="title">Laravel全局处理数据库异常回滚</a>
+                            </p>
+                    </div>
+                </li>
+            
+                <li>
+                    <div class="recent-post">
+<!--                        <p class="item-category">-->
+<!--                            <a class="category-link" href="/categories/go/">go</a>-->
+<!--                        </p>-->
+<!--                        <p class="item-title">-->
+<!--                            <a href="/posts/3307624659.html" class="title">使用go-redis/redismock做Redis单元测试</a>-->
+<!--                        </p>-->
+<!--                        <p class="item-date">-->
+<!--                            <time datetime="2023-07-26T01:17:50.000Z" itemprop="datePublished">2023-07-26</time>-->
+<!--                        </p>-->
+                            <p class="item-title">
+                                <a href="/posts/3307624659.html" class="title">使用go-redis/redismock做Redis单元测试</a>
+                            </p>
+                    </div>
+                </li>
+            
+                <li>
+                    <div class="recent-post">
+<!--                        <p class="item-category">-->
+<!--                            <a class="category-link" href="/categories/php/">php</a>-->
+<!--                        </p>-->
+<!--                        <p class="item-title">-->
+<!--                            <a href="/posts/194135748.html" class="title">Laravel项目Exception优化最佳实践</a>-->
+<!--                        </p>-->
+<!--                        <p class="item-date">-->
+<!--                            <time datetime="2023-07-05T05:16:04.000Z" itemprop="datePublished">2023-07-05</time>-->
+<!--                        </p>-->
+                            <p class="item-title">
+                                <a href="/posts/194135748.html" class="title">Laravel项目Exception优化最佳实践</a>
+                            </p>
+                    </div>
+                </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+        
+            
+    <div class="widget">
+        <h3 class="widget-title">归档</h3>
+        <div class="widget-body">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/12/">十二月 2025</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/10/">十月 2024</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">七月 2023</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/06/">六月 2023</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">二月 2023</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/06/">六月 2022</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/05/">五月 2022</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/03/">三月 2022</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/01/">一月 2022</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/11/">十一月 2021</a><span class="archive-list-count">10</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/10/">十月 2021</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/09/">九月 2021</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">13</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/04/">四月 2021</a><span class="archive-list-count">10</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/03/">三月 2021</a><span class="archive-list-count">28</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/02/">二月 2021</a><span class="archive-list-count">42</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">33</span></li></ul>
+        </div>
+    </div>
+
+
+        
+    </div>
+</aside>
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

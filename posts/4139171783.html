@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>OpenResty多级缓存策略 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="相关链接 多级缓存策略思维导图：https:&#x2F;&#x2F;kdocs.cn&#x2F;l&#x2F;sfV9xmfovVKv nginx基于openresty验证jwt：https:&#x2F;&#x2F;segmentfault.com&#x2F;a&#x2F;1190000015677681 OpenResty不完全指南：https:&#x2F;&#x2F;zhuanlan.zhihu.com&#x2F;p&#x2F;42082302 基于OpenResty实现 JWT验证2：https:&#x2F;&#x2F;www.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenResty多级缓存策略">
+<meta property="og:url" content="https://blog.mailjob.net/posts/4139171783.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="相关链接 多级缓存策略思维导图：https:&#x2F;&#x2F;kdocs.cn&#x2F;l&#x2F;sfV9xmfovVKv nginx基于openresty验证jwt：https:&#x2F;&#x2F;segmentfault.com&#x2F;a&#x2F;1190000015677681 OpenResty不完全指南：https:&#x2F;&#x2F;zhuanlan.zhihu.com&#x2F;p&#x2F;42082302 基于OpenResty实现 JWT验证2：https:&#x2F;&#x2F;www.">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210124224640.png">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210124224946.png">
+<meta property="article:published_time" content="2021-01-24T03:16:47.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.986Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="redis">
+<meta property="article:tag" content="linux">
+<meta property="article:tag" content="高可用">
+<meta property="article:tag" content="openresty">
+<meta property="article:tag" content="nginx">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210124224640.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            OpenResty多级缓存策略
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/4139171783.html" class="article-date">
+	  <time datetime="2021-01-24T03:16:47.000Z" itemprop="datePublished">2021-01-24</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/linux/">linux</a> , <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/linux/" rel="tag">linux</a>, <a class="article-tag-none-link" href="/tags/nginx/" rel="tag">nginx</a>, <a class="article-tag-none-link" href="/tags/openresty/" rel="tag">openresty</a>, <a class="article-tag-none-link" href="/tags/redis/" rel="tag">redis</a>, <a class="article-tag-none-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/4139171783.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 293(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 1(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="相关链接">相关链接</h2>
+<p>多级缓存策略思维导图：<a target="_blank" rel="noopener" href="https://kdocs.cn/l/sfV9xmfovVKv">https://kdocs.cn/l/sfV9xmfovVKv</a><br>
+nginx基于openresty验证jwt：<a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000015677681">https://segmentfault.com/a/1190000015677681</a><br>
+OpenResty不完全指南：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/42082302">https://zhuanlan.zhihu.com/p/42082302</a><br>
+基于OpenResty实现 JWT验证2：<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/66d5163b9e99">https://www.jianshu.com/p/66d5163b9e99</a></p>
+<h2 id="思维导图">思维导图</h2>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210124224640.png" alt="image-20210124224639231"></p>
+<h2 id="OpenResty验证Jwt思维图">OpenResty验证Jwt思维图</h2>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210124224946.png" alt="整体架构"></p>
+<h3 id="保证业务连贯性用uuid">保证业务连贯性用uuid</h3>
+<h5 id="uuid生成">uuid生成</h5>
+<p>为每个请求生成唯一的uuid码可以将网关层上的请求和应用层的请求关联起来,对排查问题,接口统计都非常有用.</p>
+<p><strong>创建文件<code>/usr/local/openresty/nginx/jwt-lua/resty/uuid.lua</code></strong></p>
+<pre class="line-numbers language-lua" data-language="lua"><code class="language-lua"><span class="token keyword">local</span> M  <span class="token operator">=</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+<span class="token keyword">local</span> charset <span class="token operator">=</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>  <span class="token keyword">do</span> <span class="token comment">-- [0-9a-zA-Z]</span>
+    <span class="token keyword">for</span> c <span class="token operator">=</span> <span class="token number">48</span><span class="token punctuation">,</span> <span class="token number">57</span>  <span class="token keyword">do</span> table<span class="token punctuation">.</span><span class="token function">insert</span><span class="token punctuation">(</span>charset<span class="token punctuation">,</span> string<span class="token punctuation">.</span><span class="token function">char</span><span class="token punctuation">(</span>c<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token keyword">end</span>
+    <span class="token keyword">for</span> c <span class="token operator">=</span> <span class="token number">65</span><span class="token punctuation">,</span> <span class="token number">90</span>  <span class="token keyword">do</span> table<span class="token punctuation">.</span><span class="token function">insert</span><span class="token punctuation">(</span>charset<span class="token punctuation">,</span> string<span class="token punctuation">.</span><span class="token function">char</span><span class="token punctuation">(</span>c<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token keyword">end</span>
+    <span class="token keyword">for</span> c <span class="token operator">=</span> <span class="token number">97</span><span class="token punctuation">,</span> <span class="token number">122</span> <span class="token keyword">do</span> table<span class="token punctuation">.</span><span class="token function">insert</span><span class="token punctuation">(</span>charset<span class="token punctuation">,</span> string<span class="token punctuation">.</span><span class="token function">char</span><span class="token punctuation">(</span>c<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token keyword">end</span>
+<span class="token keyword">end</span>
+<span class="token keyword">function</span> M<span class="token punctuation">.</span><span class="token function">uuid</span><span class="token punctuation">(</span>length<span class="token punctuation">)</span>
+        <span class="token keyword">local</span> res <span class="token operator">=</span> <span class="token string">""</span>
+        <span class="token keyword">for</span> i <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">,</span> length <span class="token keyword">do</span>
+                res <span class="token operator">=</span> res <span class="token operator">..</span> charset<span class="token punctuation">[</span>math<span class="token punctuation">.</span><span class="token function">random</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token operator">#</span>charset<span class="token punctuation">)</span><span class="token punctuation">]</span>
+        <span class="token keyword">end</span>
+        <span class="token keyword">return</span> res
+<span class="token keyword">end</span>
+<span class="token keyword">return</span> M<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="修改配置文件nginx-conf">修改配置文件<code>nginx.conf</code></h5>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx"><span class="token directive"><span class="token keyword">worker_processes</span>  <span class="token number">1</span></span><span class="token punctuation">;</span>
+<span class="token directive"><span class="token keyword">error_log</span> logs/error.log info</span><span class="token punctuation">;</span>
+<span class="token directive"><span class="token keyword">events</span></span> <span class="token punctuation">&#123;</span>
+    <span class="token directive"><span class="token keyword">worker_connections</span> <span class="token number">1024</span></span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token directive"><span class="token keyword">http</span></span> <span class="token punctuation">&#123;</span>
+    <span class="token directive"><span class="token keyword">upstream</span> tomcat</span><span class="token punctuation">&#123;</span>
+     <span class="token directive"><span class="token keyword">server</span> localhost:80</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token directive"><span class="token keyword">lua_package_path</span> <span class="token string">"/usr/local/openresty/nginx/jwt-lua/?.lua;;"</span></span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">server</span></span> <span class="token punctuation">&#123;</span>
+        <span class="token directive"><span class="token keyword">listen</span> <span class="token number">8080</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">set</span> <span class="token variable">$uid</span> <span class="token string">''</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">set</span> <span class="token variable">$uuid</span> <span class="token string">''</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">location</span> /</span> <span class="token punctuation">&#123;</span>
+            <span class="token directive"><span class="token keyword">access_by_lua</span> <span class="token string">'
+            local jwt = require("resty.nginx-jwt")
+            jwt.auth()
+            local u = require("resty.uuid")
+            ngx.var.uuid = u.uuid(64)
+        '</span></span><span class="token punctuation">;</span>
+            <span class="token directive"><span class="token keyword">default_type</span> application/json</span><span class="token punctuation">;</span>
+            <span class="token directive"><span class="token keyword">proxy_set_header</span> uid <span class="token variable">$uid</span></span><span class="token punctuation">;</span>
+            <span class="token directive"><span class="token keyword">proxy_set_header</span> uuid <span class="token variable">$uuid</span></span><span class="token punctuation">;</span>
+            <span class="token directive"><span class="token keyword">proxy_pass</span> http://tomcat</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/4139171783.html">https://blog.mailjob.net/posts/4139171783.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E9%93%BE%E6%8E%A5"><span class="toc-text">相关链接</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE"><span class="toc-text">思维导图</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#OpenResty%E9%AA%8C%E8%AF%81Jwt%E6%80%9D%E7%BB%B4%E5%9B%BE"><span class="toc-text">OpenResty验证Jwt思维图</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BF%9D%E8%AF%81%E4%B8%9A%E5%8A%A1%E8%BF%9E%E8%B4%AF%E6%80%A7%E7%94%A8uuid"><span class="toc-text">保证业务连贯性用uuid</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#uuid%E7%94%9F%E6%88%90"><span class="toc-text">uuid生成</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E4%BF%AE%E6%94%B9%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6nginx-conf"><span class="toc-text">修改配置文件nginx.conf</span></a></li></ol></li></ol></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

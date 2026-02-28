@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Redis集群实战搭建 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="相关链接 redis集群演示服务分布图：https:&#x2F;&#x2F;www.kdocs.cn&#x2F;view&#x2F;l&#x2F;sfN4qFXA2SyN 作者的docker-compose的redis集群：https:&#x2F;&#x2F;github.com&#x2F;mailjobblog&#x2F;dev_redis&#x2F;tree&#x2F;master&#x2F;clusters&#x2F;集群 docker-compose 文件说明 该演示示例，使用 redis6.0.10 版本进行演示">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis集群实战搭建">
+<meta property="og:url" content="https://blog.mailjob.net/posts/2057957110.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="相关链接 redis集群演示服务分布图：https:&#x2F;&#x2F;www.kdocs.cn&#x2F;view&#x2F;l&#x2F;sfN4qFXA2SyN 作者的docker-compose的redis集群：https:&#x2F;&#x2F;github.com&#x2F;mailjobblog&#x2F;dev_redis&#x2F;tree&#x2F;master&#x2F;clusters&#x2F;集群 docker-compose 文件说明 该演示示例，使用 redis6.0.10 版本进行演示">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210208230110.png">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210208132002.png">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210208134455.png">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210208174303.png">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210208230200.png">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210208230233.png">
+<meta property="article:published_time" content="2021-02-08T14:43:48.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.987Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="redis">
+<meta property="article:tag" content="高可用">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210208230110.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Redis集群实战搭建
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/2057957110.html" class="article-date">
+	  <time datetime="2021-02-08T14:43:48.000Z" itemprop="datePublished">2021-02-08</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/redis/" rel="tag">redis</a>, <a class="article-tag-none-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/2057957110.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 2.6k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 12(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="相关链接">相关链接</h2>
+<p>redis集群演示服务分布图：<a target="_blank" rel="noopener" href="https://www.kdocs.cn/view/l/sfN4qFXA2SyN">https://www.kdocs.cn/view/l/sfN4qFXA2SyN</a></p>
+<p>作者的docker-compose的redis集群：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/dev_redis/tree/master/clusters/%E9%9B%86%E7%BE%A4">https://github.com/mailjobblog/dev_redis/tree/master/clusters/集群</a></p>
+<h2 id="docker-compose-文件说明">docker-compose 文件说明</h2>
+<p>该演示示例，使用 <code>redis6.0.10</code> 版本进行演示</p>
+<h3 id="文件中容器对应关系">文件中容器对应关系</h3>
+<table>
+<thead>
+<tr>
+<th>容器名称</th>
+<th>IP</th>
+<th>客户端连接端口映射</th>
+<th>集群端口映射</th>
+<th>预想角色</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>redis-c1</td>
+<td>172.31.0.11</td>
+<td>6301-&gt;6379</td>
+<td>16301-&gt;16379</td>
+<td>master</td>
+</tr>
+<tr>
+<td>redis-c2</td>
+<td>172.31.0.12</td>
+<td>6302-&gt;6379</td>
+<td>16302-&gt;16379</td>
+<td>master</td>
+</tr>
+<tr>
+<td>redis-c3</td>
+<td>172.31.0.13</td>
+<td>6303-&gt;6379</td>
+<td>16303-&gt;16379</td>
+<td>master</td>
+</tr>
+<tr>
+<td>redis-c4</td>
+<td>172.31.0.14</td>
+<td>6304-&gt;6379</td>
+<td>16304-&gt;16379</td>
+<td>slave</td>
+</tr>
+<tr>
+<td>redis-c5</td>
+<td>172.31.0.15</td>
+<td>6305-&gt;6379</td>
+<td>16305-&gt;16379</td>
+<td>slave</td>
+</tr>
+<tr>
+<td>redis-c6</td>
+<td>172.31.0.16</td>
+<td>6306-&gt;6379</td>
+<td>16306-&gt;16379</td>
+<td>slave</td>
+</tr>
+<tr>
+<td>redis-c7</td>
+<td>172.31.0.17</td>
+<td>6307-&gt;6379</td>
+<td>16307-&gt;16379</td>
+<td>master （演示集群伸缩中使用）</td>
+</tr>
+<tr>
+<td>redis-c8</td>
+<td>172.31.0.18</td>
+<td>6308-&gt;6379</td>
+<td>16308-&gt;16379</td>
+<td>slave （演示集群伸缩中使用）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="初始服务分布如下">初始服务分布如下</h3>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210208230110.png" alt=""></p>
+<h3 id="集群主要配置文件说明">集群主要配置文件说明</h3>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 端口</span>
+port <span class="token number">6379</span>
+<span class="token comment"># 是否开启集群</span>
+cluster-enabled <span class="token function">yes</span>
+<span class="token comment"># 集群超时时间</span>
+cluster-node-timeout <span class="token number">5000</span>
+<span class="token comment"># 更新操作后进行日志记录</span>
+appendonly <span class="token function">yes</span>
+<span class="token comment"># 集群配置文件</span>
+cluster-config-file <span class="token string">"/redis/log/nodes.conf"</span>
+<span class="token comment"># 是否开启外部连接</span>
+protected-mode no
+<span class="token comment"># redis守护进程</span>
+daemonize no
+<span class="token comment"># 本地数据库存放目录</span>
+<span class="token function">dir</span> <span class="token string">"/redis/data"</span>
+<span class="token comment"># redis日志文件</span>
+logfile <span class="token string">"/redis/log/redis.log"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">daemonize 设置yes或者no区别（默认：no）
+
+daemonize:yes:redis采用的是单进程多线程的模式。当redis.conf中选项daemonize设置成yes时，代表开启守护进程模式。在该模式下，redis会在后台运行，并将进程pid号写入至redis.conf选项pidfile设置的文件中，此时redis将一直运行，除非手动kill该进程。
+daemonize:no: 当daemonize选项设置成no时，当前界面将进入redis的命令行界面，exit强制退出或者关闭连接工具(putty,xshell等)都会导致redis进程退出。<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<h1 id="开始搭建集群">开始搭建集群</h1>
+<h3 id="在宿主机-data-上传-j-cluster">在宿主机 /data 上传 j_cluster</h3>
+<p>如果上传到了其他目录需要更改 yml 里面的数据卷映射条件</p>
+<h3 id="启动项目">启动项目</h3>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 进入到项目目录</span>
+<span class="token builtin class-name">cd</span> /data/j_cluster
+
+<span class="token comment"># 启动项目</span>
+<span class="token function">docker-compose</span> up <span class="token parameter variable">-d</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210208132002.png" alt=""></p>
+<h3 id="查看一下各个节点的ip">查看一下各个节点的ip</h3>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> container inspect redis-c1 redis-c2 redis-c3 redis-c4 redis-c5 redis-c6 <span class="token operator">|</span> <span class="token function">grep</span> IPv4Address<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>可以看到和我在 yam 中定义的ip一致</p>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210208134455.png" alt=""></p>
+<h1 id="开始搭建集群-2">开始搭建集群</h1>
+<h3 id="这里以进入-redis-c1-为例">这里以进入 redis-c1 为例</h3>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> <span class="token builtin class-name">exec</span> <span class="token parameter variable">-it</span> redis-c1 /bin/bash<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="浏览一下redis的集群命令">浏览一下redis的集群命令</h3>
+<blockquote>
+<p>以下命令只有 redis5 以后才有,redis5 以后redis发布了集群搭建命令<br>
+redis5 以前如果你要搭建的话，可以采用 Ruby 脚本</p>
+</blockquote>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 查看集群帮助文档</span>
+root@e4d19717bbed:/redis<span class="token comment"># redis-cli --cluster help</span>
+
+<span class="token comment"># 集群相关命令如下</span>
+Cluster Manager Commands:
+  create         host1:port1 <span class="token punctuation">..</span>. hostN:portN   <span class="token comment">#创建集群</span>
+                 --cluster-replicas <span class="token operator">&lt;</span>arg<span class="token operator">></span>      <span class="token comment">#从节点个数</span>
+  check          host:port                     <span class="token comment">#检查集群</span>
+                 --cluster-search-multiple-owners <span class="token comment">#检查是否有槽同时被分配给了多个节点</span>
+  info           host:port                     <span class="token comment">#查看集群状态</span>
+  fix            host:port                     <span class="token comment">#修复集群</span>
+                 --cluster-search-multiple-owners <span class="token comment">#修复槽的重复分配问题</span>
+  reshard        host:port                     <span class="token comment">#指定集群的任意一节点进行迁移slot，重新分slots</span>
+                 --cluster-from <span class="token operator">&lt;</span>arg<span class="token operator">></span>          <span class="token comment">#需要从哪些源节点上迁移slot，可从多个源节点完成迁移，以逗号隔开，传递的是节点的node id，还可以直接传递--from all，这样源节点就是集群的所有节点，不传递该参数的话，则会在迁移过程中提示用户输入</span>
+                 --cluster-to <span class="token operator">&lt;</span>arg<span class="token operator">></span>            <span class="token comment">#slot需要迁移的目的节点的node id，目的节点只能填写一个，不传递该参数的话，则会在迁移过程中提示用户输入</span>
+                 --cluster-slots <span class="token operator">&lt;</span>arg<span class="token operator">></span>         <span class="token comment">#需要迁移的slot数量，不传递该参数的话，则会在迁移过程中提示用户输入。</span>
+                 --cluster-yes                 <span class="token comment">#指定迁移时的确认输入</span>
+                 --cluster-timeout <span class="token operator">&lt;</span>arg<span class="token operator">></span>       <span class="token comment">#设置migrate命令的超时时间</span>
+                 --cluster-pipeline <span class="token operator">&lt;</span>arg<span class="token operator">></span>      <span class="token comment">#定义cluster getkeysinslot命令一次取出的key数量，不传的话使用默认值为10</span>
+                 --cluster-replace             <span class="token comment">#是否直接replace到目标节点</span>
+  rebalance      host:port                                      <span class="token comment">#指定集群的任意一节点进行平衡集群节点slot数量 </span>
+                 --cluster-weight <span class="token operator">&lt;</span>node1<span class="token operator">=</span>w1<span class="token punctuation">..</span>.nodeN<span class="token operator">=</span>wN<span class="token operator">></span>         <span class="token comment">#指定集群节点的权重</span>
+                 --cluster-use-empty-masters                    <span class="token comment">#设置可以让没有分配slot的主节点参与，默认不允许</span>
+                 --cluster-timeout <span class="token operator">&lt;</span>arg<span class="token operator">></span>                        <span class="token comment">#设置migrate命令的超时时间</span>
+                 --cluster-simulate                             <span class="token comment">#模拟rebalance操作，不会真正执行迁移操作</span>
+                 --cluster-pipeline <span class="token operator">&lt;</span>arg<span class="token operator">></span>                       <span class="token comment">#定义cluster getkeysinslot命令一次取出的key数量，默认值为10</span>
+                 --cluster-threshold <span class="token operator">&lt;</span>arg<span class="token operator">></span>                      <span class="token comment">#迁移的slot阈值超过threshold，执行rebalance操作</span>
+                 --cluster-replace                              <span class="token comment">#是否直接replace到目标节点</span>
+  add-node       new_host:new_port existing_host:existing_port  <span class="token comment">#添加节点，把新节点加入到指定的集群，默认添加主节点</span>
+                 --cluster-slave                                <span class="token comment">#新节点作为从节点，默认随机一个主节点</span>
+                 --cluster-master-id <span class="token operator">&lt;</span>arg<span class="token operator">></span>                      <span class="token comment">#给新节点指定主节点</span>
+  del-node       host:port node_id                              <span class="token comment">#删除给定的一个节点，成功后关闭该节点服务</span>
+  call           host:port <span class="token builtin class-name">command</span> arg arg <span class="token punctuation">..</span> arg               <span class="token comment">#在集群的所有节点执行相关命令</span>
+  set-timeout    host:port milliseconds                         <span class="token comment">#设置cluster-node-timeout</span>
+  <span class="token function">import</span>         host:port                                      <span class="token comment">#将外部redis数据导入集群</span>
+                 --cluster-from <span class="token operator">&lt;</span>arg<span class="token operator">></span>                           <span class="token comment">#将指定实例的数据导入到集群</span>
+                 --cluster-copy                                 <span class="token comment">#migrate时指定copy</span>
+                 --cluster-replace                              <span class="token comment">#migrate时指定replace</span>
+  <span class="token builtin class-name">help</span>           
+
+For check, fix, reshard, del-node, set-timeout you can specify the <span class="token function">host</span> and port of any working <span class="token function">node</span> <span class="token keyword">in</span> the cluster.
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>注意：Redis Cluster最低要求是3个主节点</p>
+</blockquote>
+<h3 id="创建集群主从节点">创建集群主从节点</h3>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">redis-cli <span class="token parameter variable">--cluster</span> create <span class="token number">172.31</span>.0.11:6379  <span class="token number">172.31</span>.0.12:6379  <span class="token number">172.31</span>.0.13:6379 <span class="token number">172.31</span>.0.14:6379 <span class="token number">172.31</span>.0.15:6379 <span class="token number">172.31</span>.0.16:6379 --cluster-replicas <span class="token number">1</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token operator">>></span><span class="token operator">></span> Performing <span class="token builtin class-name">hash</span> slots allocation on <span class="token number">6</span> nodes<span class="token punctuation">..</span>.
+Master<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> -<span class="token operator">></span> Slots <span class="token number">0</span> - <span class="token number">5460</span>
+Master<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> -<span class="token operator">></span> Slots <span class="token number">5461</span> - <span class="token number">10922</span>
+Master<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span> -<span class="token operator">></span> Slots <span class="token number">10923</span> - <span class="token number">16383</span>
+Adding replica <span class="token number">172.31</span>.0.15:6379 to <span class="token number">172.31</span>.0.11:6379
+Adding replica <span class="token number">172.31</span>.0.16:6379 to <span class="token number">172.31</span>.0.12:6379
+Adding replica <span class="token number">172.31</span>.0.14:6379 to <span class="token number">172.31</span>.0.13:6379
+M: 50fa88c4a01f968df6ab7e8bd02e1bb51c85f13f <span class="token number">172.31</span>.0.11:6379
+   slots:<span class="token punctuation">[</span><span class="token number">0</span>-5460<span class="token punctuation">]</span> <span class="token punctuation">(</span><span class="token number">5461</span> slots<span class="token punctuation">)</span> master
+M: 04a2118b3f7b7521a55cf77171f1c50fe1a80f4d <span class="token number">172.31</span>.0.12:6379
+   slots:<span class="token punctuation">[</span><span class="token number">5461</span>-10922<span class="token punctuation">]</span> <span class="token punctuation">(</span><span class="token number">5462</span> slots<span class="token punctuation">)</span> master
+M: b83a282329830e2ea686889cb8aa9eafa3441b8f <span class="token number">172.31</span>.0.13:6379
+   slots:<span class="token punctuation">[</span><span class="token number">10923</span>-16383<span class="token punctuation">]</span> <span class="token punctuation">(</span><span class="token number">5461</span> slots<span class="token punctuation">)</span> master
+S: 9b0a2284c341efa7055dd2046aec2e1c43ee6f9b <span class="token number">172.31</span>.0.14:6379
+   replicates b83a282329830e2ea686889cb8aa9eafa3441b8f
+S: 09aca472595a229e7ceda2792aed98f88d757d45 <span class="token number">172.31</span>.0.15:6379
+   replicates 50fa88c4a01f968df6ab7e8bd02e1bb51c85f13f
+S: 2ce485e6a5bc5a3f300347c123ce911e605bf164 <span class="token number">172.31</span>.0.16:6379
+   replicates 04a2118b3f7b7521a55cf77171f1c50fe1a80f4d
+Can I <span class="token builtin class-name">set</span> the above configuration? <span class="token punctuation">(</span>type <span class="token string">'yes'</span> to accept<span class="token punctuation">)</span>: <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>–cluster create : 表示创建集群<br>
+–cluster-replicas 0 : 表示只创建n个主节点，不创建从节点<br>
+–cluster-replicas 1 : 表示为集群中的每个主节点创建一个从节点（例：master[172.31.0.11:6379] -&gt; slave[172.31.0.14:6379]）</p>
+</blockquote>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210208174303.png" alt=""></p>
+<h3 id="查看集群">查看集群</h3>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 查看节点主从关系</span>
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> cluster nodes
+b83a282329830e2ea686889cb8aa9eafa3441b8f <span class="token number">172.31</span>.0.13:6379@16379 master - <span class="token number">0</span> <span class="token number">1612778025467</span> <span class="token number">3</span> connected <span class="token number">10923</span>-16383
+04a2118b3f7b7521a55cf77171f1c50fe1a80f4d <span class="token number">172.31</span>.0.12:6379@16379 master - <span class="token number">0</span> <span class="token number">1612778025000</span> <span class="token number">2</span> connected <span class="token number">5461</span>-10922
+50fa88c4a01f968df6ab7e8bd02e1bb51c85f13f <span class="token number">172.31</span>.0.11:6379@16379 myself,master - <span class="token number">0</span> <span class="token number">1612778024000</span> <span class="token number">1</span> connected <span class="token number">0</span>-5460
+9b0a2284c341efa7055dd2046aec2e1c43ee6f9b <span class="token number">172.31</span>.0.14:6379@16379 slave b83a282329830e2ea686889cb8aa9eafa3441b8f <span class="token number">0</span> <span class="token number">1612778024565</span> <span class="token number">3</span> connected
+2ce485e6a5bc5a3f300347c123ce911e605bf164 <span class="token number">172.31</span>.0.16:6379@16379 slave 04a2118b3f7b7521a55cf77171f1c50fe1a80f4d <span class="token number">0</span> <span class="token number">1612778024465</span> <span class="token number">2</span> connected
+09aca472595a229e7ceda2792aed98f88d757d45 <span class="token number">172.31</span>.0.15:6379@16379 slave 50fa88c4a01f968df6ab7e8bd02e1bb51c85f13f <span class="token number">0</span> <span class="token number">1612778024000</span> <span class="token number">1</span> connected
+
+<span class="token comment"># 列出槽和节点信息</span>
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> cluster slots
+<span class="token number">1</span><span class="token punctuation">)</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>integer<span class="token punctuation">)</span> <span class="token number">10923</span>
+   <span class="token number">2</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>integer<span class="token punctuation">)</span> <span class="token number">16383</span>
+   <span class="token number">3</span><span class="token punctuation">)</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token string">"172.31.0.13"</span>
+      <span class="token number">2</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>integer<span class="token punctuation">)</span> <span class="token number">6379</span>
+      <span class="token number">3</span><span class="token punctuation">)</span> <span class="token string">"b83a282329830e2ea686889cb8aa9eafa3441b8f"</span>
+   <span class="token number">4</span><span class="token punctuation">)</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token string">"172.31.0.14"</span>
+      <span class="token number">2</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>integer<span class="token punctuation">)</span> <span class="token number">6379</span>
+      <span class="token number">3</span><span class="token punctuation">)</span> <span class="token string">"9b0a2284c341efa7055dd2046aec2e1c43ee6f9b"</span>
+<span class="token number">2</span><span class="token punctuation">)</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>integer<span class="token punctuation">)</span> <span class="token number">5461</span>
+   <span class="token number">2</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>integer<span class="token punctuation">)</span> <span class="token number">10922</span>
+   <span class="token number">3</span><span class="token punctuation">)</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token string">"172.31.0.12"</span>
+      <span class="token number">2</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>integer<span class="token punctuation">)</span> <span class="token number">6379</span>
+      <span class="token number">3</span><span class="token punctuation">)</span> <span class="token string">"04a2118b3f7b7521a55cf77171f1c50fe1a80f4d"</span>
+   <span class="token number">4</span><span class="token punctuation">)</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token string">"172.31.0.16"</span>
+      <span class="token number">2</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>integer<span class="token punctuation">)</span> <span class="token number">6379</span>
+      <span class="token number">3</span><span class="token punctuation">)</span> <span class="token string">"2ce485e6a5bc5a3f300347c123ce911e605bf164"</span>
+<span class="token number">3</span><span class="token punctuation">)</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>integer<span class="token punctuation">)</span> <span class="token number">0</span>
+   <span class="token number">2</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>integer<span class="token punctuation">)</span> <span class="token number">5460</span>
+   <span class="token number">3</span><span class="token punctuation">)</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token string">"172.31.0.11"</span>
+      <span class="token number">2</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>integer<span class="token punctuation">)</span> <span class="token number">6379</span>
+      <span class="token number">3</span><span class="token punctuation">)</span> <span class="token string">"50fa88c4a01f968df6ab7e8bd02e1bb51c85f13f"</span>
+   <span class="token number">4</span><span class="token punctuation">)</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token string">"172.31.0.15"</span>
+      <span class="token number">2</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>integer<span class="token punctuation">)</span> <span class="token number">6379</span>
+      <span class="token number">3</span><span class="token punctuation">)</span> <span class="token string">"09aca472595a229e7ceda2792aed98f88d757d45"</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="数据存储">数据存储</h3>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 直接存储提示槽信息不对</span>
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> <span class="token builtin class-name">set</span> name libin
+<span class="token punctuation">(</span>error<span class="token punctuation">)</span> MOVED <span class="token number">5798</span> <span class="token number">172.31</span>.0.12:6379
+
+<span class="token comment"># 客户端连接加入 -c 数据可以直接被重定向到槽服务器</span>
+root@00bfb4f9402a:/redis<span class="token comment"># redis-cli -c</span>
+<span class="token number">127.0</span>.0.1:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> <span class="token builtin class-name">set</span> name libin
+-<span class="token operator">></span> Redirected to slot <span class="token punctuation">[</span><span class="token number">5798</span><span class="token punctuation">]</span> located at <span class="token number">172.31</span>.0.12:6379
+OK
+
+<span class="token comment"># 存储多个key的时候，由于不同的槽服务器，报错问题</span>
+<span class="token number">172.31</span>.0.12:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> mset k1 v1 k2 v2
+<span class="token punctuation">(</span>error<span class="token punctuation">)</span> CROSSSLOT Keys <span class="token keyword">in</span> request don't <span class="token builtin class-name">hash</span> to the same slot
+
+<span class="token comment"># 加入一个 tag 即可解决</span>
+<span class="token number">172.31</span>.0.12:637<span class="token operator"><span class="token file-descriptor important">9</span>></span> mset <span class="token punctuation">&#123;</span>r<span class="token punctuation">&#125;</span>k1 v1 <span class="token punctuation">&#123;</span>r<span class="token punctuation">&#125;</span>k2 v2
+OK<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h1 id="集群伸缩">集群伸缩</h1>
+<p>1、准备新的redis节点服务器<br>
+2、加入到集群中<br>
+3、分配数据槽和迁移数据</p>
+<h3 id="加入一个新的-master-节点">加入一个新的 master 节点</h3>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">redis-cli <span class="token parameter variable">-h</span> <span class="token number">172.31</span>.0.17 <span class="token parameter variable">--cluster</span> add-node <span class="token number">172.31</span>.0.17:6379 <span class="token number">172.31</span>.0.11:6379<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>这里的新加入的master节点是 172.31.0.17</li>
+<li>172.31.0.11 代表的事现在存在的集群中的任意一个 master 节点</li>
+</ul>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210208230200.png" alt=""></p>
+<h3 id="为新加入的-master-节点添加一个-slave-节点">为新加入的 master 节点添加一个 slave 节点</h3>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">redis-cli <span class="token parameter variable">-h</span> <span class="token number">172.31</span>.0.17 <span class="token parameter variable">--cluster</span> add-node <span class="token number">172.31</span>.0.18:6379 <span class="token number">172.31</span>.0.17:6379 --cluster-slave<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>172.31.0.17 代表上面行加入的 master 节点</li>
+<li>172.31.0.18 代表为 master（172.31.0.17）加入的从节点</li>
+<li>–cluster-slave 代表是 slave（从节点）的身份</li>
+</ul>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210208230233.png" alt=""></p>
+<h3 id="删除-slave-节点">删除 slave 节点</h3>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">redis-cli <span class="token parameter variable">-h</span> <span class="token number">172.31</span>.0.18 <span class="token parameter variable">--cluster</span> del-node <span class="token number">172.31</span>.0.18:6379 3a12f6b4ed5f26b83525681e73ee23750bcbcfbf<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>3a12f6b4ed5f26b83525681e73ee23750bcbcfbf 是通过 <code>cluster nodes</code> 命令得到的节点ID</li>
+<li>如果上面有数据的话，无法删除，需要先迁移数据</li>
+</ul>
+<h3 id="为节点分配槽">为节点分配槽</h3>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 指定分配</span>
+redis-cli <span class="token parameter variable">-h</span> <span class="token number">172.31</span>.0.11 <span class="token parameter variable">--cluster</span> reshard <span class="token number">172.31</span>.0.11:6379
+
+<span class="token comment"># 平均分配</span>
+redis-cli <span class="token parameter variable">-h</span> <span class="token number">172.31</span>.0.11 <span class="token parameter variable">--cluster</span> rebalance <span class="token number">172.31</span>.0.11:6379<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>172.31.0.11 这个只要是随便一个 master 节点都可以操作集群</li>
+</ul>
+<h3 id="分配槽演示">分配槽演示</h3>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 可以先看到节点信息</span>
+
+<span class="token operator">>></span><span class="token operator">></span> Performing Cluster Check <span class="token punctuation">(</span>using <span class="token function">node</span> <span class="token number">172.31</span>.0.11:6379<span class="token punctuation">)</span>
+M: 9af405be84c1d448988117f88f78fa588d49a196 <span class="token number">172.31</span>.0.11:6379
+   slots:<span class="token punctuation">[</span><span class="token number">0</span>-5460<span class="token punctuation">]</span> <span class="token punctuation">(</span><span class="token number">5461</span> slots<span class="token punctuation">)</span> master
+   <span class="token number">1</span> additional replica<span class="token punctuation">(</span>s<span class="token punctuation">)</span>
+S: 3a12f6b4ed5f26b83525681e73ee23750bcbcfbf <span class="token number">172.31</span>.0.18:6379
+   slots: <span class="token punctuation">(</span><span class="token number">0</span> slots<span class="token punctuation">)</span> slave
+   replicates 34a33c9df9d909e69e5cad8965d905b72959c677
+S: 7c35cf01519c5747ca262769ed47dbbe44eeb830 <span class="token number">172.31</span>.0.14:6379
+   slots: <span class="token punctuation">(</span><span class="token number">0</span> slots<span class="token punctuation">)</span> slave
+   replicates 780d17c7c9ca86f68b6119762f0958f00093702a
+M: 780d17c7c9ca86f68b6119762f0958f00093702a <span class="token number">172.31</span>.0.13:6379
+   slots:<span class="token punctuation">[</span><span class="token number">10923</span>-16383<span class="token punctuation">]</span> <span class="token punctuation">(</span><span class="token number">5461</span> slots<span class="token punctuation">)</span> master
+   <span class="token number">1</span> additional replica<span class="token punctuation">(</span>s<span class="token punctuation">)</span>
+M: 34a33c9df9d909e69e5cad8965d905b72959c677 <span class="token number">172.31</span>.0.17:6379
+   slots: <span class="token punctuation">(</span><span class="token number">0</span> slots<span class="token punctuation">)</span> master
+   <span class="token number">1</span> additional replica<span class="token punctuation">(</span>s<span class="token punctuation">)</span>
+S: a4956784b0221598c23d18fbcad844e18eefab63 <span class="token number">172.31</span>.0.15:6379
+   slots: <span class="token punctuation">(</span><span class="token number">0</span> slots<span class="token punctuation">)</span> slave
+   replicates 9af405be84c1d448988117f88f78fa588d49a196
+M: ddf46bbdf6794d12debe824ce4e30ea96cd70212 <span class="token number">172.31</span>.0.12:6379
+   slots:<span class="token punctuation">[</span><span class="token number">5461</span>-10922<span class="token punctuation">]</span> <span class="token punctuation">(</span><span class="token number">5462</span> slots<span class="token punctuation">)</span> master
+   <span class="token number">1</span> additional replica<span class="token punctuation">(</span>s<span class="token punctuation">)</span>
+S: a2820f32aa18e7ec2d880aedc8d91c9db840dcd9 <span class="token number">172.31</span>.0.16:6379
+   slots: <span class="token punctuation">(</span><span class="token number">0</span> slots<span class="token punctuation">)</span> slave
+   replicates ddf46bbdf6794d12debe824ce4e30ea96cd70212
+<span class="token punctuation">[</span>OK<span class="token punctuation">]</span> All nodes agree about slots configuration.
+<span class="token operator">>></span><span class="token operator">></span> Check <span class="token keyword">for</span> <span class="token function">open</span> slots<span class="token punctuation">..</span>.
+<span class="token operator">>></span><span class="token operator">></span> Check slots coverage<span class="token punctuation">..</span>.
+<span class="token punctuation">[</span>OK<span class="token punctuation">]</span> All <span class="token number">16384</span> slots covered.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>可以看到这里新加入的master <code>172.31.0.17</code> 没有数据槽</li>
+</ul>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 询问要迁移的槽的数量（我在这里迁移了500个）</span>
+How many slots <span class="token keyword">do</span> you want to move <span class="token punctuation">(</span>from <span class="token number">1</span> to <span class="token number">16384</span><span class="token punctuation">)</span>? <span class="token number">500</span>
+<span class="token comment"># 询问被迁移的槽的ID（我这里迁移的是：172.31.0.11）</span>
+What is the receiving <span class="token function">node</span> ID? 34a33c9df9d909e69e5cad8965d905b72959c677
+<span class="token comment"># 请输入所有源节点ID</span>
+Please enter all the <span class="token builtin class-name">source</span> <span class="token function">node</span> IDs.
+   <span class="token comment"># 键入“all”将所有节点用作哈希槽的源节点</span>
+  Type <span class="token string">'all'</span> to use all the nodes as <span class="token builtin class-name">source</span> nodes <span class="token keyword">for</span> the <span class="token builtin class-name">hash</span> slots.
+   <span class="token comment"># 输入所有源节点ID后键入“done”。</span>
+  Type <span class="token string">'done'</span> once you entered all the <span class="token builtin class-name">source</span> nodes IDs.
+<span class="token comment"># 输入源的ID后，进行迁移</span>
+Source <span class="token function">node</span> <span class="token comment">#1: 9af405be84c1d448988117f88f78fa588d49a196</span>
+Source <span class="token function">node</span> <span class="token comment">#2: done</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>用这个方法，也可以把某一个源的槽都迁移后。那么该槽就可以进行删除了</li>
+</ul>
+<h1 id="搭建问题">搭建问题</h1>
+<h4 id="创建集群主从节点报错">创建集群主从节点报错</h4>
+<p>[ERR] Node 172.31.0.11:6379 is not configured as a cluster node<br>
+查看配置文件的配置问题</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/2057957110.html">https://blog.mailjob.net/posts/2057957110.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E9%93%BE%E6%8E%A5"><span class="toc-text">相关链接</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#docker-compose-%E6%96%87%E4%BB%B6%E8%AF%B4%E6%98%8E"><span class="toc-text">docker-compose 文件说明</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%87%E4%BB%B6%E4%B8%AD%E5%AE%B9%E5%99%A8%E5%AF%B9%E5%BA%94%E5%85%B3%E7%B3%BB"><span class="toc-text">文件中容器对应关系</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9D%E5%A7%8B%E6%9C%8D%E5%8A%A1%E5%88%86%E5%B8%83%E5%A6%82%E4%B8%8B"><span class="toc-text">初始服务分布如下</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4%E4%B8%BB%E8%A6%81%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E8%AF%B4%E6%98%8E"><span class="toc-text">集群主要配置文件说明</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BC%80%E5%A7%8B%E6%90%AD%E5%BB%BA%E9%9B%86%E7%BE%A4"><span class="toc-text">开始搭建集群</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9C%A8%E5%AE%BF%E4%B8%BB%E6%9C%BA-data-%E4%B8%8A%E4%BC%A0-j-cluster"><span class="toc-text">在宿主机 &#x2F;data 上传 j_cluster</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8%E9%A1%B9%E7%9B%AE"><span class="toc-text">启动项目</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E4%B8%80%E4%B8%8B%E5%90%84%E4%B8%AA%E8%8A%82%E7%82%B9%E7%9A%84ip"><span class="toc-text">查看一下各个节点的ip</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BC%80%E5%A7%8B%E6%90%AD%E5%BB%BA%E9%9B%86%E7%BE%A4-2"><span class="toc-text">开始搭建集群</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%99%E9%87%8C%E4%BB%A5%E8%BF%9B%E5%85%A5-redis-c1-%E4%B8%BA%E4%BE%8B"><span class="toc-text">这里以进入 redis-c1 为例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%8F%E8%A7%88%E4%B8%80%E4%B8%8Bredis%E7%9A%84%E9%9B%86%E7%BE%A4%E5%91%BD%E4%BB%A4"><span class="toc-text">浏览一下redis的集群命令</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E9%9B%86%E7%BE%A4%E4%B8%BB%E4%BB%8E%E8%8A%82%E7%82%B9"><span class="toc-text">创建集群主从节点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E9%9B%86%E7%BE%A4"><span class="toc-text">查看集群</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8"><span class="toc-text">数据存储</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4%E4%BC%B8%E7%BC%A9"><span class="toc-text">集群伸缩</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A0%E5%85%A5%E4%B8%80%E4%B8%AA%E6%96%B0%E7%9A%84-master-%E8%8A%82%E7%82%B9"><span class="toc-text">加入一个新的 master 节点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E6%96%B0%E5%8A%A0%E5%85%A5%E7%9A%84-master-%E8%8A%82%E7%82%B9%E6%B7%BB%E5%8A%A0%E4%B8%80%E4%B8%AA-slave-%E8%8A%82%E7%82%B9"><span class="toc-text">为新加入的 master 节点添加一个 slave 节点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A0%E9%99%A4-slave-%E8%8A%82%E7%82%B9"><span class="toc-text">删除 slave 节点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E8%8A%82%E7%82%B9%E5%88%86%E9%85%8D%E6%A7%BD"><span class="toc-text">为节点分配槽</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E9%85%8D%E6%A7%BD%E6%BC%94%E7%A4%BA"><span class="toc-text">分配槽演示</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%90%AD%E5%BB%BA%E9%97%AE%E9%A2%98"><span class="toc-text">搭建问题</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E9%9B%86%E7%BE%A4%E4%B8%BB%E4%BB%8E%E8%8A%82%E7%82%B9%E6%8A%A5%E9%94%99"><span class="toc-text">创建集群主从节点报错</span></a></li></ol></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

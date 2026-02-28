@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Redis哨兵选举算法Raft | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="相关链接 Raft详解：http:&#x2F;&#x2F;www.cnblogs.com&#x2F;likehua&#x2F;p&#x2F;5845575.html 分布式Raft算法：http:&#x2F;&#x2F;www.jdon.com&#x2F;artichect&#x2F;raft.html 分布式一致算法——Paxos：http:&#x2F;&#x2F;www.cnblogs.com&#x2F;cchust&#x2F;p&#x2F;5617989.html 选举Leader哨兵，来进行故障转移 （1）Raft简单介绍 哨">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis哨兵选举算法Raft">
+<meta property="og:url" content="https://blog.mailjob.net/posts/1396323676.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="相关链接 Raft详解：http:&#x2F;&#x2F;www.cnblogs.com&#x2F;likehua&#x2F;p&#x2F;5845575.html 分布式Raft算法：http:&#x2F;&#x2F;www.jdon.com&#x2F;artichect&#x2F;raft.html 分布式一致算法——Paxos：http:&#x2F;&#x2F;www.cnblogs.com&#x2F;cchust&#x2F;p&#x2F;5617989.html 选举Leader哨兵，来进行故障转移 （1）Raft简单介绍 哨">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-02-06T05:57:32.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.987Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="redis">
+<meta property="article:tag" content="高可用">
+<meta name="twitter:card" content="summary">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Redis哨兵选举算法Raft
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/1396323676.html" class="article-date">
+	  <time datetime="2021-02-06T05:57:32.000Z" itemprop="datePublished">2021-02-06</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/redis/" rel="tag">redis</a>, <a class="article-tag-none-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/1396323676.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.5k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 5(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="相关链接">相关链接</h2>
+<p>Raft详解：<a target="_blank" rel="noopener" href="http://www.cnblogs.com/likehua/p/5845575.html">http://www.cnblogs.com/likehua/p/5845575.html</a></p>
+<p>分布式Raft算法：<a target="_blank" rel="noopener" href="http://www.jdon.com/artichect/raft.html">http://www.jdon.com/artichect/raft.html</a></p>
+<p>分布式一致算法——Paxos：<a target="_blank" rel="noopener" href="http://www.cnblogs.com/cchust/p/5617989.html">http://www.cnblogs.com/cchust/p/5617989.html</a></p>
+<h1 id="选举Leader哨兵，来进行故障转移">选举Leader哨兵，来进行故障转移</h1>
+<h5 id="（1）Raft简单介绍">（1）Raft简单介绍</h5>
+<p>哨兵的选举采用的是Raft算法，Raft是一个用户管理日志一致性的协议，它将分布式一致性问题分解为多个子问题**：Leader选举**、<strong>日志复制</strong>、<strong>安全性</strong>、<strong>日志压缩</strong>等。Raft将系统中的角色分为领导者（Leader）、跟从者（Follower）和候选者（Candidate）：</p>
+<ul>
+<li>Leader：接受客户端请求，并向Follower同步请求日式，当日志同步到大多数节点上后告诉Follower提交日志。</li>
+<li>Follower：接受并持久化Leader同步的日志，在Leader告知日志可以提交之后，提交日志。</li>
+<li>Candidate：Leader选举过程中的临时角色。</li>
+</ul>
+<h5 id="（2）-Term（任期）">（2） Term（任期）</h5>
+<blockquote>
+<p>在分布式系统中，各个节点的时间同步是一个很大的难题，但是为了识别过期时间，时间信息有必不可少。Raft协议为了解决这个问题，引入了term（任期）的概念。</p>
+</blockquote>
+<p><strong>Raft算法将时间划分为任意不同长度的任期（term）</strong>。任期用连续的数字进行表示。每<strong>一个任期的开始都是一次选举（election），一个或多个候选人会试图成为领导人</strong>，如果一个候选人赢得了选举，它就会在该任期的剩余时间担任领导人。在某些情况下，选票会被瓜分，有可能没有选出领导人，那么将会开始另一个任期，并且立刻开始下一次选举。<strong>Raft算法保证在给定的一个任期内最多是有一个领导人</strong>。</p>
+<h5 id="（3）-RPC">（3） RPC</h5>
+<p><strong>Raft算法中服务器节点之间通信使用远程过程调用（RPC）</strong>，并且基本的一致性算法只需要两种类型的RPC，为了在服务器之间传输快照增加了第三种 RPC。</p>
+<ul>
+<li><strong>RequestVote RPC</strong>：候选人在选举期间发起。</li>
+<li><strong>AppendEntries RPC</strong>：领导人发起的一种心跳机制，复制日志也在该命令中完成。</li>
+<li><strong>InstallSnapshot RPC</strong>：领导者使用该RPC来发送快照给太落后的追随者。</li>
+</ul>
+<h5 id="（4）-选举流程">（4） 选举流程</h5>
+<blockquote>
+<p><strong>redis中的纪元（epoch）</strong>：使用了类似于Raft算法term（任期）的概念称为epoch（纪元），用来给时间增加版本号。主要有两种：</p>
+<ul>
+<li><strong>currentEpoch</strong>：它的作用在于，当集群的状态发生改变，某个节点为了执行一些动作需要寻求其他节点的统一时，就会增加currentEpoch的值。目前curretnEpoch只用于slabe的故障转移流程。</li>
+<li><strong>configEpoch</strong>：这是一个集群节点配置相关的概念，每个集群节点都有自己独一无二的configepoch，所谓的节点配置，实际上是指节点所负责的槽位信息。每一个master在向其他节点发送包时，都会附带其configEpoch信息，以及一份表示它负责的slots信息。</li>
+</ul>
+</blockquote>
+<ul>
+<li>1、某个Sentinel认定master客观下线的节点后，该Sentinel会先看看自己有没有投过票，如果自己已经投过票给其他Sentinel了，在2倍故障转移的超时时间自己就不会成为Leader。相当于它是一个Follower。</li>
+<li>2、如果该Sentinel还没投过票，那么它就成为Candidate。</li>
+<li>3、和Raft协议描述的一样，成为Candidate，Sentinel需要完成几件事情</li>
+</ul>
+<blockquote>
+<p>3.1 更新故障转移状态为start<br>
+3.2 当前epoch加1，相当于进入一个新term，在Sentinel中epoch就是Raft协议中的term。<br>
+3.3 更新自己的超时时间为当前时间随机加上一段时间，随机时间为1s内的随机毫秒数。<br>
+3.4 向其他节点发送is-master-down-by-addr命令请求投票。命令会带上自己的epoch。<br>
+3.5 给自己投一票，在Sentinel中，投票的方式是把自己master结构体里的leader和leader_epoch改成投给的Sentinel和它的epoch。</p>
+</blockquote>
+<ul>
+<li>4、其他Sentinel会收到Candidate的is-master-down-by-addr命令。如果Sentinel当前epoch和Candidate传给他的epoch一样，说明他已经把自己master结构体里的leader和leader_epoch改成其他Candidate，相当于把票投给了其他Candidate。投过票给别的Sentinel后，在当前epoch内自己就只能成为Follower。</li>
+<li>5、Candidate会不断的统计自己的票数，直到他发现认同他成为Leader的票数超过一半而且超过它配置的quorum（quorum可以参考《redis sentinel设计与实现》）。Sentinel比Raft协议增加了quorum，这样一个Sentinel能否当选Leader还取决于它配置的quorum。</li>
+<li>6、如果在一个选举时间内，Candidate没有获得超过一半且超过它配置的quorum的票数，自己的这次选举就失败了。</li>
+<li>7、如果在一个epoch内，没有一个Candidate获得更多的票数。那么等待超过2倍故障转移的超时时间后，Candidate增加epoch重新投票。</li>
+<li>8、如果某个Candidate获得超过一半且超过它配置的quorum的票数，那么它就成为了Leader。</li>
+<li>9、与Raft协议不同，Leader并不会把自己成为Leader的消息发给其他Sentinel。其他Sentinel等待Leader从slave选出master后，检测到新的master正常工作后，就会去掉客观下线的标识，从而不需要进入故障转移流程。</li>
+</ul>
+<p><strong>大致简单过程</strong></p>
+<p>1、每个做主观下线的sentinel节点像其他sentinel节点发送命令，要求将自己设置为领导者<br>
+2、接收到的sentinel可以同意或者拒绝<br>
+3、如果该sentinel节点发现自己的票数已经超过半数并且超过了quorum<br>
+4、如果此过程选举出了多个领导者，那么将等待一段时重新进行选举</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/1396323676.html">https://blog.mailjob.net/posts/1396323676.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E9%93%BE%E6%8E%A5"><span class="toc-text">相关链接</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%80%89%E4%B8%BELeader%E5%93%A8%E5%85%B5%EF%BC%8C%E6%9D%A5%E8%BF%9B%E8%A1%8C%E6%95%85%E9%9A%9C%E8%BD%AC%E7%A7%BB"><span class="toc-text">选举Leader哨兵，来进行故障转移</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%EF%BC%881%EF%BC%89Raft%E7%AE%80%E5%8D%95%E4%BB%8B%E7%BB%8D"><span class="toc-text">（1）Raft简单介绍</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%EF%BC%882%EF%BC%89-Term%EF%BC%88%E4%BB%BB%E6%9C%9F%EF%BC%89"><span class="toc-text">（2） Term（任期）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%EF%BC%883%EF%BC%89-RPC"><span class="toc-text">（3） RPC</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%EF%BC%884%EF%BC%89-%E9%80%89%E4%B8%BE%E6%B5%81%E7%A8%8B"><span class="toc-text">（4） 选举流程</span></a></li></ol></li></ol></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

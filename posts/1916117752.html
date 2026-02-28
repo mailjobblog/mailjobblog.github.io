@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Mycat安装与使用 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="Mycat简介  一个数据库中间件产品 一个彻底开源的，面向企业应用开发的大数据库集群 支持 事务、ACID、可以替代 MySQL的加强版数据库 一个可以视为MySQL集群的企业级数据库，用来替代昂贵的Oracle集群 一个融合内存缓存技术、NoSQL技术、HDFS大数据的 新型SQL Server结合传统数据库和 新型分布式数据仓库的新一代 企业级数据库产品  参考资料 Mycat 学习文档：h">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mycat安装与使用">
+<meta property="og:url" content="https://blog.mailjob.net/posts/1916117752.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="Mycat简介  一个数据库中间件产品 一个彻底开源的，面向企业应用开发的大数据库集群 支持 事务、ACID、可以替代 MySQL的加强版数据库 一个可以视为MySQL集群的企业级数据库，用来替代昂贵的Oracle集群 一个融合内存缓存技术、NoSQL技术、HDFS大数据的 新型SQL Server结合传统数据库和 新型分布式数据仓库的新一代 企业级数据库产品  参考资料 Mycat 学习文档：h">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210220163550.png">
+<meta property="article:published_time" content="2021-02-20T05:52:40.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.981Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="mysql">
+<meta property="article:tag" content="mycat">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/oss.github/20210220163550.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Mycat安装与使用
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/1916117752.html" class="article-date">
+	  <time datetime="2021-02-20T05:52:40.000Z" itemprop="datePublished">2021-02-20</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/mysql/">mysql</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/mycat/" rel="tag">mycat</a>, <a class="article-tag-none-link" href="/tags/mysql/" rel="tag">mysql</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/1916117752.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 3.1k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 14(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="Mycat简介">Mycat简介</h2>
+<ul>
+<li>一个数据库中间件产品</li>
+<li>一个彻底开源的，面向企业应用开发的大数据库集群</li>
+<li>支持 事务、ACID、可以替代 MySQL的加强版数据库</li>
+<li>一个可以视为MySQL集群的企业级数据库，用来替代昂贵的Oracle集群</li>
+<li>一个融合内存缓存技术、NoSQL技术、HDFS大数据的 新型SQL Server结合传统数据库和 新型分布式数据仓库的新一代 企业级数据库产品</li>
+</ul>
+<h2 id="参考资料">参考资料</h2>
+<p>Mycat 学习文档：<a target="_blank" rel="noopener" href="http://www.mycat.org.cn/document/mycat-definitive-guide.pdf">http://www.mycat.org.cn/document/mycat-definitive-guide.pdf</a></p>
+<p>mycat 网站：<a target="_blank" rel="noopener" href="http://www.mycat.org.cn/">http://www.mycat.org.cn/</a></p>
+<p>java jdk安装博文：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/wjup/p/11041274.html">https://www.cnblogs.com/wjup/p/11041274.html</a></p>
+<p>mycat github仓库：<a target="_blank" rel="noopener" href="https://github.com/MyCATApache/Mycat-download">https://github.com/MyCATApache/Mycat-download</a></p>
+<p>mycat 基本逻辑结构（思维导图）：<a target="_blank" rel="noopener" href="https://kdocs.cn/l/shHheJJd9tG0">https://kdocs.cn/l/shHheJJd9tG0</a></p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210220163550.png" alt="image-20210220163548341"></p>
+<h2 id="Mycat安装">Mycat安装</h2>
+<h3 id="Windows下安装mycat">Windows下安装mycat</h3>
+<p><strong>1、安装 java jdk</strong></p>
+<p>安装 java jdk 需要 jdk version &gt; 1.7</p>
+<p><strong>2、安装mycat</strong></p>
+<p>安装完成后，正常启动bin文件下：<br>
+启动startup_nowrap ,直接双击运行 startup_nowrap.bat<br>
+或者使用Navicat工具去连接(但是响应时间会很长，不建议使用)，推荐使用cmd命令连接mycat</p>
+<blockquote>
+<p>小帖士：本文演示下载的版本地址是：<a target="_blank" rel="noopener" href="http://dl.mycat.org.cn/1.6.7.3/20190927161129/Mycat-server-1.6.7.3-release-20190927161129-win.tar.gz">Mycat-server-1.6.7.3</a></p>
+</blockquote>
+<h3 id="Linux下安装mycat">Linux下安装mycat</h3>
+<p><strong>1、安装 java jdk</strong></p>
+<p>1.1、去Oracle官网下载需要安装的jdk版本，我这里用的是 jdk-8u181-linux-x64.tar.gz</p>
+<p>1.2、解压安装</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 解压文件</span>
+<span class="token punctuation">[</span>root@localhost home<span class="token punctuation">]</span><span class="token comment"># tar -zxvf jdk-8u20-linux-x64.tar.gz</span>
+<span class="token comment"># 移动到 use/local/java 软件安装目录</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos home<span class="token punctuation">]</span><span class="token comment"># mv jdk1.8.0_20 /usr/local/java</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>1.3、接下来就该配置 <code>环境变量</code> 了，输入以下指令进行配置：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@localhost home<span class="token punctuation">]</span><span class="token comment"># vi /etc/profile</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># java</span>
+<span class="token builtin class-name">set</span> <span class="token function">java</span> environment
+<span class="token assign-left variable">JAVA_HOME</span><span class="token operator">=</span>/usr/local/java
+<span class="token assign-left variable">JRE_HOME</span><span class="token operator">=</span>/usr/local/java/jre
+<span class="token assign-left variable">CLASS_PATH</span><span class="token operator">=</span>.:<span class="token variable">$JAVA_HOME</span>/lib/dt.jar:<span class="token variable">$JAVA_HOME</span>/lib/tools.jar:<span class="token variable">$JRE_HOME</span>/lib
+<span class="token assign-left variable"><span class="token environment constant">PATH</span></span><span class="token operator">=</span><span class="token environment constant">$PATH</span><span class="token builtin class-name">:</span><span class="token variable">$JAVA_HOME</span>/bin:<span class="token variable">$JRE_HOME</span>/bin
+<span class="token builtin class-name">export</span> JAVA_HOME JRE_HOME CLASS_PATH <span class="token environment constant">PATH</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>小帖士：其中 JAVA_HOME， JRE_HOME 请根据自己的实际安装路径及 JDK 版本配置。</p>
+</blockquote>
+<p>1.4、编辑完之后，保存并退出，然后输入以下指令，刷新环境配置使其生效</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@localhost home<span class="token punctuation">]</span><span class="token comment"># source /etc/profile</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>1.5、测试是否安装成功</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@VM-0-15-centos java<span class="token punctuation">]</span><span class="token comment"># java -version</span>
+<span class="token function">java</span> version <span class="token string">"1.8.0_20"</span>
+Java<span class="token punctuation">(</span>TM<span class="token punctuation">)</span> SE Runtime Environment <span class="token punctuation">(</span>build <span class="token number">1.8</span>.0_20-b26<span class="token punctuation">)</span>
+Java HotSpot<span class="token punctuation">(</span>TM<span class="token punctuation">)</span> <span class="token number">64</span>-Bit Server VM <span class="token punctuation">(</span>build <span class="token number">25.20</span>-b23, mixed mode<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>2、安装mycat</strong></p>
+<p>2.1、下载 <code>mycat</code> 后进行解压</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@VM-0-15-centos home<span class="token punctuation">]</span><span class="token comment"># tar -zxvf Mycat-server-1.6.7.3-release-20190828135747-linux.tar.gz</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>2.2、移动到 <code>/usr/local/</code> 目录下</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@VM-0-15-centos home<span class="token punctuation">]</span><span class="token comment"># mv mycat /usr/local/mycat</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos home<span class="token punctuation">]</span><span class="token comment"># cd /usr/local/mycat/</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>2.3、启动mycat</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 进入到 bin 目录、启动目录</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos mycat<span class="token punctuation">]</span><span class="token comment"># cd bin/</span>
+<span class="token comment"># 查看 mycat 的命令</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos bin<span class="token punctuation">]</span><span class="token comment"># ./mycat </span>
+Usage: ./mycat <span class="token punctuation">&#123;</span> console <span class="token operator">|</span> start <span class="token operator">|</span> stop <span class="token operator">|</span> restart <span class="token operator">|</span> status <span class="token operator">|</span> dump <span class="token punctuation">&#125;</span>
+<span class="token comment"># 检查mycat是否存在配置错误</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos bin<span class="token punctuation">]</span><span class="token comment"># ./mycat console</span>
+<span class="token comment"># 启动mycat</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos bin<span class="token punctuation">]</span><span class="token comment"># ./mycat start</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>2.5、修改 mycat 的 java 服务</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 进入配置文件</span>
+<span class="token function">vim</span> /usr/local/mycat/conf/wrapper.conf
+<span class="token comment"># 修改 java 的绝对路径的启动服务</span>
+<span class="token assign-left variable">wrapper.java.command</span><span class="token operator">=</span>/usr/local/java/bin/java<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>2.4、连接mycat</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@VM-0-15-centos ~<span class="token punctuation">]</span><span class="token comment"># mysql -uroot -p123456 -h127.0.0.1 -P8066 --default_auth=mysql_native_password</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<blockquote>
+<p><strong>小帖士</strong>：</p>
+<p>由于 <code>Mysql8</code> 的缺省加密方式已经改为 <code>caching_sha2_password</code> ，而MyCat对此尚不支持。为此，需加<br>
+上 <code>--default_auth=mysql_native_pasowrd</code> 选项</p>
+<p>mycat的默认配置密码是 <code>123456</code>，故这里用 <code>123456</code> 登录 mycat</p>
+</blockquote>
+<h2 id="Mycat的使用">Mycat的使用</h2>
+<h3 id="配置文件简介">配置文件简介</h3>
+<p><strong>server.xml</strong></p>
+<p>该文件几乎保存了所有mycat需要的系统配置信息，包括 mycat 用户管理、DML权限管理等，其在代码内直接的映射类为SystemConfig 类。<br>
+Mycat 1.6的用户权限管理是通过server.xml实现的。在server.xml中通过用户标签和防火墙标签进行配置管理的</p>
+<blockquote>
+<p>(1)设置password属性，设置用户的密码<br>
+(2)修改 readOnly 为 true 或 false 来限制用户对数据库是否可读写的权限，true为只读，false为读写<br>
+(3)修改 schemas 内的文本来控制用户可放问的 schema，多个schema用，号隔开<br>
+(4)设置benchmark属性：benchmark 基准, 当前端的整体 connection 数达到基准值是, 对来自该账户的请求开始拒绝连接，0 或不设表示不限制。<br>
+(5)设置usingDecrypt属性：是否对密码加密默认 0 否 如需要开启配置 1，同时使用加密程序对密码加密，加密命令方法是执行mycat的jar程序：</p>
+<pre class="line-numbers language-java" data-language="java"><code class="language-java">java <span class="token operator">-</span>cp <span class="token class-name">Mycat</span><span class="token operator">-</span>server<span class="token operator">-</span><span class="token number">1.6</span><span class="token number">.1</span><span class="token operator">-</span>dev<span class="token punctuation">.</span>jar <span class="token class-name"><span class="token namespace">org<span class="token punctuation">.</span>opencloudb<span class="token punctuation">.</span>util<span class="token punctuation">.</span></span>DecryptUtil</span> <span class="token number">0</span><span class="token operator">:</span>user<span class="token operator">:</span>password<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+</blockquote>
+<p>vim查看<code>用户配置</code>（局部配置）信息如下：</p>
+<pre class="line-numbers language-markup" data-language="markup"><code class="language-markup"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>user</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>root<span class="token punctuation">"</span></span> <span class="token attr-name">defaultAccount</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>true<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>property</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>password<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>123456<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>property</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>property</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>schemas<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>TESTDB<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>property</span><span class="token punctuation">></span></span>
+    <span class="token comment">&lt;!-- 表级 DML 权限设置 --></span>
+    <span class="token comment">&lt;!--            
+    &lt;privileges check="false">
+    &lt;schema name="TESTDB" dml="0110" >
+    &lt;table name="tb01" dml="0000">&lt;/table>
+    &lt;table name="tb02" dml="1111">&lt;/table>
+    &lt;/schema>
+    &lt;/privileges>           
+    --></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>user</span><span class="token punctuation">></span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>schema.xml</strong></p>
+<p>用来定义mycat实例中的逻辑库，mycat可以有多个逻辑库，每个逻辑库都有自己的相关配置。可以使用schema标签来划分这些不同的逻辑库。</p>
+<p>如果不配置schema标签，所有表的配置会属于同一个默认的逻辑库。<br>
+逻辑库的概念和MySql的database的概念一样，我们在查询两个不同逻辑库中的表的时候，需要切换到该逻辑库下进行查询。<br>
+（注意：进行查询的时候需要在server.xml配置相关用户权限信息）</p>
+<p>vim查看<code>数据源</code>信息如下</p>
+<pre class="line-numbers language-markup" data-language="markup"><code class="language-markup"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>dataHost</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>localhost1<span class="token punctuation">"</span></span> <span class="token attr-name">maxCon</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>1000<span class="token punctuation">"</span></span> <span class="token attr-name">minCon</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>10<span class="token punctuation">"</span></span> <span class="token attr-name">balance</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>0<span class="token punctuation">"</span></span>
+			  <span class="token attr-name">writeType</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>0<span class="token punctuation">"</span></span> <span class="token attr-name">dbType</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>mysql<span class="token punctuation">"</span></span> <span class="token attr-name">dbDriver</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>native<span class="token punctuation">"</span></span> <span class="token attr-name">switchType</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>1<span class="token punctuation">"</span></span>  <span class="token attr-name">slaveThreshold</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>100<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>heartbeat</span><span class="token punctuation">></span></span>select user()<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>heartbeat</span><span class="token punctuation">></span></span>
+		<span class="token comment">&lt;!-- can have multi write hosts --></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>writeHost</span> <span class="token attr-name">host</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>hostM1<span class="token punctuation">"</span></span> <span class="token attr-name">url</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>localhost:3306<span class="token punctuation">"</span></span> <span class="token attr-name">user</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>root<span class="token punctuation">"</span></span>
+				   <span class="token attr-name">password</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>123456<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+			<span class="token comment">&lt;!-- can have multi read hosts --></span>
+			<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>readHost</span> <span class="token attr-name">host</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>hostS2<span class="token punctuation">"</span></span> <span class="token attr-name">url</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>192.168.1.200:3306<span class="token punctuation">"</span></span> <span class="token attr-name">user</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>root<span class="token punctuation">"</span></span> <span class="token attr-name">password</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>xxx<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>writeHost</span><span class="token punctuation">></span></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>writeHost</span> <span class="token attr-name">host</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>hostS1<span class="token punctuation">"</span></span> <span class="token attr-name">url</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>localhost:3316<span class="token punctuation">"</span></span> <span class="token attr-name">user</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>root<span class="token punctuation">"</span></span>
+				   <span class="token attr-name">password</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>123456<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
+		<span class="token comment">&lt;!-- &lt;writeHost host="hostM2" url="localhost:3316" user="root" password="123456"/> --></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>dataHost</span><span class="token punctuation">></span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>rule.xml</strong></p>
+<p>里面就定义了我们对表进行拆分所涉及到的规则定义。我们可以灵活的对表使用不同的分片算法， 或者对表使用相同的算法但具体的参数不同。这个文件里面主要有 tableRule 和 function 这两个标签。在具体使 用过程中可以按照需求添加 tableRule 和 function</p>
+<h3 id="Mycat的简单使用">Mycat的简单使用</h3>
+<h4 id="接下来的实现需求如下">接下来的实现需求如下</h4>
+<ol>
+<li>数据库实现读写分离</li>
+<li>对于插入的订单数据按照算法，除模取余的方式插入的不同的表中</li>
+<li>对于查询根据除模取余算法，联查不同的表</li>
+<li>满足对于那些分库分表后进行查询的业务需求</li>
+<li>做全局表，实现插入一条数据后，该数据同时插入到对应的n个库中</li>
+</ol>
+<h4 id="在schema-xml配置数据源信息">在schema.xml配置数据源信息</h4>
+<pre class="line-numbers language-markup" data-language="markup"><code class="language-markup"><span class="token prolog">&lt;?xml version="1.0"?></span>
+<span class="token doctype"><span class="token punctuation">&lt;!</span><span class="token doctype-tag">DOCTYPE</span> <span class="token name">mycat:schema</span> <span class="token name">SYSTEM</span> <span class="token string">"schema.dtd"</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span><span class="token namespace">mycat:</span>schema</span> <span class="token attr-name"><span class="token namespace">xmlns:</span>mycat</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>http://io.mycat/<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+	<span class="token comment">&lt;!-- 用TESTDB映射对应的数据表  --></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>schema</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>TESTDB<span class="token punctuation">"</span></span> <span class="token attr-name">checkSQLschema</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>true<span class="token punctuation">"</span></span> <span class="token attr-name">sqlMaxLimit</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>100<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+		<span class="token comment">&lt;!-- 表信息 --></span>
+		<span class="token comment">&lt;!-- subTables 表示0-9十张表 --></span>
+		<span class="token comment">&lt;!-- mod-long 表示对分表进行除模取余实现 --></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>table</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>order<span class="token punctuation">"</span></span> <span class="token attr-name">primaryKey</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>id<span class="token punctuation">"</span></span> <span class="token attr-name">subTables</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>order$0-9<span class="token punctuation">"</span></span> <span class="token attr-name">dataNode</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>dn1<span class="token punctuation">"</span></span> <span class="token attr-name">rule</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>mod-long<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>schema</span><span class="token punctuation">></span></span>
+	<span class="token comment">&lt;!-- 指定数据源，即数据库 --></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>dataNode</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>dn1<span class="token punctuation">"</span></span> <span class="token attr-name">dataHost</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>localhost1<span class="token punctuation">"</span></span> <span class="token attr-name">database</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>my_test_db<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
+	<span class="token comment">&lt;!-- 配置数据源连接信息。 balance=3 且实现读写分离 --></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>dataHost</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>localhost1<span class="token punctuation">"</span></span> <span class="token attr-name">maxCon</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>1000<span class="token punctuation">"</span></span> <span class="token attr-name">minCon</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>10<span class="token punctuation">"</span></span> <span class="token attr-name">balance</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>3<span class="token punctuation">"</span></span>
+					  <span class="token attr-name">writeType</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>0<span class="token punctuation">"</span></span> <span class="token attr-name">dbType</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>mysql<span class="token punctuation">"</span></span> <span class="token attr-name">dbDriver</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>native<span class="token punctuation">"</span></span> <span class="token attr-name">switchType</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>1<span class="token punctuation">"</span></span>  <span class="token attr-name">slaveThreshold</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>100<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+		<span class="token comment">&lt;!-- 数据节点心跳检测 --></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>heartbeat</span><span class="token punctuation">></span></span>select user()<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>heartbeat</span><span class="token punctuation">></span></span>
+		<span class="token comment">&lt;!-- write 连接信息 --></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>writeHost</span> <span class="token attr-name">host</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>hostM1<span class="token punctuation">"</span></span> <span class="token attr-name">url</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>127.0.0.1:33061<span class="token punctuation">"</span></span> <span class="token attr-name">user</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>slave<span class="token punctuation">"</span></span>
+						   <span class="token attr-name">password</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>slave<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+				<span class="token comment">&lt;!-- read 连接信息 --></span>
+				<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>readHost</span> <span class="token attr-name">host</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>hostS2<span class="token punctuation">"</span></span> <span class="token attr-name">url</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>127.0.0.1:33062<span class="token punctuation">"</span></span> <span class="token attr-name">user</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>slave<span class="token punctuation">"</span></span> <span class="token attr-name">password</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>slave<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>writeHost</span><span class="token punctuation">></span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>dataHost</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span><span class="token namespace">mycat:</span>schema</span><span class="token punctuation">></span></span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>映射数据表说明</strong></p>
+<p>name=“order” 配置为 order 表</p>
+<p>subTables=“order$0-9” 代表创建的10个order表（下文会创建的）</p>
+<p>dataNode=“dn1” 表示数据源节点，可用逗号配置多个</p>
+<p>rule=“mod-long” 用 <code>除模取余</code> 的方法，插入数据的时候，根据此方法插入到不同的表中。还有其他的方法，可查看 <code>conf/rule.xml</code></p>
+<p><strong>指定数据源说明</strong></p>
+<p>name=“dn1” 这里是上文中定义的切片规则时定义的数据节点名称</p>
+<p>dataHost=“localhost1” 这里是上文中定义的数据源的 <code>dataHost 的 name</code> 信息</p>
+<p>database=“my_test_db” 这里是真实的数据库地址</p>
+<p><strong>数据库连接信息说明</strong><br>
+balance=“0”, 不开启读写分离机制，所有读操作都发送到当前可用的writeHost上。<br>
+balance=“1”，全部的readHost与stand by writeHost参与select语句的负载均衡，简单的说，当双主双从模式(M1-&gt;S1，M2-&gt;S2，并且M1与 M2互为主备)，正常情况下，M2,S1,S2都参与select语句的负载均衡。<br>
+balance=“2”，所有读操作都随机的在writeHost、readhost上分发。<br>
+balance=“3”，所有读请求随机的分发到wiriterHost对应的readhost执行，writerHost不负担读压力</p>
+<blockquote>
+<p><strong>Tips：请确保连接的账号有足够的权限</strong></p>
+<p>mysql&gt; show databases; # 用此检测 slave 能不能查到mycat中配置的 databases</p>
+</blockquote>
+<h4 id="在rule-xml配置分表算法">在rule.xml配置分表算法</h4>
+<pre class="line-numbers language-markup" data-language="markup"><code class="language-markup"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>function</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>mod-long<span class="token punctuation">"</span></span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>io.mycat.route.function.PartitionByMod<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+    <span class="token comment">&lt;!-- how many data nodes --></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>property</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>count<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>10<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>property</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>function</span><span class="token punctuation">></span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>因为接下来用 10 张表进行测试，所以我把这里的默认3改成了10</p>
+<h4 id="测试配置文件是否有误">测试配置文件是否有误</h4>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 进入mycat启动目录</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos home<span class="token punctuation">]</span><span class="token comment"># cd /usr/local/mycat/bin/</span>
+<span class="token comment"># 进行测试</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos conf<span class="token punctuation">]</span><span class="token comment"># ./mycat console</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>如果输出结果是 successfly 则表示正确，否则请查看日志，分析错误原因</p>
+<h4 id="重启mycat服务">重启mycat服务</h4>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@VM-0-15-centos bin<span class="token punctuation">]</span><span class="token comment"># ./mycat stop</span>
+Stopping Mycat-server<span class="token punctuation">..</span>.
+Stopped Mycat-server.
+<span class="token punctuation">[</span>root@VM-0-15-centos bin<span class="token punctuation">]</span><span class="token comment"># ./mycat start</span>
+Starting Mycat-server<span class="token punctuation">..</span>.
+<span class="token punctuation">[</span>root@VM-0-15-centos bin<span class="token punctuation">]</span><span class="token comment"># ./mycat status</span>
+Mycat-server is running <span class="token punctuation">(</span><span class="token number">19070</span><span class="token punctuation">)</span>.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="创建测试表进行测试">创建测试表进行测试</h4>
+<blockquote>
+<p>在端口号为 <code>33061</code> 的数据库服务器创建 <code>my_test_db</code> 数据库，然后创建 <code>order0~order9</code> 10张表用于测试</p>
+</blockquote>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token identifier"><span class="token punctuation">`</span>order<span class="token punctuation">`</span></span> <span class="token punctuation">(</span>
+  <span class="token identifier"><span class="token punctuation">`</span>id<span class="token punctuation">`</span></span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token number">11</span><span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span> <span class="token keyword">AUTO_INCREMENT</span><span class="token punctuation">,</span>
+  <span class="token identifier"><span class="token punctuation">`</span>buyer<span class="token punctuation">`</span></span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token number">11</span><span class="token punctuation">)</span> <span class="token keyword">DEFAULT</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span>
+  <span class="token identifier"><span class="token punctuation">`</span>name<span class="token punctuation">`</span></span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">20</span><span class="token punctuation">)</span> <span class="token keyword">DEFAULT</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span>
+  <span class="token identifier"><span class="token punctuation">`</span>level<span class="token punctuation">`</span></span> <span class="token keyword">tinyint</span><span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span> <span class="token keyword">DEFAULT</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span>
+  <span class="token identifier"><span class="token punctuation">`</span>status<span class="token punctuation">`</span></span> <span class="token keyword">tinyint</span><span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span> <span class="token keyword">DEFAULT</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span>
+  <span class="token keyword">PRIMARY</span> <span class="token keyword">KEY</span> <span class="token punctuation">(</span><span class="token identifier"><span class="token punctuation">`</span>id<span class="token punctuation">`</span></span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span> <span class="token keyword">ENGINE</span><span class="token operator">=</span><span class="token keyword">InnoDB</span> <span class="token keyword">DEFAULT</span> <span class="token keyword">CHARSET</span><span class="token operator">=</span>utf8mb4<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>测试mycat</strong></p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token comment"># 连接（-D 指定数据库）</span>
+<span class="token punctuation">[</span>root<span class="token variable">@VM</span><span class="token operator">-</span><span class="token number">0</span><span class="token operator">-</span><span class="token number">15</span><span class="token operator">-</span>centos <span class="token operator">~</span><span class="token punctuation">]</span><span class="token comment"># mysql -uroot -p123456 -h127.0.0.1 -P8066 -DTESTDB --default_auth=mysql_native_password</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token comment"># 插入一些数据</span>
+mysql<span class="token operator">></span> <span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token keyword">order</span><span class="token punctuation">(</span>id<span class="token punctuation">,</span>buyer<span class="token punctuation">,</span>name<span class="token punctuation">,</span><span class="token keyword">level</span><span class="token punctuation">,</span><span class="token keyword">status</span><span class="token punctuation">)</span> <span class="token keyword">VALUE</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+mysql<span class="token operator">></span> <span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token keyword">order</span><span class="token punctuation">(</span>id<span class="token punctuation">,</span>buyer<span class="token punctuation">,</span>name<span class="token punctuation">,</span><span class="token keyword">level</span><span class="token punctuation">,</span><span class="token keyword">status</span><span class="token punctuation">)</span> <span class="token keyword">VALUE</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">,</span><span class="token number">9</span><span class="token punctuation">,</span><span class="token number">9</span><span class="token punctuation">,</span><span class="token number">9</span><span class="token punctuation">,</span><span class="token number">9</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+mysql<span class="token operator">></span> <span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token keyword">order</span><span class="token punctuation">(</span>id<span class="token punctuation">,</span>buyer<span class="token punctuation">,</span>name<span class="token punctuation">,</span><span class="token keyword">level</span><span class="token punctuation">,</span><span class="token keyword">status</span><span class="token punctuation">)</span> <span class="token keyword">VALUE</span><span class="token punctuation">(</span><span class="token number">8</span><span class="token punctuation">,</span><span class="token number">8</span><span class="token punctuation">,</span><span class="token number">8</span><span class="token punctuation">,</span><span class="token number">8</span><span class="token punctuation">,</span><span class="token number">8</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment"># 测试查询</span>
+mysql<span class="token operator">></span> <span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> <span class="token keyword">order</span> <span class="token keyword">order</span> <span class="token keyword">by</span> <span class="token keyword">level</span> <span class="token keyword">desc</span><span class="token punctuation">;</span>
+<span class="token operator">+</span><span class="token comment">----+-------+------+-------+--------+</span>
+<span class="token operator">|</span> id <span class="token operator">|</span> buyer <span class="token operator">|</span> name <span class="token operator">|</span> <span class="token keyword">level</span> <span class="token operator">|</span> <span class="token keyword">status</span> <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">----+-------+------+-------+--------+</span>
+<span class="token operator">|</span>  <span class="token number">5</span> <span class="token operator">|</span>     <span class="token number">9</span> <span class="token operator">|</span> <span class="token number">9</span>    <span class="token operator">|</span>     <span class="token number">9</span> <span class="token operator">|</span>      <span class="token number">9</span> <span class="token operator">|</span>
+<span class="token operator">|</span>  <span class="token number">8</span> <span class="token operator">|</span>     <span class="token number">8</span> <span class="token operator">|</span> <span class="token number">8</span>    <span class="token operator">|</span>     <span class="token number">8</span> <span class="token operator">|</span>      <span class="token number">8</span> <span class="token operator">|</span>
+<span class="token operator">|</span>  <span class="token number">1</span> <span class="token operator">|</span>     <span class="token number">1</span> <span class="token operator">|</span> <span class="token number">1</span>    <span class="token operator">|</span>     <span class="token number">1</span> <span class="token operator">|</span>      <span class="token number">1</span> <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">----+-------+------+-------+--------+</span>
+<span class="token number">3</span> <span class="token keyword">rows</span> <span class="token operator">in</span> <span class="token keyword">set</span> <span class="token punctuation">(</span><span class="token number">0.22</span> sec<span class="token punctuation">)</span>
+<span class="token comment"># 分析被查询的表信息</span>
+mysql<span class="token operator">></span> <span class="token keyword">explain</span> <span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> <span class="token keyword">order</span> <span class="token keyword">order</span> <span class="token keyword">by</span> <span class="token keyword">level</span> <span class="token keyword">desc</span><span class="token punctuation">;</span>
+<span class="token operator">+</span><span class="token comment">-----------+----------------------------------------------------+</span>
+<span class="token operator">|</span> DATA_NODE <span class="token operator">|</span> <span class="token keyword">SQL</span>                                                <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">-----------+----------------------------------------------------+</span>
+<span class="token operator">|</span> dn1       <span class="token operator">|</span> <span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> order0 <span class="token keyword">ORDER</span> <span class="token keyword">BY</span> <span class="token keyword">level</span> <span class="token keyword">DESC</span> <span class="token keyword">LIMIT</span> <span class="token number">100</span> <span class="token operator">|</span>
+<span class="token operator">|</span> dn1       <span class="token operator">|</span> <span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> order1 <span class="token keyword">ORDER</span> <span class="token keyword">BY</span> <span class="token keyword">level</span> <span class="token keyword">DESC</span> <span class="token keyword">LIMIT</span> <span class="token number">100</span> <span class="token operator">|</span>
+<span class="token operator">|</span> dn1       <span class="token operator">|</span> <span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> order2 <span class="token keyword">ORDER</span> <span class="token keyword">BY</span> <span class="token keyword">level</span> <span class="token keyword">DESC</span> <span class="token keyword">LIMIT</span> <span class="token number">100</span> <span class="token operator">|</span>
+<span class="token operator">|</span> dn1       <span class="token operator">|</span> <span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> order3 <span class="token keyword">ORDER</span> <span class="token keyword">BY</span> <span class="token keyword">level</span> <span class="token keyword">DESC</span> <span class="token keyword">LIMIT</span> <span class="token number">100</span> <span class="token operator">|</span>
+<span class="token operator">|</span> dn1       <span class="token operator">|</span> <span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> order4 <span class="token keyword">ORDER</span> <span class="token keyword">BY</span> <span class="token keyword">level</span> <span class="token keyword">DESC</span> <span class="token keyword">LIMIT</span> <span class="token number">100</span> <span class="token operator">|</span>
+<span class="token operator">|</span> dn1       <span class="token operator">|</span> <span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> order5 <span class="token keyword">ORDER</span> <span class="token keyword">BY</span> <span class="token keyword">level</span> <span class="token keyword">DESC</span> <span class="token keyword">LIMIT</span> <span class="token number">100</span> <span class="token operator">|</span>
+<span class="token operator">|</span> dn1       <span class="token operator">|</span> <span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> order6 <span class="token keyword">ORDER</span> <span class="token keyword">BY</span> <span class="token keyword">level</span> <span class="token keyword">DESC</span> <span class="token keyword">LIMIT</span> <span class="token number">100</span> <span class="token operator">|</span>
+<span class="token operator">|</span> dn1       <span class="token operator">|</span> <span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> order7 <span class="token keyword">ORDER</span> <span class="token keyword">BY</span> <span class="token keyword">level</span> <span class="token keyword">DESC</span> <span class="token keyword">LIMIT</span> <span class="token number">100</span> <span class="token operator">|</span>
+<span class="token operator">|</span> dn1       <span class="token operator">|</span> <span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> order8 <span class="token keyword">ORDER</span> <span class="token keyword">BY</span> <span class="token keyword">level</span> <span class="token keyword">DESC</span> <span class="token keyword">LIMIT</span> <span class="token number">100</span> <span class="token operator">|</span>
+<span class="token operator">|</span> dn1       <span class="token operator">|</span> <span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> order9 <span class="token keyword">ORDER</span> <span class="token keyword">BY</span> <span class="token keyword">level</span> <span class="token keyword">DESC</span> <span class="token keyword">LIMIT</span> <span class="token number">100</span> <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">-----------+----------------------------------------------------+</span>
+<span class="token number">10</span> <span class="token keyword">rows</span> <span class="token operator">in</span> <span class="token keyword">set</span> <span class="token punctuation">(</span><span class="token number">0.00</span> sec<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>通过可视化工具，看到这些数据已经用 <code>除模取余</code> 的方法，已经插入到不同的表中。</p>
+<h4 id="实现全局表">实现全局表</h4>
+<p><strong>基于上面已经对schema.xml的更改，再做如下更改</strong></p>
+<pre class="line-numbers language-markup" data-language="markup"><code class="language-markup"><span class="token prolog">&lt;?xml version="1.0"?></span>
+<span class="token doctype"><span class="token punctuation">&lt;!</span><span class="token doctype-tag">DOCTYPE</span> <span class="token name">mycat:schema</span> <span class="token name">SYSTEM</span> <span class="token string">"schema.dtd"</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span><span class="token namespace">mycat:</span>schema</span> <span class="token attr-name"><span class="token namespace">xmlns:</span>mycat</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>http://io.mycat/<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>schema</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>TESTDB<span class="token punctuation">"</span></span> <span class="token attr-name">checkSQLschema</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>true<span class="token punctuation">"</span></span> <span class="token attr-name">sqlMaxLimit</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>100<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+		<span class="token comment">&lt;!--全局表配置--></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>table</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>student<span class="token punctuation">"</span></span> <span class="token attr-name">primaryKey</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>id<span class="token punctuation">"</span></span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>global<span class="token punctuation">"</span></span> <span class="token attr-name">dataNode</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>dn1,dn2,dn3<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>schema</span><span class="token punctuation">></span></span>
+	<span class="token comment">&lt;!-- 全局表指定的数据源1 --></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>dataNode</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>dn1<span class="token punctuation">"</span></span> <span class="token attr-name">dataHost</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>localhost1<span class="token punctuation">"</span></span> <span class="token attr-name">database</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>my_test_db<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span> 
+	<span class="token comment">&lt;!-- 全局表指定的数据源2 --></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>dataNode</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>dn2<span class="token punctuation">"</span></span> <span class="token attr-name">dataHost</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>localhost1<span class="token punctuation">"</span></span> <span class="token attr-name">database</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>my_test_db_2<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
+	<span class="token comment">&lt;!-- 全局表指定的数据源3 --></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>dataNode</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>dn3<span class="token punctuation">"</span></span> <span class="token attr-name">dataHost</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>localhost1<span class="token punctuation">"</span></span> <span class="token attr-name">database</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>my_test_db_3<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>dataHost</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>localhost1<span class="token punctuation">"</span></span> <span class="token attr-name">maxCon</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>1000<span class="token punctuation">"</span></span> <span class="token attr-name">minCon</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>10<span class="token punctuation">"</span></span> <span class="token attr-name">balance</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>3<span class="token punctuation">"</span></span>
+					  <span class="token attr-name">writeType</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>0<span class="token punctuation">"</span></span> <span class="token attr-name">dbType</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>mysql<span class="token punctuation">"</span></span> <span class="token attr-name">dbDriver</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>native<span class="token punctuation">"</span></span> <span class="token attr-name">switchType</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>1<span class="token punctuation">"</span></span>  <span class="token attr-name">slaveThreshold</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>100<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>heartbeat</span><span class="token punctuation">></span></span>select user()<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>heartbeat</span><span class="token punctuation">></span></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>writeHost</span> <span class="token attr-name">host</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>hostM1<span class="token punctuation">"</span></span> <span class="token attr-name">url</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>127.0.0.1:33061<span class="token punctuation">"</span></span> <span class="token attr-name">user</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>root<span class="token punctuation">"</span></span>
+						   <span class="token attr-name">password</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>root<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+				<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>readHost</span> <span class="token attr-name">host</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>hostS2<span class="token punctuation">"</span></span> <span class="token attr-name">url</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>127.0.0.1:33062<span class="token punctuation">"</span></span> <span class="token attr-name">user</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>root<span class="token punctuation">"</span></span> <span class="token attr-name">password</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>root<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>writeHost</span><span class="token punctuation">></span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>dataHost</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span><span class="token namespace">mycat:</span>schema</span><span class="token punctuation">></span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>进行测试</strong></p>
+<p>需要现在三个数据库（my_test_db、my_test_db_2、my_test_db_3）创建同样结构的表</p>
+<p>然后连接 mycat 服务</p>
+<p>开始插入数据</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">mysql<span class="token operator">></span> INSERT INTO student<span class="token punctuation">(</span>id,name<span class="token punctuation">)</span> VALUE<span class="token punctuation">(</span><span class="token number">1,1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+Query OK, <span class="token number">1</span> row affected <span class="token punctuation">(</span><span class="token number">0.30</span> sec<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>然后，通过数据库管理工具，可以看到三个数据库都已经新增了这条数据</p>
+<p>但是通过mycat却只能查到一个，这就是用mycat做数据库中间件的好处</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">mysql<span class="token operator">></span> <span class="token keyword">select</span> * from student<span class="token punctuation">;</span>
++----+------+
+<span class="token operator">|</span> <span class="token function">id</span> <span class="token operator">|</span> name <span class="token operator">|</span>
++----+------+
+<span class="token operator">|</span>  <span class="token number">1</span> <span class="token operator">|</span> <span class="token number">1</span>    <span class="token operator">|</span>
++----+------+
+<span class="token number">1</span> row <span class="token keyword">in</span> <span class="token builtin class-name">set</span> <span class="token punctuation">(</span><span class="token number">0.06</span> sec<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="问题">问题</h2>
+<h5 id="1、命令窗使用mycat第一次查询或者插入出现如下错误，然后紧接着第二次操作错误消失">1、命令窗使用mycat第一次查询或者插入出现如下错误，然后紧接着第二次操作错误消失</h5>
+<p><strong>错误描述</strong>： ERROR 2006 (HY000): MySQL server has gone away</p>
+<p><strong>解决方案</strong>： 出现此错误的原因是，mycat和mysql建立了一个连接后，长时间没有操作mysql，mysql会自动把这个连接 kill 掉。你可以通过配置mysql的 <code>max_allowed_packed</code> 进行解决</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/1916117752.html">https://blog.mailjob.net/posts/1916117752.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Mycat%E7%AE%80%E4%BB%8B"><span class="toc-text">Mycat简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Mycat%E5%AE%89%E8%A3%85"><span class="toc-text">Mycat安装</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Windows%E4%B8%8B%E5%AE%89%E8%A3%85mycat"><span class="toc-text">Windows下安装mycat</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Linux%E4%B8%8B%E5%AE%89%E8%A3%85mycat"><span class="toc-text">Linux下安装mycat</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Mycat%E7%9A%84%E4%BD%BF%E7%94%A8"><span class="toc-text">Mycat的使用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E7%AE%80%E4%BB%8B"><span class="toc-text">配置文件简介</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Mycat%E7%9A%84%E7%AE%80%E5%8D%95%E4%BD%BF%E7%94%A8"><span class="toc-text">Mycat的简单使用</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8E%A5%E4%B8%8B%E6%9D%A5%E7%9A%84%E5%AE%9E%E7%8E%B0%E9%9C%80%E6%B1%82%E5%A6%82%E4%B8%8B"><span class="toc-text">接下来的实现需求如下</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9C%A8schema-xml%E9%85%8D%E7%BD%AE%E6%95%B0%E6%8D%AE%E6%BA%90%E4%BF%A1%E6%81%AF"><span class="toc-text">在schema.xml配置数据源信息</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9C%A8rule-xml%E9%85%8D%E7%BD%AE%E5%88%86%E8%A1%A8%E7%AE%97%E6%B3%95"><span class="toc-text">在rule.xml配置分表算法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E6%98%AF%E5%90%A6%E6%9C%89%E8%AF%AF"><span class="toc-text">测试配置文件是否有误</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%87%8D%E5%90%AFmycat%E6%9C%8D%E5%8A%A1"><span class="toc-text">重启mycat服务</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E6%B5%8B%E8%AF%95%E8%A1%A8%E8%BF%9B%E8%A1%8C%E6%B5%8B%E8%AF%95"><span class="toc-text">创建测试表进行测试</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0%E5%85%A8%E5%B1%80%E8%A1%A8"><span class="toc-text">实现全局表</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98"><span class="toc-text">问题</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#1%E3%80%81%E5%91%BD%E4%BB%A4%E7%AA%97%E4%BD%BF%E7%94%A8mycat%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%9F%A5%E8%AF%A2%E6%88%96%E8%80%85%E6%8F%92%E5%85%A5%E5%87%BA%E7%8E%B0%E5%A6%82%E4%B8%8B%E9%94%99%E8%AF%AF%EF%BC%8C%E7%84%B6%E5%90%8E%E7%B4%A7%E6%8E%A5%E7%9D%80%E7%AC%AC%E4%BA%8C%E6%AC%A1%E6%93%8D%E4%BD%9C%E9%94%99%E8%AF%AF%E6%B6%88%E5%A4%B1"><span class="toc-text">1、命令窗使用mycat第一次查询或者插入出现如下错误，然后紧接着第二次操作错误消失</span></a></li></ol></li></ol></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

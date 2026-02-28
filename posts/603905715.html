@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Go pprof性能调优 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="在计算机性能调试领域里，profiling 是指对应用程序的画像，画像就是应用程序使用 CPU 和 内存 的情况。 Go语言是一个对性能特别看重的语言，因此语言中自带了 profiling 的库，这篇文章就要讲解怎么在 golang 中做 profiling。 PPROF介绍 pprof 可以做什么  CPU 分析（profile）: 你可以在 url 上用 seconds 参数指定抽样持续时间（">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go pprof性能调优">
+<meta property="og:url" content="https://blog.mailjob.net/posts/603905715.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="在计算机性能调试领域里，profiling 是指对应用程序的画像，画像就是应用程序使用 CPU 和 内存 的情况。 Go语言是一个对性能特别看重的语言，因此语言中自带了 profiling 的库，这篇文章就要讲解怎么在 golang 中做 profiling。 PPROF介绍 pprof 可以做什么  CPU 分析（profile）: 你可以在 url 上用 seconds 参数指定抽样持续时间（">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/20211102232827.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211102231425.png">
+<meta property="article:published_time" content="2021-11-02T08:23:56.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.979Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="go">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/20211102232827.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Go pprof性能调优
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/603905715.html" class="article-date">
+	  <time datetime="2021-11-02T08:23:56.000Z" itemprop="datePublished">2021-11-02</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/go/">go</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/go/" rel="tag">go</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/603905715.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 3.3k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 13(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <p>在计算机性能调试领域里，<code>profiling</code> 是指对应用程序的画像，画像就是应用程序使用 <code>CPU</code> 和 <code>内存</code> 的情况。 Go语言是一个对性能特别看重的语言，因此语言中自带了 <code>profiling</code> 的库，这篇文章就要讲解怎么在 golang 中做 <code>profiling</code>。</p>
+<h2 id="PPROF介绍">PPROF介绍</h2>
+<h3 id="pprof-可以做什么">pprof 可以做什么</h3>
+<ul>
+<li>CPU 分析（profile）: 你可以在 url 上用 <code>seconds</code> 参数指定抽样持续时间（默认 30s），你获取到概览文件后可以用 <code>go tool pprof</code> 命令调查这个概览</li>
+<li>内存分配（allocs）: 所有内存分配的抽样</li>
+<li>阻塞（block）: 堆栈跟踪导致阻塞的同步原语</li>
+<li>命令行调用（cmdline）: 命令行调用的程序</li>
+<li>goroutine: 当前 goroutine 的堆栈信息</li>
+<li>堆（heap）: 当前活动对象内存分配的抽样，完全也可以指定 <code>gc</code> 参数在对堆取样前执行 GC</li>
+<li>互斥锁（mutex）: 堆栈跟踪竞争状态互斥锁的持有者</li>
+<li>系统线程的创建（threadcreate）: 堆栈跟踪系统新线程的创建</li>
+<li>trace: 追踪当前程序的执行状况. 你可以用 <code>seconds</code> 参数指定抽样持续时间. 你获取到 trace 概览后可以用 <code>go tool pprof</code> 命令调查这个 trace</li>
+</ul>
+<h3 id="pprof的两个标准库">pprof的两个标准库</h3>
+<p>Go语言内置了获取程序的运行数据的工具，包括以下两个标准库：</p>
+<ul>
+<li><code>runtime/pprof</code>：采集工具型应用运行数据进行分析</li>
+<li><code>net/http/pprof</code>：采集服务型应用运行时数据进行分析</li>
+</ul>
+<p>pprof开启后，每隔一段时间<code>（10ms）</code>就会收集下当前的堆栈信息，获取各个函数占用的CPU以及内存资源；最后通过对这些采样数据进行分析，形成一个性能分析报告。</p>
+<p>注意，我们只应该在性能测试的时候才在代码中引入pprof。</p>
+<h3 id="go-tool-pprof命令">go tool pprof命令</h3>
+<p>不管是工具型应用还是服务型应用，我们使用相应的pprof库获取数据之后，下一步的都要对这些数据进行分析，我们可以使用<code>go tool pprof</code>命令行工具。</p>
+<p><code>go tool pprof</code>最简单的使用方式为:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">go tool pprof <span class="token punctuation">[</span>binary<span class="token punctuation">]</span> <span class="token punctuation">[</span>source<span class="token punctuation">]</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>其中：</p>
+<ul>
+<li>binary 是应用的二进制文件，用来解析各种符号；</li>
+<li>source 表示 profile 数据的来源，可以是本地的文件，也可以是 http 地址。</li>
+</ul>
+<p><strong>注意事项</strong>： 获取的 Profiling 数据是动态的，要想获得有效的数据，请保证应用处于较大的负载（比如正在生成中运行的服务，或者通过其他工具模拟访问压力）。否则如果应用处于空闲状态，得到的结果可能没有任何意义。</p>
+<h2 id="工具型应用">工具型应用</h2>
+<p>如果你的应用程序是运行一段时间就结束退出类型。那么最好的办法是在应用退出的时候把 profiling 的报告保存到文件中，进行分析。对于这种情况，可以使用<code>runtime/pprof</code>库。 首先在代码中导入<code>runtime/pprof</code>工具：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">import</span> <span class="token string">"runtime/pprof"</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="CPU性能分析">CPU性能分析</h3>
+<p>开启CPU性能分析：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">pprof<span class="token punctuation">.</span><span class="token function">StartCPUProfile</span><span class="token punctuation">(</span>w io<span class="token punctuation">.</span>Writer<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>停止CPU性能分析：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">pprof<span class="token punctuation">.</span><span class="token function">StopCPUProfile</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>应用执行结束后，就会生成一个文件，保存了我们的 CPU profiling 数据。得到采样数据之后，使用<code>go tool pprof</code>工具进行CPU性能分析。</p>
+<h3 id="内存性能优化">内存性能优化</h3>
+<p>记录程序的堆栈信息</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">pprof<span class="token punctuation">.</span><span class="token function">WriteHeapProfile</span><span class="token punctuation">(</span>w io<span class="token punctuation">.</span>Writer<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>得到采样数据之后，使用<code>go tool pprof</code>工具进行内存性能分析。</p>
+<p><code>go tool pprof</code>默认是使用<code>-inuse_space</code>进行统计，还可以使用<code>-inuse-objects</code>查看分配对象的数量。</p>
+<h2 id="服务型应用">服务型应用</h2>
+<p>如果你的应用程序是一直运行的，比如 web 应用，那么可以使用<code>net/http/pprof</code>库，它能够在提供 HTTP 服务进行分析。</p>
+<p>如果使用了默认的<code>http.DefaultServeMux</code>（通常是代码直接使用 http.ListenAndServe(“0.0.0.0:8000”, nil)），只需要在你的web server端代码中按如下方式导入<code>net/http/pprof</code></p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">import</span> <span class="token boolean">_</span> <span class="token string">"net/http/pprof"</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>如果你使用自定义的 Mux，则需要手动注册一些路由规则：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">r<span class="token punctuation">.</span><span class="token function">HandleFunc</span><span class="token punctuation">(</span><span class="token string">"/debug/pprof/"</span><span class="token punctuation">,</span> pprof<span class="token punctuation">.</span>Index<span class="token punctuation">)</span>
+r<span class="token punctuation">.</span><span class="token function">HandleFunc</span><span class="token punctuation">(</span><span class="token string">"/debug/pprof/cmdline"</span><span class="token punctuation">,</span> pprof<span class="token punctuation">.</span>Cmdline<span class="token punctuation">)</span>
+r<span class="token punctuation">.</span><span class="token function">HandleFunc</span><span class="token punctuation">(</span><span class="token string">"/debug/pprof/profile"</span><span class="token punctuation">,</span> pprof<span class="token punctuation">.</span>Profile<span class="token punctuation">)</span>
+r<span class="token punctuation">.</span><span class="token function">HandleFunc</span><span class="token punctuation">(</span><span class="token string">"/debug/pprof/symbol"</span><span class="token punctuation">,</span> pprof<span class="token punctuation">.</span>Symbol<span class="token punctuation">)</span>
+r<span class="token punctuation">.</span><span class="token function">HandleFunc</span><span class="token punctuation">(</span><span class="token string">"/debug/pprof/trace"</span><span class="token punctuation">,</span> pprof<span class="token punctuation">.</span>Trace<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>如果你使用的是gin框架，那么推荐使用<a target="_blank" rel="noopener" href="https://github.com/gin-contrib/pprof">github.com/gin-contrib/pprof</a>，在代码中通过以下命令注册pprof相关路由。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">pprof<span class="token punctuation">.</span><span class="token function">Register</span><span class="token punctuation">(</span>router<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>不管哪种方式，你的 HTTP 服务都会多出<code>/debug/pprof</code> endpoint，访问它会得到类似下面的内容：</p>
+<p>这个路径下还有几个子页面：</p>
+<ul>
+<li>/debug/pprof/profile：访问这个链接会自动进行 CPU profiling，持续 30s，并生成一个文件供下载</li>
+<li>/debug/pprof/heap： Memory Profiling 的路径，访问这个链接会得到一个内存 Profiling 结果的文件</li>
+<li>/debug/pprof/block：block Profiling 的路径</li>
+<li>/debug/pprof/goroutines：运行的 goroutines 列表，以及调用关系</li>
+</ul>
+<h2 id="测试示例">测试示例</h2>
+<p>测试代码如下：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token comment">// CPU分析</span>
+	fileC<span class="token punctuation">,</span> errC <span class="token operator">:=</span> os<span class="token punctuation">.</span><span class="token function">Create</span><span class="token punctuation">(</span><span class="token string">"./cpu.pprof"</span><span class="token punctuation">)</span>
+	<span class="token keyword">if</span> errC <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		fmt<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"create cpu pprof failed, err:%v\n"</span><span class="token punctuation">,</span> errC<span class="token punctuation">)</span>
+		<span class="token keyword">return</span>
+	<span class="token punctuation">&#125;</span>
+	pprof<span class="token punctuation">.</span><span class="token function">StartCPUProfile</span><span class="token punctuation">(</span>fileC<span class="token punctuation">)</span>
+	<span class="token keyword">defer</span> pprof<span class="token punctuation">.</span><span class="token function">StopCPUProfile</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	<span class="token comment">// 内存分析</span>
+	fileM<span class="token punctuation">,</span> errM <span class="token operator">:=</span> os<span class="token punctuation">.</span><span class="token function">Create</span><span class="token punctuation">(</span><span class="token string">"./mem.pprof"</span><span class="token punctuation">)</span>
+	<span class="token keyword">if</span> errM <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		fmt<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"create mem pprof failed, err:%v\n"</span><span class="token punctuation">,</span> errM<span class="token punctuation">)</span>
+		<span class="token keyword">return</span>
+	<span class="token punctuation">&#125;</span>
+	pprof<span class="token punctuation">.</span><span class="token function">WriteHeapProfile</span><span class="token punctuation">(</span>fileM<span class="token punctuation">)</span>
+	fileM<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	<span class="token comment">// 业务程序执行</span>
+	<span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token number">8</span><span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">go</span> <span class="token function">chanSelect</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+	time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span><span class="token number">10</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">chanSelect</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">var</span> c <span class="token keyword">chan</span> <span class="token builtin">int</span>
+	<span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">select</span> <span class="token punctuation">&#123;</span>
+			<span class="token keyword">case</span> v <span class="token operator">:=</span> <span class="token operator">&lt;-</span>c<span class="token punctuation">:</span>
+				fmt<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"recv from chan, value:%v\n"</span><span class="token punctuation">,</span> v<span class="token punctuation">)</span>
+			<span class="token keyword">default</span><span class="token punctuation">:</span>
+		<span class="token punctuation">&#125;</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>等待10秒后会在当前目录下生成一个<code>cpu.pprof</code> 和 <code>mem.pprof</code> 文件。</p>
+<h4 id="命令行交互界面">命令行交互界面</h4>
+<p>我们使用go工具链里的<code>pprof</code>来分析一下。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">go tool pprof cpu.pprof<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>执行上面的代码会进入交互界面如下：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">PS G:<span class="token punctuation">\</span>go_study<span class="token punctuation">\</span><span class="token number">21</span>.pprof<span class="token operator">></span> go tool pprof cpu.pprof
+Type: cpu
+Time: Nov <span class="token number">2</span>, <span class="token number">2021</span> at <span class="token number">10</span>:47pm <span class="token punctuation">(</span>CST<span class="token punctuation">)</span>
+Duration: <span class="token number">10</span>.16s, Total samples <span class="token operator">=</span> <span class="token number">23</span>.64s <span class="token punctuation">(</span><span class="token number">232.62</span>%<span class="token punctuation">)</span>
+Entering interactive mode <span class="token punctuation">(</span>type <span class="token string">"help"</span> <span class="token keyword">for</span> commands, <span class="token string">"o"</span> <span class="token keyword">for</span> options<span class="token punctuation">)</span>
+<span class="token punctuation">(</span>pprof<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>我们可以在交互界面输入<code>top3</code>来查看程序中占用CPU前3位的函数</p>
+<p>我们还可以使用<code>list 函数名</code>命令查看具体的函数分析，例如执行<code>list chanSelect</code>查看我们编写的函数的详细分析。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">(</span>pprof<span class="token punctuation">)</span> <span class="token function">top</span> <span class="token number">3</span>
+Showing nodes accounting <span class="token keyword">for</span> <span class="token number">23</span>.33s, <span class="token number">98.69</span>% of <span class="token number">23</span>.64s total
+Dropped <span class="token number">24</span> nodes <span class="token punctuation">(</span>cum <span class="token operator">&lt;=</span> <span class="token number">0</span>.12s<span class="token punctuation">)</span>
+Showing <span class="token function">top</span> <span class="token number">3</span> nodes out of <span class="token number">4</span>
+      flat  flat%   sum%        cum   cum%
+     <span class="token number">9</span>.46s <span class="token number">40.02</span>% <span class="token number">40.02</span>%     <span class="token number">18</span>.63s <span class="token number">78.81</span>%  runtime.selectnbrecv
+     <span class="token number">9</span>.13s <span class="token number">38.62</span>% <span class="token number">78.64</span>%      <span class="token number">9</span>.14s <span class="token number">38.66</span>%  runtime.chanrecv
+     <span class="token number">4</span>.74s <span class="token number">20.05</span>% <span class="token number">98.69</span>%     <span class="token number">23</span>.51s <span class="token number">99.45</span>%  main.chanSelect
+<span class="token punctuation">(</span>pprof<span class="token punctuation">)</span> list chanSelect
+Total: <span class="token number">23</span>.64s
+ROUTINE <span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span><span class="token operator">==</span> main.chanSelect <span class="token keyword">in</span> G:<span class="token punctuation">\</span>go_study<span class="token punctuation">\</span><span class="token number">21</span>.pprof<span class="token punctuation">\</span>main.go
+     <span class="token number">4</span>.74s     <span class="token number">23</span>.51s <span class="token punctuation">(</span>flat, cum<span class="token punctuation">)</span> <span class="token number">99.45</span>% of Total
+         <span class="token builtin class-name">.</span>          <span class="token builtin class-name">.</span>     <span class="token number">33</span>:   <span class="token punctuation">&#125;</span>
+         <span class="token builtin class-name">.</span>          <span class="token builtin class-name">.</span>     <span class="token number">34</span>:   time.Sleep<span class="token punctuation">(</span><span class="token number">10</span> * time.Second<span class="token punctuation">)</span>
+         <span class="token builtin class-name">.</span>          <span class="token builtin class-name">.</span>     <span class="token number">35</span>:<span class="token punctuation">&#125;</span>
+         <span class="token builtin class-name">.</span>          <span class="token builtin class-name">.</span>     <span class="token number">36</span>:
+         <span class="token builtin class-name">.</span>          <span class="token builtin class-name">.</span>     <span class="token number">37</span>:// 测试代码
+         <span class="token builtin class-name">.</span>       20ms     <span class="token number">38</span>:func chanSelect<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>int <span class="token punctuation">&#123;</span>
+         <span class="token builtin class-name">.</span>          <span class="token builtin class-name">.</span>     <span class="token number">39</span>:   var c chan int
+         <span class="token builtin class-name">.</span>          <span class="token builtin class-name">.</span>     <span class="token number">40</span>:   <span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
+         <span class="token builtin class-name">.</span>          <span class="token builtin class-name">.</span>     <span class="token number">41</span>:           <span class="token keyword">select</span> <span class="token punctuation">&#123;</span>
+     <span class="token number">4</span>.74s     <span class="token number">23</span>.49s     <span class="token number">42</span>:                   <span class="token keyword">case</span> <span class="token function">v</span> :<span class="token operator">=</span> <span class="token operator">&lt;</span>-c:
+         <span class="token builtin class-name">.</span>          <span class="token builtin class-name">.</span>     <span class="token number">43</span>:                           fmt.Printf<span class="token punctuation">(</span><span class="token string">"recv from chan, value:%v<span class="token entity" title="\n">\n</span>"</span>, <span class="token function">v</span><span class="token punctuation">)</span>
+         <span class="token builtin class-name">.</span>          <span class="token builtin class-name">.</span>     <span class="token number">44</span>:                   default:
+         <span class="token builtin class-name">.</span>          <span class="token builtin class-name">.</span>     <span class="token number">45</span>:           <span class="token punctuation">&#125;</span>
+         <span class="token builtin class-name">.</span>          <span class="token builtin class-name">.</span>     <span class="token number">46</span>:   <span class="token punctuation">&#125;</span>
+         <span class="token builtin class-name">.</span>          <span class="token builtin class-name">.</span>     <span class="token number">47</span>:<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>名称说明</strong>：</p>
+<ul>
+<li>flat：当前函数占用CPU的耗时</li>
+<li>flat：:当前函数占用CPU的耗时百分比</li>
+<li>sun%：函数占用CPU的耗时累计百分比</li>
+<li>cum：当前函数加上调用当前函数的函数占用CPU的总耗时</li>
+<li>cum%：当前函数加上调用当前函数的函数占用CPU的总耗时百分比</li>
+<li>最后一列：函数名称</li>
+</ul>
+<p>在大多数的情况下，我们可以通过分析这五列得出一个应用程序的运行情况，并对程序进行优化。</p>
+<p><em>通过分析发现大部分CPU资源被 43 行占用，我们分析出select语句中的default没有内容会导致上面的<code>case v:=&lt;-c:</code>一直执行。我们在default分支添加一行<code>time.Sleep(time.Second)</code>即可。</em></p>
+<h4 id="图形化">图形化</h4>
+<p>或者可以直接输入web，通过svg图的方式查看程序中详细的CPU占用情况。 想要查看图形化的界面首先需要安装<a target="_blank" rel="noopener" href="https://graphviz.gitlab.io/">graphviz</a>图形化工具。</p>
+<p><strong>Mac</strong>：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">brew <span class="token function">install</span> graphviz<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>**Windows: **</p>
+<p>下载<a target="_blank" rel="noopener" href="https://graphviz.gitlab.io/_pages/Download/Download_windows.html">graphviz</a> 将<code>graphviz</code>安装目录下的bin文件夹添加到Path环境变量中。 在终端输入<code>dot -version</code>查看是否安装成功。</p>
+<p><strong>如何测试</strong>：</p>
+<p>在命令行中，可以直接输入 <code>web</code> 或者 <code>png</code> 查看</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">PS G:<span class="token punctuation">\</span>go_study<span class="token punctuation">\</span><span class="token number">21</span>.pprof<span class="token operator">></span> go tool pprof cpu.pprof
+<span class="token punctuation">(</span>pprof<span class="token punctuation">)</span> web 
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p><img src="http://img.github.mailjob.net/20211102232827.png" alt="image-20211102232826211"></p>
+<p>关于图形的说明： 每个框代表一个函数，理论上框的越大表示占用的CPU资源越多。 方框之间的线条代表函数之间的调用关系。 线条上的数字表示函数调用的次数。 方框中的第一行数字表示当前函数占用CPU的百分比，第二行数字表示当前函数累计占用CPU的百分比。</p>
+<p>除了分析CPU性能数据，pprof也支持分析内存性能数据。比如，使用下面的命令分析http服务的heap性能数据，查看当前程序的内存占用以及热点内存对象使用的情况。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 查看内存占用数据</span>
+go tool pprof <span class="token parameter variable">-inuse_space</span> http://127.0.0.1:8080/debug/pprof/heap
+go tool pprof <span class="token parameter variable">-inuse_objects</span> http://127.0.0.1:8080/debug/pprof/heap
+<span class="token comment"># 查看临时内存分配数据</span>
+go tool pprof <span class="token parameter variable">-alloc_space</span> http://127.0.0.1:8080/debug/pprof/heap
+go tool pprof <span class="token parameter variable">-alloc_objects</span> http://127.0.0.1:8080/debug/pprof/heap<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="go-torch和火焰图">go-torch和火焰图</h4>
+<p>火焰图（Flame Graph）是 Bredan Gregg 创建的一种性能分析图表，因为它的样子近似 🔥而得名。上面的 profiling 结果也转换成火焰图，如果对火焰图比较了解可以手动来操作，不过这里我们要介绍一个工具：<code>go-torch</code>。这是 uber 开源的一个工具，可以直接读取 golang profiling 数据，并生成一个火焰图的 svg 文件。</p>
+<h5 id="安装go-torch">安装go-torch</h5>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">go get <span class="token parameter variable">-v</span> github.com/uber/go-torch<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>火焰图 svg 文件可以通过浏览器打开，它对于调用图的最优点是它是动态的：可以通过点击每个方块来 zoom in 分析它上面的内容。</p>
+<p>火焰图的调用顺序从下到上，每个方块代表一个函数，它上面一层表示这个函数会调用哪些函数，方块的大小代表了占用 CPU 使用的长短。火焰图的配色并没有特殊的意义，默认的红、黄配色是为了更像火焰而已。</p>
+<p>go-torch 工具的使用非常简单，没有任何参数的话，它会尝试从<code>http://localhost:8080/debug/pprof/profile</code>获取 profiling 数据。它有三个常用的参数可以调整：</p>
+<ul>
+<li>-u –url：要访问的 URL，这里只是主机和端口部分</li>
+<li>-s –suffix：pprof profile 的路径，默认为 /debug/pprof/profile</li>
+<li>–seconds：要执行 profiling 的时间长度，默认为 30s</li>
+</ul>
+<h5 id="安装-FlameGraph">安装 FlameGraph</h5>
+<p>要生成火焰图，需要事先安装 FlameGraph工具，这个工具的安装很简单（需要perl环境支持），只要把对应的可执行文件加入到环境变量中即可。</p>
+<ol>
+<li>下载安装perl：<a target="_blank" rel="noopener" href="https://www.perl.org/get.html">https://www.perl.org/get.html</a></li>
+<li>下载FlameGraph：<code>git clone https://github.com/brendangregg/FlameGraph.git</code></li>
+<li>将<code>FlameGraph</code>目录加入到操作系统的环境变量中。</li>
+<li>Windows平台的同学，需要把<code>go-torch/render/flamegraph.go</code>文件中的<code>GenerateFlameGraph</code>按如下方式修改，然后在<code>go-torch</code>目录下执行<code>go install</code>即可。</li>
+</ol>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// GenerateFlameGraph runs the flamegraph script to generate a flame graph SVG. func GenerateFlameGraph(graphInput []byte, args ...string) ([]byte, error) &#123;</span>
+flameGraph <span class="token operator">:=</span> <span class="token function">findInPath</span><span class="token punctuation">(</span>flameGraphScripts<span class="token punctuation">)</span>
+<span class="token keyword">if</span> flameGraph <span class="token operator">==</span> <span class="token string">""</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> errNoPerlScript
+<span class="token punctuation">&#125;</span>
+<span class="token keyword">if</span> runtime<span class="token punctuation">.</span>GOOS <span class="token operator">==</span> <span class="token string">"windows"</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">return</span> <span class="token function">runScript</span><span class="token punctuation">(</span><span class="token string">"perl"</span><span class="token punctuation">,</span> <span class="token function">append</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">&#123;</span>flameGraph<span class="token punctuation">&#125;</span><span class="token punctuation">,</span> args<span class="token operator">...</span><span class="token punctuation">)</span><span class="token punctuation">,</span> graphInput<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+  <span class="token keyword">return</span> <span class="token function">runScript</span><span class="token punctuation">(</span>flameGraph<span class="token punctuation">,</span> args<span class="token punctuation">,</span> graphInput<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="压测工具wrk">压测工具wrk</h5>
+<p>推荐使用<a target="_blank" rel="noopener" href="https://github.com/wg/wrk">https://github.com/wg/wrk</a> 或 <a target="_blank" rel="noopener" href="https://github.com/adjust/go-wrk">https://github.com/adjust/go-wrk</a></p>
+<h5 id="使用go-torch">使用go-torch</h5>
+<p>使用wrk进行压测:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">go-wrk <span class="token parameter variable">-n</span> <span class="token number">50000</span> http://127.0.0.1:8080/book/list<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>在上面压测进行的同时，打开另一个终端执行:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">go-torch <span class="token parameter variable">-u</span> http://127.0.0.1:8080 <span class="token parameter variable">-t</span> <span class="token number">30</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>30秒之后终端会初夏如下提示：<code>Writing svg to torch.svg</code></p>
+<p>然后我们使用浏览器打开<code>torch.svg</code>就能看到如下火焰图了。<img src="http://img.github.mailjob.net/20211102231425.png" alt="火焰图">火焰图的y轴表示cpu调用方法的先后，x轴表示在每个采样调用时间内，方法所占的时间百分比，越宽代表占据cpu时间越多。通过火焰图我们就可以更清楚的找出耗时长的函数调用，然后不断的修正代码，重新采样，不断优化。</p>
+<p>此外还可以借助火焰图分析内存性能数据：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">go-torch <span class="token parameter variable">-inuse_space</span> http://127.0.0.1:8080/debug/pprof/heap
+go-torch <span class="token parameter variable">-inuse_objects</span> http://127.0.0.1:8080/debug/pprof/heap
+go-torch <span class="token parameter variable">-alloc_space</span> http://127.0.0.1:8080/debug/pprof/heap
+go-torch <span class="token parameter variable">-alloc_objects</span> http://127.0.0.1:8080/debug/pprof/heap<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="pprof与性能测试结合">pprof与性能测试结合</h2>
+<p><code>go test</code>命令有两个参数和 pprof 相关，它们分别指定生成的 CPU 和 Memory profiling 保存的文件：</p>
+<ul>
+<li>-cpuprofile：cpu profiling 数据要保存的文件地址</li>
+<li>-memprofile：memory profiling 数据要报文的文件地址</li>
+</ul>
+<p>我们还可以选择将pprof与性能测试相结合，比如：</p>
+<p>比如下面执行测试的同时，也会执行 CPU profiling，并把结果保存在 cpu.prof 文件中：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">go <span class="token builtin class-name">test</span> <span class="token parameter variable">-bench</span> <span class="token builtin class-name">.</span> <span class="token parameter variable">-cpuprofile</span><span class="token operator">=</span>cpu.prof<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>比如下面执行测试的同时，也会执行 Mem profiling，并把结果保存在 cpu.prof 文件中：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">go <span class="token builtin class-name">test</span> <span class="token parameter variable">-bench</span> <span class="token builtin class-name">.</span> <span class="token parameter variable">-memprofile</span><span class="token operator">=</span>./mem.prof<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>需要注意的是，Profiling 一般和性能测试一起使用，这个原因在前文也提到过，只有应用在负载高的情况下 Profiling 才有意义。</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/603905715.html">https://blog.mailjob.net/posts/603905715.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#PPROF%E4%BB%8B%E7%BB%8D"><span class="toc-text">PPROF介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#pprof-%E5%8F%AF%E4%BB%A5%E5%81%9A%E4%BB%80%E4%B9%88"><span class="toc-text">pprof 可以做什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#pprof%E7%9A%84%E4%B8%A4%E4%B8%AA%E6%A0%87%E5%87%86%E5%BA%93"><span class="toc-text">pprof的两个标准库</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#go-tool-pprof%E5%91%BD%E4%BB%A4"><span class="toc-text">go tool pprof命令</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B7%A5%E5%85%B7%E5%9E%8B%E5%BA%94%E7%94%A8"><span class="toc-text">工具型应用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#CPU%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90"><span class="toc-text">CPU性能分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96"><span class="toc-text">内存性能优化</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E5%9E%8B%E5%BA%94%E7%94%A8"><span class="toc-text">服务型应用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E7%A4%BA%E4%BE%8B"><span class="toc-text">测试示例</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%91%BD%E4%BB%A4%E8%A1%8C%E4%BA%A4%E4%BA%92%E7%95%8C%E9%9D%A2"><span class="toc-text">命令行交互界面</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9B%BE%E5%BD%A2%E5%8C%96"><span class="toc-text">图形化</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#go-torch%E5%92%8C%E7%81%AB%E7%84%B0%E5%9B%BE"><span class="toc-text">go-torch和火焰图</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%AE%89%E8%A3%85go-torch"><span class="toc-text">安装go-torch</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%AE%89%E8%A3%85-FlameGraph"><span class="toc-text">安装 FlameGraph</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%8E%8B%E6%B5%8B%E5%B7%A5%E5%85%B7wrk"><span class="toc-text">压测工具wrk</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8go-torch"><span class="toc-text">使用go-torch</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#pprof%E4%B8%8E%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E7%BB%93%E5%90%88"><span class="toc-text">pprof与性能测试结合</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

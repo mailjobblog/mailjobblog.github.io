@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Mysql 数据库热备份工具 Xtrabackup | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="前言  热备份的方式也是直接复制数据物理文件，和冷备份一样，但热备份可以不停机直接复制，一般用于7×24小时不间断的重要核心业务。 MySQL社区版的热备份 工具ImnoDB Hot Backup是付费的，只能试用30天，只有购买企业版才可以得到永久使用权。Percona公司发布了一个xtrabackup热备份工具，和官方付费版的 功能一样，支持在线热备份（备份时不影响数据读写），是商业备份工具I">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mysql 数据库热备份工具 Xtrabackup">
+<meta property="og:url" content="https://blog.mailjob.net/posts/3523564565.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="前言  热备份的方式也是直接复制数据物理文件，和冷备份一样，但热备份可以不停机直接复制，一般用于7×24小时不间断的重要核心业务。 MySQL社区版的热备份 工具ImnoDB Hot Backup是付费的，只能试用30天，只有购买企业版才可以得到永久使用权。Percona公司发布了一个xtrabackup热备份工具，和官方付费版的 功能一样，支持在线热备份（备份时不影响数据读写），是商业备份工具I">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210217185630.png">
+<meta property="article:published_time" content="2021-02-17T08:58:28.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.982Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="mysql">
+<meta property="article:tag" content="高可用">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/oss.github/20210217185630.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Mysql 数据库热备份工具 Xtrabackup
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3523564565.html" class="article-date">
+	  <time datetime="2021-02-17T08:58:28.000Z" itemprop="datePublished">2021-02-17</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/mysql/">mysql</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/mysql/" rel="tag">mysql</a>, <a class="article-tag-none-link" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag">高可用</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/3523564565.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 4.6k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 19(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="前言">前言</h2>
+<blockquote>
+<p>热备份的方式也是直接复制数据物理文件，和冷备份一样，但热备份可以不停机直接复制，一般用于7×24小时不间断的重要核心业务。</p>
+<p>MySQL社区版的热备份 工具ImnoDB Hot Backup是付费的，只能试用30天，只有购买企业版才可以得到永久使用权。Percona公司发布了一个xtrabackup热备份工具，和官方付费版的 功能一样，支持在线热备份（备份时不影响数据读写），是商业备份工具InnoDBHot Backup的一个很好的替代品。</p>
+<p>xtrabackup是Percona公司的开源项目，用以实现类似ImnoDB官方的热备份工具ImmoDB Hot Backup的功能，它能非常快速地备份与恢复MySQL数据库。</p>
+<p><strong>xtrabackup只能备份innoDB和xtraDB两种数据引擎的表，而不能备份MyISAM数据表。</strong></p>
+<p>MySQL冷备、mysqldump、MySQL热拷贝都无法实现对数据库进行增量备份。在实际生产环境中增量备份是非常实用的，如果数据大于50G或100G，存储空间足够的情况下，可以每天进行完整备份，如果每天产生的数据量较大，需要定制数据备份策略。例如每周实用完整备份，周一到周六实用增量备份。而Percona-Xtrabackup就是为了实现增量备份而出现的一款主流备份工具，xtrabakackup有2个工具，分别是xtrabakup、innobakupe</p>
+</blockquote>
+<h2 id="参考文献">参考文献</h2>
+<blockquote>
+<p>xtrabackup手册：<a target="_blank" rel="noopener" href="https://www.percona.com/doc/percona-xtrabackup/2.4/installation/yum_repo.html">https://www.percona.com/doc/percona-xtrabackup/2.4/installation/yum_repo.html</a></p>
+<p>软件下载地址：<a target="_blank" rel="noopener" href="https://www.percona.com/downloads/">https://www.percona.com/downloads/</a></p>
+</blockquote>
+<h2 id="xtrabackup-的优点">xtrabackup 的优点</h2>
+<blockquote>
+<p>（1）备份速度快，物理备份可靠</p>
+<p>（2）备份过程不会打断正在执行的事务（无需锁表）</p>
+<p>（3）能够基于压缩等功能节约磁盘空间和流量</p>
+<p>（4）自动备份校验</p>
+<p>（5）还原速度快</p>
+<p>（6）可以流传将备份传输到另外一台机器上</p>
+<p>（7）在不增加服务器负载的情况备份数据</p>
+</blockquote>
+<h2 id="Xtrabackup备份原理">Xtrabackup备份原理</h2>
+<p><img src="http://img.github.mailjob.net/oss.github/20210217185630.png" alt="img"></p>
+<p><strong>流程说明</strong>：</p>
+<p>（1）innobackupex启动后，会先fork一个进程，用于启动xtrabackup，然后等待xtrabackup备份ibd数据文件；</p>
+<p>（2）xtrabackup在备份innoDB数据是，有2种线程：redo拷贝线程和ibd数据拷贝线程。xtrabackup进程开始执行后，会启动一个redo拷贝的线程，用于从最新的checkpoint点开始顺序拷贝redo.log；再启动ibd数据拷贝线程，进行拷贝ibd数据。这里是先启动redo拷贝线程的。在此阶段，innobackupex进行处于等待状态（等待文件被创建）</p>
+<p>（4）xtrabackup拷贝完成ibd数据文件后，会通知innobackupex（通过创建文件），同时xtrabackup进入等待状态（redo线程依旧在拷贝redo.log）</p>
+<p>（5）innobackupex收到xtrabackup通知后哦，执行FLUSH TABLES WITH READ LOCK（FTWRL），取得一致性位点，然后开始备份非InnoDB文件（如frm、MYD、MYI、CSV、opt、par等格式的文件），在拷贝非InnoDB文件的过程当中，数据库处于全局只读状态。</p>
+<p>（6）当innobackup拷贝完所有的非InnoDB文件后，会通知xtrabackup，通知完成后，进入等待状态；</p>
+<p>（7）xtrabackup收到innobackupex备份完成的通知后，会停止redo拷贝线程，然后通知innobackupex，redo.log文件拷贝完成；</p>
+<p>（8）innobackupex收到redo.log备份完成后，就进行解锁操作，执行：UNLOCK TABLES；</p>
+<p>（9）最后innbackupex和xtrabackup进程各自释放资源，写备份元数据信息等，innobackupex等xtrabackup子进程结束后退出。</p>
+<h2 id="xtrabackup的安装部署以及备份恢复实现">xtrabackup的安装部署以及备份恢复实现</h2>
+<h3 id="1、软件安装">1、软件安装</h3>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 下载软件</span>
+<span class="token comment"># 软件下载相关版本见上文 [参考文献]</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos src<span class="token punctuation">]</span><span class="token comment"># wget https://www.percona.com/downloads/XtraBackup/Percona-XtraBackup-2.4.9/binary/redhat/7/x86_64/percona-xtrabackup-24-2.4.9-1.el7.x86_64.rpm</span>
+<span class="token comment"># 直接采用rpm包的方式进行安装</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos src<span class="token punctuation">]</span><span class="token comment"># yum install -y percona-xtrabackup-24-2.4.9-1.el7.x86_64.rpm</span>
+<span class="token comment"># 查看 rpm 软件安装情况</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos src<span class="token punctuation">]</span><span class="token comment"># rpm -qa |grep xtrabackup</span>
+percona-xtrabackup-24-2.4.9-1.el7.x86_64<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">Xtrabackup中主要包含两个工具：
+xtrabackup：是用于热备innodb，xtradb表中数据的工具，不能备份其他类型的表，也不能备份数据表结构；
+innobackupex：是将xtrabackup进行封装的perl脚本，提供了备份myisam表的能力。
+常用选项:  
+   <span class="token parameter variable">--host</span>     指定主机
+   <span class="token parameter variable">--user</span>     指定用户名
+   <span class="token parameter variable">--password</span>    指定密码
+   <span class="token parameter variable">--port</span>     指定端口
+   <span class="token parameter variable">--databases</span>     指定数据库
+   <span class="token parameter variable">--incremental</span>    创建增量备份
+   --incremental-basedir   指定包含完全备份的目录
+   --incremental-dir      指定包含增量备份的目录   
+   --apply-log        对备份进行预处理操作             
+     一般情况下，在备份完成后，数据尚且不能用于恢复操作，因为备份的数据中可能会包含尚未提交的事务或已经提交但尚未同步至数据文件中的事务。因此，此时数据文件仍处理不一致状态。“准备”的主要作用正是通过回滚未提交的事务及同步已经提交的事务至数据文件也使得数据文件处于一致性状态。
+   --redo-only      不回滚未提交事务
+   --copy-back     恢复备份目录<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>使用innobackupex备份时，其会调用xtrabackup备份所有的InnoDB表，复制所有关于表结构定义的相关文件(.frm)、以及MyISAM、MERGE、CSV和ARCHIVE表的相关文件，同时还会备份触发器和数据库配置信息相关的文件，这些文件会被保存到一个以时间命名的目录当中。在备份的同时，innobackupex还会在备份目录中创建如下文件：</p>
+<pre class="line-numbers language-none"><code class="language-none">(1)xtrabackup_checkpoints -- 备份类型(如完全或增量)、备份状态(如是否已经为prepared状态)和LSN(日志序列号)范围信息：
+
+每个InnoDB页(通常为16k大小)
+都会包含一个日志序列号，即LSN，LSN是整个数据库系统的系统版本号，每个页面相关的LSN能够表明此页面最近是如何发生改变的。
+
+(2)xtrabackup_binlog_info  --  mysql服务器当前正在使用的二进制日志文件及备份这一刻位置二进制日志时间的位置。
+
+(3)xtrabackup_binlog_pos_innodb  --  二进制日志文件及用于InnoDB或XtraDB表的二进制日志文件的当前position。
+
+(4)xtrabackup_binary  --  备份中用到的xtrabackup的可执行文件；
+
+(5)backup-my.cnf  --  备份命令用到的配置选项信息：
+
+在使用innobackupex进行备份时，还可以使用--no-timestamp选项来阻止命令自动创建一个以时间命名的目录：如此一来，innobackupex命令将会创建一个BACKUP-DIR目录来存储备份数据。<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>如果要使用一个最小权限的用户进行备份，则可基于如下命令创建此类用户：如果要使用一个最小权限的用户进行备份，则可基于如下命令创建此类用户：</p>
+<pre class="line-numbers language-none"><code class="language-none">mysql&gt; CREATE USER &#39;bkpuser&#39;@&#39;localhost&#39; IDENTIFIED BY &#39;123456&#39;;　　#创建用户
+mysql&gt; REVOKE ALL PRIVILEGES,GRANT OPTION FROM &#39;bkpuser&#39;;　　#回收此用户所有权限
+mysql&gt; GRANT RELOAD,LOCK TABLES,RELICATION CLIENT ON *.* TO &#39;bkpuser&#39;@&#39;localhost&#39;;　　#授权刷新、锁定表、用户查看服务器状态
+mysql&gt; FLUSH PRIVILEGES;　　#刷新授权表<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="2、xtrabackup-全量备份与恢复">2、xtrabackup 全量备份与恢复</h3>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">备份：
+innobackupex <span class="token parameter variable">--user</span><span class="token operator">=</span>DBUSER <span class="token parameter variable">--password</span><span class="token operator">=</span>DBUSERPASS --defaults-file<span class="token operator">=</span>/etc/my.cnf /path/to/BACKUP-DIR/
+
+恢复：
+innobackupex --apply-log /backups/2018-07-30_11-04-55/
+innobackupex --copy-back --defaults-file<span class="token operator">=</span>/etc/my.cnf  /backups/2018-07-30_11-04-55/<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>（1）准备(prepare)一个完全备份</strong></p>
+<blockquote>
+<p>一般情况下，在备份完成后，数据尚且不能用于恢复操作，因为备份的数据中可能会包含尚未提交的事务或者已经提交但尚未同步至数据文件中的事务。因此，此时数据文件仍处于不一致状态。</p>
+</blockquote>
+<p>&quot;准备&quot;的主要作用正是通过回滚未提交的事务及同步已经提交的事务至数据文件也使用得数据文件处于一致性状态。</p>
+<p>innobackupex命令的–apply-log选项可用于实现上述功能，如下面的命令：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># innobackupex --apply-log /path/to/BACKUP-DIR</span>
+如果执行正确，其最后输出的几行信息通常如下：
+
+<span class="token number">120407</span> 09:01:04 innobackupex: completed OK<span class="token operator">!</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在实现&quot;准备&quot;的过程中，innobackupex通常还可以使用–user-memory选项来指定其可以使用的内存的大小，默认为100M.如果有足够的内存空间可用，可以多划分一些内存给prepare的过程，以提高其完成备份的速度。</p>
+<p><strong>（2）从一个完全备份中恢复数据</strong></p>
+<p>注意：恢复不用启动MySQL</p>
+<p>innobackupex命令的–copy-back选项用于恢复操作，其通过复制所有数据相关的文件至mysql服务器DATADIR目录中来执行恢复过程。innobackupex通过backup-my.cnf来获取DATADIR目录的相关信息。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># innobackupex --copy-back /path/to/BACKUP-DIR</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>当数据恢复至DATADIR目录以后，还需要确保所有的数据文件的属主和属组均为正确的用户，如mysql，否则，在启动mysqld之前还需要事先修改数据文件的属主和属组。如：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># chown -R mysql.mysql /mydata/data/</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>（3）实战演示</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">（1）全量备份
+<span class="token comment">#在master上进行全库备份#语法解释说明：</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos backups<span class="token punctuation">]</span><span class="token comment"># innobackupex --user=root --password=rootroot --host=127.0.0.1 /data/backups/</span>
+<span class="token comment">#--user=root 指定备份用户</span>
+<span class="token comment">#--password=123456  指定备份用户密码</span>
+<span class="token comment">#--host　　指定主机</span>
+<span class="token comment">#/backups　　指定备份目录</span>
+
+<span class="token comment"># 进入到备份目录</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos <span class="token number">2021</span>-02-17_19-26-01<span class="token punctuation">]</span><span class="token comment"># cd /data/backups</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos backups<span class="token punctuation">]</span><span class="token comment"># ll</span>
+total <span class="token number">4</span>
+drwxr-x--- <span class="token number">6</span> root root <span class="token number">4096</span> Feb <span class="token number">17</span> <span class="token number">19</span>:26 <span class="token number">2021</span>-02-17_19-26-01
+<span class="token punctuation">[</span>root@VM-0-15-centos backups<span class="token punctuation">]</span><span class="token comment"># cd 2021-02-17_19-26-01/</span>
+<span class="token comment"># 查看备份文件的列表</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos <span class="token number">2021</span>-02-17_19-26-01<span class="token punctuation">]</span><span class="token comment"># ll</span>
+total <span class="token number">75824</span>
+-rw-r----- <span class="token number">1</span> root root      <span class="token number">424</span> Feb <span class="token number">17</span> <span class="token number">19</span>:26 backup-my.cnf <span class="token comment">#备份用到的配置选项信息文件</span>
+-rw-r----- <span class="token number">1</span> root root      <span class="token number">291</span> Feb <span class="token number">17</span> <span class="token number">19</span>:26 ib_buffer_pool
+-rw-r----- <span class="token number">1</span> root root <span class="token number">77594624</span> Feb <span class="token number">17</span> <span class="token number">19</span>:26 ibdata1 <span class="token comment">#数据文件</span>
+drwxr-x--- <span class="token number">2</span> root root     <span class="token number">4096</span> Feb <span class="token number">17</span> <span class="token number">19</span>:26 mysql
+drwxr-x--- <span class="token number">2</span> root root     <span class="token number">4096</span> Feb <span class="token number">17</span> <span class="token number">19</span>:26 performance_schema
+drwxr-x--- <span class="token number">2</span> root root     <span class="token number">4096</span> Feb <span class="token number">17</span> <span class="token number">19</span>:26 study
+drwxr-x--- <span class="token number">2</span> root root    <span class="token number">12288</span> Feb <span class="token number">17</span> <span class="token number">19</span>:26 sys
+-rw-r----- <span class="token number">1</span> root root       <span class="token number">22</span> Feb <span class="token number">17</span> <span class="token number">19</span>:26 xtrabackup_binlog_info <span class="token comment">#mysql服务器当前正在使用的二进制日志文件和此时二进制日志时间的位置信息文件</span>
+-rw-r----- <span class="token number">1</span> root root      <span class="token number">113</span> Feb <span class="token number">17</span> <span class="token number">19</span>:26 xtrabackup_checkpoints <span class="token comment">#备份的类型、状态和LSN状态信息文件</span>
+-rw-r----- <span class="token number">1</span> root root      <span class="token number">488</span> Feb <span class="token number">17</span> <span class="token number">19</span>:26 xtrabackup_info
+-rw-r----- <span class="token number">1</span> root root     <span class="token number">2560</span> Feb <span class="token number">17</span> <span class="token number">19</span>:26 xtrabackup_logfile <span class="token comment">#备份的日志文件</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">（2）恢复
+<span class="token comment">#停止slave上的mysql服务</span>
+<span class="token punctuation">[</span>root@slave ~<span class="token punctuation">]</span><span class="token comment"># /etc/init.d/mysqld stop　　</span>
+Shutting down MySQL<span class="token punctuation">..</span> SUCCESS<span class="token operator">!</span> 
+
+<span class="token punctuation">[</span>root@slave tools<span class="token punctuation">]</span><span class="token comment"># yum install -y percona-xtrabackup-24-2.4.9-1.el7.x86_64.rpm 　　#安装xtrabackup</span>
+<span class="token punctuation">[</span>root@master backups<span class="token punctuation">]</span><span class="token comment"># scp -r 2018-07-30_11-01-37/ root@192.168.56.12:/backups/　　 #从master上拷贝备份数据</span>
+<span class="token punctuation">[</span>root@slave tools<span class="token punctuation">]</span><span class="token comment"># innobackupex --apply-log /backups/2018-07-30_11-01-37/　　　　　 #合并数据，使数据文件处于一致性的状态</span>
+
+<span class="token comment">#在slave上删除原有的数据</span>
+<span class="token punctuation">[</span>root@slave ~<span class="token punctuation">]</span><span class="token comment"># rm -rf /usr/local/mysql/data/　　</span>
+<span class="token punctuation">[</span>root@slave ~<span class="token punctuation">]</span><span class="token comment"># vim /etc/my.cnf　　#配置my.cnf的数据目录路径，否则会报错，要和master一致</span>
+<span class="token assign-left variable">datadir</span><span class="token operator">=</span>/usr/local/mysql/data
+
+<span class="token comment">#在slave上数据恢复</span>
+<span class="token punctuation">[</span>root@slave ~<span class="token punctuation">]</span><span class="token comment"># innobackupex --copy-back /backups/2018-07-30_11-01-37/　　</span>
+<span class="token number">180729</span> <span class="token number">23</span>:32:03 innobackupex: Starting the copy-back operation
+<span class="token number">180729</span> <span class="token number">23</span>:32:08 completed OK<span class="token operator">!</span>　　<span class="token comment">#看到completed OK就是恢复正常了</span>
+
+<span class="token comment">#slave上查看数据目录，可以看到数据已经恢复，但是属主会有问题，需要进行修改，所以一般使用mysql的运行用户进行恢复，否则需要进行修改属主和属组信息</span>
+<span class="token punctuation">[</span>root@slave ~<span class="token punctuation">]</span><span class="token comment"># ll /usr/local/mysql/data/　　</span>
+total <span class="token number">188432</span>
+-rw-r----- <span class="token number">1</span> root root <span class="token number">79691776</span> Jul <span class="token number">29</span> <span class="token number">23</span>:32 ibdata1
+-rw-r----- <span class="token number">1</span> root root <span class="token number">50331648</span> Jul <span class="token number">29</span> <span class="token number">23</span>:32 ib_logfile0
+-rw-r----- <span class="token number">1</span> root root <span class="token number">50331648</span> Jul <span class="token number">29</span> <span class="token number">23</span>:32 ib_logfile1
+-rw-r----- <span class="token number">1</span> root root <span class="token number">12582912</span> Jul <span class="token number">29</span> <span class="token number">23</span>:32 ibtmp1
+drwxr-x--- <span class="token number">2</span> root root       <span class="token number">20</span> Jul <span class="token number">29</span> <span class="token number">23</span>:32 kim
+drwxr-x--- <span class="token number">2</span> root root     <span class="token number">4096</span> Jul <span class="token number">29</span> <span class="token number">23</span>:32 mysql
+drwxr-x--- <span class="token number">2</span> root root     <span class="token number">4096</span> Jul <span class="token number">29</span> <span class="token number">23</span>:32 performance_schema
+drwxr-x--- <span class="token number">2</span> root root       <span class="token number">20</span> Jul <span class="token number">29</span> <span class="token number">23</span>:32 repppp
+drwxr-x--- <span class="token number">2</span> root root     <span class="token number">4096</span> Jul <span class="token number">29</span> <span class="token number">23</span>:32 wordpress
+-rw-r----- <span class="token number">1</span> root root      <span class="token number">482</span> Jul <span class="token number">29</span> <span class="token number">23</span>:32 xtrabackup_info
+
+<span class="token punctuation">[</span>root@slave ~<span class="token punctuation">]</span><span class="token comment"># chown -R mysql.mysql /usr/local/mysql/data/　　#修改属主属组</span>
+
+<span class="token punctuation">[</span>root@slave ~<span class="token punctuation">]</span><span class="token comment"># /etc/init.d/mysqld start　　#启动mysql</span>
+Starting MySQL. SUCCESS<span class="token operator">!</span> 
+
+<span class="token punctuation">[</span>root@slave ~<span class="token punctuation">]</span><span class="token comment"># mysql -uroot -p -e "show databases;"　　#查看数据，是否恢复</span>
+Enter password: 
++--------------------+
+<span class="token operator">|</span> Database           <span class="token operator">|</span>
++--------------------+
+<span class="token operator">|</span> information_schema <span class="token operator">|</span>
+<span class="token operator">|</span> kim                <span class="token operator">|</span>
+<span class="token operator">|</span> mysql              <span class="token operator">|</span>
+<span class="token operator">|</span> performance_schema <span class="token operator">|</span>
+<span class="token operator">|</span> repppp             <span class="token operator">|</span>
+<span class="token operator">|</span> wordpress          <span class="token operator">|</span>
++--------------------+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>总结全库备份与恢复三步曲</strong>：</p>
+<p>a.　 <code>innobackupex</code> 全量备份，并指定备份目录路径；</p>
+<p>b.　在恢复前，需要使用 <code>--apply-log</code> 参数先进行合并数据文件，确保数据的一致性要求；</p>
+<p>c.　恢复时，直接使用 <code>--copy-back</code> 参数进行恢复，需要注意的是，在 <code>my.cnf</code> 中要指定数据文件目录的路径。</p>
+<h3 id="3、xtrabackup-增量备份与恢复">3、xtrabackup 增量备份与恢复</h3>
+<blockquote>
+<p>使用innobackupex进行增量备份，每个InnoDB的页面都会包含一个LSN信息，每当相关的数据发生改变，相关的页面的LSN就会自动增长。这正是InnoDB表可以进行增量备份的基础，即innobackupex通过备份上次完全备份之后发生改变的页面来实现。在进行增量备份时，首先要进行一次全量备份，第一次增量备份是基于全备的，之后的增量备份都是基于上一次的增量备份的，以此类推</p>
+</blockquote>
+<p>要实现第一次增量备份，可以使用下面的命令进行</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">基于全量备份的增量备份与恢复
+
+做一次增量备份（基于当前最新的全量备份）
+innobackupex <span class="token parameter variable">--user</span><span class="token operator">=</span>root <span class="token parameter variable">--password</span><span class="token operator">=</span>root --defaults-file<span class="token operator">=</span>/etc/my.cnf <span class="token parameter variable">--incremental</span> /backups/ --incremental-basedir<span class="token operator">=</span>/backups/2018-07-30_11-01-37
+
+<span class="token number">1</span>. 准备基于全量
+innobackupex <span class="token parameter variable">--user</span><span class="token operator">=</span>root <span class="token parameter variable">--password</span><span class="token operator">=</span>root --defaults-file<span class="token operator">=</span>/etc/my.cnf --apply-log --redo-only /backups/2018-07-30_11-01-37
+
+<span class="token number">2</span>. 准备基于增量
+innobackupex <span class="token parameter variable">--user</span><span class="token operator">=</span>root <span class="token parameter variable">--password</span><span class="token operator">=</span>root --defaults-file<span class="token operator">=</span>/etc/my.cnf --apply-log --redo-only /backups/2018-07-30_11-01-37 --incremental-dir<span class="token operator">=</span>/backups/2018-07-30_13-51-47/
+
+<span class="token number">3</span>. 恢复
+innobackupex --copy-back --defaults-file<span class="token operator">=</span>/etc/my.cnf /opt/2017-01-05_11-04-55/
+
+解释：
+<span class="token number">1</span>. <span class="token number">2018</span>-07-30_11-01-37指的是完全备份所在的目录。
+<span class="token number">2</span>. <span class="token number">2018</span>-07-30_13-51-47指定是第一次基于2018-07-30_11-01-37增量备份的目录，其他类似以此类推，即如果有多次增量备份。每一次都要执行如上操作。<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>需要注意的是，增量备份仅能应用于InnoDB或XtraDB表，对于MyISAM表而言，执行增量备份时其实进行的是完全备份。</p>
+<p>“准备”(prepare)增量备份与整理完全备份有着一些不同，尤其要注意的是：<br>
+①需要在每个备份 (包括完全和各个增量备份)上，将已经提交的事务进行&quot;重放&quot;。“重放&quot;之后，所有的备份数据将合并到完全备份上。<br>
+②基于所有的备份将未提交的事务进行&quot;回滚”</p>
+<p><strong>实战演示</strong>：</p>
+<p><strong>（1）增量备份演示</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment">#全备数据</span>
+<span class="token punctuation">[</span>root@master backups<span class="token punctuation">]</span><span class="token comment"># innobackupex --user=root --password=123456 --host=127.0.0.1 /backups/</span>
+<span class="token comment">#在master上创建student库并创建testtb表插入若干数据</span>
+<span class="token punctuation">[</span>root@master ~<span class="token punctuation">]</span><span class="token comment"># mysql -uroot -p　　</span>
+Enter password: 
+mysql<span class="token operator">></span> create database student<span class="token punctuation">;</span>
+Query OK, <span class="token number">1</span> row affected <span class="token punctuation">(</span><span class="token number">0.03</span> sec<span class="token punctuation">)</span>
+
+mysql<span class="token operator">></span> use student<span class="token punctuation">;</span>
+Database changed
+mysql<span class="token operator">></span> create table testtb<span class="token punctuation">(</span>id int<span class="token punctuation">)</span><span class="token punctuation">;</span>
+Query OK, <span class="token number">0</span> rows affected <span class="token punctuation">(</span><span class="token number">0.07</span> sec<span class="token punctuation">)</span>
+
+mysql<span class="token operator">></span> insert into testtb values<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>,<span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span>,<span class="token punctuation">(</span><span class="token number">99</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+Query OK, <span class="token number">3</span> rows affected <span class="token punctuation">(</span><span class="token number">0.04</span> sec<span class="token punctuation">)</span>
+Records: <span class="token number">3</span>  Duplicates: <span class="token number">0</span>  Warnings: <span class="token number">0</span>
+
+mysql<span class="token operator">></span> <span class="token keyword">select</span> * from testtb<span class="token punctuation">;</span>
++------+
+<span class="token operator">|</span> <span class="token function">id</span>   <span class="token operator">|</span>
++------+
+<span class="token operator">|</span>    <span class="token number">1</span> <span class="token operator">|</span>
+<span class="token operator">|</span>   <span class="token number">10</span> <span class="token operator">|</span>
+<span class="token operator">|</span>   <span class="token number">99</span> <span class="token operator">|</span>
++------+
+<span class="token number">3</span> rows <span class="token keyword">in</span> <span class="token builtin class-name">set</span> <span class="token punctuation">(</span><span class="token number">0.00</span> sec<span class="token punctuation">)</span>
+
+mysql<span class="token operator">></span> quit<span class="token punctuation">;</span>
+Bye
+
+<span class="token comment">#使用innobackupex进行增量备份</span>
+<span class="token punctuation">[</span>root@master backups<span class="token punctuation">]</span><span class="token comment"># innobackupex --user=root --password=123456 --host=127.0.0.1 --incremental /backups/ --incremental-basedir=/backups/2018-07-30_11-01-37/</span>
+<span class="token number">180730</span> <span class="token number">13</span>:51:50 completed OK<span class="token operator">!</span> <span class="token comment"># 执行结果是 ok 就是成功了</span>
+
+<span class="token comment">#查看备份数据</span>
+<span class="token punctuation">[</span>root@master backups<span class="token punctuation">]</span><span class="token comment"># ll　　</span>
+total <span class="token number">0</span>
+drwxr-x--- <span class="token number">7</span> root root <span class="token number">232</span> Jul <span class="token number">30</span> <span class="token number">11</span>:01 <span class="token number">2018</span>-07-30_11-01-37　　<span class="token comment">#全量备份数据目录</span>
+drwxr-x--- <span class="token number">8</span> root root <span class="token number">273</span> Jul <span class="token number">30</span> <span class="token number">13</span>:51 <span class="token number">2018</span>-07-30_13-51-47　　<span class="token comment">#增量备份数据目录</span>
+
+<span class="token comment">#查看全量备份的</span>
+<span class="token punctuation">[</span>root@master <span class="token number">2018</span>-07-30_11-01-37<span class="token punctuation">]</span><span class="token comment"># cat xtrabackup_checkpoints </span>
+xtrabackup_checkpoints
+backup_type <span class="token operator">=</span> full-backuped　　<span class="token comment">#备份类型为全量备份</span>
+from_lsn <span class="token operator">=</span> <span class="token number">0</span>　　<span class="token comment">#lsn从0开始</span>
+to_lsn <span class="token operator">=</span> <span class="token number">3127097</span>　　<span class="token comment">#lsn到3127097结束</span>
+last_lsn <span class="token operator">=</span> <span class="token number">3127097</span>
+compact <span class="token operator">=</span> <span class="token number">0</span>
+recover_binlog_info <span class="token operator">=</span> <span class="token number">0</span>
+
+<span class="token comment">#查看增量备份的</span>
+<span class="token punctuation">[</span>root@master <span class="token number">2018</span>-07-30_13-51-47<span class="token punctuation">]</span><span class="token comment"># cat xtrabackup_checkpoints 　　</span>
+xtrabackup_checkpoints
+backup_type <span class="token operator">=</span> incremental　　<span class="token comment">#备份类型为增量备份</span>
+from_lsn <span class="token operator">=</span> <span class="token number">3127097</span>　　<span class="token comment">#lsn从3127097开始</span>
+to_lsn <span class="token operator">=</span> <span class="token number">3158741</span>　　  <span class="token comment">#lsn到啊3158741结束</span>
+last_lsn <span class="token operator">=</span> <span class="token number">3158741</span>　　
+compact <span class="token operator">=</span> <span class="token number">0</span>
+recover_binlog_info <span class="token operator">=</span> <span class="token number">0</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>（2）增量备份后数据恢复演示</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">（1）
+模拟mysql故障，删除数据目录所有数据
+
+<span class="token comment">#模拟mysql故障，停止mysql</span>
+<span class="token punctuation">[</span>root@master ~<span class="token punctuation">]</span><span class="token comment"># /etc/init.d/mysqld stop　　</span>
+
+<span class="token comment">#删除数据目录中的所有数据</span>
+<span class="token punctuation">[</span>root@master ~<span class="token punctuation">]</span><span class="token comment"># rm -rf /usr/local/mysql/data/*</span>
+
+（2）合并全备数据目录，确保数据的一致性
+<span class="token punctuation">[</span>root@master ~<span class="token punctuation">]</span><span class="token comment"># innobackupex --apply-log --redo-only /backups/2018-07-30_11-01-37/</span>
+
+（3）将增量备份数据合并到全备数据目录当中
+<span class="token punctuation">[</span>root@master ~<span class="token punctuation">]</span><span class="token comment"># innobackupex --apply-log --redo-only /backups/2018-07-30_11-01-37/ --incremental-dir=/backups/2018-07-30_13-51-47/</span>
+
+<span class="token punctuation">[</span>root@master ~<span class="token punctuation">]</span><span class="token comment"># cat /backups/2018-07-30_11-01-37/xtrabackup_checkpoints </span>
+backup_type <span class="token operator">=</span> log-applied　　<span class="token comment">#查看到数据备份类型是增加</span>
+from_lsn <span class="token operator">=</span> <span class="token number">0</span>　　<span class="token comment">#lsn从0开始</span>
+to_lsn <span class="token operator">=</span> <span class="token number">3158741</span>　　<span class="token comment">#lsn结束号为最新的lsn</span>
+last_lsn <span class="token operator">=</span> <span class="token number">3158741</span>
+compact <span class="token operator">=</span> <span class="token number">0</span>
+recover_binlog_info <span class="token operator">=</span> <span class="token number">0</span>
+
+（4）恢复数据
+<span class="token punctuation">[</span>root@master ~<span class="token punctuation">]</span><span class="token comment"># innobackupex --copy-back /backups/2018-07-30_11-01-37/</span>
+
+<span class="token punctuation">[</span>root@master ~<span class="token punctuation">]</span><span class="token comment"># ll /usr/local/mysql/data/</span>
+total <span class="token number">77844</span>
+-rw-r----- <span class="token number">1</span> root root <span class="token number">79691776</span> Jul <span class="token number">30</span> <span class="token number">14</span>:08 ibdata1
+drwxr-x--- <span class="token number">2</span> root root       <span class="token number">20</span> Jul <span class="token number">30</span> <span class="token number">14</span>:08 kim
+drwxr-x--- <span class="token number">2</span> root root     <span class="token number">4096</span> Jul <span class="token number">30</span> <span class="token number">14</span>:08 mysql
+drwxr-x--- <span class="token number">2</span> root root     <span class="token number">4096</span> Jul <span class="token number">30</span> <span class="token number">14</span>:08 performance_schema
+drwxr-x--- <span class="token number">2</span> root root       <span class="token number">20</span> Jul <span class="token number">30</span> <span class="token number">14</span>:08 repppp
+drwxr-x--- <span class="token number">2</span> root root       <span class="token number">56</span> Jul <span class="token number">30</span> <span class="token number">14</span>:08 student
+drwxr-x--- <span class="token number">2</span> root root     <span class="token number">4096</span> Jul <span class="token number">30</span> <span class="token number">14</span>:08 wordpress
+-rw-r----- <span class="token number">1</span> root root       <span class="token number">21</span> Jul <span class="token number">30</span> <span class="token number">14</span>:08 xtrabackup_binlog_pos_innodb
+-rw-r----- <span class="token number">1</span> root root      <span class="token number">554</span> Jul <span class="token number">30</span> <span class="token number">14</span>:08 xtrabackup_info
+
+<span class="token comment">#更改数据的属主属组</span>
+<span class="token punctuation">[</span>root@master ~<span class="token punctuation">]</span><span class="token comment"># chown -R mysql.mysql /usr/local/mysql/data</span>
+<span class="token comment">#启动mysql</span>
+<span class="token punctuation">[</span>root@master ~<span class="token punctuation">]</span><span class="token comment"># /etc/init.d/mysqld start　　</span>
+Starting MySQL.Logging to <span class="token string">'/usr/local/mysql/data/master.err'</span><span class="token builtin class-name">.</span>
+<span class="token punctuation">..</span> SUCCESS<span class="token operator">!</span> 
+<span class="token comment">#查看数据是否恢复</span>
+<span class="token punctuation">[</span>root@master ~<span class="token punctuation">]</span><span class="token comment"># mysql -uroot -p -e "show databases;"</span>
+Enter password: 
++--------------------+
+<span class="token operator">|</span> Database           <span class="token operator">|</span>
++--------------------+
+<span class="token operator">|</span> information_schema <span class="token operator">|</span>
+<span class="token operator">|</span> kim                <span class="token operator">|</span>
+<span class="token operator">|</span> mysql              <span class="token operator">|</span>
+<span class="token operator">|</span> performance_schema <span class="token operator">|</span>
+<span class="token operator">|</span> repppp             <span class="token operator">|</span>
+<span class="token operator">|</span> student            <span class="token operator">|</span>
+<span class="token operator">|</span> wordpress          <span class="token operator">|</span>
++--------------------+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>总结</strong></p>
+<p>（1）增量备份需要使用参数 <code>--incremental</code> 指定需要备份到哪个目录，使用 <code>incremental-dir</code> 指定全备目录；</p>
+<p>（2）进行数据备份时，需要使用参数 <code>--apply-log redo-only</code> 先合并全备数据目录数据，确保全备数据目录数据的一致性；</p>
+<p>（3）再将增量备份数据使用参数 <code>--incremental-dir</code> 合并到全备数据当中；</p>
+<p>（4）最后通过最后的全备数据进行恢复数据，注意，如果有多个增量备份，需要逐一合并到全备数据当中，再进行恢复。</p>
+<blockquote>
+<p>关于阿里云RDS物理备份数据使用xtrabackup工具恢复到本地mysql当中，</p>
+<p>请参考阿里云文档：<a target="_blank" rel="noopener" href="https://help.aliyun.com/knowledge_detail/41817.html?spm=5176.11065259.1996646101.searchclickresult.53d420cclqekK3">https://help.aliyun.com/knowledge_detail/41817.html?spm=5176.11065259.1996646101.searchclickresult.53d420cclqekK3</a></p>
+</blockquote>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/3523564565.html">https://blog.mailjob.net/posts/3523564565.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#xtrabackup-%E7%9A%84%E4%BC%98%E7%82%B9"><span class="toc-text">xtrabackup 的优点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Xtrabackup%E5%A4%87%E4%BB%BD%E5%8E%9F%E7%90%86"><span class="toc-text">Xtrabackup备份原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#xtrabackup%E7%9A%84%E5%AE%89%E8%A3%85%E9%83%A8%E7%BD%B2%E4%BB%A5%E5%8F%8A%E5%A4%87%E4%BB%BD%E6%81%A2%E5%A4%8D%E5%AE%9E%E7%8E%B0"><span class="toc-text">xtrabackup的安装部署以及备份恢复实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1%E3%80%81%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85"><span class="toc-text">1、软件安装</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2%E3%80%81xtrabackup-%E5%85%A8%E9%87%8F%E5%A4%87%E4%BB%BD%E4%B8%8E%E6%81%A2%E5%A4%8D"><span class="toc-text">2、xtrabackup 全量备份与恢复</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3%E3%80%81xtrabackup-%E5%A2%9E%E9%87%8F%E5%A4%87%E4%BB%BD%E4%B8%8E%E6%81%A2%E5%A4%8D"><span class="toc-text">3、xtrabackup 增量备份与恢复</span></a></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

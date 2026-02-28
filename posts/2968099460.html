@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Docker发布node-hexo镜像 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="参考文献 DockerHub：https:&#x2F;&#x2F;hub.docker.com&#x2F;r&#x2F;jefferyjob&#x2F;node-hexo GithubDockerfile：https:&#x2F;&#x2F;github.com&#x2F;jefferyjob&#x2F;node-hexo Docker-composer管理hexo：https:&#x2F;&#x2F;github.com&#x2F;jefferyjob&#x2F;docker-compose-hexo 使用 Dockerf">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Docker发布node-hexo镜像">
+<meta property="og:url" content="https://blog.mailjob.net/posts/2968099460.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="参考文献 DockerHub：https:&#x2F;&#x2F;hub.docker.com&#x2F;r&#x2F;jefferyjob&#x2F;node-hexo GithubDockerfile：https:&#x2F;&#x2F;github.com&#x2F;jefferyjob&#x2F;node-hexo Docker-composer管理hexo：https:&#x2F;&#x2F;github.com&#x2F;jefferyjob&#x2F;docker-compose-hexo 使用 Dockerf">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/202207081317360.png">
+<meta property="article:published_time" content="2021-03-12T14:57:38.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.978Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="docker">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/202207081317360.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Docker发布node-hexo镜像
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/2968099460.html" class="article-date">
+	  <time datetime="2021-03-12T14:57:38.000Z" itemprop="datePublished">2021-03-12</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/docker/">docker</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/docker/" rel="tag">docker</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/2968099460.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 766(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 3(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="参考文献">参考文献</h2>
+<p>DockerHub：<a target="_blank" rel="noopener" href="https://hub.docker.com/r/jefferyjob/node-hexo">https://hub.docker.com/r/jefferyjob/node-hexo</a></p>
+<p>GithubDockerfile：<a target="_blank" rel="noopener" href="https://github.com/jefferyjob/node-hexo">https://github.com/jefferyjob/node-hexo</a></p>
+<p>Docker-composer管理hexo：<a target="_blank" rel="noopener" href="https://github.com/jefferyjob/docker-compose-hexo">https://github.com/jefferyjob/docker-compose-hexo</a></p>
+<p>使用 Dockerfile 基于 alpine 系统，构建 nodejs 环境和 hexo 基础依赖以及 git 环境。</p>
+<h3 id="Dockerfile构建">Dockerfile构建</h3>
+<h4 id="编写镜像包">编写镜像包</h4>
+<p><strong>第1种方法</strong>：</p>
+<pre class="line-numbers language-docker" data-language="docker"><code class="language-docker"><span class="token comment"># base image</span>
+<span class="token instruction"><span class="token keyword">FROM</span> node:alpine</span>
+<span class="token comment"># MAINTAINER</span>
+<span class="token instruction"><span class="token keyword">MAINTAINER</span> lbinjob@163.com</span>
+<span class="token comment"># work dir</span>
+<span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
+<span class="token comment"># run install</span>
+<span class="token instruction"><span class="token keyword">RUN</span> npm config set registry https://registry.npm.taobao.org <span class="token operator">\</span>
+    &amp;&amp; npm install -g hexo</span>
+<span class="token comment"># port</span>
+<span class="token instruction"><span class="token keyword">EXPOSE</span> 4000</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>第2种方法</strong>：未来更好的扩展性，此处采用 alpine 从0到1开始构建。</p>
+<pre class="line-numbers language-docker" data-language="docker"><code class="language-docker"><span class="token comment"># base image</span>
+<span class="token instruction"><span class="token keyword">FROM</span> alpine:3.10</span>
+<span class="token comment"># MAINTAINER</span>
+<span class="token instruction"><span class="token keyword">MAINTAINER</span> lbinjob@163.com</span>
+<span class="token comment"># work dir</span>
+<span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
+<span class="token comment"># run install</span>
+<span class="token instruction"><span class="token keyword">RUN</span> apk add --no-cache nodejs <span class="token operator">\</span>
+    &amp;&amp; apk add --no-cache git <span class="token operator">\</span>
+    &amp;&amp; apk add --no-cache npm <span class="token operator">\</span>
+    &amp;&amp; npm config set registry https://registry.npm.taobao.org <span class="token operator">\</span>
+    &amp;&amp; npm install -g hexo</span>
+<span class="token comment"># port</span>
+<span class="token instruction"><span class="token keyword">EXPOSE</span> 4000</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="镜像发布">镜像发布</h4>
+<h5 id="镜像生成：">镜像生成：</h5>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> build <span class="token parameter variable">-t</span> node-hexo:1.0 <span class="token builtin class-name">.</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<ul>
+<li>–tag 或 -t：镜像的名字及标签，通常 name:tag 或者 name 格式；可以在一次构建中为一个镜像设置多个标签</li>
+<li>-f：指定要使用的Dockerfile路径</li>
+</ul>
+<h5 id="镜像测试：">镜像测试：</h5>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 查看镜像构建历史</span>
+<span class="token function">docker</span> <span class="token function">history</span> node-hexo:1.0
+
+<span class="token comment"># run 一个测试容器</span>
+<span class="token function">docker</span> run <span class="token parameter variable">-itd</span> <span class="token parameter variable">--name</span> node-hexo-test node-hexo:1.0
+
+<span class="token comment"># 进入容器</span>
+<span class="token function">docker</span> <span class="token builtin class-name">exec</span> <span class="token parameter variable">-it</span> node-hexo-test /bin/sh<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 进行软件测试</span>
+$ <span class="token function">node</span> <span class="token parameter variable">-v</span>
+v10.24.0
+$ <span class="token function">npm</span> <span class="token parameter variable">-v</span>
+<span class="token number">6.14</span>.11
+$ <span class="token function">git</span> <span class="token parameter variable">--version</span>
+<span class="token function">git</span> version <span class="token number">2.22</span>.5
+$ hexo <span class="token parameter variable">-version</span>
+hexo-cli: <span class="token number">4.2</span>.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="发布到DockerHub：">发布到DockerHub：</h5>
+<p><strong>1、注册 Dockerhub 的仓库</strong></p>
+<p>注册地址：<a target="_blank" rel="noopener" href="https://hub.docker.com/repository/create">https://hub.docker.com/repository/create</a></p>
+<blockquote>
+<p>名称要和你要发布的镜像名称保持一致哦</p>
+<p>此处我创建的为 public 权限的 node-hexo 仓库</p>
+</blockquote>
+<p><img src="http://img.github.mailjob.net/202207081317360.png" alt="image-20220708131714100"></p>
+<p><strong>2、重命名</strong></p>
+<p>命名规范为：<code>docker_username/repository_name</code></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> tag node-hexo:1.0 jefferyjob/node-hexo:1.0<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>3、登录docker</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> login <span class="token parameter variable">-u</span> jefferyjob<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>4、发布</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> push jefferyjob/node-hexo:1.0<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>注意，此版本发布后，把版本号改为 <code>latest</code> 然后再发布一次，让dockerhub中的latest保持最新。</strong></p>
+<p><strong>5、高级技巧</strong></p>
+<p>你也可以将此仓库绑定到你的 github 仓库，每次修改 github 仓库的 dockerfile 的时候，实施 webhook 通知你的docker repository 实现自动更新 docker 镜像。</p>
+<p>也可以在 dockerfile 中使用 ENTRYPOINT [“<a target="_blank" rel="noopener" href="http://docker-entrypoint.sh">docker-entrypoint.sh</a>”] 管理入口，提供更加便捷化的操作。</p>
+<h2 id="问题">问题</h2>
+<p>开始我使用<code>Nodejs</code>官方的源码包安装<code>Nodejs</code>。也就是将官网下载的<code>tar</code>格式的包解压后，再链接二进制文件的方式。</p>
+<p>但是发生了一个问题：我将源码包里边的<code>node</code>可执行文件链接到<code>/usr/sbin/node</code>后，执行<code>node -v</code>，提示<code>command not found</code>。</p>
+<p><strong>原因</strong>：</p>
+<p>几经查找，发现原来是因为<code>Nodejs</code>官网提供的源码包是使用<code>glibc</code>库打包的，而<code>Alpine</code>使用的是<code>musl</code>库</p>
+<p><strong>解决方案</strong>：</p>
+<ol>
+<li>使用<code>Alpine</code>自带的<code>apk</code>进行安装: <code>apk add nodejs npm</code>。</li>
+<li>使用非官方构建源里边的包，里边有<code>musl</code>版本的：<a target="_blank" rel="noopener" href="https://unofficial-builds.nodejs.org/download/release/">https://unofficial-builds.nodejs.org/download/release/</a> 。虽说是非官方构建源，也是官网上提供的链接。</li>
+</ol>
+<p><strong>反思</strong>：</p>
+<p>之前也看到过<code>Alpine</code>关于编译库的坑，但是没想到这么快就让我遇上了，而且的确容易被<code>command not found</code>这个提示误导，这使我一度怀疑<code>dash</code>，<code>$PATH</code>和<code>ln</code>。</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/2968099460.html">https://blog.mailjob.net/posts/2968099460.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Dockerfile%E6%9E%84%E5%BB%BA"><span class="toc-text">Dockerfile构建</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%96%E5%86%99%E9%95%9C%E5%83%8F%E5%8C%85"><span class="toc-text">编写镜像包</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%95%9C%E5%83%8F%E5%8F%91%E5%B8%83"><span class="toc-text">镜像发布</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%95%9C%E5%83%8F%E7%94%9F%E6%88%90%EF%BC%9A"><span class="toc-text">镜像生成：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%95%9C%E5%83%8F%E6%B5%8B%E8%AF%95%EF%BC%9A"><span class="toc-text">镜像测试：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%8F%91%E5%B8%83%E5%88%B0DockerHub%EF%BC%9A"><span class="toc-text">发布到DockerHub：</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98"><span class="toc-text">问题</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

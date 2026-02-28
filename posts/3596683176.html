@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>免费使用mongodb数据库 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="mongodb的云数据库，新用户注册，提供500m免费的空间，对于创建测试的网站数据库来说，足够使用。虽然是服务器是在美国，但是链接稳定。下面就介绍注册和使用的流程。 网址  MongoDB官网：https:&#x2F;&#x2F;account.mongodb.com  Mongodb概念解析 不管我们学习什么数据库都应该学习其中的基础概念，在mongodb中基本的概念是文档、集合、数据库，下面我们挨个介绍。 下表">
+<meta property="og:type" content="article">
+<meta property="og:title" content="免费使用mongodb数据库">
+<meta property="og:url" content="https://blog.mailjob.net/posts/3596683176.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="mongodb的云数据库，新用户注册，提供500m免费的空间，对于创建测试的网站数据库来说，足够使用。虽然是服务器是在美国，但是链接稳定。下面就介绍注册和使用的流程。 网址  MongoDB官网：https:&#x2F;&#x2F;account.mongodb.com  Mongodb概念解析 不管我们学习什么数据库都应该学习其中的基础概念，在mongodb中基本的概念是文档、集合、数据库，下面我们挨个介绍。 下表">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/20211208184216.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211208171610.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211208171825.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211208172042.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211208172253.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211208172338.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211208173050.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211208173402.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211208173950.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211208183312.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211208174532.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211208180252.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211208180553.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211208180748.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20211209121843.png">
+<meta property="article:published_time" content="2021-12-07T10:14:31.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.978Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="blog">
+<meta property="article:tag" content="mongodb">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/20211208184216.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            免费使用mongodb数据库
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3596683176.html" class="article-date">
+	  <time datetime="2021-12-07T10:14:31.000Z" itemprop="datePublished">2021-12-07</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/blog/">blog</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/blog/" rel="tag">blog</a>, <a class="article-tag-none-link" href="/tags/mongodb/" rel="tag">mongodb</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/3596683176.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.3k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 5(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <p>mongodb的云数据库，新用户注册，提供500m免费的空间，对于创建测试的网站数据库来说，足够使用。虽然是服务器是在美国，但是链接稳定。下面就介绍注册和使用的流程。</p>
+<h2 id="网址">网址</h2>
+<blockquote>
+<p>MongoDB官网：<a target="_blank" rel="noopener" href="https://account.mongodb.com">https://account.mongodb.com</a></p>
+</blockquote>
+<h2 id="Mongodb概念解析">Mongodb概念解析</h2>
+<p>不管我们学习什么数据库都应该学习其中的基础概念，在mongodb中基本的概念是文档、集合、数据库，下面我们挨个介绍。</p>
+<p>下表将帮助您更容易理解Mongo中的一些概念：</p>
+<p>基础概念学习地址：<a target="_blank" rel="noopener" href="https://www.runoob.com/mongodb/mongodb-databases-documents-collections.html">https://www.runoob.com/mongodb/mongodb-databases-documents-collections.html</a></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">SQL术语/概念</th>
+<th style="text-align:left">MongoDB术语/概念</th>
+<th style="text-align:left">解释/说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">database</td>
+<td style="text-align:left">database</td>
+<td style="text-align:left">数据库</td>
+</tr>
+<tr>
+<td style="text-align:left">table</td>
+<td style="text-align:left">collection</td>
+<td style="text-align:left">数据库表/集合</td>
+</tr>
+<tr>
+<td style="text-align:left">row</td>
+<td style="text-align:left">document</td>
+<td style="text-align:left">数据记录行/文档</td>
+</tr>
+<tr>
+<td style="text-align:left">column</td>
+<td style="text-align:left">field</td>
+<td style="text-align:left">数据字段/域</td>
+</tr>
+<tr>
+<td style="text-align:left">index</td>
+<td style="text-align:left">index</td>
+<td style="text-align:left">索引</td>
+</tr>
+<tr>
+<td style="text-align:left">table joins</td>
+<td style="text-align:left"></td>
+<td style="text-align:left">表连接,MongoDB不支持</td>
+</tr>
+<tr>
+<td style="text-align:left">primary key</td>
+<td style="text-align:left">primary key</td>
+<td style="text-align:left">主键,MongoDB自动将_id字段设置为主键</td>
+</tr>
+</tbody>
+</table>
+<p>通过下图实例，我们也可以更直观的了解Mongo中的一些概念：</p>
+<p><img src="http://img.github.mailjob.net/20211208184216.png" alt="img"></p>
+<h2 id="云数据库操作步骤">云数据库操作步骤</h2>
+<h3 id="创建组织">创建组织</h3>
+<p>首先，创建一个组织，名字你可以随便写，只要符合规范即可，命名完成后点击 <code>Next</code> 下一步</p>
+<p><img src="http://img.github.mailjob.net/20211208171610.png" alt="image-20211208171555994"></p>
+<p>在这里，你可以添加其他的同事进入这个组织（这里就我一个人开发，就不邀请其他人了），后点击 <code>Create Organization</code> 创建组织</p>
+<p><img src="http://img.github.mailjob.net/20211208171825.png" alt="image-20211208171823314"></p>
+<h3 id="创建项目">创建项目</h3>
+<p>完成创建后，我们进去 <code>Organization的组织</code> 页面，在这里我们可以创建一个 <code>project</code> 项目</p>
+<p><img src="http://img.github.mailjob.net/20211208172042.png" alt="image-20211208172036852"></p>
+<h3 id="创建数据库">创建数据库</h3>
+<p>项目创建完成后，我们需要 <code>Create a database</code>创建数据库</p>
+<p><img src="http://img.github.mailjob.net/20211208172253.png" alt="image-20211208172250036"></p>
+<p><img src="http://img.github.mailjob.net/20211208172338.png" alt="image-20211208172337099"></p>
+<p>然后可以根据自己所在的地域，选择距离自己较近的节点，因为我当前所在的地域是北京，所以我在这里就选择东京了。然后 <code>Create Cluster</code>创建集群</p>
+<p>![image-20211208172525043](/Users/libin/Library/Application Support/typora-user-images/image-20211208172525043.png)</p>
+<h3 id="创建连接账户">创建连接账户</h3>
+<p>紧接着，我们在安全与快速入门这里，需要创建账号和密码，以及ip白名单。</p>
+<p>连接账户的创建，有两种方式，一种是用户名和密码，一种是证书。在这里我们选择一种比较简单的连接方式，就是用户名和密码了。</p>
+<p><img src="http://img.github.mailjob.net/20211208173050.png" alt="image-20211208173049240"></p>
+<p>在环境配置这里，有两种方式，一种是本地环境，一种是云环境。在这里我们选择第一种本地环境，并且开放所有的ip进入白名单。</p>
+<p><img src="http://img.github.mailjob.net/20211208173402.png" alt="image-20211208173400381">了这里，我们就创建成功了</p>
+<h3 id="创建成功">创建成功</h3>
+<p>如果看到这个界面，则表示，你已经创建成功了。</p>
+<p><img src="http://img.github.mailjob.net/20211208173950.png" alt="image-20211208173948382"></p>
+<h3 id="测试操作">测试操作</h3>
+<p>点击上图中的 <code>Cluster0</code>进入集群0的节点，然后点击 <code>Collections</code>集合，再点击 <code>Add My Own Data</code> 创建数据库和集合。</p>
+<p><img src="http://img.github.mailjob.net/20211208183312.png" alt="image-20211208183310875"></p>
+<p>创建成功后，可以在里面插入数据测试</p>
+<h3 id="测试连接mongodb">测试连接mongodb</h3>
+<p>点击 <code>Connect</code>连接会出现以下界面，界面提供了三种连接mongodb的方式</p>
+<p><img src="http://img.github.mailjob.net/20211208174532.png" alt="image-20211208174530814"></p>
+<p><strong>Connect with the MongoDB Shell</strong></p>
+<p>表示用shell脚本连接mongodb</p>
+<p><strong>Connect your application</strong></p>
+<p>表示使用你的应用代码连接，在项目开发中，无论你使用的是 java、php、go、nodejs 都需要选择这种方式连接mongodb</p>
+<p><strong>Connect using MongoDB Compass</strong></p>
+<p>表示用客户端工具连接momgodb，你可以用mongodb官网提供的客户端工具，也可以使用 Navicat 连接</p>
+<h4 id="Navicat连接">Navicat连接</h4>
+<p>选择 <code>Connect using MongoDB Compass</code>则会提示相对的连接信息，然后复制连接信息，注意这里的 <code>&lt;passwor&gt;</code>需要改成你设定的密码</p>
+<p><img src="http://img.github.mailjob.net/20211208180252.png" alt="image-20211208180250418"></p>
+<p>Navicat 中连接方式选择 Mongodb 连接，然后选择 <code>url</code> 连接</p>
+<p><img src="http://img.github.mailjob.net/20211208180553.png" alt="image-20211208180551317"></p>
+<p>应用后，进行连接测试，查看是否连接成功</p>
+<p><img src="http://img.github.mailjob.net/20211208180748.png" alt="image-20211208180746569"></p>
+<h4 id="代码连接">代码连接</h4>
+<p><img src="http://img.github.mailjob.net/20211209121843.png" alt="image-20211209121842356"></p>
+<p><strong>基于Go语言测试</strong></p>
+<p>代码下载：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/dev_go/tree/master/211209-mongodb-connect">https://github.com/mailjobblog/dev_go/tree/master/211209-mongodb-connect</a></p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+	<span class="token string">"context"</span>
+	<span class="token string">"fmt"</span>
+	<span class="token string">"go.mongodb.org/mongo-driver/mongo"</span>
+	<span class="token string">"go.mongodb.org/mongo-driver/mongo/options"</span>
+	<span class="token string">"log"</span>
+	<span class="token string">"time"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token comment">// 连接 mongodb</span>
+  <span class="token comment">// 注意：这里的账号和密码要改成你自己的</span>
+	clientOptions <span class="token operator">:=</span> options<span class="token punctuation">.</span><span class="token function">Client</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">ApplyURI</span><span class="token punctuation">(</span><span class="token string">"mongodb+srv://test_user:test_pwd@cluster0.sy0un.mongodb.net/myFirstDatabase?retryWrites=true&amp;w=majority"</span><span class="token punctuation">)</span>
+	ctx<span class="token punctuation">,</span> cancel <span class="token operator">:=</span> context<span class="token punctuation">.</span><span class="token function">WithTimeout</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token operator">*</span>time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+	<span class="token keyword">defer</span> <span class="token function">cancel</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	client<span class="token punctuation">,</span> err <span class="token operator">:=</span> mongo<span class="token punctuation">.</span><span class="token function">Connect</span><span class="token punctuation">(</span>ctx<span class="token punctuation">,</span> clientOptions<span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		log<span class="token punctuation">.</span><span class="token function">Fatal</span><span class="token punctuation">(</span><span class="token string">"mongodb 连接失败，error："</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token comment">// 定义连接库和连接集合</span>
+	collection <span class="token operator">:=</span> client<span class="token punctuation">.</span><span class="token function">Database</span><span class="token punctuation">(</span><span class="token string">"t_db"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Collection</span><span class="token punctuation">(</span><span class="token string">"t_coll"</span><span class="token punctuation">)</span>
+
+	<span class="token comment">// 定义要插入的数据</span>
+	user <span class="token operator">:=</span> UserData<span class="token punctuation">&#123;</span>
+		Name<span class="token punctuation">:</span>       <span class="token string">"张三"</span><span class="token punctuation">,</span>
+		Age<span class="token punctuation">:</span>        <span class="token number">20</span><span class="token punctuation">,</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token comment">// 测试插入数据</span>
+	insert<span class="token punctuation">,</span>err <span class="token operator">:=</span> collection<span class="token punctuation">.</span><span class="token function">InsertOne</span><span class="token punctuation">(</span>ctx<span class="token punctuation">,</span> <span class="token operator">&amp;</span>user<span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		log<span class="token punctuation">.</span><span class="token function">Fatal</span><span class="token punctuation">(</span><span class="token string">"mongodb 数据插入失败，error："</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token comment">// 打印执行结果的id</span>
+	fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>insert<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// UserData 定义插入数据的结构体</span>
+<span class="token keyword">type</span> UserData <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+	<span class="token comment">// Id         string `bson:"_id,omitempty" json:"id"` // 这里不设置id，让数据库自动生成</span>
+	Name       <span class="token builtin">string</span> <span class="token string">`bson:"name" json:"name"`</span>
+	Age        <span class="token builtin">int</span>    <span class="token string">`bson:"age" json:"age"`</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>基于Node.js语言测试</strong></p>
+<p>代码下载：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/dev_nodejs/tree/master/211209-mongodb-connect">https://github.com/mailjobblog/dev_nodejs/tree/master/211209-mongodb-connect</a></p>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript"><span class="token keyword">const</span> <span class="token punctuation">&#123;</span> MongoClient <span class="token punctuation">&#125;</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'mongodb'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// 定义数据库连接地址</span>
+<span class="token comment">// 这里：这里的用户名和密码要改成你自己的</span>
+<span class="token keyword">const</span> uri <span class="token operator">=</span> <span class="token string">"mongodb+srv://test_user:test_pwd@cluster0.sy0un.mongodb.net/myFirstDatabase?retryWrites=true&amp;w=majority"</span><span class="token punctuation">;</span>
+
+<span class="token comment">// 定义异步方法</span>
+<span class="token keyword">const</span> <span class="token function-variable function">testMongo</span> <span class="token operator">=</span> <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// connect to your cluster</span>
+    <span class="token keyword">const</span> client <span class="token operator">=</span> <span class="token keyword">await</span> MongoClient<span class="token punctuation">.</span><span class="token function">connect</span><span class="token punctuation">(</span>uri<span class="token punctuation">,</span> <span class="token punctuation">&#123;</span>
+        <span class="token literal-property property">useNewUrlParser</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">useUnifiedTopology</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+    <span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// specify the DB's name</span>
+    <span class="token keyword">const</span> db <span class="token operator">=</span> client<span class="token punctuation">.</span><span class="token function">db</span><span class="token punctuation">(</span><span class="token string">'t_db'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// 数据插入测试</span>
+    <span class="token keyword">const</span> items <span class="token operator">=</span> <span class="token keyword">await</span> db<span class="token punctuation">.</span><span class="token function">collection</span><span class="token punctuation">(</span><span class="token string">'t_coll'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">insertOne</span><span class="token punctuation">(</span><span class="token punctuation">&#123;</span> <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">"test_names"</span> <span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>items<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// close connection</span>
+    client<span class="token punctuation">.</span><span class="token function">close</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// 调用异步方法</span>
+<span class="token function">testMongo</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/3596683176.html">https://blog.mailjob.net/posts/3596683176.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BD%91%E5%9D%80"><span class="toc-text">网址</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Mongodb%E6%A6%82%E5%BF%B5%E8%A7%A3%E6%9E%90"><span class="toc-text">Mongodb概念解析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%91%E6%95%B0%E6%8D%AE%E5%BA%93%E6%93%8D%E4%BD%9C%E6%AD%A5%E9%AA%A4"><span class="toc-text">云数据库操作步骤</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E7%BB%84%E7%BB%87"><span class="toc-text">创建组织</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E9%A1%B9%E7%9B%AE"><span class="toc-text">创建项目</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E6%95%B0%E6%8D%AE%E5%BA%93"><span class="toc-text">创建数据库</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E8%BF%9E%E6%8E%A5%E8%B4%A6%E6%88%B7"><span class="toc-text">创建连接账户</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E6%88%90%E5%8A%9F"><span class="toc-text">创建成功</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E6%93%8D%E4%BD%9C"><span class="toc-text">测试操作</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E8%BF%9E%E6%8E%A5mongodb"><span class="toc-text">测试连接mongodb</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Navicat%E8%BF%9E%E6%8E%A5"><span class="toc-text">Navicat连接</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E8%BF%9E%E6%8E%A5"><span class="toc-text">代码连接</span></a></li></ol></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

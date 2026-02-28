@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>数据库设计三范式 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="1. 数据库设计三大范式 在设计关系数据库的时候，一般来说我们都是需要遵从不同的规范要求来设计出合理的关系型数据库，这些不同的规范要 求被称为不同的范式，各种范式呈递次规范，越高的范式数据库冗余越小。 范式分为：3大范式，以及BC范式，第四范式还有第五范式 一共六大范式通常来说满足与三大范式就基本足够 ； 注意：项目的数据库设计并不一定要完全满足与三大范式，有些时候我们会适量的冗余让Query尽两">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据库设计三范式">
+<meta property="og:url" content="https://blog.mailjob.net/posts/2151902749.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="1. 数据库设计三大范式 在设计关系数据库的时候，一般来说我们都是需要遵从不同的规范要求来设计出合理的关系型数据库，这些不同的规范要 求被称为不同的范式，各种范式呈递次规范，越高的范式数据库冗余越小。 范式分为：3大范式，以及BC范式，第四范式还有第五范式 一共六大范式通常来说满足与三大范式就基本足够 ； 注意：项目的数据库设计并不一定要完全满足与三大范式，有些时候我们会适量的冗余让Query尽两">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-02-17T05:10:36.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.982Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="mysql">
+<meta name="twitter:card" content="summary">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            数据库设计三范式
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/2151902749.html" class="article-date">
+	  <time datetime="2021-02-17T05:10:36.000Z" itemprop="datePublished">2021-02-17</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/mysql/">mysql</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/mysql/" rel="tag">mysql</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/2151902749.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.9k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 6(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="1-数据库设计三大范式">1. 数据库设计三大范式</h2>
+<p>在设计关系数据库的时候，一般来说我们都是需要遵从不同的规范要求来设计出合理的关系型数据库，这些不同的规范要 求被称为不同的范式，各种范式呈递次规范，越高的范式数据库冗余越小。</p>
+<p>范式分为：3大范式，以及BC范式，第四范式还有第五范式 一共六大范式通常来说满足与三大范式就基本足够 ；</p>
+<p>注意：项目的数据库设计并不一定要完全满足与三大范式，有些时候我们会适量的冗余让Query尽两减少Join</p>
+<p>误区:不是范式越高越就越好 好 =&gt; 结构清晰</p>
+<p>早期:希望数据可以足够的小数据量不是问题主要分问题</p>
+<p>现在:希望查询速度越快越好,同时操作越简单越好</p>
+<h3 id="1-1-第一范式（1NF）">1.1 第一范式（1NF）</h3>
+<p>简单地说，第一范式要求关系中的属性必须是原子项，即不可再分的基本类型，集合、数组和 结构不能作为某一属性出现，严禁关系中出现“表中有表”的情况在任何一个关系数据库系统中，第一范式是关系模 式的一个最起码的要求。不满足第一范式的数据库模式不能称为关系数据库。</p>
+<blockquote>
+<p>原始表中，其中”工程地址”列还可以细分为省份，城市等。在国外，更多的程序把”姓名”列也分成2列,即”姓”和“名”。</p>
+</blockquote>
+<p>虽然第一范式要求各列要保存原子性，不能再分，但是这种要求和我们的需求是相关联的，如上表中我们对”工程地址”没有省份，城市这样方面的查询和应用需求，则不需拆分，”姓名”列也是同样如此。</p>
+<p>原始表:</p>
+<table>
+<thead>
+<tr>
+<th>工程号</th>
+<th>工程名称</th>
+<th>工程地址</th>
+<th>员工编号</th>
+<th>员工名称</th>
+<th>薪资待遇</th>
+<th>职务</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P001</td>
+<td>港珠澳大桥</td>
+<td>广东珠海</td>
+<td>E0001</td>
+<td>Jack</td>
+<td>6000/月</td>
+<td>工人</td>
+</tr>
+<tr>
+<td>P001</td>
+<td>港珠澳大桥</td>
+<td>广东珠海</td>
+<td>E0002</td>
+<td>Join</td>
+<td>7800/月</td>
+<td>工人</td>
+</tr>
+<tr>
+<td>P001</td>
+<td>港珠澳大桥</td>
+<td>广东珠海</td>
+<td>E0003</td>
+<td>Apple</td>
+<td>8000/月</td>
+<td>高级技工</td>
+</tr>
+<tr>
+<td>P002</td>
+<td>南海航天</td>
+<td>海南三亚</td>
+<td>E0001</td>
+<td>Jack</td>
+<td>5000/月</td>
+<td>工人</td>
+</tr>
+</tbody>
+</table>
+<h3 id="1-2-第二范式（2NF）">1.2 第二范式（2NF）</h3>
+<p>第二范式（2NF）是在第一范式（1NF）的基础建立起来的，既满足第二范式（2NF）就必须要 满足第一范式。第二范式（2NF）要求实体的属性完全依赖于主键字。</p>
+<p>第二范式（2NF）要求实体的属性完全依赖于主关键字。所谓完全依赖是指不能存在仅依赖主关键字一部分的属性，如果存在，那么这个属性和主关键字的这一部分应该分离出来形成一个新的实体，新实体与原实体之间是一对多的关系。为实现区分通常需要为表加上一个列，以存储各个实例的唯一标识。简而言之，第二范式就是在第一范式的基础上属性完全依赖于主键。</p>
+<blockquote>
+<p>例如：原始表中描述了工程信息，员工信息等。这样就造成了大量数据的重复。按照第二范式，我们可以将原始表分为工程信息表与员工信息表</p>
+</blockquote>
+<p>工程信息表：</p>
+<table>
+<thead>
+<tr>
+<th>工程编号</th>
+<th>工程名称</th>
+<th>工程地址</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P001</td>
+<td>港珠澳大桥</td>
+<td>广东珠海</td>
+</tr>
+<tr>
+<td>P002</td>
+<td>南海航天</td>
+<td>海南三亚</td>
+</tr>
+</tbody>
+</table>
+<p>员工信息表：</p>
+<table>
+<thead>
+<tr>
+<th>员工编号</th>
+<th>员工姓名</th>
+<th>职务</th>
+<th>薪资水平</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>E0001</td>
+<td>Jack</td>
+<td>工人</td>
+<td>3000/月</td>
+</tr>
+<tr>
+<td>E0002</td>
+<td>Join</td>
+<td>工人</td>
+<td>3000/月</td>
+</tr>
+<tr>
+<td>E0003</td>
+<td>Apple</td>
+<td>高级技工</td>
+<td>6000/月</td>
+</tr>
+</tbody>
+</table>
+<h3 id="1-3-第三范式（3NF）">1.3 第三范式（3NF）</h3>
+<p>第三范式（3NF）是第二范式的子集，既满足第三范式就必须满足第二范式。意思是不存在非 关键字段对任意候选关键字段的传递函数依赖</p>
+<blockquote>
+<p>例如：现在我们来看看在第二范式的讲解中，我们将表1-1拆分成了两张表。这两个表是否符合第三范式呢。在员工信息表中包含：”员工编号”、”员工名称”、”职务”、”薪资水平”，而我们知道，薪资水平是有职务决定，这里”薪资水平”通过”职务”与员工相关，则不符合第三范式。我们需要将员工信息表进一步拆分，如下:</p>
+</blockquote>
+<p>员工信息表：</p>
+<table>
+<thead>
+<tr>
+<th>员工编号</th>
+<th>员工姓名</th>
+<th>职务编号</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>E0001</td>
+<td>Jack</td>
+<td>1</td>
+</tr>
+<tr>
+<td>E0002</td>
+<td>Join</td>
+<td>1</td>
+</tr>
+<tr>
+<td>E0003</td>
+<td>Apple</td>
+<td>2</td>
+</tr>
+</tbody>
+</table>
+<p>工程信息表：</p>
+<table>
+<thead>
+<tr>
+<th>工程编号</th>
+<th>工程名称</th>
+<th>工程地址</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P001</td>
+<td>港珠澳大桥</td>
+<td>广东珠海</td>
+</tr>
+<tr>
+<td>P002</td>
+<td>南海航天</td>
+<td>海南三亚</td>
+</tr>
+</tbody>
+</table>
+<p>职务表(Duty)</p>
+<table>
+<thead>
+<tr>
+<th>职务编号</th>
+<th>职务名称</th>
+<th>工资待遇</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>工人</td>
+<td>3000/月</td>
+</tr>
+<tr>
+<td>2</td>
+<td>高级技工</td>
+<td>6000/月</td>
+</tr>
+</tbody>
+</table>
+<p>工程参与人员记录表：</p>
+<table>
+<thead>
+<tr>
+<th>编号</th>
+<th>工程编号</th>
+<th>人员编号</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>P001</td>
+<td>E0001</td>
+</tr>
+<tr>
+<td>2</td>
+<td>P001</td>
+<td>E0002</td>
+</tr>
+<tr>
+<td>3</td>
+<td>P002</td>
+<td>E0003</td>
+</tr>
+</tbody>
+</table>
+<p>通过对比我们发现，表多了，关系复杂了，查询数据变的麻烦了，编程中的难度也提高了，但是各个表中内容更清晰了， 重复的数据少了，更新和维护变的更容易了。</p>
+<h2 id="不推荐存储的数据类型">不推荐存储的数据类型</h2>
+<ol>
+<li>二进制多媒体数据 将二进制多媒体数据存放在数据库中，一个问题是数据库空间资源耗用非常严重，另一个问题是 这些数据的存储很消耗数据库主机的CPU 资源。这种数据主要 包括图片，音频、视频和其他一些相关的二进制文件。 这些数据的处理本不是数据的优势，如果我们硬要将他们塞入数据库，肯定会造成数据库的处理资源消耗 严重。</li>
+<li>流水队列数据 我们都知道，数据库为了保证事务的安全性（支持事务的存储引擎）以及可恢复性，都是需要记录所 有变更的日志信息的。而流水队列数据的用途就决定了存放 这种数据的表中的数据会不断的被 INSERT，UPDATE 和 DELETE，而每一个操作都会生成与之对应的日志信息。在 MySQL 中，如果是支持事务的存储引擎，这 个日志的产生量 更是要翻倍。而如果我们通过一些成熟的第三方队列软件来实现这个 Queue 数据的处理功能，性能将会成倍的提升。</li>
+<li>超大文本数据 对于 5.0.3 之前的 MySQL 版本，VARCHAR 类型的数据最长只能存放 255 个字节，如果需要存储 更长的文本数据到一个字段，我们就必须使用 TEXT 类型（最大 可存放 64KB）的字段，甚至是更大的LONGTEXT 类型 （最大 4GB）。而 TEXT 类型数据的处理性能要远比 VARCHAR 类型数据的处理性能低下很多。从 5.0.3 版 本开始 ，VARCHAR 类型的最大长度被调整到 64KB 了，但是当实际数据小于 255Bytes 的时候，实际存储空间和实际的数据长 度一样，可一旦长度超过 255 Bytes 之后，所占用的存储空间就是实际数据长度的两倍。 对于图片的存储，如果说是 特殊情况可以使用BLOB，但是通常来说跟推介使用varchar存图片路径，而图片会放在一个文件夹中</li>
+</ol>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/2151902749.html">https://blog.mailjob.net/posts/2151902749.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E6%95%B0%E6%8D%AE%E5%BA%93%E8%AE%BE%E8%AE%A1%E4%B8%89%E5%A4%A7%E8%8C%83%E5%BC%8F"><span class="toc-text">1. 数据库设计三大范式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E7%AC%AC%E4%B8%80%E8%8C%83%E5%BC%8F%EF%BC%881NF%EF%BC%89"><span class="toc-text">1.1 第一范式（1NF）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E7%AC%AC%E4%BA%8C%E8%8C%83%E5%BC%8F%EF%BC%882NF%EF%BC%89"><span class="toc-text">1.2 第二范式（2NF）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-3-%E7%AC%AC%E4%B8%89%E8%8C%83%E5%BC%8F%EF%BC%883NF%EF%BC%89"><span class="toc-text">1.3 第三范式（3NF）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8D%E6%8E%A8%E8%8D%90%E5%AD%98%E5%82%A8%E7%9A%84%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B"><span class="toc-text">不推荐存储的数据类型</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Swoole协程的多种实现方式 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="参考文献 新版文档：https:&#x2F;&#x2F;wiki.swoole.com&#x2F;#&#x2F;runtime 新版文档（协程高级）：https:&#x2F;&#x2F;wiki.swoole.com&#x2F;#&#x2F;coroutine 新版文档（协程调度）：https:&#x2F;&#x2F;wiki.swoole.com&#x2F;#&#x2F;coroutine&#x2F;scheduler?id&#x3D;coroutinescheduler 新版文档（协程api）：https:&#x2F;&#x2F;wiki.swool">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Swoole协程的多种实现方式">
+<meta property="og:url" content="https://blog.mailjob.net/posts/3050366645.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="参考文献 新版文档：https:&#x2F;&#x2F;wiki.swoole.com&#x2F;#&#x2F;runtime 新版文档（协程高级）：https:&#x2F;&#x2F;wiki.swoole.com&#x2F;#&#x2F;coroutine 新版文档（协程调度）：https:&#x2F;&#x2F;wiki.swoole.com&#x2F;#&#x2F;coroutine&#x2F;scheduler?id&#x3D;coroutinescheduler 新版文档（协程api）：https:&#x2F;&#x2F;wiki.swool">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/20210525104904.png">
+<meta property="article:published_time" content="2021-05-24T17:08:47.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.984Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="swoole">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/20210525104904.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Swoole协程的多种实现方式
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3050366645.html" class="article-date">
+	  <time datetime="2021-05-24T17:08:47.000Z" itemprop="datePublished">2021-05-25</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/php/">php</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/swoole/" rel="tag">swoole</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/3050366645.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 875(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 3(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="参考文献">参考文献</h2>
+<p>新版文档：<a target="_blank" rel="noopener" href="https://wiki.swoole.com/#/runtime">https://wiki.swoole.com/#/runtime</a><br>
+新版文档（协程高级）：<a target="_blank" rel="noopener" href="https://wiki.swoole.com/#/coroutine">https://wiki.swoole.com/#/coroutine</a><br>
+新版文档（协程调度）：<a target="_blank" rel="noopener" href="https://wiki.swoole.com/#/coroutine/scheduler?id=coroutinescheduler">https://wiki.swoole.com/#/coroutine/scheduler?id=coroutinescheduler</a><br>
+新版文档（协程api）：<a target="_blank" rel="noopener" href="https://wiki.swoole.com/#/coroutine/coroutine?id=create">https://wiki.swoole.com/#/coroutine/coroutine?id=create</a><br>
+旧版文档：<a target="_blank" rel="noopener" href="https://wiki.swoole.com/wiki/page/p-coroutine.html">https://wiki.swoole.com/wiki/page/p-coroutine.html</a><br>
+PHP yield 关键字：<a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/language.generators.syntax.php">https://www.php.net/manual/zh/language.generators.syntax.php</a><br>
+代码下载：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/dev_swoole/tree/master/210525_coroutine">https://github.com/mailjobblog/dev_swoole/tree/master/210525_coroutine</a></p>
+<h2 id="swoole协程运行方式">swoole协程运行方式</h2>
+<p>协程是轻量级线程，协程也是属于线程，协程是在线程里执行的。协程的调度是用户手动切换的，所以又叫用户空间线程。协程的创建、切换、挂起、销毁全部为内存操作，消耗是非常低的。协程的调度策略是：协作式调度。</p>
+<ul>
+<li>Swoole4 由于是单线程多进程的，同一时间同一个进程只会有一个协程在运行。</li>
+<li>Swoole server 接收数据在 worker 进程触发 onReceive 回调，产生一个协程。Swoole 为每个请求创建对应携程。协程中也能创建子协程。</li>
+<li>协程在底层实现上是单线程的，因此同一时间只有一个协程在工作，协程的执行是串行的。</li>
+<li>因此多任务多协程执行时，一个协程正在运行时，其他协程会停止工作。当前协程执行阻塞 IO 操作时会挂起，底层调度器会进入事件循环。当有 IO 完成事件时，底层调度器恢复事件对应的协程的执行。。所以协程不存在 IO 耗时，非常适合高并发 IO 场景。（如下图）</li>
+</ul>
+<p><img src="http://img.github.mailjob.net/20210525104904.png" alt="协程执行流程"></p>
+<ul>
+<li>协程没有 IO 等待 正常执行 PHP 代码，不会产生执行流程切换</li>
+<li>协程遇到 IO 等待 立即将控制权切，待 IO 完成后，重新将执行流切回原来协程切出的点</li>
+<li>协程并行协程依次执行，同上一个逻辑</li>
+<li>协程嵌套执行流程由外向内逐层进入，直到发生 IO，然后切到外层协程，父协程不会等待子协程结束</li>
+</ul>
+<h2 id="多进程模型和协程模型应用场景">多进程模型和协程模型应用场景</h2>
+<p><strong>首先, 一般的计算机任务分为 2 种:</strong></p>
+<ul>
+<li>CPU密集型, 比如加减乘除等科学计算</li>
+<li>IO 密集型, 比如网络请求, 文件读写等</li>
+</ul>
+<p><strong>其次, 高性能相关的 2 个概念:</strong></p>
+<ul>
+<li>并行: 同一个时刻, 同一个 CPU 只能执行同一个任务, 要同时执行多个任务, 就需要有多个 CPU 才行</li>
+<li>并发: 由于 CPU 切换任务非常快, 快到人类可以感知的极限, 就会有很多任务 同时执行 的错觉</li>
+</ul>
+<p><strong>了解了这些, 我们再来看协程, 协程适合的是 <code>IO 密集型</code> 应用, 因为<code>协程</code>在 IO阻塞 时会<code>自动调度</code>,<code>减少IO阻塞</code>导致的时间损失</strong></p>
+<p><strong>测试注意事项</strong></p>
+<ul>
+<li><code>sleep()</code> 可以看做是 <code>CPU密集型</code>任务, 不会引起协程的调度</li>
+<li><code>Co::sleep()</code> 模拟的是 <code>IO密集型</code>任务, 会引发协程的调度</li>
+</ul>
+<h2 id="协程实现方式">协程实现方式</h2>
+<h3 id="Scheduler">Scheduler</h3>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token variable">$scheduler</span> <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name class-name-fully-qualified">Swoole<span class="token punctuation">\</span>Coroutine<span class="token punctuation">\</span>Scheduler</span><span class="token punctuation">;</span>
+
+<span class="token variable">$scheduler</span><span class="token operator">-></span><span class="token function">add</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+
+    <span class="token class-name class-name-fully-qualified static-context">Swoole<span class="token punctuation">\</span>Coroutine</span><span class="token operator">::</span><span class="token function">sleep</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">echo</span> <span class="token string single-quoted-string">'i am Coroutine'</span><span class="token operator">.</span><span class="token constant">PHP_EOL</span><span class="token punctuation">;</span>
+
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$scheduler</span><span class="token operator">-></span><span class="token function">add</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+
+    <span class="token class-name class-name-fully-qualified static-context">Swoole<span class="token punctuation">\</span>Coroutine</span><span class="token operator">::</span><span class="token function">sleep</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">echo</span> <span class="token string single-quoted-string">'i am Coroutine2222222222222222'</span><span class="token operator">.</span><span class="token constant">PHP_EOL</span><span class="token punctuation">;</span>
+
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$scheduler</span><span class="token operator">-></span><span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="Coroutine">Coroutine</h3>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token keyword">echo</span> <span class="token string single-quoted-string">'start'</span><span class="token operator">.</span><span class="token constant">PHP_EOL</span><span class="token punctuation">;</span>
+
+<span class="token class-name class-name-fully-qualified static-context">Swoole<span class="token punctuation">\</span>Coroutine</span><span class="token operator">::</span><span class="token function">create</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+
+    <span class="token class-name class-name-fully-qualified static-context">Swoole<span class="token punctuation">\</span>Coroutine</span><span class="token operator">::</span><span class="token function">sleep</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">echo</span> <span class="token string single-quoted-string">'i am Coroutine'</span><span class="token operator">.</span><span class="token constant">PHP_EOL</span><span class="token punctuation">;</span>
+
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">echo</span> <span class="token string single-quoted-string">'end'</span><span class="token operator">.</span><span class="token constant">PHP_EOL</span><span class="token punctuation">;</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="go">go</h3>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token keyword">echo</span> <span class="token string single-quoted-string">'start'</span><span class="token operator">.</span><span class="token constant">PHP_EOL</span><span class="token punctuation">;</span>
+
+<span class="token function">go</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+
+    <span class="token class-name static-context">co</span><span class="token operator">::</span><span class="token function">sleep</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">echo</span> <span class="token string single-quoted-string">'i am Coroutine'</span><span class="token operator">.</span><span class="token constant">PHP_EOL</span><span class="token punctuation">;</span>
+
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">echo</span> <span class="token string single-quoted-string">'end'</span><span class="token operator">.</span><span class="token constant">PHP_EOL</span><span class="token punctuation">;</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="Go-run">Go\run</h3>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token keyword">echo</span> <span class="token string single-quoted-string">'start'</span><span class="token operator">.</span><span class="token constant">PHP_EOL</span><span class="token punctuation">;</span>
+
+<span class="token function">Go<span class="token punctuation">\</span>run</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+
+    <span class="token class-name static-context">co</span><span class="token operator">::</span><span class="token function">sleep</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">echo</span> <span class="token string single-quoted-string">'i am Coroutine'</span><span class="token operator">.</span><span class="token constant">PHP_EOL</span><span class="token punctuation">;</span>
+
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">echo</span> <span class="token string single-quoted-string">'end'</span><span class="token operator">.</span><span class="token constant">PHP_EOL</span><span class="token punctuation">;</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/3050366645.html">https://blog.mailjob.net/posts/3050366645.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#swoole%E5%8D%8F%E7%A8%8B%E8%BF%90%E8%A1%8C%E6%96%B9%E5%BC%8F"><span class="toc-text">swoole协程运行方式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E8%BF%9B%E7%A8%8B%E6%A8%A1%E5%9E%8B%E5%92%8C%E5%8D%8F%E7%A8%8B%E6%A8%A1%E5%9E%8B%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">多进程模型和协程模型应用场景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%8F%E7%A8%8B%E5%AE%9E%E7%8E%B0%E6%96%B9%E5%BC%8F"><span class="toc-text">协程实现方式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Scheduler"><span class="toc-text">Scheduler</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Coroutine"><span class="toc-text">Coroutine</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#go"><span class="toc-text">go</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Go-run"><span class="toc-text">Go\run</span></a></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

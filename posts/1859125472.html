@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Go实现常见的数据结构 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="1.1 链表 举单链表的例子，双向链表同理只是多了pre指针。 定义单链表结构： type LinkNode struct &amp;#123; 	Data     int64 	NextNode *LinkNode &amp;#125; 构造链表及打印链表： func main() &amp;#123;  	node :&#x3D; new(LinkNode) 	node.Data &#x3D; 1  	node1 :&#x3D; new(Link">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go实现常见的数据结构">
+<meta property="og:url" content="https://blog.mailjob.net/posts/1859125472.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="1.1 链表 举单链表的例子，双向链表同理只是多了pre指针。 定义单链表结构： type LinkNode struct &amp;#123; 	Data     int64 	NextNode *LinkNode &amp;#125; 构造链表及打印链表： func main() &amp;#123;  	node :&#x3D; new(LinkNode) 	node.Data &#x3D; 1  	node1 :&#x3D; new(Link">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-11-16T04:48:11.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.979Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="go">
+<meta name="twitter:card" content="summary">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Go实现常见的数据结构
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/1859125472.html" class="article-date">
+	  <time datetime="2021-11-16T04:48:11.000Z" itemprop="datePublished">2021-11-16</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/go/">go</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/go/" rel="tag">go</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/1859125472.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 2.4k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 10(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="1-1-链表">1.1 链表</h2>
+<p>举单链表的例子，双向链表同理只是多了pre指针。</p>
+<p>定义单链表结构：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> LinkNode <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+	Data     <span class="token builtin">int64</span>
+	NextNode <span class="token operator">*</span>LinkNode
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>构造链表及打印链表：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+
+	node <span class="token operator">:=</span> <span class="token function">new</span><span class="token punctuation">(</span>LinkNode<span class="token punctuation">)</span>
+	node<span class="token punctuation">.</span>Data <span class="token operator">=</span> <span class="token number">1</span>
+
+	node1 <span class="token operator">:=</span> <span class="token function">new</span><span class="token punctuation">(</span>LinkNode<span class="token punctuation">)</span>
+	node1<span class="token punctuation">.</span>Data <span class="token operator">=</span> <span class="token number">2</span>
+	node<span class="token punctuation">.</span>NextNode <span class="token operator">=</span> node1 <span class="token comment">// node1 链接到 node 节点上</span>
+
+	node2 <span class="token operator">:=</span> <span class="token function">new</span><span class="token punctuation">(</span>LinkNode<span class="token punctuation">)</span>
+	node2<span class="token punctuation">.</span>Data <span class="token operator">=</span> <span class="token number">3</span>
+	node1<span class="token punctuation">.</span>NextNode <span class="token operator">=</span> node2 <span class="token comment">// node2 链接到 node1 节点上</span>
+
+	<span class="token comment">// 顺序打印。把原链表头结点赋值到新的NowNode上</span>
+	<span class="token comment">// 这样仍然保留了原链表头结点node不变</span>
+	nowNode <span class="token operator">:=</span> node
+	<span class="token keyword">for</span> nowNode <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>nowNode<span class="token punctuation">.</span>Data<span class="token punctuation">)</span>
+		<span class="token comment">// 获取下一个节点。链表向下滑动</span>
+		nowNode <span class="token operator">=</span> nowNode<span class="token punctuation">.</span>NextNode
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="1-2-可变数组">1.2 可变数组</h2>
+<p>可变数组在各种语言中都非常常用，在golang中，可变数组语言本身已经实现，就是我们的切片slice。</p>
+<h2 id="1-3-栈和队列">1.3 栈和队列</h2>
+<h3 id="1-3-1-原生切片实现栈和队列">1.3.1 原生切片实现栈和队列</h3>
+<p>栈：先进后出，后进先出，类似弹夹</p>
+<p>队列：先进先出</p>
+<p>golang中，实现并发不安全的栈和队列，非常简单，我们直接使用原生切片即可。</p>
+<h4 id="1-3-1-1-切片原生栈实现">1.3.1.1 切片原生栈实现</h4>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token comment">// 用切片制作一个栈</span>
+	<span class="token keyword">var</span> stack <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span>
+	<span class="token comment">// 元素1 入栈</span>
+	stack <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>stack<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">7</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span>
+	<span class="token comment">// 栈取出最近添加的数据。例如[1,5,7,2] ，len = 4</span>
+	x <span class="token operator">:=</span> stack<span class="token punctuation">[</span><span class="token function">len</span><span class="token punctuation">(</span>stack<span class="token punctuation">)</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token comment">// 2</span>
+	<span class="token comment">// 切掉最近添加的数据，上一步和这一步模仿栈的pop。</span>
+	stack <span class="token operator">=</span> stack<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token function">len</span><span class="token punctuation">(</span>stack<span class="token punctuation">)</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token comment">// [1,5,7]</span>
+	fmt<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"%d"</span><span class="token punctuation">,</span> x<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="1-3-1-2-切片原生队列实现">1.3.1.2 切片原生队列实现</h4>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+
+	<span class="token comment">// 用切片模仿队列</span>
+	<span class="token keyword">var</span> queue <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span>
+	<span class="token comment">// 进队列</span>
+	queue <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>queue<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">7</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span>
+	<span class="token comment">// 队头弹出，再把队头切掉，模仿队列的poll操作</span>
+	cur <span class="token operator">:=</span> queue<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+	queue <span class="token operator">=</span> queue<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">]</span>
+
+	fmt<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"%d"</span><span class="token punctuation">,</span> cur<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="1-3-2-并发安全的栈和队列">1.3.2 并发安全的栈和队列</h3>
+<h4 id="1-3-2-1-切片实现并发安全的栈">1.3.2.1 切片实现并发安全的栈</h4>
+<ul>
+<li>并发安全的栈</li>
+</ul>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 数组栈，后进先出</span>
+<span class="token keyword">type</span> Mystack <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    array <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span>   <span class="token comment">// 底层切片</span>
+    size  <span class="token builtin">int</span>        <span class="token comment">// 栈的元素数量</span>
+    lock  sync<span class="token punctuation">.</span>Mutex <span class="token comment">// 为了并发安全使用的锁</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>入栈</li>
+</ul>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 入栈</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>stack <span class="token operator">*</span>Mytack<span class="token punctuation">)</span> <span class="token function">Push</span><span class="token punctuation">(</span>v <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    stack<span class="token punctuation">.</span>lock<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">defer</span> stack<span class="token punctuation">.</span>lock<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token comment">// 放入切片中，后进的元素放在数组最后面</span>
+    stack<span class="token punctuation">.</span>array <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>stack<span class="token punctuation">.</span>array<span class="token punctuation">,</span> v<span class="token punctuation">)</span>
+
+    <span class="token comment">// 栈中元素数量+1</span>
+    stack<span class="token punctuation">.</span>size <span class="token operator">=</span> stack<span class="token punctuation">.</span>size <span class="token operator">+</span> <span class="token number">1</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>出栈</li>
+</ul>
+<p>1、如果切片偏移量向前移动 stack.array[0 : stack.size-1]，表明最后的元素已经不属于该数组了，数组变相的缩容了。此时，切片被缩容的部分并不会被回收，仍然占用着空间，所以空间复杂度较高，但操作的时间复杂度为：O(1)。</p>
+<p>2、如果我们创建新的数组 newArray，然后把老数组的元素复制到新数组，就不会占用多余的空间，但移动次数过多，时间复杂度为：O(n)。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>stack <span class="token operator">*</span>Mystack<span class="token punctuation">)</span> <span class="token function">Pop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">&#123;</span>
+    stack<span class="token punctuation">.</span>lock<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">defer</span> stack<span class="token punctuation">.</span>lock<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token comment">// 栈中元素已空</span>
+    <span class="token keyword">if</span> stack<span class="token punctuation">.</span>size <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"empty"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment">// 栈顶元素</span>
+    v <span class="token operator">:=</span> stack<span class="token punctuation">.</span>array<span class="token punctuation">[</span>stack<span class="token punctuation">.</span>size<span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span>
+
+    <span class="token comment">// 切片收缩，但可能占用空间越来越大</span>
+    <span class="token comment">//stack.array = stack.array[0 : stack.size-1]</span>
+
+    <span class="token comment">// 创建新的数组，空间占用不会越来越大，但可能移动元素次数过多</span>
+    newArray <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">,</span> stack<span class="token punctuation">.</span>size<span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> stack<span class="token punctuation">.</span>size<span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> stack<span class="token punctuation">.</span>size<span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">&#123;</span>
+        newArray<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> stack<span class="token punctuation">.</span>array<span class="token punctuation">[</span>i<span class="token punctuation">]</span>
+    <span class="token punctuation">&#125;</span>
+    stack<span class="token punctuation">.</span>array <span class="token operator">=</span> newArray
+
+    <span class="token comment">// 栈中元素数量-1</span>
+    stack<span class="token punctuation">.</span>size <span class="token operator">=</span> stack<span class="token punctuation">.</span>size <span class="token operator">-</span> <span class="token number">1</span>
+    <span class="token keyword">return</span> v
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>获取栈顶元素</li>
+</ul>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 获取栈顶元素</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>stack <span class="token operator">*</span>Mystack<span class="token punctuation">)</span> <span class="token function">Peek</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// 栈中元素已空</span>
+    <span class="token keyword">if</span> stack<span class="token punctuation">.</span>size <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"empty"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment">// 栈顶元素值</span>
+    v <span class="token operator">:=</span> stack<span class="token punctuation">.</span>array<span class="token punctuation">[</span>stack<span class="token punctuation">.</span>size<span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span>
+    <span class="token keyword">return</span> v
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>获取栈大小和判定是否为空</li>
+</ul>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 栈大小</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>stack <span class="token operator">*</span>Mystack<span class="token punctuation">)</span> <span class="token function">Size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">int</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> stack<span class="token punctuation">.</span>size
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// 栈是否为空</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>stack <span class="token operator">*</span>Mystack<span class="token punctuation">)</span> <span class="token function">IsEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">bool</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> stack<span class="token punctuation">.</span>size <span class="token operator">==</span> <span class="token number">0</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="1-3-2-2-切片实现并发安全的队列">1.3.2.2 切片实现并发安全的队列</h4>
+<ul>
+<li>队列结构</li>
+</ul>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 数组队列，先进先出</span>
+<span class="token keyword">type</span> Myqueue <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    array <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span>   <span class="token comment">// 底层切片</span>
+    size  <span class="token builtin">int</span>        <span class="token comment">// 队列的元素数量</span>
+    lock  sync<span class="token punctuation">.</span>Mutex <span class="token comment">// 为了并发安全使用的锁</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>入队</li>
+</ul>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 入队</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>queue <span class="token operator">*</span>Myqueue<span class="token punctuation">)</span> <span class="token function">Add</span><span class="token punctuation">(</span>v <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    queue<span class="token punctuation">.</span>lock<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">defer</span> queue<span class="token punctuation">.</span>lock<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token comment">// 放入切片中，后进的元素放在数组最后面</span>
+    queue<span class="token punctuation">.</span>array <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>queue<span class="token punctuation">.</span>array<span class="token punctuation">,</span> v<span class="token punctuation">)</span>
+
+    <span class="token comment">// 队中元素数量+1</span>
+    queue<span class="token punctuation">.</span>size <span class="token operator">=</span> queue<span class="token punctuation">.</span>size <span class="token operator">+</span> <span class="token number">1</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>出队</li>
+</ul>
+<p>1、原地挪位，依次补位 queue.array[i-1] = queue.array[i]，然后数组缩容：queue.array = queue.array[0 : queue.size-1]，但是这样切片缩容的那部分内存空间不会释放。</p>
+<p>2、创建新的数组，将老数组中除第一个元素以外的元素移动到新数组。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 出队</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>queue <span class="token operator">*</span>Myqueue<span class="token punctuation">)</span> <span class="token function">Remove</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">&#123;</span>
+    queue<span class="token punctuation">.</span>lock<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">defer</span> queue<span class="token punctuation">.</span>lock<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token comment">// 队中元素已空</span>
+    <span class="token keyword">if</span> queue<span class="token punctuation">.</span>size <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"empty"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment">// 队列最前面元素</span>
+    v <span class="token operator">:=</span> queue<span class="token punctuation">.</span>array<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+
+    <span class="token comment">/*    直接原位移动，但缩容后继的空间不会被释放
+        for i := 1; i &lt; queue.size; i++ &#123;
+            // 从第一位开始进行数据移动
+            queue.array[i-1] = queue.array[i]
+        &#125;
+        // 原数组缩容
+        queue.array = queue.array[0 : queue.size-1]
+    */</span>
+
+    <span class="token comment">// 创建新的数组，移动次数过多</span>
+    newArray <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">,</span> queue<span class="token punctuation">.</span>size<span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> queue<span class="token punctuation">.</span>size<span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">1</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> queue<span class="token punctuation">.</span>size<span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">// 从老数组的第一位开始进行数据移动</span>
+        newArray<span class="token punctuation">[</span>i<span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">=</span> queue<span class="token punctuation">.</span>array<span class="token punctuation">[</span>i<span class="token punctuation">]</span>
+    <span class="token punctuation">&#125;</span>
+    queue<span class="token punctuation">.</span>array <span class="token operator">=</span> newArray
+
+    <span class="token comment">// 队中元素数量-1</span>
+    queue<span class="token punctuation">.</span>size <span class="token operator">=</span> queue<span class="token punctuation">.</span>size <span class="token operator">-</span> <span class="token number">1</span>
+    <span class="token keyword">return</span> v
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="1-4-字典Map和集合Set">1.4 字典Map和集合Set</h2>
+<h3 id="1-4-1-Map">1.4.1 Map</h3>
+<p>字典也是程序语言经常使用的结构，golang中的字典是其自身实现的map结构。具体操作可以查看语言api</p>
+<p>并发安全的map，可以定义结构，结构中有一个map成员和一个锁变量成员，参考并发安全的栈和队列的实现。go语言也实现了一个并发安全的map,具体参考sync.map的api</p>
+<h3 id="1-4-2-Set">1.4.2 Set</h3>
+<p>我们可以借助map的特性，实现一个Set结构。</p>
+<ul>
+<li>Set结构</li>
+</ul>
+<p>map的值我们不适用，定义为空的结构体struct{}</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 集合结构体</span>
+<span class="token keyword">type</span> Set <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    m            <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">int</span><span class="token punctuation">]</span><span class="token keyword">struct</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span> <span class="token comment">// 用字典来实现，因为字段键不能重复</span>
+    <span class="token builtin">len</span>          <span class="token builtin">int</span>          <span class="token comment">// 集合的大小</span>
+    sync<span class="token punctuation">.</span>RWMutex              <span class="token comment">// 锁，实现并发安全</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>初始化Set</li>
+</ul>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 新建一个空集合</span>
+<span class="token keyword">func</span> <span class="token function">NewSet</span><span class="token punctuation">(</span><span class="token builtin">cap</span> <span class="token builtin">int64</span><span class="token punctuation">)</span> <span class="token operator">*</span>Set <span class="token punctuation">&#123;</span>
+    temp <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">int</span><span class="token punctuation">]</span><span class="token keyword">struct</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span> <span class="token builtin">cap</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token operator">&amp;</span>Set<span class="token punctuation">&#123;</span>
+        m<span class="token punctuation">:</span> temp<span class="token punctuation">,</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>往set中添加一个元素</li>
+</ul>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 增加一个元素</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s <span class="token operator">*</span>Set<span class="token punctuation">)</span> <span class="token function">Add</span><span class="token punctuation">(</span>item <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    s<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">defer</span> s<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    s<span class="token punctuation">.</span>m<span class="token punctuation">[</span>item<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token keyword">struct</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span> <span class="token comment">// 实际往字典添加这个键</span>
+    s<span class="token punctuation">.</span><span class="token builtin">len</span> <span class="token operator">=</span> <span class="token function">len</span><span class="token punctuation">(</span>s<span class="token punctuation">.</span>m<span class="token punctuation">)</span>       <span class="token comment">// 重新计算元素数量</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>删除一个元素</li>
+</ul>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 移除一个元素</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s <span class="token operator">*</span>Set<span class="token punctuation">)</span> <span class="token function">Remove</span><span class="token punctuation">(</span>item <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    s<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    s<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token comment">// 集合没元素直接返回</span>
+    <span class="token keyword">if</span> s<span class="token punctuation">.</span><span class="token builtin">len</span> <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token function">delete</span><span class="token punctuation">(</span>s<span class="token punctuation">.</span>m<span class="token punctuation">,</span> item<span class="token punctuation">)</span> <span class="token comment">// 实际从字典删除这个键</span>
+    s<span class="token punctuation">.</span><span class="token builtin">len</span> <span class="token operator">=</span> <span class="token function">len</span><span class="token punctuation">(</span>s<span class="token punctuation">.</span>m<span class="token punctuation">)</span>  <span class="token comment">// 重新计算元素数量</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>查看元素是否在集合set中</li>
+</ul>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 查看是否存在元素</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s <span class="token operator">*</span>Set<span class="token punctuation">)</span> <span class="token function">Has</span><span class="token punctuation">(</span>item <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token builtin">bool</span> <span class="token punctuation">&#123;</span>
+    s<span class="token punctuation">.</span><span class="token function">RLock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">defer</span> s<span class="token punctuation">.</span><span class="token function">RUnlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token boolean">_</span><span class="token punctuation">,</span> ok <span class="token operator">:=</span> s<span class="token punctuation">.</span>m<span class="token punctuation">[</span>item<span class="token punctuation">]</span>
+    <span class="token keyword">return</span> ok
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>查看集合大小</li>
+</ul>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 查看集合大小</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s <span class="token operator">*</span>Set<span class="token punctuation">)</span> <span class="token function">Len</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">int</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> s<span class="token punctuation">.</span><span class="token builtin">len</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>查看集合是否为空</li>
+</ul>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 集合是够为空</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s <span class="token operator">*</span>Set<span class="token punctuation">)</span> <span class="token function">IsEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">bool</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> s<span class="token punctuation">.</span><span class="token function">Len</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token boolean">true</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">return</span> <span class="token boolean">false</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>清除集合所有元素</li>
+</ul>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 清除集合所有元素</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s <span class="token operator">*</span>Set<span class="token punctuation">)</span> <span class="token function">Clear</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    s<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">defer</span> s<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    s<span class="token punctuation">.</span>m <span class="token operator">=</span> <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">int</span><span class="token punctuation">]</span><span class="token keyword">struct</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span> <span class="token comment">// 字典重新赋值</span>
+    s<span class="token punctuation">.</span><span class="token builtin">len</span> <span class="token operator">=</span> <span class="token number">0</span>                <span class="token comment">// 大小归零</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>将集合转化为切片</li>
+</ul>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>s <span class="token operator">*</span>Set<span class="token punctuation">)</span> <span class="token function">List</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span> <span class="token punctuation">&#123;</span>
+    s<span class="token punctuation">.</span><span class="token function">RLock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">defer</span> s<span class="token punctuation">.</span><span class="token function">RUnlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    list <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> s<span class="token punctuation">.</span><span class="token builtin">len</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> item <span class="token operator">:=</span> <span class="token keyword">range</span> s<span class="token punctuation">.</span>m <span class="token punctuation">&#123;</span>
+        list <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>list<span class="token punctuation">,</span> item<span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">return</span> list
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="1-5-二叉树">1.5 二叉树</h2>
+<p>二叉树：每个节点最多只有两个儿子节点的树。</p>
+<p>满二叉树：叶子节点与叶子节点之间的高度差为 0 的二叉树，即整棵树是满的，树呈满三角形结构。在国外的定义，非叶子节点儿子都是满的树就是满二叉树。我们以国内为准。</p>
+<p>完全二叉树：完全二叉树是由满二叉树而引出来的，设二叉树的深度为 k，除第 k 层外，其他各层的节点数都达到最大值，且第 k 层所有的节点都连续集中在最左边。</p>
+<ul>
+<li>二叉树结构定义</li>
+</ul>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 二叉树</span>
+<span class="token keyword">type</span> TreeNode <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    Data  <span class="token builtin">string</span>    <span class="token comment">// 节点用来存放数据</span>
+    Left  <span class="token operator">*</span>TreeNode <span class="token comment">// 左子树</span>
+    Right <span class="token operator">*</span>TreeNode <span class="token comment">// 右字树</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>树的遍历</li>
+</ul>
+<p>1、先序遍历：先访问根节点，再访问左子树，最后访问右子树。</p>
+<p>2、后序遍历：先访问左子树，再访问右子树，最后访问根节点。</p>
+<p>3、中序遍历：先访问左子树，再访问根节点，最后访问右子树。</p>
+<p>4、层次遍历：每一层从左到右访问每一个节点。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 先序遍历</span>
+<span class="token keyword">func</span> <span class="token function">PreOrder</span><span class="token punctuation">(</span>tree <span class="token operator">*</span>TreeNode<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> tree <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment">// 先打印根节点</span>
+    fmt<span class="token punctuation">.</span><span class="token function">Print</span><span class="token punctuation">(</span>tree<span class="token punctuation">.</span>Data<span class="token punctuation">,</span> <span class="token string">" "</span><span class="token punctuation">)</span>
+    <span class="token comment">// 再打印左子树</span>
+    <span class="token function">PreOrder</span><span class="token punctuation">(</span>tree<span class="token punctuation">.</span>Left<span class="token punctuation">)</span>
+    <span class="token comment">// 再打印右字树</span>
+    <span class="token function">PreOrder</span><span class="token punctuation">(</span>tree<span class="token punctuation">.</span>Right<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// 中序遍历</span>
+<span class="token keyword">func</span> <span class="token function">MidOrder</span><span class="token punctuation">(</span>tree <span class="token operator">*</span>TreeNode<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> tree <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment">// 先打印左子树</span>
+    <span class="token function">MidOrder</span><span class="token punctuation">(</span>tree<span class="token punctuation">.</span>Left<span class="token punctuation">)</span>
+    <span class="token comment">// 再打印根节点</span>
+    fmt<span class="token punctuation">.</span><span class="token function">Print</span><span class="token punctuation">(</span>tree<span class="token punctuation">.</span>Data<span class="token punctuation">,</span> <span class="token string">" "</span><span class="token punctuation">)</span>
+    <span class="token comment">// 再打印右字树</span>
+    <span class="token function">MidOrder</span><span class="token punctuation">(</span>tree<span class="token punctuation">.</span>Right<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// 后序遍历</span>
+<span class="token keyword">func</span> <span class="token function">PostOrder</span><span class="token punctuation">(</span>tree <span class="token operator">*</span>TreeNode<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> tree <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment">// 先打印左子树</span>
+    <span class="token function">MidOrder</span><span class="token punctuation">(</span>tree<span class="token punctuation">.</span>Left<span class="token punctuation">)</span>
+    <span class="token comment">// 再打印右字树</span>
+    <span class="token function">MidOrder</span><span class="token punctuation">(</span>tree<span class="token punctuation">.</span>Right<span class="token punctuation">)</span>
+    <span class="token comment">// 再打印根节点</span>
+    fmt<span class="token punctuation">.</span><span class="token function">Print</span><span class="token punctuation">(</span>tree<span class="token punctuation">.</span>Data<span class="token punctuation">,</span> <span class="token string">" "</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>按层遍历：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">Level</span><span class="token punctuation">(</span>head <span class="token operator">*</span>TreeNode<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+
+	<span class="token keyword">if</span> head <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">return</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token comment">// 用切片模仿队列</span>
+	<span class="token keyword">var</span> queue <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>TreeNode
+	queue <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>queue<span class="token punctuation">,</span> head<span class="token punctuation">)</span>
+
+	<span class="token keyword">for</span> <span class="token function">len</span><span class="token punctuation">(</span>queue<span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+		<span class="token comment">// 队头弹出，再把队头切掉，模仿队列的poll操作</span>
+		cur <span class="token operator">:=</span> queue<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+		queue <span class="token operator">=</span> queue<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">]</span>
+
+		fmt<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"%d"</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token operator">*</span>cur<span class="token punctuation">)</span><span class="token punctuation">.</span>Data<span class="token punctuation">)</span>
+
+		<span class="token comment">// 当前节点有左孩子，加入左孩子进队列</span>
+		<span class="token keyword">if</span> cur<span class="token punctuation">.</span>Left <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+			queue <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>queue<span class="token punctuation">,</span> cur<span class="token punctuation">.</span>Left<span class="token punctuation">)</span>
+		<span class="token punctuation">&#125;</span>
+
+		<span class="token comment">// 当前节点有右孩子，加入右孩子进队列</span>
+		<span class="token keyword">if</span> cur<span class="token punctuation">.</span>Right <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+			queue <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>queue<span class="token punctuation">,</span> cur<span class="token punctuation">.</span>Right<span class="token punctuation">)</span>
+		<span class="token punctuation">&#125;</span>
+	<span class="token punctuation">&#125;</span>
+
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/1859125472.html">https://blog.mailjob.net/posts/1859125472.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-1-%E9%93%BE%E8%A1%A8"><span class="toc-text">1.1 链表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-2-%E5%8F%AF%E5%8F%98%E6%95%B0%E7%BB%84"><span class="toc-text">1.2 可变数组</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-3-%E6%A0%88%E5%92%8C%E9%98%9F%E5%88%97"><span class="toc-text">1.3 栈和队列</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-3-1-%E5%8E%9F%E7%94%9F%E5%88%87%E7%89%87%E5%AE%9E%E7%8E%B0%E6%A0%88%E5%92%8C%E9%98%9F%E5%88%97"><span class="toc-text">1.3.1 原生切片实现栈和队列</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-3-1-1-%E5%88%87%E7%89%87%E5%8E%9F%E7%94%9F%E6%A0%88%E5%AE%9E%E7%8E%B0"><span class="toc-text">1.3.1.1 切片原生栈实现</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-3-1-2-%E5%88%87%E7%89%87%E5%8E%9F%E7%94%9F%E9%98%9F%E5%88%97%E5%AE%9E%E7%8E%B0"><span class="toc-text">1.3.1.2 切片原生队列实现</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-3-2-%E5%B9%B6%E5%8F%91%E5%AE%89%E5%85%A8%E7%9A%84%E6%A0%88%E5%92%8C%E9%98%9F%E5%88%97"><span class="toc-text">1.3.2 并发安全的栈和队列</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-3-2-1-%E5%88%87%E7%89%87%E5%AE%9E%E7%8E%B0%E5%B9%B6%E5%8F%91%E5%AE%89%E5%85%A8%E7%9A%84%E6%A0%88"><span class="toc-text">1.3.2.1 切片实现并发安全的栈</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-3-2-2-%E5%88%87%E7%89%87%E5%AE%9E%E7%8E%B0%E5%B9%B6%E5%8F%91%E5%AE%89%E5%85%A8%E7%9A%84%E9%98%9F%E5%88%97"><span class="toc-text">1.3.2.2 切片实现并发安全的队列</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-4-%E5%AD%97%E5%85%B8Map%E5%92%8C%E9%9B%86%E5%90%88Set"><span class="toc-text">1.4 字典Map和集合Set</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-4-1-Map"><span class="toc-text">1.4.1 Map</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-4-2-Set"><span class="toc-text">1.4.2 Set</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-5-%E4%BA%8C%E5%8F%89%E6%A0%91"><span class="toc-text">1.5 二叉树</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

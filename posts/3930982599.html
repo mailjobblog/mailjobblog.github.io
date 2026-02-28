@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Hexo图片上传七牛云 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="引言 注意：hexo管理网站方式一 和 hexo管理网站方式二 可能需要该文章中的七牛插件文件托管方法。如果你选择是 hexo管理网站方式三 方法管理你的网站，那么你不需要改文章讲的托管方法，所以你并不需要阅读此文章 在本站的 hexo网站搭建文章中，方法一和方法二，都采用的是将图片资源托管到git仓库进行管理。 但是在实际的开发过程中，我们总是习惯将图片资源和文档资源分开管理，这样可以让我们的代">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hexo图片上传七牛云">
+<meta property="og:url" content="https://blog.mailjob.net/posts/3930982599.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="引言 注意：hexo管理网站方式一 和 hexo管理网站方式二 可能需要该文章中的七牛插件文件托管方法。如果你选择是 hexo管理网站方式三 方法管理你的网站，那么你不需要改文章讲的托管方法，所以你并不需要阅读此文章 在本站的 hexo网站搭建文章中，方法一和方法二，都采用的是将图片资源托管到git仓库进行管理。 但是在实际的开发过程中，我们总是习惯将图片资源和文档资源分开管理，这样可以让我们的代">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210218115154.webp">
+<meta property="article:published_time" content="2021-01-21T07:00:00.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.977Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/oss.github/20210218115154.webp">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Hexo图片上传七牛云
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3930982599.html" class="article-date">
+	  <time datetime="2021-01-21T07:00:00.000Z" itemprop="datePublished">2021-01-21</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/blog/">blog</a>
+  </span>
+
+
+                
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/3930982599.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 869(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 3(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="引言">引言</h2>
+<p><strong>注意：<code>hexo管理网站方式一</code> 和 <code>hexo管理网站方式二</code> 可能需要该文章中的七牛插件文件托管方法。如果你选择是 <code>hexo管理网站方式三</code> 方法管理你的网站，那么你不需要改文章讲的托管方法，所以你并不需要阅读此文章</strong></p>
+<p>在本站的 hexo网站搭建文章中，方法一和方法二，都采用的是将图片资源托管到git仓库进行管理。<br>
+但是在实际的开发过程中，我们总是习惯将图片资源和文档资源分开管理，这样可以让我们的代码仓库不会被静态的资源（图片、视频）等占据大量空间。<br>
+所以，在本文中，我们将探讨一种采用第三次 COS 托管图片的方案，选择的是七牛云，因为每个用户友10G的免费空间，这些空间足够我们托管hexo博客的静态资源了。</p>
+<h2 id="参考文献">参考文献</h2>
+<ul>
+<li>插件github地址：<a target="_blank" rel="noopener" href="https://github.com/gyk001/hexo-qiniu-sync">https://github.com/gyk001/hexo-qiniu-sync</a></li>
+<li>七牛云注册：<a target="_blank" rel="noopener" href="https://www.qiniu.com/">https://www.qiniu.com/</a></li>
+</ul>
+<h2 id="开始安装">开始安装</h2>
+<h3 id="安装七牛云插件">安装七牛云插件</h3>
+<ul>
+<li>安装七牛云插件</li>
+</ul>
+<pre class="line-numbers language-dart" data-language="dart"><code class="language-dart">npm install hexo<span class="token operator">-</span>qiniu<span class="token operator">-</span><span class="token keyword">sync</span> <span class="token operator">--</span>save<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="配置相关信息">配置相关信息</h3>
+<ul>
+<li>配置站点文件 <code>_config.yml</code>，配置入内容（注意：添加到配置文件时，把<code>//</code>去掉）</li>
+</ul>
+<pre class="line-numbers language-csharp" data-language="csharp"><code class="language-csharp"><span class="token preprocessor property">#plugins:</span>
+<span class="token preprocessor property"># - hexo-qiniu-sync</span>
+
+qiniu<span class="token punctuation">:</span>
+  offline<span class="token punctuation">:</span> <span class="token class-name">false</span>
+  sync<span class="token punctuation">:</span> <span class="token class-name">true</span>
+  bucket<span class="token punctuation">:</span> blogwenbo
+  <span class="token comment">//这里将其注释掉，不注释，执行hexo g报错</span>
+  <span class="token preprocessor property"># secret_file: sec/qn.json or C:</span>
+  access_key<span class="token punctuation">:</span> your <span class="token class-name">access_key</span>
+  secret_key<span class="token punctuation">:</span> your secret_key
+  <span class="token comment">// 上传的资源子目录前缀.如设置，需与urlPrefix同步</span>
+  dirPrefix<span class="token punctuation">:</span> <span class="token keyword">static</span>
+  <span class="token comment">//外链前缀</span>
+  urlPrefix<span class="token punctuation">:</span> http<span class="token punctuation">:</span><span class="token operator">/</span><span class="token operator">/</span>p2zukkwm9<span class="token punctuation">.</span>bkt<span class="token punctuation">.</span>clouddn<span class="token punctuation">.</span>com<span class="token operator">/</span><span class="token keyword">static</span>
+  <span class="token comment">//使用默认配置即可</span>
+  up_host<span class="token punctuation">:</span> http<span class="token punctuation">:</span><span class="token operator">/</span><span class="token operator">/</span>upload<span class="token punctuation">.</span>qiniu<span class="token punctuation">.</span>com
+  <span class="token comment">//本地目录</span>
+  local_dir<span class="token punctuation">:</span> <span class="token keyword">static</span>
+  <span class="token comment">// 是否更新已经上传过的文件(仅文件大小不同或在上次上传后进行更新的才会重新上传)</span>
+  update_exist<span class="token punctuation">:</span> <span class="token class-name">true</span>
+  image<span class="token punctuation">:</span> 
+    folder<span class="token punctuation">:</span> <span class="token class-name">images</span>
+    extend<span class="token punctuation">:</span> 
+  js<span class="token punctuation">:</span>
+    folder<span class="token punctuation">:</span> <span class="token class-name">js</span>
+  css<span class="token punctuation">:</span>
+    folder<span class="token punctuation">:</span> css<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>生成七牛配置路径，执行下面命令任意一个</li>
+</ul>
+<pre class="line-numbers language-none"><code class="language-none">hexo s
+或
+hexo g
+
+&#x2F;&#x2F;终端输出
+INFO  -----------------------------------------------------------
+INFO  qiniu state: online
+INFO  qiniu sync:  true
+INFO  qiniu local dir:  static
+INFO  qiniu url:   http:&#x2F;&#x2F;blogwenbo.com&#x2F;static
+INFO  -----------------------------------------------------------
+INFO  Start processing
+INFO  Now start qiniu sync.
+INFO  Need upload file num: 0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>就会在<strong>static</strong>目录下生成<strong>images</strong>、<strong>css</strong>、<strong>js</strong>三个文件夹。这时我们把测试图片<strong>七牛云.png</strong>放在<strong>images</strong>文件夹下，然后按照如下标签语法书写：</p>
+<pre class="line-numbers language-none"><code class="language-none">&#123;% qnimg 七牛云.png title:七牛云 alt:七牛云 &#39;class:&#39; extend:?imageView2&#x2F;2&#x2F;w&#x2F;450 %&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><img src="http://img.github.mailjob.net/oss.github/20210218115154.webp" alt="img"></p>
+<ul>
+<li>同步静态资源到七牛云空间，主要有两种方式，一种是使用hexo命令，还有一种是使用七牛插件命令，可以参考GitHub文档：<a target="_blank" rel="noopener" href="https://link.jianshu.com/?t=https%3A%2F%2Fgithub.com%2Fgyk001%2Fhexo-qiniu-sync">hexo-qiniu-sync</a></li>
+</ul>
+<pre class="line-numbers language-dart" data-language="dart"><code class="language-dart"><span class="token comment">//1、启用本地服务器.即使用 hexo server 命令（简写为 hexo s）</span>
+<span class="token comment">//当以本地服务器模式启动后，会自动监测 local_dir 目录下的文件变化， 会自动将新文件进行上传。</span>
+如果文件进行了修改，但设置中没有启用 update_exist 配置，则不会更新到七牛空间。
+hexo s
+hexo server
+
+<span class="token comment">//2、使用命令行命令(sync | s | sync2 | s2)</span>
+<span class="token comment">//命令行命令会扫描 local_dir 目录下的文件，同步至七牛空间。</span>
+hexo qiniu <span class="token keyword">sync</span>
+hexo qiniu s
+hexo qiniu sync2
+hexo qiniu s2<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="问题解决">问题解决</h3>
+<ul>
+<li>
+<p>没有注释**secret_file: sec/qn.json or C:**报错</p>
+<p>只需要吧这个注释掉就行了</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># secret_file: sec/qn.json or C:</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://github.com/gyk001/hexo-qiniu-sync/issues/41">hexo-qiniu-sync安装好后，hexo s命令不见了，hexo d也提示问题 #41</a></p>
+<pre class="line-numbers language-csharp" data-language="csharp"><code class="language-csharp"><span class="token comment">//将其注释就好了</span>
+<span class="token preprocessor property">#plugins:</span>
+<span class="token preprocessor property"># - hexo-qiniu-sync</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+</li>
+</ul>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/3930982599.html">https://blog.mailjob.net/posts/3930982599.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%95%E8%A8%80"><span class="toc-text">引言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%80%E5%A7%8B%E5%AE%89%E8%A3%85"><span class="toc-text">开始安装</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E4%B8%83%E7%89%9B%E4%BA%91%E6%8F%92%E4%BB%B6"><span class="toc-text">安装七牛云插件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3%E4%BF%A1%E6%81%AF"><span class="toc-text">配置相关信息</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3"><span class="toc-text">问题解决</span></a></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

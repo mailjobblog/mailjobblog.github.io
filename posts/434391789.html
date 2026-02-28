@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>算法的时间复杂度 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="计算时间复杂度需要三个前提  不考虑任何的软硬件环境 假设程序每一条语句的执行时间相同，均为t 只考虑最坏情况，即数据规模足够大，设为n  所以，一定要注意这三个前提下，我们的分析才能正常进行也才有意义！所以我们这里的时间复杂度实际上指的是最坏时间复杂度! 这里有一个固定的公式来表示时间复杂度: T(n) &#x3D; O(f(n)) 其中n表示的是数据规模，f(n)是算法执行的总时间，其计算公式">
+<meta property="og:type" content="article">
+<meta property="og:title" content="算法的时间复杂度">
+<meta property="og:url" content="https://blog.mailjob.net/posts/434391789.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="计算时间复杂度需要三个前提  不考虑任何的软硬件环境 假设程序每一条语句的执行时间相同，均为t 只考虑最坏情况，即数据规模足够大，设为n  所以，一定要注意这三个前提下，我们的分析才能正常进行也才有意义！所以我们这里的时间复杂度实际上指的是最坏时间复杂度! 这里有一个固定的公式来表示时间复杂度: T(n) &#x3D; O(f(n)) 其中n表示的是数据规模，f(n)是算法执行的总时间，其计算公式">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-03-19T13:04:55.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.976Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="算法">
+<meta name="twitter:card" content="summary">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            算法的时间复杂度
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/434391789.html" class="article-date">
+	  <time datetime="2021-03-19T13:04:55.000Z" itemprop="datePublished">2021-03-19</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/%E7%AE%97%E6%B3%95/">算法</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/434391789.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 2.1k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 8(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="计算时间复杂度需要三个前提">计算时间复杂度需要三个前提</h2>
+<ul>
+<li>不考虑任何的软硬件环境</li>
+<li>假设程序每一条语句的执行时间相同，均为<code>t</code></li>
+<li>只考虑最坏情况，即数据规模足够大，设为<code>n</code></li>
+</ul>
+<p>所以，一定要注意这三个前提下，我们的分析才能正常进行也才有意义！所以我们这里的时间复杂度实际上指的是最坏时间复杂度!</p>
+<p><strong>这里有一个固定的公式来表示时间复杂度:</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">T(n) &#x3D; O(f(n))<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>其中n表示的是数据规模，f(n)是算法执行的总时间，其计算公式是:</p>
+<pre class="line-numbers language-none"><code class="language-none">f(n) &#x3D; 算法执行语句的数量 * t<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>即算法中语句的执行数量与单条语句执行时间t的积。<br>
+所以时间复杂度公式就是:</p>
+<pre class="line-numbers language-none"><code class="language-none">T(n) &#x3D; O(算法运行总时间)<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>这里我们把算法运行总时间放在了一个固定的格式中: <code>O()</code>。 我们成这种表达方式为<code>大O</code>表示法，<code>大O</code>表示法就是表达<br>
+最坏的情况的一中表示形式，后面我们会学习最坏空间复杂度，也是用<code>大O</code>表示法来表示！而且在时间复杂度扩展知识中我们还会了解表达最好情况的<code>大Ω</code>表示法和表达平均情况的<code>大Θ</code>表示法！</p>
+<h2 id="常见的时间复杂度">常见的时间复杂度</h2>
+<table>
+<thead>
+<tr>
+<th>时间复杂度</th>
+<th>非正式术语</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>O（1）</td>
+<td>常数阶</td>
+</tr>
+<tr>
+<td>O（n）</td>
+<td>线性阶</td>
+</tr>
+<tr>
+<td>O（n^2）</td>
+<td>平方阶</td>
+</tr>
+<tr>
+<td>O（log n）</td>
+<td>对数阶</td>
+</tr>
+<tr>
+<td>O（n * log n）</td>
+<td>n log n 阶</td>
+</tr>
+<tr>
+<td>O（n^3）</td>
+<td>立方阶</td>
+</tr>
+<tr>
+<td>O（2^n）</td>
+<td>指数阶</td>
+</tr>
+<tr>
+<td>O（n!）</td>
+<td>阶乘阶</td>
+</tr>
+<tr>
+<td>O（n^n）</td>
+<td>n的n方阶</td>
+</tr>
+</tbody>
+</table>
+<h3 id="复杂度排名如下">复杂度排名如下</h3>
+<p><strong>O(1) &lt; O(logn) &lt; O(n) &lt; O(nlogn) &lt; O(n^2) &lt; O(n^3) &lt; O(2^n) &lt; O(n!) &lt; O(n^n)</strong></p>
+<h2 id="时间复杂度知识扩展">时间复杂度知识扩展</h2>
+<p><strong>1、最好情况下的算法时间复杂度</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">最好情况下的时间复杂度又叫做 最好时间复杂度，使用 大Ω 表示法表示！<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>其实“最好时间复杂度”好理解，它描述了一个算法的最好的情况下花费的时间，也可以看做是一个算法花费时间的下限！就比如我们生活中要找一个东西，最好的情况是他就摆在你眼前，你一下就能找到它！在算法里呢，如果要设计一个搜索算法，比如要在一个包含100个元素的数据中搜索指定目标，最好的情况就是第一次就找到了！</p>
+<p>但是“最好时间复杂度”的实际意义并不大，除非我们要求一个算法只要最好的状态能满足需求就可以使用，但是这样的要求并不多见，一般都是要求最坏的情况下如果能接受那算法就可以使用！所以我们主要研究的和使用的都是“最坏时间复杂度”！</p>
+<p><strong>2、平均情况下的算法时间复杂度</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">平均情况下的时间复杂度又叫作 平均时间复杂度, 使用大Θ表示法表示！<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>“平均时间复杂度”也有一定的实用性，它描述了一个算法在处理数据过程中单个数据元素花费的平均时间！但是“平均时间复杂度”有一个问题就是并不好测量，因为平均时间是在真正运行过程中统计并且计算出来的！但也更贴合实际效果！所以这种表示方法很难通过直接评估得到结果！这个更加接近事后统计的一种方案。</p>
+<p>不过我们可以举一个比较好统计的例子,仍然是搜索100个排好序的数据中的某个元素！我们就使用直接遍历对比并且找到就立刻停下的形式来搜索！那么最好情况下找到的第一个元素就是我们要找的，也就是1次就找到了！最坏情况呢？是第100次才找到！那么平均呢？如果每一个元素都要找一遍的话，按照从头到尾找并且找到就停下的算法你可以计算一下应该是</p>
+<pre class="line-numbers language-none"><code class="language-none">( 1+2+3+4+...100 ) &#x2F; 100 &#x3D; 50.5<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>平均要找 50.5 次！</p>
+<h2 id="时间复杂度计算案例">时间复杂度计算案例</h2>
+<pre class="line-numbers language-none"><code class="language-none">计算 1+2+3+4+5.....+n 的和！<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="第一种思想：">第一种思想：</h3>
+<p>我们可以生成一个<code>n</code>个长度的数组，然后把数据存储到数组中，最后计算数组各项的和。</p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token keyword">function</span> <span class="token function-definition function">sum</span><span class="token punctuation">(</span> <span class="token variable">$n</span> <span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+    <span class="token comment">// 设定返回结果</span>
+    <span class="token variable">$res</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token comment">//&#123;1&#125;</span>
+    <span class="token comment">// 生成数组[1,2,3,4,5...n]</span>
+    <span class="token variable">$arr</span> <span class="token operator">=</span> <span class="token function">range</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token variable">$n</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//&#123;2&#125;</span>
+    <span class="token comment">// 计算数组中各项的和</span>
+    <span class="token keyword">for</span><span class="token punctuation">(</span><span class="token variable">$i</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token variable">$i</span> <span class="token operator">&lt;</span> <span class="token variable">$n</span><span class="token punctuation">;</span> <span class="token operator">++</span> <span class="token variable">$i</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span> <span class="token comment">//&#123;3&#125;</span>
+    	<span class="token variable">$res</span> <span class="token operator">+=</span> <span class="token variable">$arr</span><span class="token punctuation">[</span><span class="token variable">$i</span><span class="token punctuation">]</span><span class="token punctuation">;</span> <span class="token comment">//&#123;4&#125;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">// 返回结果</span>
+    <span class="token keyword">return</span> <span class="token variable">$res</span><span class="token punctuation">;</span> <span class="token comment">//&#123;5&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="时间复杂度计算">时间复杂度计算</h4>
+<p><strong>第一步：计算算法运行过程中运行的代码总的条数N</strong></p>
+<p>分析代码可知，其中{1}{2}{5}所标注的代码语句整个过程每条都只执行1次，而{3}{4}标注的语句执行过程中每一条都要执行n次！所以总条数N:</p>
+<pre class="line-numbers language-none"><code class="language-none">N &#x3D; 2*n + 3<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>第二步：计算算法总运行时间f(n):</strong></p>
+<p>前面我们已经制定了前提，以为每一条语句执行的时间实行同的，都是t，所以:</p>
+<pre class="line-numbers language-none"><code class="language-none">f(n) &#x3D; N * t &#x3D; (2*n + 3) * t<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>第三步：计算时间复杂度T(n):</strong></p>
+<p>我们这里的时间复杂度指的是最坏的时间复杂度，使用大O表示法表示:</p>
+<pre class="line-numbers language-none"><code class="language-none">T(n) &#x3D; O( f(n) ) &#x3D; O( (2*n + 3) * t )
+即
+T(n) &#x3D; O( (2*n + 3) * t )<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p><strong>第四步：简化</strong></p>
+<p>实际上到这里我们已经成功的计算出了这个算法的时间复杂度，但是在实际的时间复杂度的表示中，对于上面的结果我们要做一定的简化，简化结果是:</p>
+<pre class="line-numbers language-none"><code class="language-none">T(n) &#x3D; O(n)<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h5 id="Tips：简化步骤">Tips：简化步骤</h5>
+<blockquote>
+<p>1, 去掉常数t:<br>
+因为t代表的是每一条语句的运行时间，而每一条语句的运行时间都相同，所以t实际上是个常数，并且不影响<br>
+分析结果</p>
+<pre class="line-numbers language-none"><code class="language-none">T(n) &#x3D; O( (2*n + 3) )<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>2, 用常数1取代运行时间中的所有加法常数:</p>
+<pre class="line-numbers language-none"><code class="language-none">T(n) &#x3D; O( 2*n + 1 )<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>3, 在修改后的运行次数函数中，只保留最高阶项:</p>
+<pre class="line-numbers language-none"><code class="language-none">T(n) &#x3D; O( 2*n + 1 )<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>4, 如果最高阶项存在且不是1，则去除与这个项相乘的常数:</p>
+<pre class="line-numbers language-none"><code class="language-none">T(n) &#x3D; O( n + 1 )<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>5, 如果存在数据规模n, 去掉加法常数项:</p>
+<pre class="line-numbers language-none"><code class="language-none">T(n) &#x3D; O(n)<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>关于时间复杂度的计算，你会发现计算过程实际上变成了要数数整个程序一共会有多少条语句被执行的一年级数数问题！</p>
+<p>哈！开个玩笑！但，时间复杂度计算的实际结果确实也如此！</p>
+<p><strong>所以以后有人问你某个算法的时间发复杂度是什么，如果是直接描述，你就直接告诉他是O(XX), 如果是写表达式的话就写我们上面演示的这种T(n)=O(XX)就可以啦！</strong></p>
+</blockquote>
+<h3 id="第二种思想">第二种思想</h3>
+<p>直接循环计算数组各项的和</p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token keyword">function</span> <span class="token function-definition function">sum</span><span class="token punctuation">(</span> <span class="token variable">$n</span> <span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+    <span class="token comment">// 设定返回结果</span>
+    <span class="token variable">$res</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token comment">//&#123;1&#125;</span>
+    <span class="token comment">// 计算数组中各项的和</span>
+    <span class="token keyword">for</span><span class="token punctuation">(</span><span class="token variable">$i</span> <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span> <span class="token variable">$i</span> <span class="token operator">&lt;</span> <span class="token variable">$n</span><span class="token punctuation">;</span> <span class="token operator">++</span> <span class="token variable">$i</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span> <span class="token comment">//&#123;2&#125;</span>
+    	<span class="token variable">$res</span> <span class="token operator">+=</span> <span class="token variable">$i</span><span class="token punctuation">;</span> <span class="token comment">//&#123;3&#125;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">// 返回结果</span>
+    <span class="token keyword">return</span> <span class="token variable">$res</span><span class="token punctuation">;</span> <span class="token comment">//&#123;4&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="时间复杂度计算-2">时间复杂度计算</h4>
+<p><strong>第一步：计算算法运行过程中运行的代码总的条数N:</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">N &#x3D; 2*n + 2<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>第二步：计算算法总运行时间f(n):</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">f(n) &#x3D; N * t &#x3D; (2*n + 2) * t<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>第三步：计算时间复杂度T(n):</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">T(n) &#x3D; O( f(n) ) &#x3D; O( (2*n + 2) * t )<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>第四步：简化</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">T(n) &#x3D; O(n)<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="第三种思想">第三种思想</h3>
+<p>利用高斯公式，f(n) = (1+n)*n/2</p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php"><span class="token keyword">function</span> <span class="token function-definition function">sum</span><span class="token punctuation">(</span> <span class="token variable">$n</span> <span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+    <span class="token comment">// 设定返回结果</span>
+    <span class="token variable">$res</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token comment">//&#123;1&#125;</span>
+    <span class="token variable">$res</span> <span class="token operator">=</span> <span class="token punctuation">(</span> <span class="token number">1</span> <span class="token operator">+</span> <span class="token variable">$n</span> <span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token variable">$n</span> <span class="token operator">/</span> <span class="token number">2</span><span class="token punctuation">;</span> <span class="token comment">//&#123;2&#125;</span>
+    <span class="token comment">// 返回结果</span>
+    <span class="token keyword">return</span> <span class="token variable">$res</span><span class="token punctuation">;</span> <span class="token comment">//&#123;3&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="时间复杂度计算-3">时间复杂度计算</h4>
+<p><strong>第一步：计算算法运行过程中运行的代码总的条数N:</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">N &#x3D; 3<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>第二步：计算算法总运行时间f(n):</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">f(n) &#x3D; N * t &#x3D; 3 * t<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>第三步：计算时间复杂度T(n):</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">T(n) &#x3D; O( f(n) ) &#x3D; O( 3 * t )<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>第四步：简化。</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">T(n) &#x3D; O(1)<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/434391789.html">https://blog.mailjob.net/posts/434391789.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%A1%E7%AE%97%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E9%9C%80%E8%A6%81%E4%B8%89%E4%B8%AA%E5%89%8D%E6%8F%90"><span class="toc-text">计算时间复杂度需要三个前提</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E7%9A%84%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6"><span class="toc-text">常见的时间复杂度</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%8D%E6%9D%82%E5%BA%A6%E6%8E%92%E5%90%8D%E5%A6%82%E4%B8%8B"><span class="toc-text">复杂度排名如下</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E7%9F%A5%E8%AF%86%E6%89%A9%E5%B1%95"><span class="toc-text">时间复杂度知识扩展</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E8%AE%A1%E7%AE%97%E6%A1%88%E4%BE%8B"><span class="toc-text">时间复杂度计算案例</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E7%A7%8D%E6%80%9D%E6%83%B3%EF%BC%9A"><span class="toc-text">第一种思想：</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E8%AE%A1%E7%AE%97"><span class="toc-text">时间复杂度计算</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#Tips%EF%BC%9A%E7%AE%80%E5%8C%96%E6%AD%A5%E9%AA%A4"><span class="toc-text">Tips：简化步骤</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E7%A7%8D%E6%80%9D%E6%83%B3"><span class="toc-text">第二种思想</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E8%AE%A1%E7%AE%97-2"><span class="toc-text">时间复杂度计算</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%B8%89%E7%A7%8D%E6%80%9D%E6%83%B3"><span class="toc-text">第三种思想</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E8%AE%A1%E7%AE%97-3"><span class="toc-text">时间复杂度计算</span></a></li></ol></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

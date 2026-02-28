@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>etcd介绍与安装 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="介绍 etcd是一个高可用的 Key&#x2F;Value 存储系统，主要用于分享配置和服务发现。它是一款云原生时代的首选元数据存储产品，已经成为云原生和分布式系统的存储基石。类似项目有zookeeper和consul。 etcd具有以下特点：  完全复制：集群中的每个节点都可以使用完整的存档 高可用性：Etcd可用于避免硬件的单点故障或网络问题 一致性：每次读取都会返回跨多主机的最新写入 简单：包括一个定">
+<meta property="og:type" content="article">
+<meta property="og:title" content="etcd介绍与安装">
+<meta property="og:url" content="https://blog.mailjob.net/posts/1765858488.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="介绍 etcd是一个高可用的 Key&#x2F;Value 存储系统，主要用于分享配置和服务发现。它是一款云原生时代的首选元数据存储产品，已经成为云原生和分布式系统的存储基石。类似项目有zookeeper和consul。 etcd具有以下特点：  完全复制：集群中的每个节点都可以使用完整的存档 高可用性：Etcd可用于避免硬件的单点故障或网络问题 一致性：每次读取都会返回跨多主机的最新写入 简单：包括一个定">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/20220106223904.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20220106223946.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20220106224032.jpeg">
+<meta property="og:image" content="http://img.github.mailjob.net/20220106224040.png">
+<meta property="og:image" content="http://img.github.mailjob.net/20220106224130.png">
+<meta property="article:published_time" content="2022-01-06T13:44:51.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.980Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="go">
+<meta property="article:tag" content="linux">
+<meta property="article:tag" content="etcd">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/20220106223904.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            etcd介绍与安装
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/1765858488.html" class="article-date">
+	  <time datetime="2022-01-06T13:44:51.000Z" itemprop="datePublished">2022-01-06</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/linux/">linux</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/etcd/" rel="tag">etcd</a>, <a class="article-tag-none-link" href="/tags/go/" rel="tag">go</a>, <a class="article-tag-none-link" href="/tags/linux/" rel="tag">linux</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/1765858488.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.5k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 6(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="介绍">介绍</h2>
+<p>etcd是一个高可用的 Key/Value 存储系统，主要用于分享配置和服务发现。它是一款云原生时代的首选元数据存储产品，已经成为云原生和分布式系统的存储基石。类似项目有zookeeper和consul。</p>
+<p><strong>etcd具有以下特点</strong>：</p>
+<ul>
+<li>完全复制：集群中的每个节点都可以使用完整的存档</li>
+<li>高可用性：Etcd可用于避免硬件的单点故障或网络问题</li>
+<li>一致性：每次读取都会返回跨多主机的最新写入</li>
+<li>简单：包括一个定义良好、面向用户的API（gRPC）</li>
+<li>安全：实现了带有可选的客户端证书身份验证的自动化TLS</li>
+<li>快速：每秒10000次写入的基准速度</li>
+<li>可靠：使用Raft算法实现了强一致、高可用的服务存储目录</li>
+</ul>
+<h3 id="etcd架构介绍">etcd架构介绍</h3>
+<p><img src="http://img.github.mailjob.net/20220106223904.png" alt=""></p>
+<h4 id="Client层">Client层</h4>
+<ul>
+<li>组成
+<ul>
+<li>client v2 API 客户端库</li>
+<li>client v3 API 客户端库</li>
+</ul>
+</li>
+<li>作用
+<ul>
+<li>提供了简洁易用的 API</li>
+<li>支持负载均衡、节点间故障自动转移</li>
+<li>极大降低业务使用 etcd 复杂度，提升开发效率、服务可用性</li>
+</ul>
+</li>
+</ul>
+<h4 id="API-网络层">API 网络层</h4>
+<ul>
+<li>client 访问 server的通信协议
+<ul>
+<li>v2API
+<ul>
+<li>HTTP/1.x 协议</li>
+</ul>
+</li>
+<li>v3API
+<ul>
+<li>gRPC 协议</li>
+<li>HTTP/1.x 协议（通过 etcd grpc-gateway 组件支持）</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>server 节点之间的通信协议
+<ul>
+<li>节点间通过 Raft 算法实现数据复制和 Leader 选举等功能时使用的 HTTP 协议</li>
+</ul>
+</li>
+</ul>
+<h4 id="Raft-算法层（基石和亮点）">Raft 算法层（基石和亮点）</h4>
+<ul>
+<li>核心算法组成
+<ul>
+<li>Leader 选举</li>
+<li>日志复制</li>
+<li>ReadIndex</li>
+</ul>
+</li>
+<li>作用
+<ul>
+<li>用于保障 etcd 多个节点间的数据一致性、提升服务可用性等</li>
+</ul>
+</li>
+</ul>
+<h4 id="功能逻辑层（核心特性实现层）">功能逻辑层（核心特性实现层）</h4>
+<ul>
+<li>
+<p>KVServer 模块</p>
+<ul>
+<li>限速判断（保证集群稳定性，避免雪崩）</li>
+</ul>
+<p><img src="http://img.github.mailjob.net/20220106223946.png" alt=""></p>
+<ul>
+<li>生成一个唯一的 ID，将此请求关联到一个对应的消息通知 channel，然后向 Raft 模块发起（Propose）一个提案（Proposal）</li>
+<li>等待此 put 请求，等待写入结果通过消息通知 channel 返回或者超时。etcd 默认超时时间是 7 秒（5 秒磁盘 IO 延时 +2*1 秒竞选超时时间），如果一个请求超时未返回结果，则可能会出现 etcdserver: request timed out 错误</li>
+</ul>
+</li>
+<li>
+<p>MVCC 模块</p>
+<ul>
+<li>
+<p>读场景</p>
+<p><img src="http://img.github.mailjob.net/20220106224032.jpeg" alt="img"></p>
+</li>
+<li>
+<p>写场景</p>
+<p><img src="http://img.github.mailjob.net/20220106224040.png" alt=""></p>
+</li>
+<li>
+<p>treeIndex 模块（内存树形索引模块）</p>
+<ul>
+<li>保存用户 key 和版本号的映射关系</li>
+</ul>
+</li>
+<li>
+<p>boltdb 模块</p>
+<ul>
+<li>基于 B+ tree 实现的 key-value 键值库，支持事务，提供 Get/Put 等简易 API 给 etcd 操作</li>
+<li>每次修改操作，生成一个新的版本号 (revision)，以版本号为 key， value 为用户 key-value 等信息组成的结构体</li>
+<li>数据隔离
+<ul>
+<li>boltdb 里每个 bucket 类似对应 MySQL 一个表
+<ul>
+<li>用户的 key 数据存放的 bucket 名字的是 key</li>
+<li>etcd MVCC 元数据存放的 bucket 是 meta</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>Auth 鉴权模块</p>
+</li>
+<li>
+<p>Lease 租约模块</p>
+</li>
+<li>
+<p>Compactor 压缩模块</p>
+</li>
+<li>
+<p>Quota 模块（配额）</p>
+</li>
+<li>
+<p>Apply模块</p>
+<p><img src="http://img.github.mailjob.net/20220106224130.png" alt=""></p>
+</li>
+</ul>
+<h4 id="存储层">存储层</h4>
+<ul>
+<li>预写日志 (WAL) 模块
+<ul>
+<li>可保障 etcd crash 后数据不丢失</li>
+</ul>
+</li>
+<li>快照 (Snapshot) 模块</li>
+<li>boltdb 模块
+<ul>
+<li>保存了集群元数据和用户写入的数据</li>
+</ul>
+</li>
+</ul>
+<h2 id="参考文献">参考文献</h2>
+<ul>
+<li>etcd官方下载：<a target="_blank" rel="noopener" href="https://github.com/etcd-io/etcd/releases">https://github.com/etcd-io/etcd/releases</a></li>
+<li>etcd集群搭建：<a target="_blank" rel="noopener" href="https://www.wenjiangs.com/doc/h30rpjp5r">https://www.wenjiangs.com/doc/h30rpjp5r</a></li>
+<li>etcd集群配置文件：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/skymyyang/p/9067280.html">https://www.cnblogs.com/skymyyang/p/9067280.html</a></li>
+</ul>
+<h2 id="安装与配置">安装与配置</h2>
+<p>本文基于 <code>centos7</code> 和  <code>etcd v3.5.1</code> 进行讲解，请注意版本软件区分。</p>
+<h3 id="安装">安装</h3>
+<p><strong>下载etcd</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">curl</span> <span class="token parameter variable">-O</span>  https://github.com/etcd-io/etcd/releases/download/v3.5.1/etcd-v3.5.1-linux-amd64.tar.gz<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>PS：curl默认不支持Https，命令<code>curl -V</code>（V大写）查看Protocols项有没有https ，如果没有就要用命令：<code>yum install openssl-devel</code> 装SSL</p>
+<p><strong>解压文件</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">tar</span> <span class="token parameter variable">-zxvf</span> etcd-v3.5.1-linux-amd64.tar.gz
+
+<span class="token builtin class-name">cd</span> etcd-v3.5.1-linux-amd6<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p><strong>添加环境变量</strong></p>
+<p>etcd是服务端，etcdctl是运维人员操作的控制端，一般只需要装etcd，现在是学习就都装在同一台机器。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">cp</span> etcd /usr/local/bin
+<span class="token function">cp</span> etcdctl /usr/local/bin<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>PS：用echo $PATH查看自己的环境变量路径</p>
+<p><strong>修改环境变量PATH</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">vi</span> /etc/profile<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>在文件最后加入变量，因为<code>etcd</code>默认使用<code>V2</code>版本，我们需要<code>V3</code>版本的<code>API</code></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token builtin class-name">export</span> <span class="token assign-left variable">ETCDCTL_API</span><span class="token operator">=</span><span class="token number">3</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>刷新环境变量</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token builtin class-name">source</span> /etc/profile<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>查看版本信息</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">etcd <span class="token parameter variable">-version</span>
+或
+etcdctl version<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<h3 id="启动etcd">启动etcd</h3>
+<h4 id="单机部署">单机部署</h4>
+<p><strong>启动</strong>：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">etcd<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>直接运行命令 <code>./etcd</code> 就可以启动了，非常简单。默认使用2379端口为客户端提供通讯， 并使用端口2380来进行服务器间通讯。</p>
+<p><strong>测试</strong>：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@VM-0-15-centos ~<span class="token punctuation">]</span><span class="token comment"># etcdctl put foo bar</span>
+OK
+<span class="token punctuation">[</span>root@VM-0-15-centos ~<span class="token punctuation">]</span><span class="token comment"># etcdctl get foo</span>
+foo
+bar<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="集群部署">集群部署</h4>
+<p>内容略去。。。。。。</p>
+<h3 id="其他配置">其他配置</h3>
+<p><strong>创建etcd配置文件</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@VM-0-15-centos ~<span class="token punctuation">]</span><span class="token comment"># mkdir -p /var/lib/etcd/</span>
+<span class="token punctuation">[</span>root@VM-0-15-centos ~<span class="token punctuation">]</span><span class="token comment"># cat &lt;&lt;EOF | sudo tee /etc/etcd.conf</span>
+<span class="token operator">></span> <span class="token comment"># 节点名称</span>
+<span class="token operator">></span> <span class="token assign-left variable">ETCD_NAME</span><span class="token operator">=</span>etcd1
+<span class="token operator">></span> <span class="token comment"># 数据存放位置</span>
+<span class="token operator">></span> <span class="token assign-left variable">ETCD_DATA_DIR</span><span class="token operator">=</span>/var/lib/etcd/
+<span class="token operator">></span> EOF<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>创建开机启动文件</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">vim  &#x2F;etc&#x2F;systemd&#x2F;system&#x2F;etcd.service<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>写入以下配置信息</p>
+<pre class="line-numbers language-none"><code class="language-none">[Unit]
+Description&#x3D;Etcd Server
+Documentation&#x3D;https:&#x2F;&#x2F;github.com&#x2F;coreos&#x2F;etcd
+After&#x3D;network.target
+ 
+[Service]
+User&#x3D;root
+Type&#x3D;notify
+#这个文件特别关键，etcd使用的环境变量都需要通过环境变量文件读取
+EnvironmentFile&#x3D;-&#x2F;etc&#x2F;etcd.conf
+ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;etcd
+Restart&#x3D;on-failure
+RestartSec&#x3D;10s
+LimitNOFILE&#x3D;40000
+ 
+[Install]
+WantedBy&#x3D;multi-user.target<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>PS：<code>EnvironmentFile=-/etc/etcd.conf </code>这个配置项里<code>/etc</code>前的<code>-</code>是<code>K8S</code>生成配置文件时就有的，不是我误写的。</p>
+<p><strong>重新加载配置 &amp;&amp; 开机启动 &amp;&amp; 启动etcd</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">systemctl daemon-reload <span class="token operator">&amp;&amp;</span> systemctl <span class="token builtin class-name">enable</span> etcd <span class="token operator">&amp;&amp;</span> systemctl start etcd<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>开机启动设置状态，状态<code>enabled</code></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@VM-0-15-centos ~<span class="token punctuation">]</span><span class="token comment"># systemctl list-unit-files etcd.service</span>
+UNIT FILE    STATE  
+etcd.service enabled
+
+<span class="token number">1</span> unit files listed.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>查看etcd状态</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">systemctl show etcd.service<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>查看2379端口是否启动成功</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@VM-0-15-centos ~<span class="token punctuation">]</span><span class="token comment"># netstat -an |grep 2379</span>
+tcp        <span class="token number">0</span>      <span class="token number">0</span> <span class="token number">127.0</span>.0.1:2379          <span class="token number">0.0</span>.0.0:*               LISTEN     
+tcp        <span class="token number">0</span>      <span class="token number">0</span> <span class="token number">127.0</span>.0.1:50822         <span class="token number">127.0</span>.0.1:2379          ESTABLISHED
+tcp        <span class="token number">0</span>      <span class="token number">0</span> <span class="token number">127.0</span>.0.1:2379          <span class="token number">127.0</span>.0.1:50822         ESTABLISHED<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>PS： CentOS默认没有装<code>netstat</code>，需要 <code>yum install -y net-tools</code> 自己装</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/1765858488.html">https://blog.mailjob.net/posts/1765858488.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8B%E7%BB%8D"><span class="toc-text">介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#etcd%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D"><span class="toc-text">etcd架构介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Client%E5%B1%82"><span class="toc-text">Client层</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#API-%E7%BD%91%E7%BB%9C%E5%B1%82"><span class="toc-text">API 网络层</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Raft-%E7%AE%97%E6%B3%95%E5%B1%82%EF%BC%88%E5%9F%BA%E7%9F%B3%E5%92%8C%E4%BA%AE%E7%82%B9%EF%BC%89"><span class="toc-text">Raft 算法层（基石和亮点）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8A%9F%E8%83%BD%E9%80%BB%E8%BE%91%E5%B1%82%EF%BC%88%E6%A0%B8%E5%BF%83%E7%89%B9%E6%80%A7%E5%AE%9E%E7%8E%B0%E5%B1%82%EF%BC%89"><span class="toc-text">功能逻辑层（核心特性实现层）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AD%98%E5%82%A8%E5%B1%82"><span class="toc-text">存储层</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE"><span class="toc-text">安装与配置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85"><span class="toc-text">安装</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8etcd"><span class="toc-text">启动etcd</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8D%95%E6%9C%BA%E9%83%A8%E7%BD%B2"><span class="toc-text">单机部署</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4%E9%83%A8%E7%BD%B2"><span class="toc-text">集群部署</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B6%E4%BB%96%E9%85%8D%E7%BD%AE"><span class="toc-text">其他配置</span></a></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

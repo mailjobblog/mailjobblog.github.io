@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>使用go-redis/redismock做Redis单元测试 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="在开发应用程序时，使用 Redis 是一种常见的方式来处理和存储数据。Redis 提供了五种常用的数据类型：String、List、Set、Hash 和 Sorted Set。除了这些数据类型之外，有时我们还需要在 Redis 中执行复杂的命令序列，这时可以使用 Lua 脚本来实现。在本篇博客中，我们将探讨如何在 Go 语言中使用 go-redis&#x2F;redismock 来测试 Redis 常用的五">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用go-redis&#x2F;redismock做Redis单元测试">
+<meta property="og:url" content="https://blog.mailjob.net/posts/3307624659.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="在开发应用程序时，使用 Redis 是一种常见的方式来处理和存储数据。Redis 提供了五种常用的数据类型：String、List、Set、Hash 和 Sorted Set。除了这些数据类型之外，有时我们还需要在 Redis 中执行复杂的命令序列，这时可以使用 Lua 脚本来实现。在本篇博客中，我们将探讨如何在 Go 语言中使用 go-redis&#x2F;redismock 来测试 Redis 常用的五">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-07-26T01:17:50.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.979Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="go">
+<meta property="article:tag" content="redis">
+<meta name="twitter:card" content="summary">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            使用go-redis/redismock做Redis单元测试
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3307624659.html" class="article-date">
+	  <time datetime="2023-07-26T01:17:50.000Z" itemprop="datePublished">2023-07-26</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/go/">go</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/go/" rel="tag">go</a>, <a class="article-tag-none-link" href="/tags/redis/" rel="tag">redis</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/3307624659.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 2.5k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 12(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <p>在开发应用程序时，使用 Redis 是一种常见的方式来处理和存储数据。Redis 提供了五种常用的数据类型：String、List、Set、Hash 和 Sorted Set。除了这些数据类型之外，有时我们还需要在 Redis 中执行复杂的命令序列，这时可以使用 Lua 脚本来实现。在本篇博客中，我们将探讨如何在 Go 语言中使用 <code>go-redis/redismock</code> 来测试 Redis 常用的五种数据类型以及执行 Lua 脚本。</p>
+<h3 id="1-简介">1. 简介</h3>
+<p>首先，让我们了解一下 <code>go-redis/redismock</code> 是什么。它是一个用于 Mock Redis 数据库的库，可以模拟 Redis 客户端的行为，无需实际连接到真实的 Redis 数据库。这样，我们可以在单元测试中更快速和可控地测试与 Redis 交互的代码。</p>
+<h3 id="2-安装和设置">2. 安装和设置</h3>
+<p>在开始之前，请确保您已经安装了 Go 环境，并配置好了 Go 的工作空间。</p>
+<p>首先，我们需要安装 <code>go-redis/redismock</code> 和 <code>go-redis/redis/v8</code>：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">go get github.com/go-redis/redismock/v8
+go get github.com/go-redis/redis/v8<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<h3 id="3-示例：测试-Redis-String、List、Set、Hash-和-Sorted-Set">3. 示例：测试 Redis String、List、Set、Hash 和 Sorted Set</h3>
+<h4 id="String-类型">String 类型</h4>
+<p>首先，我们将测试 Redis 中的 String 类型。我们创建一个 <code>string_ops.go</code> 文件，并实现相应的 Go 代码：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// string_ops.go</span>
+
+<span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+	<span class="token string">"context"</span>
+	<span class="token string">"fmt"</span>
+	<span class="token string">"github.com/go-redis/redis/v8"</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment">// SetString 设置 Redis 中的 String 类型数据</span>
+<span class="token keyword">func</span> <span class="token function">SetString</span><span class="token punctuation">(</span>client <span class="token operator">*</span>redis<span class="token punctuation">.</span>Client<span class="token punctuation">,</span> key<span class="token punctuation">,</span> value <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">return</span> client<span class="token punctuation">.</span><span class="token function">Set</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> key<span class="token punctuation">,</span> value<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Err</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// GetString 获取 Redis 中的 String 类型数据</span>
+<span class="token keyword">func</span> <span class="token function">GetString</span><span class="token punctuation">(</span>client <span class="token operator">*</span>redis<span class="token punctuation">.</span>Client<span class="token punctuation">,</span> key <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">return</span> client<span class="token punctuation">.</span><span class="token function">Get</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> key<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Result</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在这个示例中，我们编写了 <code>SetString</code> 和 <code>GetString</code> 函数，用于设置和获取 Redis 中的 String 类型数据。</p>
+<p>接下来，我们编写单元测试来测试这两个函数。创建一个 <code>string_ops_test.go</code> 文件：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// string_ops_test.go</span>
+
+<span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+	<span class="token string">"testing"</span>
+
+	<span class="token string">"github.com/go-redis/redismock/v8"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">TestSetAndGet_String</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	client<span class="token punctuation">,</span> mock <span class="token operator">:=</span> redismock<span class="token punctuation">.</span><span class="token function">NewClientMock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	key <span class="token operator">:=</span> <span class="token string">"mykey"</span>
+	value <span class="token operator">:=</span> <span class="token string">"myvalue"</span>
+
+	mock<span class="token punctuation">.</span><span class="token function">ExpectSet</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> value<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">SetVal</span><span class="token punctuation">(</span><span class="token string">"OK"</span><span class="token punctuation">)</span>
+	mock<span class="token punctuation">.</span><span class="token function">ExpectGet</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">SetVal</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span>
+
+	err <span class="token operator">:=</span> <span class="token function">SetString</span><span class="token punctuation">(</span>client<span class="token punctuation">,</span> key<span class="token punctuation">,</span> value<span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"SetString failed: %s"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	result<span class="token punctuation">,</span> err <span class="token operator">:=</span> <span class="token function">GetString</span><span class="token punctuation">(</span>client<span class="token punctuation">,</span> key<span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"GetString failed: %s"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token keyword">if</span> result <span class="token operator">!=</span> value <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unexpected value, got: %s, want: %s"</span><span class="token punctuation">,</span> result<span class="token punctuation">,</span> value<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token keyword">if</span> err <span class="token operator">:=</span> mock<span class="token punctuation">.</span><span class="token function">ExpectationsWereMet</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unfulfilled expectations: %s"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="List-类型">List 类型</h4>
+<p>接下来，我们测试 Redis 中的 List 类型。我们创建一个 <code>list_ops.go</code> 文件，并实现相应的 Go 代码：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// list_ops.go</span>
+
+<span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+	<span class="token string">"context"</span>
+	<span class="token string">"fmt"</span>
+	<span class="token string">"github.com/go-redis/redis/v8"</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment">// ListPush 在 Redis 中的 List 类型数据上进行 push 操作</span>
+<span class="token keyword">func</span> <span class="token function">ListPush</span><span class="token punctuation">(</span>client <span class="token operator">*</span>redis<span class="token punctuation">.</span>Client<span class="token punctuation">,</span> key <span class="token builtin">string</span><span class="token punctuation">,</span> values <span class="token operator">...</span><span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token builtin">int64</span><span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">return</span> client<span class="token punctuation">.</span><span class="token function">LPush</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> key<span class="token punctuation">,</span> values<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Result</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// ListPop 在 Redis 中的 List 类型数据上进行 pop 操作</span>
+<span class="token keyword">func</span> <span class="token function">ListPop</span><span class="token punctuation">(</span>client <span class="token operator">*</span>redis<span class="token punctuation">.</span>Client<span class="token punctuation">,</span> key <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">return</span> client<span class="token punctuation">.</span><span class="token function">LPop</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> key<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Result</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在这个示例中，我们编写了 <code>ListPush</code> 和 <code>ListPop</code> 函数，用于在 Redis 中添加和弹出 List 类型数据。</p>
+<p>接下来，我们编写单元测试来测试这两个函数。创建一个 <code>list_ops_test.go</code> 文件：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// list_ops_test.go</span>
+
+<span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+	<span class="token string">"testing"</span>
+
+	<span class="token string">"github.com/go-redis/redismock/v8"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">TestListPushAndPop</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	client<span class="token punctuation">,</span> mock <span class="token operator">:=</span> redismock<span class="token punctuation">.</span><span class="token function">NewClientMock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	key <span class="token operator">:=</span> <span class="token string">"mylist"</span>
+
+	<span class="token comment">// 测试 ListPush</span>
+	values <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">&#123;</span><span class="token string">"item1"</span><span class="token punctuation">,</span> <span class="token string">"item2"</span><span class="token punctuation">,</span> <span class="token string">"item3"</span><span class="token punctuation">&#125;</span>
+	mock<span class="token punctuation">.</span><span class="token function">ExpectLPush</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> values<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">SetVal</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>
+
+	<span class="token comment">// 测试 ListPop</span>
+	mock<span class="token punctuation">.</span><span class="token function">ExpectLPop</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">SetVal</span><span class="token punctuation">(</span><span class="token string">"item3"</span><span class="token punctuation">)</span>
+
+	count<span class="token punctuation">,</span> err <span class="token operator">:=</span> <span class="token function">ListPush</span><span class="token punctuation">(</span>client<span class="token punctuation">,</span> key<span class="token punctuation">,</span> values<span class="token operator">...</span><span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"ListPush failed: %s"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token keyword">if</span> count <span class="token operator">!=</span> <span class="token number">3</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unexpected count, got: %d, want: %d"</span><span class="token punctuation">,</span> count<span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	item<span class="token punctuation">,</span> err <span class="token operator">:=</span> <span class="token function">ListPop</span><span class="token punctuation">(</span>client<span class="token punctuation">,</span> key<span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"ListPop failed: %s"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token keyword">if</span> item <span class="token operator">!=</span> <span class="token string">"item3"</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unexpected item, got: %s, want: %s"</span><span class="token punctuation">,</span> item<span class="token punctuation">,</span> <span class="token string">"item3"</span><span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token keyword">if</span> err <span class="token operator">:=</span> mock<span class="token punctuation">.</span><span class="token function">ExpectationsWereMet</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unfulfilled expectations: %s"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="Set-类型">Set 类型</h4>
+<p>接下来，我们测试 Redis 中的 Set 类型。我们创建一个 <code>set_ops.go</code> 文件，并实现相应的 Go 代码：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// set_ops.go</span>
+
+<span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+	<span class="token string">"context"</span>
+	<span class="token string">"fmt"</span>
+	<span class="token string">"github.com/go-redis/redis/v8"</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment">// SetAdd 在 Redis 中的 Set 类型数据上进行 add 操作</span>
+<span class="token keyword">func</span> <span class="token function">SetAdd</span><span class="token punctuation">(</span>client <span class="token operator">*</span>redis<span class="token punctuation">.</span>Client<span class="token punctuation">,</span> key <span class="token builtin">string</span><span class="token punctuation">,</span> members <span class="token operator">...</span><span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token builtin">int64</span><span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">return</span> client<span class="token punctuation">.</span><span class="token function">SAdd</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> key<span class="token punctuation">,</span> members<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Result</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// SetMembers 获取 Redis 中的 Set 类型数据的所有成员</span>
+<span class="token keyword">func</span> <span class="token function">SetMembers</span><span class="token punctuation">(</span>client <span class="token operator">*</span>redis<span class="token punctuation">.</span>Client<span class="token punctuation">,</span> key <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">return</span> client<span class="token punctuation">.</span><span class="token function">SMembers</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> key<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Result</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在这个示例中，我们编写了 <code>SetAdd</code> 和 <code>SetMembers</code> 函数，用于在 Redis 中添加和获取 Set 类型数据。</p>
+<p>接下来，我们编写单元测试来测试这两个函数。创建一个 <code>set_ops_test.go</code> 文件：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// set_ops_test.go</span>
+
+<span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+	<span class="token string">"reflect"</span>
+	<span class="token string">"testing"</span>
+
+	<span class="token string">"github.com/go-redis/redismock/v8"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">TestSetAddAndMembers</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	client<span class="token punctuation">,</span> mock <span class="token operator">:=</span> redismock<span class="token punctuation">.</span><span class="token function">NewClientMock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	key <span class="token operator">:=</span> <span class="token string">"myset"</span>
+
+	<span class="token comment">// 测试 SetAdd</span>
+	members <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">&#123;</span><span class="token string">"member1"</span><span class="token punctuation">,</span> <span class="token string">"member2"</span><span class="token punctuation">,</span> <span class="token string">"member3"</span><span class="token punctuation">&#125;</span>
+	mock<span class="token punctuation">.</span><span class="token function">ExpectSAdd</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> members<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">SetVal</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>
+
+	<span class="token comment">// 测试 SetMembers</span>
+	mock<span class="token punctuation">.</span><span class="token function">ExpectSMembers</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">SetVal</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">&#123;</span><span class="token string">"member1"</span><span class="token punctuation">,</span> <span class="token string">"member2"</span><span class="token punctuation">,</span> <span class="token string">"member3"</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+
+	count<span class="token punctuation">,</span> err <span class="token operator">:=</span> <span class="token function">SetAdd</span><span class="token punctuation">(</span>client<span class="token punctuation">,</span> key<span class="token punctuation">,</span> members<span class="token operator">...</span><span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"SetAdd failed: %s"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token keyword">if</span> count <span class="token operator">!=</span> <span class="token number">3</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unexpected count, got: %d, want: %d"</span><span class="token punctuation">,</span> count<span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	result<span class="token punctuation">,</span> err <span class="token operator">:=</span> <span class="token function">SetMembers</span><span class="token punctuation">(</span>client<span class="token punctuation">,</span> key<span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"SetMembers failed: %s"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token keyword">if</span> <span class="token operator">!</span>reflect<span class="token punctuation">.</span><span class="token function">DeepEqual</span><span class="token punctuation">(</span>result<span class="token punctuation">,</span> members<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unexpected members, got: %v, want: %v"</span><span class="token punctuation">,</span> result<span class="token punctuation">,</span> members<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token keyword">if</span> err <span class="token operator">:=</span> mock<span class="token punctuation">.</span><span class="token function">ExpectationsWereMet</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unfulfilled expectations: %s"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="Hash-类型">Hash 类型</h4>
+<p>接下来，我们测试 Redis 中的 Hash 类型。我们创建一个 <code>hash_ops.go</code> 文件，并实现相应的 Go 代码：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// hash_ops.go</span>
+
+<span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+	<span class="token string">"context"</span>
+	<span class="token string">"fmt"</span>
+	<span class="token string">"github.com/go-redis/redis/v8"</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment">// HashSet 在 Redis 中的 Hash 类型数据上进行设置操作</span>
+<span class="token keyword">func</span> <span class="token function">HashSet</span><span class="token punctuation">(</span>client <span class="token operator">*</span>redis<span class="token punctuation">.</span>Client<span class="token punctuation">,</span> key <span class="token builtin">string</span><span class="token punctuation">,</span> fieldValues <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">return</span> client<span class="token punctuation">.</span><span class="token function">HMSet</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> key<span class="token punctuation">,</span> fieldValues<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Err</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// HashGet 获取 Redis 中的 Hash 类型数据的指定字段值</span>
+<span class="token keyword">func</span> <span class="token function">HashGet</span><span class="token punctuation">(</span>client <span class="token operator">*</span>redis<span class="token punctuation">.</span>Client<span class="token punctuation">,</span> key<span class="token punctuation">,</span> field <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">return</span> client<span class="token punctuation">.</span><span class="token function">HGet</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> key<span class="token punctuation">,</span> field<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Result</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在这个示例中，我们编写了 <code>HashSet</code> 和 <code>HashGet</code> 函数，用于在 Redis 中设置和获取 Hash 类型数据。</p>
+<p>接下来，我们编写单元测试来测试这两个函数。创建一个 <code>hash_ops_test.go</code> 文件：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// hash_ops_test.go</span>
+
+<span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+	<span class="token string">"testing"</span>
+
+	<span class="token string">"github.com/go-redis/redismock/v8"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">TestHashSetAndGet</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	client<span class="token punctuation">,</span> mock <span class="token operator">:=</span> redismock<span class="token punctuation">.</span><span class="token function">NewClientMock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	key <span class="token operator">:=</span> <span class="token string">"myhash"</span>
+
+	<span class="token comment">// 测试 HashSet</span>
+	fieldValues <span class="token operator">:=</span> <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">&#123;</span>
+		<span class="token string">"field1"</span><span class="token punctuation">:</span> <span class="token string">"value1"</span><span class="token punctuation">,</span>
+		<span class="token string">"field2"</span><span class="token punctuation">:</span> <span class="token string">"value2"</span><span class="token punctuation">,</span>
+		<span class="token string">"field3"</span><span class="token punctuation">:</span> <span class="token string">"value3"</span><span class="token punctuation">,</span>
+	<span class="token punctuation">&#125;</span>
+	mock<span class="token punctuation">.</span><span class="token function">ExpectHMSet</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> fieldValues<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">SetVal</span><span class="token punctuation">(</span><span class="token string">"OK"</span><span class="token punctuation">)</span>
+
+	<span class="token comment">// 测试 HashGet</span>
+	field <span class="token operator">:=</span> <span class="token string">"field2"</span>
+	mock<span class="token punctuation">.</span><span class="token function">ExpectHGet</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> field<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">SetVal</span><span class="token punctuation">(</span><span class="token string">"value2"</span><span class="token punctuation">)</span>
+
+	err <span class="token operator">:=</span> <span class="token function">HashSet</span><span class="token punctuation">(</span>client<span class="token punctuation">,</span> key<span class="token punctuation">,</span> fieldValues<span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"HashSet failed: %s"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	result<span class="token punctuation">,</span> err <span class="token operator">:=</span> <span class="token function">HashGet</span><span class="token punctuation">(</span>client<span class="token punctuation">,</span> key<span class="token punctuation">,</span> field<span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"HashGet failed: %s"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token keyword">if</span> result <span class="token operator">!=</span> <span class="token string">"value2"</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unexpected value, got: %s, want: %s"</span><span class="token punctuation">,</span> result<span class="token punctuation">,</span> <span class="token string">"value2"</span><span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token keyword">if</span> err <span class="token operator">:=</span> mock<span class="token punctuation">.</span><span class="token function">ExpectationsWereMet</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unfulfilled expectations: %s"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="Sorted-Set-类型">Sorted Set 类型</h4>
+<p>最后，我们测试 Redis 中的 Sorted Set 类型。我们创建一个 <code>sorted_set_ops.go</code> 文件，并实现相应的 Go 代码：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// sorted_set_ops.go</span>
+
+<span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+	<span class="token string">"context"</span>
+	<span class="token string">"fmt"</span>
+	<span class="token string">"github.com/go-redis/redis/v8"</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment">// SortedSetAdd 在 Redis 中的 Sorted Set 类型数据上进行 add 操作</span>
+<span class="token keyword">func</span> <span class="token function">SortedSetAdd</span><span class="token punctuation">(</span>client <span class="token operator">*</span>redis<span class="token punctuation">.</span>Client<span class="token punctuation">,</span> key <span class="token builtin">string</span><span class="token punctuation">,</span> members <span class="token operator">...</span><span class="token operator">*</span>redis<span class="token punctuation">.</span>Z<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token builtin">int64</span><span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">return</span> client<span class="token punctuation">.</span><span class="token function">ZAdd</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> key<span class="token punctuation">,</span> members<span class="token operator">...</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Result</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// SortedSetRange 获取 Redis 中的 Sorted Set 类型数据指定范围的成员</span>
+<span class="token keyword">func</span> <span class="token function">SortedSetRange</span><span class="token punctuation">(</span>client <span class="token operator">*</span>redis<span class="token punctuation">.</span>Client<span class="token punctuation">,</span> key <span class="token builtin">string</span><span class="token punctuation">,</span> start<span class="token punctuation">,</span> stop <span class="token builtin">int64</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">return</span> client<span class="token punctuation">.</span><span class="token function">ZRange</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> key<span class="token punctuation">,</span> start<span class="token punctuation">,</span> stop<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Result</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在这个示例中，我们编写了 <code>SortedSetAdd</code> 和 <code>SortedSetRange</code> 函数，用于在 Redis 中添加和获取 Sorted Set 类型数据。</p>
+<p>接下来，我们编写单元测试来测试这两个函数。创建一个 <code>sorted_set_ops_test.go</code> 文件：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// sorted_set_ops_test.go</span>
+
+<span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+	<span class="token string">"reflect"</span>
+	<span class="token string">"testing"</span>
+
+	<span class="token string">"github.com/go-redis/redismock/v8"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">TestSortedSetAddAndRange</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	client<span class="token punctuation">,</span> mock <span class="token operator">:=</span> redismock<span class="token punctuation">.</span><span class="token function">NewClientMock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	key <span class="token operator">:=</span> <span class="token string">"mysortedset"</span>
+
+	<span class="token comment">// 测试 SortedSetAdd</span>
+	members <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>redis<span class="token punctuation">.</span>Z<span class="token punctuation">&#123;</span>
+		<span class="token operator">&amp;</span>redis<span class="token punctuation">.</span>Z<span class="token punctuation">&#123;</span>Score<span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">,</span> Member<span class="token punctuation">:</span> <span class="token string">"member1"</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+		<span class="token operator">&amp;</span>redis<span class="token punctuation">.</span>Z<span class="token punctuation">&#123;</span>Score<span class="token punctuation">:</span> <span class="token number">2</span><span class="token punctuation">,</span> Member<span class="token punctuation">:</span> <span class="token string">"member2"</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+		<span class="token operator">&amp;</span>redis<span class="token punctuation">.</span>Z<span class="token punctuation">&#123;</span>Score<span class="token punctuation">:</span> <span class="token number">3</span><span class="token punctuation">,</span> Member<span class="token punctuation">:</span> <span class="token string">"member3"</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+	<span class="token punctuation">&#125;</span>
+	mock<span class="token punctuation">.</span><span class="token function">ExpectZAdd</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> members<span class="token operator">...</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">SetVal</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>
+
+	<span class="token comment">// 测试 SortedSetRange</span>
+	mock<span class="token punctuation">.</span><span class="token function">ExpectZRange</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">SetVal</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">&#123;</span><span class="token string">"member1"</span><span class="token punctuation">,</span> <span class="token string">"member2"</span><span class="token punctuation">,</span> <span class="token string">"member3"</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+
+	count<span class="token punctuation">,</span> err <span class="token operator">:=</span> <span class="token function">SortedSetAdd</span><span class="token punctuation">(</span>client<span class="token punctuation">,</span> key<span class="token punctuation">,</span> members<span class="token operator">...</span><span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"SortedSetAdd failed: %s"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token keyword">if</span> count <span class="token operator">!=</span> <span class="token number">3</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unexpected count, got: %d, want: %d"</span><span class="token punctuation">,</span> count<span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	result<span class="token punctuation">,</span> err <span class="token operator">:=</span> <span class="token function">SortedSetRange</span><span class="token punctuation">(</span>client<span class="token punctuation">,</span> key<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"SortedSetRange failed: %s"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	expected <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">&#123;</span><span class="token string">"member1"</span><span class="token punctuation">,</span> <span class="token string">"member2"</span><span class="token punctuation">,</span> <span class="token string">"member3"</span><span class="token punctuation">&#125;</span>
+	<span class="token keyword">if</span> <span class="token operator">!</span>reflect<span class="token punctuation">.</span><span class="token function">DeepEqual</span><span class="token punctuation">(</span>result<span class="token punctuation">,</span> expected<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unexpected members, got: %v, want: %v"</span><span class="token punctuation">,</span> result<span class="token punctuation">,</span> expected<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token keyword">if</span> err <span class="token operator">:=</span> mock<span class="token punctuation">.</span><span class="token function">ExpectationsWereMet</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unfulfilled expectations: %s"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="4-执行-Lua-脚本">4. 执行 Lua 脚本</h3>
+<p>现在，让我们测试在 Redis 中执行 Lua 脚本。我们将使用 <code>counter.lua</code> 脚本，并在其中实现计数器应用。</p>
+<p>首先，创建一个名为 <code>counter.lua</code> 的 Lua 脚本：</p>
+<pre class="line-numbers language-lua" data-language="lua"><code class="language-lua"><span class="token comment">-- counter.lua</span>
+
+<span class="token keyword">local</span> key <span class="token operator">=</span> KEYS<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+<span class="token keyword">local</span> increment <span class="token operator">=</span> <span class="token function">tonumber</span><span class="token punctuation">(</span>ARGV<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token keyword">if</span> increment <span class="token operator">></span> <span class="token number">0</span> <span class="token keyword">then</span>
+    <span class="token keyword">return</span> redis<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string">'INCRBY'</span><span class="token punctuation">,</span> key<span class="token punctuation">,</span> increment<span class="token punctuation">)</span>
+<span class="token keyword">else</span>
+    <span class="token keyword">return</span> redis<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span><span class="token string">'GET'</span><span class="token punctuation">,</span> key<span class="token punctuation">)</span>
+<span class="token keyword">end</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在该脚本中，我们接收一个键和一个增量值作为参数。如果增量值大于 0，则在 Redis 中使用 <code>INCRBY</code> 命令增加计数；否则，返回该键的当前值。</p>
+<p>接下来，我们创建一个名为 <code>counter.go</code> 的文件，并实现相应的 Go 代码：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// counter.go</span>
+
+<span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+	<span class="token string">"context"</span>
+	<span class="token string">"github.com/go-redis/redis/v8"</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment">//  Lua 脚本用于增加计数或获取当前值</span>
+<span class="token keyword">const</span> counterLuaScript <span class="token operator">=</span> <span class="token string">`
+    local key = KEYS[1]
+    local increment = tonumber(ARGV[1])
+    
+    if increment > 0 then
+        return redis.call('INCRBY', key, increment)
+    else
+        return redis.call('GET', key)
+    end
+`</span>
+
+<span class="token comment">// IncreaseCounter 使用 Redis EVAL 命令执行 Lua 脚本，增加计数或获取当前值</span>
+<span class="token keyword">func</span> <span class="token function">IncreaseCounter</span><span class="token punctuation">(</span>client <span class="token operator">*</span>redis<span class="token punctuation">.</span>Client<span class="token punctuation">,</span> key <span class="token builtin">string</span><span class="token punctuation">,</span> increment <span class="token builtin">int64</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token builtin">int64</span><span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token comment">// 调用 Redis EVAL 命令执行 Lua 脚本</span>
+	result<span class="token punctuation">,</span> err <span class="token operator">:=</span> client<span class="token punctuation">.</span><span class="token function">Eval</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> counterLuaScript<span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">&#123;</span>key<span class="token punctuation">&#125;</span><span class="token punctuation">,</span> increment<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Result</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">,</span> err
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token comment">// 转换结果为整数并返回</span>
+	<span class="token keyword">if</span> intValue<span class="token punctuation">,</span> ok <span class="token operator">:=</span> result<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token builtin">int64</span><span class="token punctuation">)</span><span class="token punctuation">;</span> ok <span class="token punctuation">&#123;</span>
+		<span class="token keyword">return</span> intValue<span class="token punctuation">,</span> <span class="token boolean">nil</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">,</span> fmt<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unexpected result type"</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在这个示例中，我们编写了 <code>IncreaseCounter</code> 函数，它使用 Redis 客户端执行我们之前创建的 Lua 脚本，并返回结果。</p>
+<p>接下来，我们编写单元测试来测试 <code>IncreaseCounter</code> 函数。创建一个 <code>counter_test.go</code> 文件：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// counter_test.go</span>
+
+<span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+	<span class="token string">"testing"</span>
+
+	<span class="token string">"github.com/go-redis/redismock/v8"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">TestIncreaseCounter_PositiveIncrement</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	client<span class="token punctuation">,</span> mock <span class="token operator">:=</span> redismock<span class="token punctuation">.</span><span class="token function">NewClientMock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	key <span class="token operator">:=</span> <span class="token string">"mykey"</span>
+	increment <span class="token operator">:=</span> <span class="token function">int64</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span>
+
+	mock<span class="token punctuation">.</span><span class="token function">ExpectEval</span><span class="token punctuation">(</span>counterLuaScript<span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">&#123;</span>key<span class="token punctuation">&#125;</span><span class="token punctuation">,</span> increment<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">SetVal</span><span class="token punctuation">(</span>increment<span class="token punctuation">)</span>
+
+	result<span class="token punctuation">,</span> err <span class="token operator">:=</span> <span class="token function">IncreaseCounter</span><span class="token punctuation">(</span>client<span class="token punctuation">,</span> key<span class="token punctuation">,</span> increment<span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"IncreaseCounter failed: %s"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token keyword">if</span> result <span class="token operator">!=</span> increment <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unexpected result, got: %d, want: %d"</span><span class="token punctuation">,</span> result<span class="token punctuation">,</span> increment<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token keyword">if</span> err <span class="token operator">:=</span> mock<span class="token punctuation">.</span><span class="token function">ExpectationsWereMet</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unfulfilled expectations: %s"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">TestIncreaseCounter_NegativeIncrement</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	client<span class="token punctuation">,</span> mock <span class="token operator">:=</span> redismock<span class="token punctuation">.</span><span class="token function">NewClientMock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	key <span class="token operator">:=</span> <span class="token string">"mykey"</span>
+	increment <span class="token operator">:=</span> <span class="token function">int64</span><span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">5</span><span class="token punctuation">)</span>
+	currentValue <span class="token operator">:=</span> <span class="token function">int64</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span>
+
+	mock<span class="token punctuation">.</span><span class="token function">ExpectEval</span><span class="token punctuation">(</span>counterLuaScript<span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">&#123;</span>key<span class="token punctuation">&#125;</span><span class="token punctuation">,</span> increment<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">SetVal</span><span class="token punctuation">(</span>currentValue<span class="token punctuation">)</span>
+
+	result<span class="token punctuation">,</span> err <span class="token operator">:=</span> <span class="token function">IncreaseCounter</span><span class="token punctuation">(</span>client<span class="token punctuation">,</span> key<span class="token punctuation">,</span> increment<span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"IncreaseCounter failed: %s"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token keyword">if</span> result <span class="token operator">!=</span> currentValue <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unexpected result, got: %d, want: %d"</span><span class="token punctuation">,</span> result<span class="token punctuation">,</span> currentValue<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token keyword">if</span> err <span class="token operator">:=</span> mock<span class="token punctuation">.</span><span class="token function">ExpectationsWereMet</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unfulfilled expectations: %s"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="5-结论">5. 结论</h3>
+<p>在本文中，我们学习了如何使用 <code>go-redis/redismock</code> 在 Go 语言中测试 Redis 常用的五种数据类型以及执行 Lua 脚本。我们测试了 Redis 中的 String、List、Set、Hash 和 Sorted Set 类型，并实现了一个简单的计数器应用来测试执行 Lua 脚本的功能。通过单元测试，我们可以确保这些 Redis 操作的正确性和稳定性。使用 <code>go-redis/redismock</code>，我们可以在不连接到真实 Redis 数据库的情况下快速和可控地测试与 Redis 交互的代码。这为我们的应用程序开发和维护带来了便利和信心。</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/3307624659.html">https://blog.mailjob.net/posts/3307624659.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E7%AE%80%E4%BB%8B"><span class="toc-text">1. 简介</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%AE%89%E8%A3%85%E5%92%8C%E8%AE%BE%E7%BD%AE"><span class="toc-text">2. 安装和设置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E7%A4%BA%E4%BE%8B%EF%BC%9A%E6%B5%8B%E8%AF%95-Redis-String%E3%80%81List%E3%80%81Set%E3%80%81Hash-%E5%92%8C-Sorted-Set"><span class="toc-text">3. 示例：测试 Redis String、List、Set、Hash 和 Sorted Set</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#String-%E7%B1%BB%E5%9E%8B"><span class="toc-text">String 类型</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#List-%E7%B1%BB%E5%9E%8B"><span class="toc-text">List 类型</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Set-%E7%B1%BB%E5%9E%8B"><span class="toc-text">Set 类型</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Hash-%E7%B1%BB%E5%9E%8B"><span class="toc-text">Hash 类型</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Sorted-Set-%E7%B1%BB%E5%9E%8B"><span class="toc-text">Sorted Set 类型</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E6%89%A7%E8%A1%8C-Lua-%E8%84%9A%E6%9C%AC"><span class="toc-text">4. 执行 Lua 脚本</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E7%BB%93%E8%AE%BA"><span class="toc-text">5. 结论</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

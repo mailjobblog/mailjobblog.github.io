@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>mysql视图(View) | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="引言 MySQL 视图（View）是一种虚拟存在的表，同真实表一样，视图也由列和行构成，但视图并不实际存在于数据库中。行和列的数据来自于定义视图的查询中所使用的表，并且还是在使用视图时动态生成的。 数据库中只存放了视图的定义，并没有存放视图中的数据，这些数据都存放在定义视图查询所引用的真实表中。使用视图查询数据时，数据库会从真实表中取出对应的数据。因此，视图中的数据是依赖于真实表中的数据的。一旦真">
+<meta property="og:type" content="article">
+<meta property="og:title" content="mysql视图(View)">
+<meta property="og:url" content="https://blog.mailjob.net/posts/1198915737.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="引言 MySQL 视图（View）是一种虚拟存在的表，同真实表一样，视图也由列和行构成，但视图并不实际存在于数据库中。行和列的数据来自于定义视图的查询中所使用的表，并且还是在使用视图时动态生成的。 数据库中只存放了视图的定义，并没有存放视图中的数据，这些数据都存放在定义视图查询所引用的真实表中。使用视图查询数据时，数据库会从真实表中取出对应的数据。因此，视图中的数据是依赖于真实表中的数据的。一旦真">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-04-03T01:07:28.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.982Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="mysql">
+<meta name="twitter:card" content="summary">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            mysql视图(View)
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/1198915737.html" class="article-date">
+	  <time datetime="2021-04-03T01:07:28.000Z" itemprop="datePublished">2021-04-03</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/mysql/">mysql</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/mysql/" rel="tag">mysql</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/1198915737.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 4.2k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 16(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="引言">引言</h2>
+<p>MySQL 视图（View）是一种虚拟存在的表，同真实表一样，视图也由列和行构成，但视图并不实际存在于数据库中。行和列的数据来自于定义视图的查询中所使用的表，并且还是在使用视图时动态生成的。</p>
+<p>数据库中只存放了视图的定义，并没有存放视图中的数据，这些数据都存放在定义视图查询所引用的真实表中。使用视图查询数据时，数据库会从真实表中取出对应的数据。因此，视图中的数据是依赖于真实表中的数据的。一旦真实表中的数据发生改变，显示在视图中的数据也会发生改变。</p>
+<p>视图可以从原有的表上选取对用户有用的信息，那些对用户没用，或者用户没有权限了解的信息，都可以直接屏蔽掉，作用类似于筛选。这样做既使应用简单化，也保证了系统的安全。</p>
+<h2 id="基本概念">基本概念</h2>
+<h3 id="场面描述说明">场面描述说明</h3>
+<p>例如，下面的数据库中有一张公司部门表 department。表中包括部门号（d_id）、部门名称（d_name）、功能（function）和办公地址（address）。department 表的结构如下：</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql<span class="token operator">></span> <span class="token keyword">DESC</span> department<span class="token punctuation">;</span>
+<span class="token operator">+</span><span class="token comment">----------+-------------+------+-----+---------+-------+</span>
+<span class="token operator">|</span> Field    <span class="token operator">|</span> <span class="token keyword">Type</span>        <span class="token operator">|</span> <span class="token boolean">Null</span> <span class="token operator">|</span> <span class="token keyword">Key</span> <span class="token operator">|</span> <span class="token keyword">Default</span> <span class="token operator">|</span> Extra <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">----------+-------------+------+-----+---------+-------+</span>
+<span class="token operator">|</span> d_id     <span class="token operator">|</span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span>      <span class="token operator">|</span> <span class="token keyword">NO</span>   <span class="token operator">|</span> PRI <span class="token operator">|</span> <span class="token boolean">NULL</span>    <span class="token operator">|</span>       <span class="token operator">|</span>
+<span class="token operator">|</span> d_name   <span class="token operator">|</span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">20</span><span class="token punctuation">)</span> <span class="token operator">|</span> <span class="token keyword">NO</span>   <span class="token operator">|</span> UNI    <span class="token operator">|</span> <span class="token boolean">NULL</span>    <span class="token operator">|</span>       <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token keyword">function</span> <span class="token operator">|</span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">50</span><span class="token punctuation">)</span> <span class="token operator">|</span> YES  <span class="token operator">|</span>     <span class="token operator">|</span> <span class="token boolean">NULL</span>    <span class="token operator">|</span>       <span class="token operator">|</span>
+<span class="token operator">|</span> address  <span class="token operator">|</span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">50</span><span class="token punctuation">)</span> <span class="token operator">|</span> YES  <span class="token operator">|</span>     <span class="token operator">|</span> <span class="token boolean">NULL</span>    <span class="token operator">|</span>       <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">----------+-------------+------+-----+---------+-------+</span>
+<span class="token number">4</span> <span class="token keyword">rows</span> <span class="token operator">in</span> <span class="token keyword">set</span> <span class="token punctuation">(</span><span class="token number">0.02</span> sec<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>还有一张员工表 worker。表中包含了员工的工作号（num）、部门号（d_id）、姓名（name）、性别（sex）、出生日期（birthday）和家庭住址（homeaddress）。worker 表的结构如下：</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql<span class="token operator">></span> <span class="token keyword">DESC</span> worker<span class="token punctuation">;</span>
+<span class="token operator">+</span><span class="token comment">-------------+-------------+------+-----+---------+-------+</span>
+<span class="token operator">|</span> Field       <span class="token operator">|</span> <span class="token keyword">Type</span>        <span class="token operator">|</span> <span class="token boolean">Null</span> <span class="token operator">|</span> <span class="token keyword">Key</span> <span class="token operator">|</span> <span class="token keyword">Default</span> <span class="token operator">|</span> Extra <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">-------------+-------------+------+-----+---------+-------+</span>
+<span class="token operator">|</span> num         <span class="token operator">|</span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span>     <span class="token operator">|</span> <span class="token keyword">NO</span>   <span class="token operator">|</span> PRI <span class="token operator">|</span> <span class="token boolean">NULL</span>    <span class="token operator">|</span>       <span class="token operator">|</span>
+<span class="token operator">|</span> d_id        <span class="token operator">|</span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span>      <span class="token operator">|</span> YES  <span class="token operator">|</span>MUL     <span class="token operator">|</span> <span class="token boolean">NULL</span>    <span class="token operator">|</span>       <span class="token operator">|</span>
+<span class="token operator">|</span> name        <span class="token operator">|</span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">20</span><span class="token punctuation">)</span> <span class="token operator">|</span> <span class="token keyword">NO</span>   <span class="token operator">|</span>     <span class="token operator">|</span> <span class="token boolean">NULL</span>    <span class="token operator">|</span>       <span class="token operator">|</span>
+<span class="token operator">|</span> sex         <span class="token operator">|</span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span>  <span class="token operator">|</span> <span class="token keyword">NO</span>   <span class="token operator">|</span>     <span class="token operator">|</span> <span class="token boolean">NULL</span>    <span class="token operator">|</span>       <span class="token operator">|</span>
+<span class="token operator">|</span> birthday    <span class="token operator">|</span> <span class="token keyword">datetime</span>    <span class="token operator">|</span> YES  <span class="token operator">|</span>     <span class="token operator">|</span> <span class="token boolean">NULL</span>    <span class="token operator">|</span>       <span class="token operator">|</span>
+<span class="token operator">|</span> homeaddress <span class="token operator">|</span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">50</span><span class="token punctuation">)</span> <span class="token operator">|</span> YES  <span class="token operator">|</span>     <span class="token operator">|</span> <span class="token boolean">NULL</span>    <span class="token operator">|</span>       <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">-------------+-------------+------+-----+---------+-------+</span>
+<span class="token number">6</span> <span class="token keyword">rows</span> <span class="token operator">in</span> <span class="token keyword">set</span> <span class="token punctuation">(</span><span class="token number">0.01</span> sec<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>由于各部门领导的权力范围不同，因此，各部门的领导只能看到该部门的员工信息；而且，领导可能不关心员工的生日和家庭住址。为了达到这个目的，可以为各部门的领导建立一个视图，通过该视图，领导只能看到本部门员工的指定信息。</p>
+<p>例如，为生产部门建立一个名为 product <em>view 的视图。通过视图 product</em> view，生产部门的领导只能看到生产部门员工的工作号、姓名和性别等信息。这些 department 表的信息和 worker 表的信息依然存在于各自的表中，而视图 product_view 中不保存任何数据信息。当 department 表和 worker 表的信息发生改变时，视图 product_view 显示的信息也会发生相应的变化。</p>
+<blockquote>
+<p>技巧：如果经常需要从多个表查询指定字段的数据，可以在这些表上建立一个视图，通过这个视图显示这些字段的数据。</p>
+<p>MySQL 的视图不支持输入参数的功能，因此交互性上还有欠缺。但对于变化不是很大的操作，使用视图可以很大程度上简化用户的操作。</p>
+</blockquote>
+<p><strong>视图并不同于数据表，它们的区别在于以下几点</strong>：</p>
+<ul>
+<li>视图不是数据库中真实的表，而是一张虚拟表，其结构和数据是建立在对数据中真实表的查询基础上的。</li>
+<li>存储在数据库中的查询操作 SQL 语句定义了视图的内容，列数据和行数据来自于视图查询所引用的实际表，引用视图时动态生成这些数据。</li>
+<li>视图没有实际的物理记录，不是以数据集的形式存储在数据库中的，它所对应的数据实际上是存储在视图所引用的真实表中的。</li>
+<li>视图是数据的窗口，而表是内容。表是实际数据的存放单位，而视图只是以不同的显示方式展示数据，其数据来源还是实际表。</li>
+<li>视图是查看数据表的一种方法，可以查询数据表中某些字段构成的数据，只是一些 SQL 语句的集合。从安全的角度来看，视图的数据安全性更高，使用视图的用户不接触数据表，不知道表结构。</li>
+<li>视图的建立和删除只影响视图本身，不影响对应的基本表。</li>
+</ul>
+<h3 id="视图的优点：">视图的优点：</h3>
+<p>视图与表在本质上虽然不相同，但视图经过定义以后，结构形式和表一样，可以进行查询、修改、更新和删除等操作。同时，视图具有如下优点：</p>
+<h4 id="1-定制用户数据，聚焦特定的数据">1) 定制用户数据，聚焦特定的数据</h4>
+<p>在实际的应用过程中，不同的用户可能对不同的数据有不同的要求。</p>
+<p>例如，当数据库同时存在时，如学生基本信息表、课程表和教师信息表等多种表同时存在时，可以根据需求让不同的用户使用各自的数据。学生查看修改自己基本信息的视图，安排课程人员查看修改课程表和教师信息的视图，教师查看学生信息和课程信息表的视图。</p>
+<h4 id="2-简化数据操作">2) 简化数据操作</h4>
+<p>在使用查询时，很多时候要使用聚合函数，同时还要显示其他字段的信息，可能还需要关联到其他表，语句可能会很长，如果这个动作频繁发生的话，可以创建视图来简化操作。</p>
+<h4 id="3-提高数据的安全性">3) 提高数据的安全性</h4>
+<p>视图是虚拟的，物理上是不存在的。可以只授予用户视图的权限，而不具体指定使用表的权限，来保护基础数据的安全。</p>
+<h4 id="4-共享所需数据">4) 共享所需数据</h4>
+<p>通过使用视图，每个用户不必都定义和存储自己所需的数据，可以共享数据库中的数据，同样的数据只需要存储一次。</p>
+<h4 id="5-更改数据格式">5) 更改数据格式</h4>
+<p>通过使用视图，可以重新格式化检索出的数据，并组织输出到其他应用程序中。</p>
+<h4 id="6-重用-SQL-语句">6) 重用 SQL 语句</h4>
+<p>视图提供的是对查询操作的封装，本身不包含数据，所呈现的数据是根据视图定义从基础表中检索出来的，如果基础表的数据新增或删除，视图呈现的也是更新后的数据。视图定义后，编写完所需的查询，可以方便地重用该视图。</p>
+<p>要注意区别视图和数据表的本质，即视图是基于真实表的一张虚拟的表，其数据来源均建立在真实表的基础上。</p>
+<p><strong>使用视图的时候，还应该注意以下几点</strong>：</p>
+<ul>
+<li>创建视图需要足够的访问权限。</li>
+<li>创建视图的数目没有限制。</li>
+<li>视图可以嵌套，即从其他视图中检索数据的查询来创建视图。</li>
+<li>视图不能索引，也不能有关联的触发器、默认值或规则。</li>
+<li>视图可以和表一起使用。</li>
+<li>视图不包含数据，所以每次使用视图时，都必须执行查询中所需的任何一个检索操作。如果用多个连接和过滤条件创建了复杂的视图或嵌套了视图，可能会发现系统运行性能下降得十分严重。因此，在部署大量视图应用时，应该进行系统测试。</li>
+</ul>
+<blockquote>
+<p>提示：ORDER BY 子句可以用在视图中，但若该视图检索数据的 SELECT 语句中也含有 ORDER BY 子句，则该视图中的 ORDER BY 子句将被覆盖。</p>
+</blockquote>
+<h2 id="Mysql视图-View-操作演示">Mysql视图(View)操作演示</h2>
+<p><strong>department</strong></p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token identifier"><span class="token punctuation">`</span>department<span class="token punctuation">`</span></span> <span class="token punctuation">(</span>
+  <span class="token identifier"><span class="token punctuation">`</span>d_id<span class="token punctuation">`</span></span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token number">11</span><span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span> <span class="token keyword">AUTO_INCREMENT</span> <span class="token keyword">COMMENT</span> <span class="token string">'部门号'</span><span class="token punctuation">,</span>
+  <span class="token identifier"><span class="token punctuation">`</span>d_name<span class="token punctuation">`</span></span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">20</span><span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span> <span class="token keyword">COMMENT</span> <span class="token string">'部门名称'</span><span class="token punctuation">,</span>
+  <span class="token identifier"><span class="token punctuation">`</span>function<span class="token punctuation">`</span></span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">50</span><span class="token punctuation">)</span> <span class="token keyword">DEFAULT</span> <span class="token boolean">NULL</span> <span class="token keyword">COMMENT</span> <span class="token string">'功能'</span><span class="token punctuation">,</span>
+  <span class="token identifier"><span class="token punctuation">`</span>address<span class="token punctuation">`</span></span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">50</span><span class="token punctuation">)</span> <span class="token keyword">DEFAULT</span> <span class="token boolean">NULL</span> <span class="token keyword">COMMENT</span> <span class="token string">'办公地址'</span><span class="token punctuation">,</span>
+  <span class="token keyword">PRIMARY</span> <span class="token keyword">KEY</span> <span class="token punctuation">(</span><span class="token identifier"><span class="token punctuation">`</span>d_id<span class="token punctuation">`</span></span><span class="token punctuation">,</span><span class="token identifier"><span class="token punctuation">`</span>d_name<span class="token punctuation">`</span></span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span> <span class="token keyword">ENGINE</span><span class="token operator">=</span><span class="token keyword">InnoDB</span> <span class="token keyword">AUTO_INCREMENT</span><span class="token operator">=</span><span class="token number">5</span> <span class="token keyword">DEFAULT</span> <span class="token keyword">CHARSET</span><span class="token operator">=</span>utf8mb4 <span class="token keyword">COMMENT</span><span class="token operator">=</span><span class="token string">'部门表'</span><span class="token punctuation">;</span>
+
+<span class="token comment">-- ----------------------------</span>
+<span class="token comment">-- Records of department</span>
+<span class="token comment">-- ----------------------------</span>
+<span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token identifier"><span class="token punctuation">`</span>department<span class="token punctuation">`</span></span> <span class="token keyword">VALUES</span> <span class="token punctuation">(</span><span class="token string">'1'</span><span class="token punctuation">,</span> <span class="token string">'总裁办'</span><span class="token punctuation">,</span> <span class="token string">'批改奏折'</span><span class="token punctuation">,</span> <span class="token string">'华北'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token identifier"><span class="token punctuation">`</span>department<span class="token punctuation">`</span></span> <span class="token keyword">VALUES</span> <span class="token punctuation">(</span><span class="token string">'2'</span><span class="token punctuation">,</span> <span class="token string">'财务部'</span><span class="token punctuation">,</span> <span class="token string">'出账'</span><span class="token punctuation">,</span> <span class="token string">'华南'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token identifier"><span class="token punctuation">`</span>department<span class="token punctuation">`</span></span> <span class="token keyword">VALUES</span> <span class="token punctuation">(</span><span class="token string">'3'</span><span class="token punctuation">,</span> <span class="token string">'技术部'</span><span class="token punctuation">,</span> <span class="token string">'干技术'</span><span class="token punctuation">,</span> <span class="token string">'华中'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token identifier"><span class="token punctuation">`</span>department<span class="token punctuation">`</span></span> <span class="token keyword">VALUES</span> <span class="token punctuation">(</span><span class="token string">'4'</span><span class="token punctuation">,</span> <span class="token string">'设计部'</span><span class="token punctuation">,</span> <span class="token string">'干设计的'</span><span class="token punctuation">,</span> <span class="token string">'华东'</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>worker</strong></p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span> <span class="token identifier"><span class="token punctuation">`</span>worker<span class="token punctuation">`</span></span> <span class="token punctuation">(</span>
+  <span class="token identifier"><span class="token punctuation">`</span>num<span class="token punctuation">`</span></span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token number">11</span><span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span>
+  <span class="token identifier"><span class="token punctuation">`</span>d_id<span class="token punctuation">`</span></span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token number">11</span><span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span>
+  <span class="token identifier"><span class="token punctuation">`</span>name<span class="token punctuation">`</span></span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">20</span><span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span>
+  <span class="token identifier"><span class="token punctuation">`</span>sex<span class="token punctuation">`</span></span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span> <span class="token operator">NOT</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span>
+  <span class="token identifier"><span class="token punctuation">`</span>birthday<span class="token punctuation">`</span></span> <span class="token keyword">datetime</span> <span class="token keyword">DEFAULT</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span>
+  <span class="token identifier"><span class="token punctuation">`</span>homeaddress<span class="token punctuation">`</span></span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">50</span><span class="token punctuation">)</span> <span class="token keyword">DEFAULT</span> <span class="token boolean">NULL</span><span class="token punctuation">,</span>
+  <span class="token keyword">PRIMARY</span> <span class="token keyword">KEY</span> <span class="token punctuation">(</span><span class="token identifier"><span class="token punctuation">`</span>num<span class="token punctuation">`</span></span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span> <span class="token keyword">ENGINE</span><span class="token operator">=</span><span class="token keyword">InnoDB</span> <span class="token keyword">DEFAULT</span> <span class="token keyword">CHARSET</span><span class="token operator">=</span>utf8mb4 <span class="token keyword">COMMENT</span><span class="token operator">=</span><span class="token string">'员工表'</span><span class="token punctuation">;</span>
+
+<span class="token comment">-- ----------------------------</span>
+<span class="token comment">-- Records of worker</span>
+<span class="token comment">-- ----------------------------</span>
+<span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token identifier"><span class="token punctuation">`</span>worker<span class="token punctuation">`</span></span> <span class="token keyword">VALUES</span> <span class="token punctuation">(</span><span class="token string">'222'</span><span class="token punctuation">,</span> <span class="token string">'4'</span><span class="token punctuation">,</span> <span class="token string">'张三'</span><span class="token punctuation">,</span> <span class="token string">'男'</span><span class="token punctuation">,</span> <span class="token string">'1993-06-03 09:23:24'</span><span class="token punctuation">,</span> <span class="token string">'北京朝阳群众'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token identifier"><span class="token punctuation">`</span>worker<span class="token punctuation">`</span></span> <span class="token keyword">VALUES</span> <span class="token punctuation">(</span><span class="token string">'333'</span><span class="token punctuation">,</span> <span class="token string">'3'</span><span class="token punctuation">,</span> <span class="token string">'李四'</span><span class="token punctuation">,</span> <span class="token string">'男'</span><span class="token punctuation">,</span> <span class="token string">'1990-07-03 09:23:24'</span><span class="token punctuation">,</span> <span class="token string">'湖南长沙实名'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token identifier"><span class="token punctuation">`</span>worker<span class="token punctuation">`</span></span> <span class="token keyword">VALUES</span> <span class="token punctuation">(</span><span class="token string">'444'</span><span class="token punctuation">,</span> <span class="token string">'2'</span><span class="token punctuation">,</span> <span class="token string">'王五'</span><span class="token punctuation">,</span> <span class="token string">'女'</span><span class="token punctuation">,</span> <span class="token string">'1998-01-13 09:23:24'</span><span class="token punctuation">,</span> <span class="token string">'上海开发大道'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token identifier"><span class="token punctuation">`</span>worker<span class="token punctuation">`</span></span> <span class="token keyword">VALUES</span> <span class="token punctuation">(</span><span class="token string">'555'</span><span class="token punctuation">,</span> <span class="token string">'1'</span><span class="token punctuation">,</span> <span class="token string">'赵六'</span><span class="token punctuation">,</span> <span class="token string">'男'</span><span class="token punctuation">,</span> <span class="token string">'1995-01-03 09:23:24'</span><span class="token punctuation">,</span> <span class="token string">'深圳长江一号'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token identifier"><span class="token punctuation">`</span>worker<span class="token punctuation">`</span></span> <span class="token keyword">VALUES</span> <span class="token punctuation">(</span><span class="token string">'666'</span><span class="token punctuation">,</span> <span class="token string">'2'</span><span class="token punctuation">,</span> <span class="token string">'小明'</span><span class="token punctuation">,</span> <span class="token string">'男'</span><span class="token punctuation">,</span> <span class="token string">'1999-07-07 09:23:24'</span><span class="token punctuation">,</span> <span class="token string">'天津市武清区'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token identifier"><span class="token punctuation">`</span>worker<span class="token punctuation">`</span></span> <span class="token keyword">VALUES</span> <span class="token punctuation">(</span><span class="token string">'777'</span><span class="token punctuation">,</span> <span class="token string">'3'</span><span class="token punctuation">,</span> <span class="token string">'小红'</span><span class="token punctuation">,</span> <span class="token string">'女'</span><span class="token punctuation">,</span> <span class="token string">'1992-04-23 09:23:24'</span><span class="token punctuation">,</span> <span class="token string">'河北承德市'</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="创建视图基本语法">创建视图基本语法</h3>
+<p>可以使用 CREATE VIEW 语句来创建视图。语法格式如下：</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">VIEW</span> <span class="token operator">&lt;</span>视图名<span class="token operator">></span> <span class="token keyword">AS</span> <span class="token operator">&lt;</span><span class="token keyword">SELECT</span>语句<span class="token operator">></span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>语法说明如下。</p>
+<ul>
+<li><code>&lt;视图名&gt;</code>：指定视图的名称。该名称在数据库中必须是唯一的，不能与其他表或视图同名。</li>
+<li><code>&lt;SELECT语句&gt;</code>：指定创建视图的 SELECT 语句，可用于查询多个基础表或源视图。</li>
+</ul>
+<blockquote>
+<p>对于创建视图中的 SELECT 语句的指定存在以下限制：</p>
+<ul>
+<li>用户除了拥有 CREATE VIEW 权限外，还具有操作中涉及的基础表和其他视图的相关权限。</li>
+<li>SELECT 语句不能引用系统或用户变量。</li>
+<li>SELECT 语句不能包含 FROM 子句中的子查询。</li>
+<li>SELECT 语句不能引用预处理语句参数。</li>
+</ul>
+</blockquote>
+<blockquote>
+<p>视图定义中引用的表或视图必须存在。但是，创建完视图后，可以删除定义引用的表或视图。可使用 CHECK TABLE 语句检查视图定义是否存在这类问题。</p>
+<p>视图定义中允许使用 ORDER BY 语句，但是若从特定视图进行选择，而该视图使用了自己的 ORDER BY 语句，则视图定义中的 ORDER BY 将被忽略。</p>
+<p>视图定义中不能引用 TEMPORARY 表（临时表），不能创建 TEMPORARY 视图。</p>
+<p>WITH CHECK OPTION 的意思是，修改视图时，检查插入的数据是否符合 WHERE 设置的条件。</p>
+</blockquote>
+<h3 id="创建单表视图">创建单表视图</h3>
+<p>【实例 1】在 <code>worker</code> 表中，创建 <code>view_worker_info</code> 视图</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">VIEW</span> view_worker_info <span class="token keyword">AS</span> <span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> worker<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>查看视图</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql<span class="token operator">></span> <span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> view_worker_info<span class="token punctuation">;</span>
+<span class="token operator">+</span><span class="token comment">-----+------+------+-----+---------------------+--------------+</span>
+<span class="token operator">|</span> num <span class="token operator">|</span> d_id <span class="token operator">|</span> name <span class="token operator">|</span> sex <span class="token operator">|</span> birthday            <span class="token operator">|</span> homeaddress  <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">-----+------+------+-----+---------------------+--------------+</span>
+<span class="token operator">|</span> <span class="token number">222</span> <span class="token operator">|</span>    <span class="token number">4</span> <span class="token operator">|</span> 张三 <span class="token operator">|</span> 男  <span class="token operator">|</span> <span class="token number">1993</span><span class="token operator">-</span><span class="token number">06</span><span class="token operator">-</span><span class="token number">03</span> <span class="token number">09</span>:<span class="token number">23</span>:<span class="token number">24</span> <span class="token operator">|</span> 北京朝阳群众 <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token number">333</span> <span class="token operator">|</span>    <span class="token number">3</span> <span class="token operator">|</span> 李四 <span class="token operator">|</span> 男  <span class="token operator">|</span> <span class="token number">1990</span><span class="token operator">-</span><span class="token number">07</span><span class="token operator">-</span><span class="token number">03</span> <span class="token number">09</span>:<span class="token number">23</span>:<span class="token number">24</span> <span class="token operator">|</span> 湖南长沙实名 <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token number">444</span> <span class="token operator">|</span>    <span class="token number">2</span> <span class="token operator">|</span> 王五 <span class="token operator">|</span> 女  <span class="token operator">|</span> <span class="token number">1998</span><span class="token operator">-</span><span class="token number">01</span><span class="token operator">-</span><span class="token number">13</span> <span class="token number">09</span>:<span class="token number">23</span>:<span class="token number">24</span> <span class="token operator">|</span> 上海开发大道 <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token number">555</span> <span class="token operator">|</span>    <span class="token number">1</span> <span class="token operator">|</span> 赵六 <span class="token operator">|</span> 男  <span class="token operator">|</span> <span class="token number">1995</span><span class="token operator">-</span><span class="token number">01</span><span class="token operator">-</span><span class="token number">03</span> <span class="token number">09</span>:<span class="token number">23</span>:<span class="token number">24</span> <span class="token operator">|</span> 深圳长江一号 <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token number">666</span> <span class="token operator">|</span>    <span class="token number">2</span> <span class="token operator">|</span> 小明 <span class="token operator">|</span> 男  <span class="token operator">|</span> <span class="token number">1999</span><span class="token operator">-</span><span class="token number">07</span><span class="token operator">-</span><span class="token number">07</span> <span class="token number">09</span>:<span class="token number">23</span>:<span class="token number">24</span> <span class="token operator">|</span> 天津市武清区 <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token number">777</span> <span class="token operator">|</span>    <span class="token number">3</span> <span class="token operator">|</span> 小红 <span class="token operator">|</span> 女  <span class="token operator">|</span> <span class="token number">1992</span><span class="token operator">-</span><span class="token number">04</span><span class="token operator">-</span><span class="token number">23</span> <span class="token number">09</span>:<span class="token number">23</span>:<span class="token number">24</span> <span class="token operator">|</span> 河北承德市   <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">-----+------+------+-----+---------------------+--------------+</span>
+<span class="token number">6</span> <span class="token keyword">rows</span> <span class="token operator">in</span> <span class="token keyword">set</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>【实例 2】在 <code>worker</code> 表中，根据某些字段，创建 <code>view_worker_attr</code> 视图</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">VIEW</span> view_worker_attr <span class="token punctuation">(</span>s_num<span class="token punctuation">,</span>s_name<span class="token punctuation">,</span>s_homeaddress<span class="token punctuation">)</span> <span class="token keyword">AS</span> <span class="token keyword">SELECT</span> num<span class="token punctuation">,</span>name<span class="token punctuation">,</span>homeaddress <span class="token keyword">FROM</span> worker<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>查看视图</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql<span class="token operator">></span> <span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> view_worker_attr<span class="token punctuation">;</span>
+<span class="token operator">+</span><span class="token comment">-------+--------+---------------+</span>
+<span class="token operator">|</span> s_num <span class="token operator">|</span> s_name <span class="token operator">|</span> s_homeaddress <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">-------+--------+---------------+</span>
+<span class="token operator">|</span>   <span class="token number">222</span> <span class="token operator">|</span> 张三   <span class="token operator">|</span> 北京朝阳群众  <span class="token operator">|</span>
+<span class="token operator">|</span>   <span class="token number">333</span> <span class="token operator">|</span> 李四   <span class="token operator">|</span> 湖南长沙实名  <span class="token operator">|</span>
+<span class="token operator">|</span>   <span class="token number">444</span> <span class="token operator">|</span> 王五   <span class="token operator">|</span> 上海开发大道  <span class="token operator">|</span>
+<span class="token operator">|</span>   <span class="token number">555</span> <span class="token operator">|</span> 赵六   <span class="token operator">|</span> 深圳长江一号  <span class="token operator">|</span>
+<span class="token operator">|</span>   <span class="token number">666</span> <span class="token operator">|</span> 小明   <span class="token operator">|</span> 天津市武清区  <span class="token operator">|</span>
+<span class="token operator">|</span>   <span class="token number">777</span> <span class="token operator">|</span> 小红   <span class="token operator">|</span> 河北承德市    <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">-------+--------+---------------+</span>
+<span class="token number">6</span> <span class="token keyword">rows</span> <span class="token operator">in</span> <span class="token keyword">set</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="创建多表视图">创建多表视图</h3>
+<p>创建基于 <code>department</code> 和  <code>worker</code> 的联合视图</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">VIEW</span> view_info <span class="token punctuation">(</span>
+	s_num<span class="token punctuation">,</span>
+	s_name<span class="token punctuation">,</span>
+	d_id<span class="token punctuation">,</span>
+	s_dname<span class="token punctuation">,</span>
+	s_homeaddress<span class="token punctuation">,</span>
+	s_address
+<span class="token punctuation">)</span> <span class="token keyword">AS</span> <span class="token keyword">SELECT</span>
+	num<span class="token punctuation">,</span>
+	<span class="token identifier"><span class="token punctuation">`</span>name<span class="token punctuation">`</span></span><span class="token punctuation">,</span>
+	worker<span class="token punctuation">.</span>d_id<span class="token punctuation">,</span>
+	d_name<span class="token punctuation">,</span>
+	homeaddress<span class="token punctuation">,</span>
+	address
+<span class="token keyword">FROM</span>
+	worker<span class="token punctuation">,</span>
+	department
+<span class="token keyword">WHERE</span>
+	worker<span class="token punctuation">.</span>d_id <span class="token operator">=</span> department<span class="token punctuation">.</span>d_id<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>查看视图</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql<span class="token operator">></span> <span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> view_info<span class="token punctuation">;</span>
+<span class="token operator">+</span><span class="token comment">-------+--------+------+---------+---------------+-----------+</span>
+<span class="token operator">|</span> s_num <span class="token operator">|</span> s_name <span class="token operator">|</span> d_id <span class="token operator">|</span> s_dname <span class="token operator">|</span> s_homeaddress <span class="token operator">|</span> s_address <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">-------+--------+------+---------+---------------+-----------+</span>
+<span class="token operator">|</span>   <span class="token number">222</span> <span class="token operator">|</span> 张三   <span class="token operator">|</span>    <span class="token number">4</span> <span class="token operator">|</span> 设计部  <span class="token operator">|</span> 北京朝阳群众  <span class="token operator">|</span> 华东      <span class="token operator">|</span>
+<span class="token operator">|</span>   <span class="token number">333</span> <span class="token operator">|</span> 李四   <span class="token operator">|</span>    <span class="token number">3</span> <span class="token operator">|</span> 技术部  <span class="token operator">|</span> 湖南长沙实名  <span class="token operator">|</span> 华中      <span class="token operator">|</span>
+<span class="token operator">|</span>   <span class="token number">444</span> <span class="token operator">|</span> 王五   <span class="token operator">|</span>    <span class="token number">2</span> <span class="token operator">|</span> 财务部  <span class="token operator">|</span> 上海开发大道  <span class="token operator">|</span> 华南      <span class="token operator">|</span>
+<span class="token operator">|</span>   <span class="token number">555</span> <span class="token operator">|</span> 赵六   <span class="token operator">|</span>    <span class="token number">1</span> <span class="token operator">|</span> 总裁办  <span class="token operator">|</span> 深圳长江一号  <span class="token operator">|</span> 华北      <span class="token operator">|</span>
+<span class="token operator">|</span>   <span class="token number">666</span> <span class="token operator">|</span> 小明   <span class="token operator">|</span>    <span class="token number">2</span> <span class="token operator">|</span> 财务部  <span class="token operator">|</span> 天津市武清区  <span class="token operator">|</span> 华南      <span class="token operator">|</span>
+<span class="token operator">|</span>   <span class="token number">777</span> <span class="token operator">|</span> 小红   <span class="token operator">|</span>    <span class="token number">3</span> <span class="token operator">|</span> 技术部  <span class="token operator">|</span> 河北承德市    <span class="token operator">|</span> 华中      <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">-------+--------+------+---------+---------------+-----------+</span>
+<span class="token number">6</span> <span class="token keyword">rows</span> <span class="token operator">in</span> <span class="token keyword">set</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="查看视图基本语法">查看视图基本语法</h3>
+<p>查看视图的字段信息与查看数据表的字段信息一样，都是使用 DESCRIBE 关键字来查看的。具体语法如下：</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">DESCRIBE</span> 视图名<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>或简写成：</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">DESC</span> 视图名<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h4 id="测试">测试</h4>
+<p>查看联合视图 <code>view_info</code>  的视图结构</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql<span class="token operator">></span> <span class="token keyword">DESCRIBE</span> view_info<span class="token punctuation">;</span>
+<span class="token operator">+</span><span class="token comment">---------------+-------------+------+-----+---------+-------+</span>
+<span class="token operator">|</span> Field         <span class="token operator">|</span> <span class="token keyword">Type</span>        <span class="token operator">|</span> <span class="token boolean">Null</span> <span class="token operator">|</span> <span class="token keyword">Key</span> <span class="token operator">|</span> <span class="token keyword">Default</span> <span class="token operator">|</span> Extra <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">---------------+-------------+------+-----+---------+-------+</span>
+<span class="token operator">|</span> s_num         <span class="token operator">|</span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token number">11</span><span class="token punctuation">)</span>     <span class="token operator">|</span> <span class="token keyword">NO</span>   <span class="token operator">|</span>     <span class="token operator">|</span> <span class="token boolean">NULL</span>    <span class="token operator">|</span>       <span class="token operator">|</span>
+<span class="token operator">|</span> s_name        <span class="token operator">|</span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">20</span><span class="token punctuation">)</span> <span class="token operator">|</span> <span class="token keyword">NO</span>   <span class="token operator">|</span>     <span class="token operator">|</span> <span class="token boolean">NULL</span>    <span class="token operator">|</span>       <span class="token operator">|</span>
+<span class="token operator">|</span> d_id          <span class="token operator">|</span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token number">11</span><span class="token punctuation">)</span>     <span class="token operator">|</span> <span class="token keyword">NO</span>   <span class="token operator">|</span>     <span class="token operator">|</span> <span class="token boolean">NULL</span>    <span class="token operator">|</span>       <span class="token operator">|</span>
+<span class="token operator">|</span> s_dname       <span class="token operator">|</span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">20</span><span class="token punctuation">)</span> <span class="token operator">|</span> <span class="token keyword">NO</span>   <span class="token operator">|</span>     <span class="token operator">|</span> <span class="token boolean">NULL</span>    <span class="token operator">|</span>       <span class="token operator">|</span>
+<span class="token operator">|</span> s_homeaddress <span class="token operator">|</span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">50</span><span class="token punctuation">)</span> <span class="token operator">|</span> YES  <span class="token operator">|</span>     <span class="token operator">|</span> <span class="token boolean">NULL</span>    <span class="token operator">|</span>       <span class="token operator">|</span>
+<span class="token operator">|</span> s_address     <span class="token operator">|</span> <span class="token keyword">varchar</span><span class="token punctuation">(</span><span class="token number">50</span><span class="token punctuation">)</span> <span class="token operator">|</span> YES  <span class="token operator">|</span>     <span class="token operator">|</span> <span class="token boolean">NULL</span>    <span class="token operator">|</span>       <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">---------------+-------------+------+-----+---------+-------+</span>
+<span class="token number">6</span> <span class="token keyword">rows</span> <span class="token operator">in</span> <span class="token keyword">set</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="查看视图表的详细信息">查看视图表的详细信息</h3>
+<p>在 MySQL 中，SHOW CREATE VIEW 语句可以查看视图的详细定义。其语法如下所示：</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">SHOW</span> <span class="token keyword">CREATE</span> <span class="token keyword">VIEW</span> 视图名<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>通过上面的语句，还可以查看创建视图的语句。创建视图的语句可以作为修改或者重新创建视图的参考，方便用户操作。</p>
+<h4 id="测试-2">测试</h4>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql<span class="token operator">></span> <span class="token keyword">SHOW</span> <span class="token keyword">CREATE</span> <span class="token keyword">VIEW</span> view_info \G<span class="token punctuation">;</span>
+<span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span> <span class="token number">1.</span> <span class="token keyword">row</span> <span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span><span class="token operator">*</span>
+                <span class="token keyword">View</span>: view_info
+         <span class="token keyword">Create</span> <span class="token keyword">View</span>: <span class="token keyword">CREATE</span> <span class="token keyword">ALGORITHM</span><span class="token operator">=</span><span class="token keyword">UNDEFINED</span> <span class="token keyword">DEFINER</span><span class="token operator">=</span><span class="token identifier"><span class="token punctuation">`</span>offline<span class="token punctuation">`</span></span><span class="token variable">@`%`</span> <span class="token keyword">SQL</span> SECURITY <span class="token keyword">DEFINER</span> <span class="token keyword">VIEW</span> <span class="token identifier"><span class="token punctuation">`</span>view_info<span class="token punctuation">`</span></span> <span class="token keyword">AS</span> <span class="token keyword">select</span> <span class="token identifier"><span class="token punctuation">`</span>worker<span class="token punctuation">`</span></span><span class="token punctuation">.</span><span class="token identifier"><span class="token punctuation">`</span>num<span class="token punctuation">`</span></span> <span class="token keyword">AS</span> <span class="token identifier"><span class="token punctuation">`</span>s_num<span class="token punctuation">`</span></span><span class="token punctuation">,</span><span class="token identifier"><span class="token punctuation">`</span>worker<span class="token punctuation">`</span></span><span class="token punctuation">.</span><span class="token identifier"><span class="token punctuation">`</span>name<span class="token punctuation">`</span></span> <span class="token keyword">AS</span> <span class="token identifier"><span class="token punctuation">`</span>s_name<span class="token punctuation">`</span></span><span class="token punctuation">,</span><span class="token identifier"><span class="token punctuation">`</span>worker<span class="token punctuation">`</span></span><span class="token punctuation">.</span><span class="token identifier"><span class="token punctuation">`</span>d_id<span class="token punctuation">`</span></span> <span class="token keyword">AS</span> <span class="token identifier"><span class="token punctuation">`</span>d_id<span class="token punctuation">`</span></span><span class="token punctuation">,</span><span class="token identifier"><span class="token punctuation">`</span>department<span class="token punctuation">`</span></span><span class="token punctuation">.</span><span class="token identifier"><span class="token punctuation">`</span>d_name<span class="token punctuation">`</span></span> <span class="token keyword">AS</span> <span class="token identifier"><span class="token punctuation">`</span>s_dname<span class="token punctuation">`</span></span><span class="token punctuation">,</span><span class="token identifier"><span class="token punctuation">`</span>worker<span class="token punctuation">`</span></span><span class="token punctuation">.</span><span class="token identifier"><span class="token punctuation">`</span>homeaddress<span class="token punctuation">`</span></span> <span class="token keyword">AS</span> <span class="token identifier"><span class="token punctuation">`</span>s_homeaddress<span class="token punctuation">`</span></span><span class="token punctuation">,</span><span class="token identifier"><span class="token punctuation">`</span>department<span class="token punctuation">`</span></span><span class="token punctuation">.</span><span class="token identifier"><span class="token punctuation">`</span>address<span class="token punctuation">`</span></span> <span class="token keyword">AS</span> <span class="token identifier"><span class="token punctuation">`</span>s_address<span class="token punctuation">`</span></span> <span class="token keyword">from</span> <span class="token punctuation">(</span><span class="token identifier"><span class="token punctuation">`</span>worker<span class="token punctuation">`</span></span> <span class="token keyword">join</span> <span class="token identifier"><span class="token punctuation">`</span>department<span class="token punctuation">`</span></span><span class="token punctuation">)</span> <span class="token keyword">where</span> <span class="token punctuation">(</span><span class="token identifier"><span class="token punctuation">`</span>worker<span class="token punctuation">`</span></span><span class="token punctuation">.</span><span class="token identifier"><span class="token punctuation">`</span>d_id<span class="token punctuation">`</span></span> <span class="token operator">=</span> <span class="token identifier"><span class="token punctuation">`</span>department<span class="token punctuation">`</span></span><span class="token punctuation">.</span><span class="token identifier"><span class="token punctuation">`</span>d_id<span class="token punctuation">`</span></span><span class="token punctuation">)</span>
+character_set_client: utf8
+collation_connection: utf8_general_ci
+<span class="token number">1</span> <span class="token keyword">row</span> <span class="token operator">in</span> <span class="token keyword">set</span> <span class="token punctuation">(</span><span class="token number">0.04</span> sec<span class="token punctuation">)</span>
+
+ERROR: 
+<span class="token keyword">No</span> query specified<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>上述 SQL 语句以<code>\G</code>结尾，这样能使显示结果格式化。如果不使用<code>\G</code>，显示的结果会比较混乱</p>
+<h4 id="拓展阅读">拓展阅读</h4>
+<p>所有视图的定义都是存储在 information_schema 数据库下的 views 表中，也可以在这个表中查看所有视图的详细信息，SQL 语句如下：</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> information_schema<span class="token punctuation">.</span>views<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>不过，通常情况下都是使用 SHOW CREATE VIEW 语句。</p>
+<h3 id="修改视图基本语法">修改视图基本语法</h3>
+<p>可以使用 ALTER VIEW 语句来对已有的视图进行修改。语法格式如下：</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">ALTER</span> <span class="token keyword">VIEW</span> <span class="token operator">&lt;</span>视图名<span class="token operator">></span> <span class="token keyword">AS</span> <span class="token operator">&lt;</span><span class="token keyword">SELECT</span>语句<span class="token operator">></span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>语法说明如下：</p>
+<ul>
+<li><code>&lt;视图名&gt;</code>：指定视图的名称。该名称在数据库中必须是唯一的，不能与其他表或视图同名。</li>
+<li><code>&lt;SELECT 语句&gt;</code>：指定创建视图的 SELECT 语句，可用于查询多个基础表或源视图。</li>
+</ul>
+<blockquote>
+<p>需要注意的是，对于 ALTER VIEW 语句的使用，需要用户具有针对视图的 CREATE VIEW 和 DROP 权限，以及由 SELECT 语句选择的每一列上的某些权限。</p>
+<p>修改视图的定义，除了可以通过 ALTER VIEW 外，也可以使用 DROP VIEW 语句先删除视图，再使用 CREATE VIEW 语句来实现。</p>
+</blockquote>
+<h4 id="修改视图内容">修改视图内容</h4>
+<p>视图是一个虚拟表，实际的数据来自于基本表，所以通过插入、修改和删除操作更新视图中的数据，实质上是在更新视图所引用的基本表的数据。</p>
+<blockquote>
+<p>注意：对视图的修改就是对基本表的修改，因此在修改时，要满足基本表的数据定义。</p>
+</blockquote>
+<p>某些视图是可更新的。也就是说，可以使用 UPDATE、DELETE 或 INSERT 等语句更新基本表的内容。对于可更新的视图，视图中的行和基本表的行之间必须具有一对一的关系。</p>
+<p>还有一些特定的其他结构，这些结构会使得视图不可更新。更具体地讲，如果视图包含以下结构中的任何一种，它就是不可更新的：</p>
+<ul>
+<li>聚合函数 SUM()、MIN()、MAX()、COUNT() 等。</li>
+<li>DISTINCT 关键字。</li>
+<li>GROUP BY 子句。</li>
+<li>HAVING 子句。</li>
+<li>UNION 或 UNION ALL 运算符。</li>
+<li>位于选择列表中的子查询。</li>
+<li>FROM 子句中的不可更新视图或包含多个表。</li>
+<li>WHERE 子句中的子查询，引用 FROM 子句中的表。</li>
+<li>ALGORITHM 选项为 TEMPTABLE（使用临时表总会使视图成为不可更新的）的时候。</li>
+</ul>
+<h4 id="测试-3">测试</h4>
+<h5 id="案例1">案例1</h5>
+<p>修改视图表的表结构</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">ALTER</span> <span class="token keyword">VIEW</span> view_worker_attr <span class="token keyword">AS</span> <span class="token keyword">SELECT</span> num<span class="token punctuation">,</span>name <span class="token keyword">FROM</span> worker<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>查看</strong></p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql<span class="token operator">></span> <span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> view_worker_attr<span class="token punctuation">;</span>
+<span class="token operator">+</span><span class="token comment">-----+--------+</span>
+<span class="token operator">|</span> num <span class="token operator">|</span> name   <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">-----+--------+</span>
+<span class="token operator">|</span> <span class="token number">222</span> <span class="token operator">|</span> 张三   <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token number">333</span> <span class="token operator">|</span> 李四   <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token number">444</span> <span class="token operator">|</span> 王五   <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token number">555</span> <span class="token operator">|</span> 赵六   <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token number">666</span> <span class="token operator">|</span> 小明   <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token number">777</span> <span class="token operator">|</span> 小红   <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">-----+--------+</span>
+<span class="token number">6</span> <span class="token keyword">rows</span> <span class="token operator">in</span> <span class="token keyword">set</span> <span class="token punctuation">(</span><span class="token number">0.02</span> sec<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="案例2">案例2</h5>
+<p>使用 <code>UPDATE</code> 语句更新视图 <code>view_worker_attr</code></p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">UPDATE</span> view_worker_attr <span class="token keyword">SET</span> name<span class="token operator">=</span><span class="token string">"666张三666"</span> <span class="token keyword">WHERE</span> num<span class="token operator">=</span><span class="token number">222</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>查看</strong></p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql<span class="token operator">></span> <span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> view_worker_attr<span class="token punctuation">;</span>
+<span class="token operator">+</span><span class="token comment">-----+--------------+</span>
+<span class="token operator">|</span> num <span class="token operator">|</span> name         <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">-----+--------------+</span>
+<span class="token operator">|</span> <span class="token number">222</span> <span class="token operator">|</span> <span class="token number">666</span>张三<span class="token number">666</span>   <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token number">333</span> <span class="token operator">|</span> 李四         <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token number">444</span> <span class="token operator">|</span> 王五         <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token number">555</span> <span class="token operator">|</span> 赵六         <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token number">666</span> <span class="token operator">|</span> 小明         <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token number">777</span> <span class="token operator">|</span> 小红         <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">-----+--------------+</span>
+<span class="token number">6</span> <span class="token keyword">rows</span> <span class="token operator">in</span> <span class="token keyword">set</span> <span class="token punctuation">(</span><span class="token number">0.04</span> sec<span class="token punctuation">)</span>
+
+mysql<span class="token operator">></span> <span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> worker<span class="token punctuation">;</span>
+<span class="token operator">+</span><span class="token comment">-----+------+--------------+-----+---------------------+--------------------+</span>
+<span class="token operator">|</span> num <span class="token operator">|</span> d_id <span class="token operator">|</span> name         <span class="token operator">|</span> sex <span class="token operator">|</span> birthday            <span class="token operator">|</span> homeaddress        <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">-----+------+--------------+-----+---------------------+--------------------+</span>
+<span class="token operator">|</span> <span class="token number">222</span> <span class="token operator">|</span>    <span class="token number">4</span> <span class="token operator">|</span> <span class="token number">666</span>张三<span class="token number">666</span>   <span class="token operator">|</span> 男  <span class="token operator">|</span> <span class="token number">1993</span><span class="token operator">-</span><span class="token number">06</span><span class="token operator">-</span><span class="token number">03</span> <span class="token number">09</span>:<span class="token number">23</span>:<span class="token number">24</span> <span class="token operator">|</span> 北京朝阳群众       <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token number">333</span> <span class="token operator">|</span>    <span class="token number">3</span> <span class="token operator">|</span> 李四         <span class="token operator">|</span> 男  <span class="token operator">|</span> <span class="token number">1990</span><span class="token operator">-</span><span class="token number">07</span><span class="token operator">-</span><span class="token number">03</span> <span class="token number">09</span>:<span class="token number">23</span>:<span class="token number">24</span> <span class="token operator">|</span> 湖南长沙实名       <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token number">444</span> <span class="token operator">|</span>    <span class="token number">2</span> <span class="token operator">|</span> 王五         <span class="token operator">|</span> 女  <span class="token operator">|</span> <span class="token number">1998</span><span class="token operator">-</span><span class="token number">01</span><span class="token operator">-</span><span class="token number">13</span> <span class="token number">09</span>:<span class="token number">23</span>:<span class="token number">24</span> <span class="token operator">|</span> 上海开发大道       <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token number">555</span> <span class="token operator">|</span>    <span class="token number">1</span> <span class="token operator">|</span> 赵六         <span class="token operator">|</span> 男  <span class="token operator">|</span> <span class="token number">1995</span><span class="token operator">-</span><span class="token number">01</span><span class="token operator">-</span><span class="token number">03</span> <span class="token number">09</span>:<span class="token number">23</span>:<span class="token number">24</span> <span class="token operator">|</span> 深圳长江一号       <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token number">666</span> <span class="token operator">|</span>    <span class="token number">2</span> <span class="token operator">|</span> 小明         <span class="token operator">|</span> 男  <span class="token operator">|</span> <span class="token number">1999</span><span class="token operator">-</span><span class="token number">07</span><span class="token operator">-</span><span class="token number">07</span> <span class="token number">09</span>:<span class="token number">23</span>:<span class="token number">24</span> <span class="token operator">|</span> 天津市武清区       <span class="token operator">|</span>
+<span class="token operator">|</span> <span class="token number">777</span> <span class="token operator">|</span>    <span class="token number">3</span> <span class="token operator">|</span> 小红         <span class="token operator">|</span> 女  <span class="token operator">|</span> <span class="token number">1992</span><span class="token operator">-</span><span class="token number">04</span><span class="token operator">-</span><span class="token number">23</span> <span class="token number">09</span>:<span class="token number">23</span>:<span class="token number">24</span> <span class="token operator">|</span> 河北承德市         <span class="token operator">|</span>
+<span class="token operator">+</span><span class="token comment">-----+------+--------------+-----+---------------------+--------------------+</span>
+<span class="token number">6</span> <span class="token keyword">rows</span> <span class="token operator">in</span> <span class="token keyword">set</span> <span class="token punctuation">(</span><span class="token number">0.02</span> sec<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="删除视图基本语法">删除视图基本语法</h3>
+<p>可以使用 DROP VIEW 语句来删除视图。语法格式如下：</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"><span class="token keyword">DROP</span> <span class="token keyword">VIEW</span> <span class="token operator">&lt;</span>视图名<span class="token number">1</span><span class="token operator">></span> <span class="token punctuation">[</span> <span class="token punctuation">,</span> <span class="token operator">&lt;</span>视图名<span class="token number">2</span><span class="token operator">></span> …<span class="token punctuation">]</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>其中：<code>&lt;视图名&gt;</code>指定要删除的视图名。DROP VIEW 语句可以一次删除多个视图，但是必须在每个视图上拥有 DROP 权限。</p>
+<h4 id="测试-4">测试</h4>
+<p>删除 <code>view_worker_attr</code> 视图</p>
+<pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql<span class="token operator">></span> <span class="token keyword">DROP</span> <span class="token keyword">VIEW</span> view_worker_attr<span class="token punctuation">;</span>
+Query OK<span class="token punctuation">,</span> <span class="token number">0</span> <span class="token keyword">rows</span> affected <span class="token punctuation">(</span><span class="token number">0.03</span> sec<span class="token punctuation">)</span>
+
+mysql<span class="token operator">></span> <span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> view_worker_attr<span class="token punctuation">;</span>
+ERROR <span class="token number">1146</span> <span class="token punctuation">(</span><span class="token number">42</span>S02<span class="token punctuation">)</span>: <span class="token keyword">Table</span> <span class="token string">'view_db.view_worker_attr'</span> doesn't exist<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/1198915737.html">https://blog.mailjob.net/posts/1198915737.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%95%E8%A8%80"><span class="toc-text">引言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="toc-text">基本概念</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9C%BA%E9%9D%A2%E6%8F%8F%E8%BF%B0%E8%AF%B4%E6%98%8E"><span class="toc-text">场面描述说明</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%86%E5%9B%BE%E7%9A%84%E4%BC%98%E7%82%B9%EF%BC%9A"><span class="toc-text">视图的优点：</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E5%AE%9A%E5%88%B6%E7%94%A8%E6%88%B7%E6%95%B0%E6%8D%AE%EF%BC%8C%E8%81%9A%E7%84%A6%E7%89%B9%E5%AE%9A%E7%9A%84%E6%95%B0%E6%8D%AE"><span class="toc-text">1) 定制用户数据，聚焦特定的数据</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E7%AE%80%E5%8C%96%E6%95%B0%E6%8D%AE%E6%93%8D%E4%BD%9C"><span class="toc-text">2) 简化数据操作</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-%E6%8F%90%E9%AB%98%E6%95%B0%E6%8D%AE%E7%9A%84%E5%AE%89%E5%85%A8%E6%80%A7"><span class="toc-text">3) 提高数据的安全性</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-%E5%85%B1%E4%BA%AB%E6%89%80%E9%9C%80%E6%95%B0%E6%8D%AE"><span class="toc-text">4) 共享所需数据</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-%E6%9B%B4%E6%94%B9%E6%95%B0%E6%8D%AE%E6%A0%BC%E5%BC%8F"><span class="toc-text">5) 更改数据格式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-%E9%87%8D%E7%94%A8-SQL-%E8%AF%AD%E5%8F%A5"><span class="toc-text">6) 重用 SQL 语句</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Mysql%E8%A7%86%E5%9B%BE-View-%E6%93%8D%E4%BD%9C%E6%BC%94%E7%A4%BA"><span class="toc-text">Mysql视图(View)操作演示</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E8%A7%86%E5%9B%BE%E5%9F%BA%E6%9C%AC%E8%AF%AD%E6%B3%95"><span class="toc-text">创建视图基本语法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E5%8D%95%E8%A1%A8%E8%A7%86%E5%9B%BE"><span class="toc-text">创建单表视图</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E5%A4%9A%E8%A1%A8%E8%A7%86%E5%9B%BE"><span class="toc-text">创建多表视图</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E8%A7%86%E5%9B%BE%E5%9F%BA%E6%9C%AC%E8%AF%AD%E6%B3%95"><span class="toc-text">查看视图基本语法</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95"><span class="toc-text">测试</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E8%A7%86%E5%9B%BE%E8%A1%A8%E7%9A%84%E8%AF%A6%E7%BB%86%E4%BF%A1%E6%81%AF"><span class="toc-text">查看视图表的详细信息</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95-2"><span class="toc-text">测试</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8B%93%E5%B1%95%E9%98%85%E8%AF%BB"><span class="toc-text">拓展阅读</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BF%AE%E6%94%B9%E8%A7%86%E5%9B%BE%E5%9F%BA%E6%9C%AC%E8%AF%AD%E6%B3%95"><span class="toc-text">修改视图基本语法</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BF%AE%E6%94%B9%E8%A7%86%E5%9B%BE%E5%86%85%E5%AE%B9"><span class="toc-text">修改视图内容</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95-3"><span class="toc-text">测试</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B1"><span class="toc-text">案例1</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B2"><span class="toc-text">案例2</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A0%E9%99%A4%E8%A7%86%E5%9B%BE%E5%9F%BA%E6%9C%AC%E8%AF%AD%E6%B3%95"><span class="toc-text">删除视图基本语法</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95-4"><span class="toc-text">测试</span></a></li></ol></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

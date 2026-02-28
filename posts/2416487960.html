@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Redis发布订阅（广播） | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="相关链接 Redis 发布订阅 - 简单模式：https:&#x2F;&#x2F;kdocs.cn&#x2F;l&#x2F;sl5exWLEzq2x Redis 发布订阅 - 复杂模式：https:&#x2F;&#x2F;kdocs.cn&#x2F;l&#x2F;sd0RbrsFajZE 生活化场景重现 学校时期，学级主任为了提高整个学级学生的写作能力，会要求我们订阅一些周刊例如《读者》《意林》。 简单模式： 同学各自订阅，然后出版商会把周刊递交给邮局【频道channel】，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis发布订阅（广播）">
+<meta property="og:url" content="https://blog.mailjob.net/posts/2416487960.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="相关链接 Redis 发布订阅 - 简单模式：https:&#x2F;&#x2F;kdocs.cn&#x2F;l&#x2F;sl5exWLEzq2x Redis 发布订阅 - 复杂模式：https:&#x2F;&#x2F;kdocs.cn&#x2F;l&#x2F;sd0RbrsFajZE 生活化场景重现 学校时期，学级主任为了提高整个学级学生的写作能力，会要求我们订阅一些周刊例如《读者》《意林》。 简单模式： 同学各自订阅，然后出版商会把周刊递交给邮局【频道channel】，">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210114231912453.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xpYmluZW1haWw=,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20210114231927484.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xpYmluZW1haWw=,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="http://img.github.mailjob.net/202212101339302.png">
+<meta property="og:image" content="http://img.github.mailjob.net/jefferyjob.github.io/20210204224332.gif">
+<meta property="article:published_time" content="2021-01-19T13:56:40.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.986Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="redis">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/20210114231912453.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xpYmluZW1haWw=,size_16,color_FFFFFF,t_70">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Redis发布订阅（广播）
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/2416487960.html" class="article-date">
+	  <time datetime="2021-01-19T13:56:40.000Z" itemprop="datePublished">2021-01-19</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/redis/" rel="tag">redis</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/2416487960.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.1k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 4(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h1 id="相关链接">相关链接</h1>
+<p>Redis 发布订阅 - 简单模式：<a target="_blank" rel="noopener" href="https://kdocs.cn/l/sl5exWLEzq2x">https://kdocs.cn/l/sl5exWLEzq2x</a></p>
+<p>Redis 发布订阅 - 复杂模式：<a target="_blank" rel="noopener" href="https://kdocs.cn/l/sd0RbrsFajZE">https://kdocs.cn/l/sd0RbrsFajZE</a></p>
+<h1 id="生活化场景重现">生活化场景重现</h1>
+<p>学校时期，学级主任为了提高整个学级学生的写作能力，会要求我们订阅一些周刊例如《读者》《意林》。</p>
+<h3 id="简单模式：">简单模式：</h3>
+<p>同学各自订阅，然后出版商会把周刊递交给<strong>邮局【频道channel】</strong>，然后邮局会在递交给所订阅整个周刊的<strong>同学们【(订阅者/客户端)client】</strong></p>
+<h3 id="复杂模式："><strong>复杂模式</strong>：</h3>
+<p>出资班费后**班级【频道channel】<strong>订阅，然后这个周刊，班级内的</strong>同学【(订阅者/客户端)client】**都可以阅读</p>
+<p><img src="https://img-blog.csdnimg.cn/20210114231912453.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xpYmluZW1haWw=,size_16,color_FFFFFF,t_70" alt="img"></p>
+<p><img src="https://img-blog.csdnimg.cn/20210114231927484.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xpYmluZW1haWw=,size_16,color_FFFFFF,t_70" alt="img"></p>
+<h2 id="底层实现">底层实现</h2>
+<p>服务器将所有的订阅关系都保存在服务器状态的<code>pubsub_channels</code>属性里面，在模式订阅里服务器也将所有模式的订阅关系都保存在服务器状态的<code>pubsub_patterns</code>属性里面。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">struct</span> <span class="token class-name">redisServer</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// ...</span>
+    <span class="token comment">// 保存所有模式订阅关系</span>
+    list <span class="token operator">*</span>pubsub_patterns<span class="token punctuation">;</span>
+    <span class="token comment">// ...</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><code>pubsub_patterns</code> 属性是一个链表，链表中的每个节点都包含着一个<code>pubsubPattern</code>结构，这个结构的<code>pattern</code>属性记录了被订阅的模式，而<code>client</code>属性则记录了订阅模式的客户端。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">typedef</span> <span class="token keyword">struct</span> <span class="token class-name">pubsubPattern</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// 订阅模式的客户端</span>
+    redisClient <span class="token operator">*</span>client<span class="token punctuation">;</span>
+    <span class="token comment">// 被订阅的模式</span>
+    robj <span class="token operator">*</span> pattern<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span> pubsubPattern<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><img src="http://img.github.mailjob.net/202212101339302.png" alt="图片描述"></p>
+<p>每当客户端执行<code>PSUBSCRIBE</code>命令订阅某个或某些模式的时候，服务器会对每个被订阅的模式执行以下两个操作：</p>
+<ol>
+<li>新建一个<code>pubsubPattern</code>结构，将结构的<code>pattern</code>属性设置为被订阅的模式（如：<code>music.*</code>），<code>client</code> 属性设置为订阅模式的客户端。</li>
+<li>将<code>pubsubPattern</code>结构添加到<code>pubsub_patterns</code>链表的表尾。</li>
+</ol>
+<h1 id="实战演练-Gif动画">实战演练 Gif动画</h1>
+<p>第一层窗口：发布订阅窗口</p>
+<p>第二层窗口：1：订阅 it.new 频道、2：订阅 it.photo 频道</p>
+<p>第三层窗口：1：订阅 it.* 模式频道、2： 订阅 it* 模式频道</p>
+<p><img src="http://img.github.mailjob.net/jefferyjob.github.io/20210204224332.gif" alt="img"></p>
+<h1 id="应用场景">应用场景</h1>
+<p>简单的应用场景的话, 以门户网站为例, 当编辑更新了某推荐板块的内容后:</p>
+<p>CMS发布<strong>清除缓存的消息</strong>到channel (推送者推送消息)</p>
+<p>门户网站的缓存系统通过channel收到<strong>清除缓存的消息</strong> (订阅者收到消息)，更新了推荐板块的缓存</p>
+<h1 id="Redis-发布订阅缺陷">Redis 发布订阅缺陷</h1>
+<p>作为我个人角度来看这个redis发布订阅，觉得挺鸡肋的，首先客户端必须得订阅，发布端才能发布信息，否则发布信息就报异常的错误。还有客户端一直要保持在线才能收到消息，和设计模式中的观察者模式极为相似。 所以总结一下，redis订阅模式有以下缺陷</p>
+<p><strong>1、redis系统的稳定性有关</strong> 对于旧版的redis来说，如果一个客户端订阅了某个或者某些频道，但是它读取消息的速度不够快，那么不断的积压的消息就会使得redis输出缓冲区的体积越来越大，这可能会导致redis的速度变慢，甚至直接崩溃。也可能会导致redis被操作系统强制杀死，甚至导致操作系统本身不可用。新版的redis不会出现这种问题，因为它会自动断开不符合client-output-buffer-limit pubsub配置选项要求的订阅客户端</p>
+<p><strong>2、数据传输的可靠性</strong> 任何网络系统在执行操作时都可能会遇到断网的情况。而断线产生的连接错误通常会使得网络连接两端中的一端进行重新连接。如果客户端在执行订阅操作的过程中断线，那么客户端将会丢失在断线期间的消息，这在很多业务场景下是不可忍受的。</p>
+<p>所以如果我碰到类似的业务的话，我也不会选择redis的发布订阅模式，我会选择：rabbitMQ，rockedMQ,activitedMQ 等消息中间件</p>
+<h1 id="常用命令">常用命令</h1>
+<p>下表列出了 redis 发布订阅常用命令：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">序号</th>
+<th style="text-align:left">命令及描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">[PSUBSCRIBE pattern <a target="_blank" rel="noopener" href="https://www.runoob.com/redis/pub-sub-psubscribe.html">pattern …]</a> 订阅一个或多个符合给定模式的频道。</td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">[PUBSUB subcommand <a target="_blank" rel="noopener" href="https://www.runoob.com/redis/pub-sub-pubsub.html">argument [argument …]]</a> 查看订阅与发布系统状态。</td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://www.runoob.com/redis/pub-sub-publish.html">PUBLISH channel message</a> 将信息发送到指定的频道。</td>
+</tr>
+<tr>
+<td style="text-align:left">4</td>
+<td style="text-align:left">[PUNSUBSCRIBE <a target="_blank" rel="noopener" href="https://www.runoob.com/redis/pub-sub-punsubscribe.html">pattern [pattern …]]</a> 退订所有给定模式的频道。</td>
+</tr>
+<tr>
+<td style="text-align:left">5</td>
+<td style="text-align:left">[SUBSCRIBE channel <a target="_blank" rel="noopener" href="https://www.runoob.com/redis/pub-sub-subscribe.html">channel …]</a> 订阅给定的一个或多个频道的信息。</td>
+</tr>
+<tr>
+<td style="text-align:left">6</td>
+<td style="text-align:left">[UNSUBSCRIBE <a target="_blank" rel="noopener" href="https://www.runoob.com/redis/pub-sub-unsubscribe.html">channel [channel …]]</a> 指退订给定的频道。</td>
+</tr>
+</tbody>
+</table>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/2416487960.html">https://blog.mailjob.net/posts/2416487960.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E9%93%BE%E6%8E%A5"><span class="toc-text">相关链接</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%94%9F%E6%B4%BB%E5%8C%96%E5%9C%BA%E6%99%AF%E9%87%8D%E7%8E%B0"><span class="toc-text">生活化场景重现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AE%80%E5%8D%95%E6%A8%A1%E5%BC%8F%EF%BC%9A"><span class="toc-text">简单模式：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%8D%E6%9D%82%E6%A8%A1%E5%BC%8F%EF%BC%9A"><span class="toc-text">复杂模式：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0"><span class="toc-text">底层实现</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%9E%E6%88%98%E6%BC%94%E7%BB%83-Gif%E5%8A%A8%E7%94%BB"><span class="toc-text">实战演练 Gif动画</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">应用场景</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Redis-%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85%E7%BC%BA%E9%99%B7"><span class="toc-text">Redis 发布订阅缺陷</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-text">常用命令</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

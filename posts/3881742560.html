@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Elasticsearch 的安装 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="前言 此文讨论一个 全文搜索引擎 的解决方案，ES是基于RESTful web接口。当然，还有其他的方案供你选择，例如：Lucene、讯搜、sphinx、Sort  。 Elasticsearch是用Java语言开发的，并作为Apache许可条款下的开放源码发布，是一种流行的企业级搜索引擎。Elasticsearch用于云计算中，能够达到实时搜索，稳定，可靠，快速，安装使用方便。 参考文献  ES">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Elasticsearch 的安装">
+<meta property="og:url" content="https://blog.mailjob.net/posts/3881742560.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="前言 此文讨论一个 全文搜索引擎 的解决方案，ES是基于RESTful web接口。当然，还有其他的方案供你选择，例如：Lucene、讯搜、sphinx、Sort  。 Elasticsearch是用Java语言开发的，并作为Apache许可条款下的开放源码发布，是一种流行的企业级搜索引擎。Elasticsearch用于云计算中，能够达到实时搜索，稳定，可靠，快速，安装使用方便。 参考文献  ES">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/oss.github/20210221192528.png">
+<meta property="article:published_time" content="2021-02-21T01:36:17.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.979Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="es">
+<meta property="article:tag" content="middle">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/oss.github/20210221192528.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Elasticsearch 的安装
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3881742560.html" class="article-date">
+	  <time datetime="2021-02-21T01:36:17.000Z" itemprop="datePublished">2021-02-21</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/es/">es</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/es/" rel="tag">es</a>, <a class="article-tag-none-link" href="/tags/middle/" rel="tag">middle</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/3881742560.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.9k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 8(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="前言">前言</h2>
+<p>此文讨论一个 <strong>全文搜索引擎</strong> 的解决方案，ES是基于RESTful web接口。当然，还有其他的方案供你选择，例如：<a target="_blank" rel="noopener" href="https://lucene.apache.org/core/">Lucene</a>、<a target="_blank" rel="noopener" href="http://www.xunsearch.com/">讯搜</a>、<a target="_blank" rel="noopener" href="http://www.sphinxsearch.org/sphinx-tutorial">sphinx</a>、<a target="_blank" rel="noopener" href="https://lucene.apache.org/solr/">Sort</a>  。</p>
+<p>Elasticsearch是用Java语言开发的，并作为Apache许可条款下的开放源码发布，是一种流行的企业级搜索引擎。Elasticsearch用于云计算中，能够达到实时搜索，稳定，可靠，快速，安装使用方便。</p>
+<h2 id="参考文献">参考文献</h2>
+<blockquote>
+<p>ES官方文档：<a target="_blank" rel="noopener" href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/index-doc.html">https://www.elastic.co/guide/cn/elasticsearch/guide/current/index-doc.html</a></p>
+<p>ES学习文档：<a target="_blank" rel="noopener" href="http://doc.codingdict.com/elasticsearch/95/">http://doc.codingdict.com/elasticsearch/95/</a></p>
+<p>ES 下载地址：<a target="_blank" rel="noopener" href="https://www.elastic.co/cn/downloads/elasticsearch">https://www.elastic.co/cn/downloads/elasticsearch</a></p>
+<p>ES集群搭建：<a target="_blank" rel="noopener" href="http://www.cnblogs.com/aubin/p/8012840.html">http://www.cnblogs.com/aubin/p/8012840.html</a></p>
+<p>中文分词器IK：<a target="_blank" rel="noopener" href="https://github.com/medcl/elasticsearch-analysis-ik/releases">https://github.com/medcl/elasticsearch-analysis-ik/releases</a></p>
+</blockquote>
+<h2 id="安装Elasticsearch">安装Elasticsearch</h2>
+<h5 id="1、安装-java-jdk-环境">1、安装 java jdk 环境</h5>
+<p>因为 es 搜索引擎需要 java 环境的支持，所以需要先安装 java jdk，并且检查在全局情况下 java 和 javac 命令是否可用。此处略去 java jdk 的安装过程。。。</p>
+<h5 id="2、下载es软件">2、下载es软件</h5>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">wget</span> https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-7.11.1-linux-x86_64.tar.gz<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h5 id="3、解压并移动到安装目录">3、解压并移动到安装目录</h5>
+<pre class="line-numbers language-none"><code class="language-none">tar -zxvf elasticsearch-7.11.1-linux-x86_64.tar.gz
+mv elasticsearch-7.11.1-linux-x86_64 &#x2F;usr&#x2F;local&#x2F;es<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<h5 id="4、进行相关配置">4、进行相关配置</h5>
+<p><strong>4.1、新建 data 目录(用于存放数据文件)</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">[root@VM-0-15-centos home]# cd &#x2F;usr&#x2F;local&#x2F;es
+[root@VM-0-15-centos es]# mkdir data<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p><strong>4.2、修改config/elasticsearch.yml</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">vi config&#x2F;elasticsearch.yml<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>取消或者修改下列项注释并修改：</p>
+<pre class="line-numbers language-none"><code class="language-none">#集群名称
+cluster.name: my-application
+#节点名称
+node.name: node-1
+#数据和日志的存储目录
+path.data: &#x2F;usr&#x2F;local&#x2F;es&#x2F;data
+path.logs: &#x2F;usr&#x2F;local&#x2F;es&#x2F;logs
+#设置绑定的ip，设置为0.0.0.0以后就可以让任何计算机节点访问到了
+network.host: 0.0.0.0
+#端口
+http.port: 9200
+#设置在集群中的所有节点名称，这个节点名称就是之前所修改的，当然你也可以采用默认的也行，目前 是单机，放入一个节点即可
+cluster.initial_master_nodes: [&quot;node-1&quot;]<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>修改完毕后，<code>:wq</code> 保存退出</p>
+<p><strong>4.3、修改内存</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">vi .&#x2F;config&#x2F;jvm.options<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<blockquote>
+<p>因为我的服务器内存是1G、而es默认配置的内存是1G、所以启动时可能会出现内存不足的情况<br>
+所以此内存的配置，请大家根据自己服务器的内存情况进行配置</p>
+</blockquote>
+<pre class="line-numbers language-none"><code class="language-none">-Xms256m
+-Xmx256m<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>:wq 保存并退出</p>
+<p><strong>4.4、为linux添加es服务的用户</strong></p>
+<blockquote>
+<p><strong>Tips</strong>： elasticsearch 服务不允许以 root 用户进行启动，所以应该为elasticsearch新建一个用户，并且给定相应的权限，切换为 elasticsearch 的用户后，以 elasticsearch 用户的身份进行启动</p>
+<p><strong>此文中为Elasticsearch添加的用户是es，后面的文章会被该用户（es），进行配置相应的权限</strong></p>
+</blockquote>
+<pre class="line-numbers language-none"><code class="language-none"># 添加linux用户
+[root@VM-0-15-centos config]# useradd es
+# 为该用户设置密码
+[root@VM-0-15-centos config]# passwd es
+Changing password for user es.
+New password: 
+BAD PASSWORD: The password is shorter than 8 characters
+Retype new password: 
+passwd: all authentication tokens updated successfully.
+# 将 es 服务的权限给予该linux用户
+[root@VM-0-15-centos config]# chown -R es &#x2F;usr&#x2F;local&#x2F;es<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>4.5、编辑 /etc/security/limits.conf，在末尾加上</strong></p>
+<blockquote>
+<p>此配置文件用于配置用户的进程数和可以打开的文件的最大数</p>
+<p>soft nproc：单个用户可用的最大进程数量(超过会警告)<br>
+hard nproc：单个用户可用的最大进程数量(超过会报错)<br>
+soft nofile：可打开的文件描述符的最大数(超过会警告)<br>
+hard nofile：可打开的文件描述符的最大数(超过会报错)</p>
+</blockquote>
+<pre class="line-numbers language-none"><code class="language-none"># 进入 limits.conf 文件
+[root@VM-0-15-centos config]# vim &#x2F;etc&#x2F;security&#x2F;limits.conf
+# 在末尾为【es的用户】加上这些配置
+# elasticsearch
+es soft nofile 65536
+es hard nofile 65536
+es soft nproc 4096
+es hard nproc 4096<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><em><em>4.6、在 20-nproc.conf，将</em> 改为用户名（es的用户）</em>*</p>
+<blockquote>
+<p>对 es 用户做权限限制</p>
+</blockquote>
+<pre class="line-numbers language-none"><code class="language-none"># 进入 20-nproc.conf 文件
+[root@VM-0-15-centos config]# vi &#x2F;etc&#x2F;security&#x2F;limits.d&#x2F;20-nproc.conf
+
+# 把 * 改为用户名（es的用户）
+# Default limit for number of user&#39;s processes to prevent
+# accidental fork bombs.
+# See rhbz #432903 for reasoning.
+
+es          soft    nproc     4096 # 所有的用户默认可以打开最大的进程数为 4096
+root       soft    nproc     unlimited # root 用户默认可以打开最大的进程数 无限制的。<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>4.7、修改sysctl.conf配置文件</strong></p>
+<blockquote>
+<p>此处用于指定用户所拥有的内存大小</p>
+</blockquote>
+<pre class="line-numbers language-none"><code class="language-none"># vi 进入 sysctl.conf 配置文件
+[root@VM-0-15-centos config]# vim &#x2F;etc&#x2F;sysctl.conf
+# 在末尾加上
+vm.max_map_count &#x3D; 655360<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>4.8、防火墙授权访问端口-9200</strong></p>
+<pre class="line-numbers language-none"><code class="language-none"># 在 root 用户下，开发es的端口9200
+[root@VM-0-15-centos root]# firewall-cmd --permanent --add-port&#x3D;9200&#x2F;tcp
+# 平滑重载防火墙
+firewall-cmd --reload<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>4.9、启动ES服务</strong></p>
+<p>登录刚才新建的elasticsearch用户，并启动elasticsearch</p>
+<pre class="line-numbers language-none"><code class="language-none"># 切换 es 用户
+[root@VM-0-15-centos config]# su es
+# 启动 es 服务
+[es@VM-0-15-centos es]$ .&#x2F;bin&#x2F;elasticsearch<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p><strong>Tips</strong></p>
+<p>此处启动后，如果 ctrl+c 结束后，es服务将会关闭，所以启动的时候，请加入 <code>-d</code> ，表示以守护进程的方式启动 es 服务，用 <code>ps -aux | grep elasticsearch</code> 建仓 es 的服务状态</p>
+</blockquote>
+<p><strong>4.10、网页访问</strong></p>
+<p>然后再浏览器输入服务器的 <code>IP</code> + <code>端口(默认：9200)</code>  就可以看到是否成功了</p>
+<p><img src="http://img.github.mailjob.net/oss.github/20210221192528.png" alt="image-20210221192527321"></p>
+<h2 id="安装IK分词器">安装IK分词器</h2>
+<p><strong>注意</strong>： 下载此软件，请和 es 的版本保持一致</p>
+<p>ik分词器是一个中文分词器，安装这个后 es 就支持中文分词啦。IK提供了两个分词算法：ik_smart 和 ik_max_word，其中 ik_smart 为最少切分，ik_max_word为最细 粒度划分。<code>elasticsearch-plugin</code> 可以通过这个命令来查看加载进来的插件</p>
+<p><strong>1、下载软件</strong></p>
+<pre class="line-numbers language-none"><code class="language-none">wget https:&#x2F;&#x2F;github.com&#x2F;medcl&#x2F;elasticsearch-analysis-ik&#x2F;releases&#x2F;download&#x2F;v7.11.1&#x2F;elasticsearch-analysis-ik-7.11.1.zip<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p><strong>2、复制到es软件的插件目录</strong></p>
+<pre class="line-numbers language-none"><code class="language-none"># 进入es插件目录
+[root@VM-0-15-centos plugins]# &#x2F;usr&#x2F;local&#x2F;es&#x2F;plugins&#x2F;
+# 创建ik分词器目录
+[root@VM-0-15-centos plugins]# mkdir elasticsearch-analysis-ik
+[root@VM-0-15-centos plugins]# ls
+elasticsearch-analysis-ik
+# 进入ik分词器目录
+[root@VM-0-15-centos plugins]# cd elasticsearch-analysis-ik&#x2F;
+# 把(ik分词器软件)复制到(ik分词器目录)
+[root@VM-0-15-centos elasticsearch-analysis-ik]# cp &#x2F;home&#x2F;elasticsearch-analysis-ik-7.11.1.zip &#x2F;usr&#x2F;local&#x2F;es&#x2F;plugins&#x2F;elasticsearch-analysis-ik&#x2F;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>3、解压软件</strong></p>
+<pre class="line-numbers language-none"><code class="language-none"># 解压
+[root@VM-0-15-centos elasticsearch-analysis-ik]# unzip elasticsearch-analysis-ik-7.11.1.zip
+# 删除zip包
+[root@VM-0-15-centos elasticsearch-analysis-ik]# rm -rf elasticsearch-analysis-ik-7.11.1.zip<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>4、重启es软件</strong></p>
+<p>重启后，就可以使用 ik 中文分词器了</p>
+<h2 id="安装遇到的问题">安装遇到的问题</h2>
+<h3 id="用户内存过低">用户内存过低</h3>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>翻译过来就是：elasticsearch用户拥有的内存权限太小，至少需要262144；<br>
+上文中，我已经修改了此参数为 65530，但是看来还是太小了</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">切换到root用户
+执行命令：
+<span class="token function">sysctl</span> <span class="token parameter variable">-w</span> <span class="token assign-left variable">vm.max_map_count</span><span class="token operator">=</span><span class="token number">262144</span>
+查看结果：
+<span class="token function">sysctl</span> -a<span class="token operator">|</span><span class="token function">grep</span> vm.max_map_count
+显示：
+vm.max_map_count <span class="token operator">=</span> <span class="token number">262144</span>
+
+上述方法修改之后，如果重启虚拟机将失效，所以：
+解决办法：
+在 /etc/sysctl.conf文件最后添加一行
+<span class="token assign-left variable">vm.max_map_count</span><span class="token operator">=</span><span class="token number">262144</span>
+即可永久修改<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="安全提示错误日志">安全提示错误日志</h3>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">Active licenses is now [Basic]; Security is disabled<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>此提示可忽略。这是一个很普通的INFO级别的日志信息,就是linux服务器告诉我目前我的es集群的是默认的[Basic]许可，并且我的elasticsearch集群没有开启security(es集群中的security可以实现基于角色的访问控制，可以为es服务设置密码账号访问)，这里我是没有开启security，即没有设置账号密码登陆elasticsearch服务。这就是一个安全认证的提示信息，仅此而已</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/3881742560.html">https://blog.mailjob.net/posts/3881742560.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85Elasticsearch"><span class="toc-text">安装Elasticsearch</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#1%E3%80%81%E5%AE%89%E8%A3%85-java-jdk-%E7%8E%AF%E5%A2%83"><span class="toc-text">1、安装 java jdk 环境</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2%E3%80%81%E4%B8%8B%E8%BD%BDes%E8%BD%AF%E4%BB%B6"><span class="toc-text">2、下载es软件</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3%E3%80%81%E8%A7%A3%E5%8E%8B%E5%B9%B6%E7%A7%BB%E5%8A%A8%E5%88%B0%E5%AE%89%E8%A3%85%E7%9B%AE%E5%BD%95"><span class="toc-text">3、解压并移动到安装目录</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#4%E3%80%81%E8%BF%9B%E8%A1%8C%E7%9B%B8%E5%85%B3%E9%85%8D%E7%BD%AE"><span class="toc-text">4、进行相关配置</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85IK%E5%88%86%E8%AF%8D%E5%99%A8"><span class="toc-text">安装IK分词器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E9%81%87%E5%88%B0%E7%9A%84%E9%97%AE%E9%A2%98"><span class="toc-text">安装遇到的问题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%94%A8%E6%88%B7%E5%86%85%E5%AD%98%E8%BF%87%E4%BD%8E"><span class="toc-text">用户内存过低</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E5%85%A8%E6%8F%90%E7%A4%BA%E9%94%99%E8%AF%AF%E6%97%A5%E5%BF%97"><span class="toc-text">安全提示错误日志</span></a></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

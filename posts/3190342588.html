@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>Go原生方法实现RPC | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="引言 RPC是远程过程调用的缩写（Remote Procedure Call），通俗地说就是调用远处的一个函数。使得应用程序之间可以进行通信，而且也遵从server&#x2F;client模型。使用的时候客户端调用server端提供的接口就像是调用本地的函数一样。  参考文献  net&#x2F;rpc实现rpc代码：https:&#x2F;&#x2F;github.com&#x2F;mailjobblog&#x2F;dev_go&#x2F;tree&#x2F;master&#x2F;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go原生方法实现RPC">
+<meta property="og:url" content="https://blog.mailjob.net/posts/3190342588.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="引言 RPC是远程过程调用的缩写（Remote Procedure Call），通俗地说就是调用远处的一个函数。使得应用程序之间可以进行通信，而且也遵从server&#x2F;client模型。使用的时候客户端调用server端提供的接口就像是调用本地的函数一样。  参考文献  net&#x2F;rpc实现rpc代码：https:&#x2F;&#x2F;github.com&#x2F;mailjobblog&#x2F;dev_go&#x2F;tree&#x2F;master&#x2F;">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.github.mailjob.net/20220113211735.png">
+<meta property="article:published_time" content="2022-01-13T12:54:19.000Z">
+<meta property="article:modified_time" content="2026-02-28T10:56:06.979Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="go">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.github.mailjob.net/20220113211735.png">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            Go原生方法实现RPC
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3190342588.html" class="article-date">
+	  <time datetime="2022-01-13T12:54:19.000Z" itemprop="datePublished">2022-01-13</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/go/">go</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/go/" rel="tag">go</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/3190342588.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.3k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 5(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="引言">引言</h2>
+<p>RPC是远程过程调用的缩写（Remote Procedure Call），通俗地说就是调用远处的一个函数。使得应用程序之间可以进行通信，而且也遵从server/client模型。使用的时候客户端调用server端提供的接口就像是调用本地的函数一样。<br>
+<img src="http://img.github.mailjob.net/20220113211735.png" alt="RPC原理图"></p>
+<h2 id="参考文献">参考文献</h2>
+<blockquote>
+<p>net/rpc实现rpc代码：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/dev_go/tree/master/220113_rpc/1.rpc">https://github.com/mailjobblog/dev_go/tree/master/220113_rpc/1.rpc</a><br>
+jsonrpc实现rpc代码：<a target="_blank" rel="noopener" href="https://github.com/mailjobblog/dev_go/tree/master/220113_rpc/2.rpcjson">https://github.com/mailjobblog/dev_go/tree/master/220113_rpc/2.rpcjson</a></p>
+</blockquote>
+<h2 id="RPC实现">RPC实现</h2>
+<h3 id="Go原生net-rpc实现">Go原生net/rpc实现</h3>
+<p>Go语言的RPC包的路径为<code>net/rpc</code>，也就是放在了net包目录下面。因此我们可以猜测该RPC包是建立在net包基础之上的。</p>
+<h4 id="代码实现">代码实现</h4>
+<p><strong>server.go</strong></p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token boolean">_</span> <span class="token operator">=</span> rpc<span class="token punctuation">.</span><span class="token function">Register</span><span class="token punctuation">(</span><span class="token function">new</span><span class="token punctuation">(</span>HelloService<span class="token punctuation">)</span><span class="token punctuation">)</span>
+	<span class="token comment">// _ = rpc.RegisterName("HelloService", new(HelloService)) // 自定义名称注册</span>
+
+	listener<span class="token punctuation">,</span> err <span class="token operator">:=</span> net<span class="token punctuation">.</span><span class="token function">Listen</span><span class="token punctuation">(</span><span class="token string">"tcp"</span><span class="token punctuation">,</span> <span class="token string">":8888"</span><span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		log<span class="token punctuation">.</span><span class="token function">Fatal</span><span class="token punctuation">(</span><span class="token string">"ListenTCP error:"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	conn<span class="token punctuation">,</span> err <span class="token operator">:=</span> listener<span class="token punctuation">.</span><span class="token function">Accept</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		log<span class="token punctuation">.</span><span class="token function">Fatal</span><span class="token punctuation">(</span><span class="token string">"Accept error:"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+	rpc<span class="token punctuation">.</span><span class="token function">ServeConn</span><span class="token punctuation">(</span>conn<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">type</span> HelloService <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>h <span class="token operator">*</span>HelloService<span class="token punctuation">)</span> <span class="token function">Length</span><span class="token punctuation">(</span>res <span class="token builtin">string</span><span class="token punctuation">,</span> reply <span class="token operator">*</span><span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">&#123;</span>
+	<span class="token operator">*</span>reply <span class="token operator">=</span> <span class="token function">len</span><span class="token punctuation">(</span>res<span class="token punctuation">)</span>
+	<span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>rpc.Register函数调用会将对象类型中所有满足RPC规则的对象方法注册为RPC函数，所有注册的方法会放在“HelloService”服务空间之下。然后我们建立一个唯一的TCP链接，并且通过rpc.ServeConn函数在该TCP链接上为对方提供RPC服务。</p>
+<p><strong>其中Length方法必须满足Go语言的RPC规则</strong>：</p>
+<ul>
+<li>方法只能有两个可序列化的参数</li>
+<li>其中第二个参数是指针类型，</li>
+<li>并且返回一个error类型</li>
+<li>必须是公开的方法。</li>
+</ul>
+<p><strong>client.go</strong></p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	client<span class="token punctuation">,</span> err <span class="token operator">:=</span> rpc<span class="token punctuation">.</span><span class="token function">Dial</span><span class="token punctuation">(</span><span class="token string">"tcp"</span><span class="token punctuation">,</span> <span class="token string">"127.0.0.1:8888"</span><span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		log<span class="token punctuation">.</span><span class="token function">Fatal</span><span class="token punctuation">(</span><span class="token string">"dialing:"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	res <span class="token operator">:=</span> <span class="token string">"test HelloService"</span>
+	<span class="token keyword">var</span> reply <span class="token builtin">int</span>
+	err <span class="token operator">=</span> client<span class="token punctuation">.</span><span class="token function">Call</span><span class="token punctuation">(</span><span class="token string">"HelloService.Length"</span><span class="token punctuation">,</span> res<span class="token punctuation">,</span> <span class="token operator">&amp;</span>reply<span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		log<span class="token punctuation">.</span><span class="token function">Fatal</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>reply<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="Go使用jsonrpc实现">Go使用jsonrpc实现</h3>
+<p><strong>标准库的RPC默认采用Go语言特有的 <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail/article/details/122503469">gob</a> 编码，因此从其它语言调用Go语言实现的RPC服务将比较困难。</strong></p>
+<p>Go语言的RPC框架有两个比较有特色的设计：一个是RPC数据打包时可以通过插件实现自定义的编码和解码；另一个是RPC建立在抽象的io.ReadWriteCloser接口之上的，我们可以将RPC架设在不同的通讯协议之上。这里我们将尝试通过官方自带的net/rpc/jsonrpc扩展实现一个跨语言的PPC。</p>
+<h4 id="代码实现-2">代码实现</h4>
+<p><strong>server.go</strong></p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token boolean">_</span> <span class="token operator">=</span> rpc<span class="token punctuation">.</span><span class="token function">Register</span><span class="token punctuation">(</span><span class="token function">new</span><span class="token punctuation">(</span>HelloService<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+	listener<span class="token punctuation">,</span> err <span class="token operator">:=</span> net<span class="token punctuation">.</span><span class="token function">Listen</span><span class="token punctuation">(</span><span class="token string">"tcp"</span><span class="token punctuation">,</span> <span class="token string">":8888"</span><span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		log<span class="token punctuation">.</span><span class="token function">Fatal</span><span class="token punctuation">(</span><span class="token string">"ListenTCP error:"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
+		conn<span class="token punctuation">,</span> err <span class="token operator">:=</span> listener<span class="token punctuation">.</span><span class="token function">Accept</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+		<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+			log<span class="token punctuation">.</span><span class="token function">Fatal</span><span class="token punctuation">(</span><span class="token string">"Accept error:"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+		<span class="token punctuation">&#125;</span>
+		<span class="token comment">// 用rpc.ServeCodec函数替代了rpc.ServeConn函数</span>
+		<span class="token comment">// 传入的参数是针对服务端的json编解码器</span>
+		<span class="token keyword">go</span> rpc<span class="token punctuation">.</span><span class="token function">ServeCodec</span><span class="token punctuation">(</span>jsonrpc<span class="token punctuation">.</span><span class="token function">NewServerCodec</span><span class="token punctuation">(</span>conn<span class="token punctuation">)</span><span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">type</span> HelloService <span class="token keyword">struct</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>h <span class="token operator">*</span>HelloService<span class="token punctuation">)</span> <span class="token function">Length</span><span class="token punctuation">(</span>res <span class="token builtin">string</span><span class="token punctuation">,</span> reply <span class="token operator">*</span><span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">&#123;</span>
+	<span class="token operator">*</span>reply <span class="token operator">=</span> <span class="token function">len</span><span class="token punctuation">(</span>res<span class="token punctuation">)</span>
+	<span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>client.go</strong></p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token comment">// 手工调用net.Dial函数建立TCP链接</span>
+	conn<span class="token punctuation">,</span> err <span class="token operator">:=</span> net<span class="token punctuation">.</span><span class="token function">Dial</span><span class="token punctuation">(</span><span class="token string">"tcp"</span><span class="token punctuation">,</span> <span class="token string">"127.0.0.1:8888"</span><span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		log<span class="token punctuation">.</span><span class="token function">Fatal</span><span class="token punctuation">(</span><span class="token string">"net.Dial:"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+
+	<span class="token comment">// 针对客户端的json编解码器</span>
+	client <span class="token operator">:=</span> rpc<span class="token punctuation">.</span><span class="token function">NewClientWithCodec</span><span class="token punctuation">(</span>jsonrpc<span class="token punctuation">.</span><span class="token function">NewClientCodec</span><span class="token punctuation">(</span>conn<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+	res <span class="token operator">:=</span> <span class="token string">"test HelloService"</span>
+	<span class="token keyword">var</span> reply <span class="token builtin">int</span>
+	err <span class="token operator">=</span> client<span class="token punctuation">.</span><span class="token function">Call</span><span class="token punctuation">(</span><span class="token string">"HelloService.Length"</span><span class="token punctuation">,</span> res<span class="token punctuation">,</span> <span class="token operator">&amp;</span>reply<span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+		log<span class="token punctuation">.</span><span class="token function">Fatal</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+	fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>reply<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="知识拓展">知识拓展</h4>
+<h5 id="查看服务器接收的客户端数据">查看服务器接收的客户端数据</h5>
+<p>为了查看到客户端调用时发送的数据格式。我们可以用 <a target="_blank" rel="noopener" href="https://www.runoob.com/linux/linux-comm-nc.html">nc</a> 命令 <code>nc -l 8888</code> 在同样的端口启动一个TCP服务。</p>
+<p>然后再次执行一次RPC调用（client.go）将会发现nc输出了以下的信息：</p>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">&#123;</span><span class="token property">"method"</span><span class="token operator">:</span><span class="token string">"HelloService.Length"</span><span class="token punctuation">,</span><span class="token property">"params"</span><span class="token operator">:</span><span class="token punctuation">[</span><span class="token string">"test HelloService"</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token property">"id"</span><span class="token operator">:</span><span class="token number">0</span><span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>这是一个json编码的数据，其中<code>method</code>部分对应要调用的rpc服务和方法组合成的名字，<code>params</code>部分的第一个元素为参数，<code>id</code>是由调用端维护的一个唯一的调用编号。</p>
+<p>请求的json数据对象在内部对应两个结构体：客户端是clientRequest，服务端是serverRequest。</p>
+<p>clientRequest 和 serverRequest结构体的内容基本是一致的：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> clientRequest <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    Method <span class="token builtin">string</span>         <span class="token string">`json:"method"`</span>
+    Params <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span> <span class="token string">`json:"params"`</span>
+    Id     <span class="token builtin">uint64</span>         <span class="token string">`json:"id"`</span>
+<span class="token punctuation">&#125;</span>
+<span class="token keyword">type</span> serverRequest <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    Method <span class="token builtin">string</span>           <span class="token string">`json:"method"`</span>
+    Params <span class="token operator">*</span>json<span class="token punctuation">.</span>RawMessage <span class="token string">`json:"params"`</span>
+    Id     <span class="token operator">*</span>json<span class="token punctuation">.</span>RawMessage <span class="token string">`json:"id"`</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="用linux命令模拟客户端请求服务端">用linux命令模拟客户端请求服务端</h5>
+<p>在获取到RPC调用对应的json数据后，我们可以通过直接向架设了RPC服务（server.go）的TCP服务器发送json数据模拟RPC方法调用：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ <span class="token builtin class-name">echo</span> <span class="token parameter variable">-e</span> <span class="token string">'&#123;"method":"HelloService.Length","params":["test HelloService"],"id":0&#125;'</span> <span class="token operator">|</span> <span class="token function">nc</span> <span class="token number">127.0</span>.0.1 <span class="token number">8888</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>返回的结果也是一个json格式的数据：</p>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">&#123;</span><span class="token property">"id"</span><span class="token operator">:</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token property">"result"</span><span class="token operator">:</span><span class="token number">17</span><span class="token punctuation">,</span><span class="token property">"error"</span><span class="token operator">:</span><span class="token null keyword">null</span><span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>返回的json数据也是对应内部的两个结构体：客户端是clientResponse，服务端是serverResponse。两个结构体的内容同样也是类似的：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> clientResponse <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    Id     <span class="token builtin">uint64</span>           <span class="token string">`json:"id"`</span>
+    Result <span class="token operator">*</span>json<span class="token punctuation">.</span>RawMessage <span class="token string">`json:"result"`</span>
+    Error  <span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>      <span class="token string">`json:"error"`</span>
+<span class="token punctuation">&#125;</span>
+<span class="token keyword">type</span> serverResponse <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    Id     <span class="token operator">*</span>json<span class="token punctuation">.</span>RawMessage <span class="token string">`json:"id"`</span>
+    Result <span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>      <span class="token string">`json:"result"`</span>
+    Error  <span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>      <span class="token string">`json:"error"`</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>因此无论采用何种语言，只要遵循同样的json结构，以同样的流程就可以和Go语言编写的RPC服务进行通信。这样我们就实现了跨语言的RPC。</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/3190342588.html">https://blog.mailjob.net/posts/3190342588.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%95%E8%A8%80"><span class="toc-text">引言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RPC%E5%AE%9E%E7%8E%B0"><span class="toc-text">RPC实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Go%E5%8E%9F%E7%94%9Fnet-rpc%E5%AE%9E%E7%8E%B0"><span class="toc-text">Go原生net&#x2F;rpc实现</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="toc-text">代码实现</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Go%E4%BD%BF%E7%94%A8jsonrpc%E5%AE%9E%E7%8E%B0"><span class="toc-text">Go使用jsonrpc实现</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0-2"><span class="toc-text">代码实现</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%9F%A5%E8%AF%86%E6%8B%93%E5%B1%95"><span class="toc-text">知识拓展</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%8E%A5%E6%94%B6%E7%9A%84%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%95%B0%E6%8D%AE"><span class="toc-text">查看服务器接收的客户端数据</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%94%A8linux%E5%91%BD%E4%BB%A4%E6%A8%A1%E6%8B%9F%E5%AE%A2%E6%88%B7%E7%AB%AF%E8%AF%B7%E6%B1%82%E6%9C%8D%E5%8A%A1%E7%AB%AF"><span class="toc-text">用linux命令模拟客户端请求服务端</span></a></li></ol></li></ol></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+</footer>
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

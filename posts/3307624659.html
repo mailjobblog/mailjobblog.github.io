@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>使用go-redis/redismock做Redis单元测试 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="在开发应用程序时，使用 Redis 是一种常见的方式来处理和存储数据。Redis 提供了五种常用的数据类型：String、List、Set、Hash 和 Sorted Set。除了这些数据类型之外，有时我们还需要在 Redis 中执行复杂的命令序列，这时可以使用 Lua 脚本来实现。在本篇博客中，我们将探讨如何在 Go 语言中使用 go-redis&#x2F;redismock 来测试 Redis 常用的五">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用go-redis&#x2F;redismock做Redis单元测试">
+<meta property="og:url" content="https://blog.mailjob.net/posts/3307624659.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="在开发应用程序时，使用 Redis 是一种常见的方式来处理和存储数据。Redis 提供了五种常用的数据类型：String、List、Set、Hash 和 Sorted Set。除了这些数据类型之外，有时我们还需要在 Redis 中执行复杂的命令序列，这时可以使用 Lua 脚本来实现。在本篇博客中，我们将探讨如何在 Go 语言中使用 go-redis&#x2F;redismock 来测试 Redis 常用的五">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-07-26T01:17:50.000Z">
+<meta property="article:modified_time" content="2026-07-13T01:22:00.643Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="go">
+<meta property="article:tag" content="redis">
+<meta name="twitter:card" content="summary">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            使用go-redis/redismock做Redis单元测试
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3307624659.html" class="article-date">
+	  <time datetime="2023-07-26T01:17:50.000Z" itemprop="datePublished">2023-07-26</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/go/">go</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/go/" rel="tag">go</a>, <a class="article-tag-none-link" href="/tags/redis/" rel="tag">redis</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/3307624659.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 2.7k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 13(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <p>在开发应用程序时，使用 Redis 是一种常见的方式来处理和存储数据。Redis 提供了五种常用的数据类型：String、List、Set、Hash 和 Sorted Set。除了这些数据类型之外，有时我们还需要在 Redis 中执行复杂的命令序列，这时可以使用 Lua 脚本来实现。在本篇博客中，我们将探讨如何在 Go 语言中使用 <code>go-redis/redismock</code> 来测试 Redis 常用的五种数据类型以及执行 Lua 脚本。</p>
+<h3 id="1-简介">1. 简介</h3>
+<p>首先，让我们了解一下 <code>go-redis/redismock</code> 是什么。它是一个用于 Mock Redis 数据库的库，可以模拟 Redis 客户端的行为，无需实际连接到真实的 Redis 数据库。这样，我们可以在单元测试中更快速和可控地测试与 Redis 交互的代码。</p>
+<h3 id="2-安装和设置">2. 安装和设置</h3>
+<p>在开始之前，请确保您已经安装了 Go 环境，并配置好了 Go 的工作空间。</p>
+<p>首先，我们需要安装 <code>go-redis/redismock</code> 和 <code>go-redis/redis/v8</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">go get github.com/go-redis/redismock/v8</span><br><span class="line">go get github.com/go-redis/redis/v8</span><br></pre></td></tr></table></figure>
+<h3 id="3-示例：测试-Redis-String、List、Set、Hash-和-Sorted-Set">3. 示例：测试 Redis String、List、Set、Hash 和 Sorted Set</h3>
+<h4 id="String-类型">String 类型</h4>
+<p>首先，我们将测试 Redis 中的 String 类型。我们创建一个 <code>string_ops.go</code> 文件，并实现相应的 Go 代码：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// string_ops.go</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;context&quot;</span></span><br><span class="line">	<span class="string">&quot;fmt&quot;</span></span><br><span class="line">	<span class="string">&quot;github.com/go-redis/redis/v8&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// SetString 设置 Redis 中的 String 类型数据</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">SetString</span><span class="params">(client *redis.Client, key, value <span class="type">string</span>)</span></span> <span class="type">error</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> client.Set(context.Background(), key, value, <span class="number">0</span>).Err()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// GetString 获取 Redis 中的 String 类型数据</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">GetString</span><span class="params">(client *redis.Client, key <span class="type">string</span>)</span></span> (<span class="type">string</span>, <span class="type">error</span>) &#123;</span><br><span class="line">	<span class="keyword">return</span> client.Get(context.Background(), key).Result()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在这个示例中，我们编写了 <code>SetString</code> 和 <code>GetString</code> 函数，用于设置和获取 Redis 中的 String 类型数据。</p>
+<p>接下来，我们编写单元测试来测试这两个函数。创建一个 <code>string_ops_test.go</code> 文件：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// string_ops_test.go</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;testing&quot;</span></span><br><span class="line"></span><br><span class="line">	<span class="string">&quot;github.com/go-redis/redismock/v8&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestSetAndGet_String</span><span class="params">(t *testing.T)</span></span> &#123;</span><br><span class="line">	client, mock := redismock.NewClientMock()</span><br><span class="line"></span><br><span class="line">	key := <span class="string">&quot;mykey&quot;</span></span><br><span class="line">	value := <span class="string">&quot;myvalue&quot;</span></span><br><span class="line"></span><br><span class="line">	mock.ExpectSet(key, value).SetVal(<span class="string">&quot;OK&quot;</span>)</span><br><span class="line">	mock.ExpectGet(key).SetVal(value)</span><br><span class="line"></span><br><span class="line">	err := SetString(client, key, value)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;SetString failed: %s&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	result, err := GetString(client, key)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;GetString failed: %s&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> result != value &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;unexpected value, got: %s, want: %s&quot;</span>, result, value)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err := mock.ExpectationsWereMet(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;unfulfilled expectations: %s&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="List-类型">List 类型</h4>
+<p>接下来，我们测试 Redis 中的 List 类型。我们创建一个 <code>list_ops.go</code> 文件，并实现相应的 Go 代码：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// list_ops.go</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;context&quot;</span></span><br><span class="line">	<span class="string">&quot;fmt&quot;</span></span><br><span class="line">	<span class="string">&quot;github.com/go-redis/redis/v8&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// ListPush 在 Redis 中的 List 类型数据上进行 push 操作</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">ListPush</span><span class="params">(client *redis.Client, key <span class="type">string</span>, values ...<span class="type">string</span>)</span></span> (<span class="type">int64</span>, <span class="type">error</span>) &#123;</span><br><span class="line">	<span class="keyword">return</span> client.LPush(context.Background(), key, values).Result()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ListPop 在 Redis 中的 List 类型数据上进行 pop 操作</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">ListPop</span><span class="params">(client *redis.Client, key <span class="type">string</span>)</span></span> (<span class="type">string</span>, <span class="type">error</span>) &#123;</span><br><span class="line">	<span class="keyword">return</span> client.LPop(context.Background(), key).Result()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在这个示例中，我们编写了 <code>ListPush</code> 和 <code>ListPop</code> 函数，用于在 Redis 中添加和弹出 List 类型数据。</p>
+<p>接下来，我们编写单元测试来测试这两个函数。创建一个 <code>list_ops_test.go</code> 文件：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// list_ops_test.go</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;testing&quot;</span></span><br><span class="line"></span><br><span class="line">	<span class="string">&quot;github.com/go-redis/redismock/v8&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestListPushAndPop</span><span class="params">(t *testing.T)</span></span> &#123;</span><br><span class="line">	client, mock := redismock.NewClientMock()</span><br><span class="line"></span><br><span class="line">	key := <span class="string">&quot;mylist&quot;</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// 测试 ListPush</span></span><br><span class="line">	values := []<span class="type">string</span>&#123;<span class="string">&quot;item1&quot;</span>, <span class="string">&quot;item2&quot;</span>, <span class="string">&quot;item3&quot;</span>&#125;</span><br><span class="line">	mock.ExpectLPush(key, values).SetVal(<span class="number">3</span>)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 测试 ListPop</span></span><br><span class="line">	mock.ExpectLPop(key).SetVal(<span class="string">&quot;item3&quot;</span>)</span><br><span class="line"></span><br><span class="line">	count, err := ListPush(client, key, values...)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;ListPush failed: %s&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> count != <span class="number">3</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;unexpected count, got: %d, want: %d&quot;</span>, count, <span class="number">3</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	item, err := ListPop(client, key)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;ListPop failed: %s&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> item != <span class="string">&quot;item3&quot;</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;unexpected item, got: %s, want: %s&quot;</span>, item, <span class="string">&quot;item3&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err := mock.ExpectationsWereMet(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;unfulfilled expectations: %s&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="Set-类型">Set 类型</h4>
+<p>接下来，我们测试 Redis 中的 Set 类型。我们创建一个 <code>set_ops.go</code> 文件，并实现相应的 Go 代码：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// set_ops.go</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;context&quot;</span></span><br><span class="line">	<span class="string">&quot;fmt&quot;</span></span><br><span class="line">	<span class="string">&quot;github.com/go-redis/redis/v8&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// SetAdd 在 Redis 中的 Set 类型数据上进行 add 操作</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">SetAdd</span><span class="params">(client *redis.Client, key <span class="type">string</span>, members ...<span class="type">string</span>)</span></span> (<span class="type">int64</span>, <span class="type">error</span>) &#123;</span><br><span class="line">	<span class="keyword">return</span> client.SAdd(context.Background(), key, members).Result()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// SetMembers 获取 Redis 中的 Set 类型数据的所有成员</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">SetMembers</span><span class="params">(client *redis.Client, key <span class="type">string</span>)</span></span> ([]<span class="type">string</span>, <span class="type">error</span>) &#123;</span><br><span class="line">	<span class="keyword">return</span> client.SMembers(context.Background(), key).Result()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在这个示例中，我们编写了 <code>SetAdd</code> 和 <code>SetMembers</code> 函数，用于在 Redis 中添加和获取 Set 类型数据。</p>
+<p>接下来，我们编写单元测试来测试这两个函数。创建一个 <code>set_ops_test.go</code> 文件：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// set_ops_test.go</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;reflect&quot;</span></span><br><span class="line">	<span class="string">&quot;testing&quot;</span></span><br><span class="line"></span><br><span class="line">	<span class="string">&quot;github.com/go-redis/redismock/v8&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestSetAddAndMembers</span><span class="params">(t *testing.T)</span></span> &#123;</span><br><span class="line">	client, mock := redismock.NewClientMock()</span><br><span class="line"></span><br><span class="line">	key := <span class="string">&quot;myset&quot;</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// 测试 SetAdd</span></span><br><span class="line">	members := []<span class="type">string</span>&#123;<span class="string">&quot;member1&quot;</span>, <span class="string">&quot;member2&quot;</span>, <span class="string">&quot;member3&quot;</span>&#125;</span><br><span class="line">	mock.ExpectSAdd(key, members).SetVal(<span class="number">3</span>)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 测试 SetMembers</span></span><br><span class="line">	mock.ExpectSMembers(key).SetVal([]<span class="type">string</span>&#123;<span class="string">&quot;member1&quot;</span>, <span class="string">&quot;member2&quot;</span>, <span class="string">&quot;member3&quot;</span>&#125;)</span><br><span class="line"></span><br><span class="line">	count, err := SetAdd(client, key, members...)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;SetAdd failed: %s&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> count != <span class="number">3</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;unexpected count, got: %d, want: %d&quot;</span>, count, <span class="number">3</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	result, err := SetMembers(client, key)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;SetMembers failed: %s&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> !reflect.DeepEqual(result, members) &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;unexpected members, got: %v, want: %v&quot;</span>, result, members)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err := mock.ExpectationsWereMet(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;unfulfilled expectations: %s&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="Hash-类型">Hash 类型</h4>
+<p>接下来，我们测试 Redis 中的 Hash 类型。我们创建一个 <code>hash_ops.go</code> 文件，并实现相应的 Go 代码：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// hash_ops.go</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;context&quot;</span></span><br><span class="line">	<span class="string">&quot;fmt&quot;</span></span><br><span class="line">	<span class="string">&quot;github.com/go-redis/redis/v8&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// HashSet 在 Redis 中的 Hash 类型数据上进行设置操作</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">HashSet</span><span class="params">(client *redis.Client, key <span class="type">string</span>, fieldValues <span class="keyword">map</span>[<span class="type">string</span>]<span class="keyword">interface</span>&#123;&#125;)</span></span> <span class="type">error</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> client.HMSet(context.Background(), key, fieldValues).Err()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// HashGet 获取 Redis 中的 Hash 类型数据的指定字段值</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">HashGet</span><span class="params">(client *redis.Client, key, field <span class="type">string</span>)</span></span> (<span class="type">string</span>, <span class="type">error</span>) &#123;</span><br><span class="line">	<span class="keyword">return</span> client.HGet(context.Background(), key, field).Result()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在这个示例中，我们编写了 <code>HashSet</code> 和 <code>HashGet</code> 函数，用于在 Redis 中设置和获取 Hash 类型数据。</p>
+<p>接下来，我们编写单元测试来测试这两个函数。创建一个 <code>hash_ops_test.go</code> 文件：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// hash_ops_test.go</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;testing&quot;</span></span><br><span class="line"></span><br><span class="line">	<span class="string">&quot;github.com/go-redis/redismock/v8&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestHashSetAndGet</span><span class="params">(t *testing.T)</span></span> &#123;</span><br><span class="line">	client, mock := redismock.NewClientMock()</span><br><span class="line"></span><br><span class="line">	key := <span class="string">&quot;myhash&quot;</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// 测试 HashSet</span></span><br><span class="line">	fieldValues := <span class="keyword">map</span>[<span class="type">string</span>]<span class="keyword">interface</span>&#123;&#125;&#123;</span><br><span class="line">		<span class="string">&quot;field1&quot;</span>: <span class="string">&quot;value1&quot;</span>,</span><br><span class="line">		<span class="string">&quot;field2&quot;</span>: <span class="string">&quot;value2&quot;</span>,</span><br><span class="line">		<span class="string">&quot;field3&quot;</span>: <span class="string">&quot;value3&quot;</span>,</span><br><span class="line">	&#125;</span><br><span class="line">	mock.ExpectHMSet(key, fieldValues).SetVal(<span class="string">&quot;OK&quot;</span>)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 测试 HashGet</span></span><br><span class="line">	field := <span class="string">&quot;field2&quot;</span></span><br><span class="line">	mock.ExpectHGet(key, field).SetVal(<span class="string">&quot;value2&quot;</span>)</span><br><span class="line"></span><br><span class="line">	err := HashSet(client, key, fieldValues)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;HashSet failed: %s&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	result, err := HashGet(client, key, field)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;HashGet failed: %s&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> result != <span class="string">&quot;value2&quot;</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;unexpected value, got: %s, want: %s&quot;</span>, result, <span class="string">&quot;value2&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err := mock.ExpectationsWereMet(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;unfulfilled expectations: %s&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="Sorted-Set-类型">Sorted Set 类型</h4>
+<p>最后，我们测试 Redis 中的 Sorted Set 类型。我们创建一个 <code>sorted_set_ops.go</code> 文件，并实现相应的 Go 代码：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// sorted_set_ops.go</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;context&quot;</span></span><br><span class="line">	<span class="string">&quot;fmt&quot;</span></span><br><span class="line">	<span class="string">&quot;github.com/go-redis/redis/v8&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// SortedSetAdd 在 Redis 中的 Sorted Set 类型数据上进行 add 操作</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">SortedSetAdd</span><span class="params">(client *redis.Client, key <span class="type">string</span>, members ...*redis.Z)</span></span> (<span class="type">int64</span>, <span class="type">error</span>) &#123;</span><br><span class="line">	<span class="keyword">return</span> client.ZAdd(context.Background(), key, members...).Result()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// SortedSetRange 获取 Redis 中的 Sorted Set 类型数据指定范围的成员</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">SortedSetRange</span><span class="params">(client *redis.Client, key <span class="type">string</span>, start, stop <span class="type">int64</span>)</span></span> ([]<span class="type">string</span>, <span class="type">error</span>) &#123;</span><br><span class="line">	<span class="keyword">return</span> client.ZRange(context.Background(), key, start, stop).Result()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在这个示例中，我们编写了 <code>SortedSetAdd</code> 和 <code>SortedSetRange</code> 函数，用于在 Redis 中添加和获取 Sorted Set 类型数据。</p>
+<p>接下来，我们编写单元测试来测试这两个函数。创建一个 <code>sorted_set_ops_test.go</code> 文件：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// sorted_set_ops_test.go</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;reflect&quot;</span></span><br><span class="line">	<span class="string">&quot;testing&quot;</span></span><br><span class="line"></span><br><span class="line">	<span class="string">&quot;github.com/go-redis/redismock/v8&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestSortedSetAddAndRange</span><span class="params">(t *testing.T)</span></span> &#123;</span><br><span class="line">	client, mock := redismock.NewClientMock()</span><br><span class="line"></span><br><span class="line">	key := <span class="string">&quot;mysortedset&quot;</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// 测试 SortedSetAdd</span></span><br><span class="line">	members := []*redis.Z&#123;</span><br><span class="line">		&amp;redis.Z&#123;Score: <span class="number">1</span>, Member: <span class="string">&quot;member1&quot;</span>&#125;,</span><br><span class="line">		&amp;redis.Z&#123;Score: <span class="number">2</span>, Member: <span class="string">&quot;member2&quot;</span>&#125;,</span><br><span class="line">		&amp;redis.Z&#123;Score: <span class="number">3</span>, Member: <span class="string">&quot;member3&quot;</span>&#125;,</span><br><span class="line">	&#125;</span><br><span class="line">	mock.ExpectZAdd(key, members...).SetVal(<span class="number">3</span>)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 测试 SortedSetRange</span></span><br><span class="line">	mock.ExpectZRange(key, <span class="number">0</span>, <span class="number">-1</span>).SetVal([]<span class="type">string</span>&#123;<span class="string">&quot;member1&quot;</span>, <span class="string">&quot;member2&quot;</span>, <span class="string">&quot;member3&quot;</span>&#125;)</span><br><span class="line"></span><br><span class="line">	count, err := SortedSetAdd(client, key, members...)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;SortedSetAdd failed: %s&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> count != <span class="number">3</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;unexpected count, got: %d, want: %d&quot;</span>, count, <span class="number">3</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	result, err := SortedSetRange(client, key, <span class="number">0</span>, <span class="number">-1</span>)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;SortedSetRange failed: %s&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	expected := []<span class="type">string</span>&#123;<span class="string">&quot;member1&quot;</span>, <span class="string">&quot;member2&quot;</span>, <span class="string">&quot;member3&quot;</span>&#125;</span><br><span class="line">	<span class="keyword">if</span> !reflect.DeepEqual(result, expected) &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;unexpected members, got: %v, want: %v&quot;</span>, result, expected)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err := mock.ExpectationsWereMet(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;unfulfilled expectations: %s&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="4-执行-Lua-脚本">4. 执行 Lua 脚本</h3>
+<p>现在，让我们测试在 Redis 中执行 Lua 脚本。我们将使用 <code>counter.lua</code> 脚本，并在其中实现计数器应用。</p>
+<p>首先，创建一个名为 <code>counter.lua</code> 的 Lua 脚本：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- counter.lua</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">local</span> key = KEYS[<span class="number">1</span>]</span><br><span class="line"><span class="keyword">local</span> increment = <span class="built_in">tonumber</span>(ARGV[<span class="number">1</span>])</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> increment &gt; <span class="number">0</span> <span class="keyword">then</span></span><br><span class="line">    <span class="keyword">return</span> redis.call(<span class="string">&#x27;INCRBY&#x27;</span>, key, increment)</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    <span class="keyword">return</span> redis.call(<span class="string">&#x27;GET&#x27;</span>, key)</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+<p>在该脚本中，我们接收一个键和一个增量值作为参数。如果增量值大于 0，则在 Redis 中使用 <code>INCRBY</code> 命令增加计数；否则，返回该键的当前值。</p>
+<p>接下来，我们创建一个名为 <code>counter.go</code> 的文件，并实现相应的 Go 代码：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// counter.go</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;context&quot;</span></span><br><span class="line">	<span class="string">&quot;github.com/go-redis/redis/v8&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">//  Lua 脚本用于增加计数或获取当前值</span></span><br><span class="line"><span class="keyword">const</span> counterLuaScript = <span class="string">`</span></span><br><span class="line"><span class="string">    local key = KEYS[1]</span></span><br><span class="line"><span class="string">    local increment = tonumber(ARGV[1])</span></span><br><span class="line"><span class="string">    </span></span><br><span class="line"><span class="string">    if increment &gt; 0 then</span></span><br><span class="line"><span class="string">        return redis.call(&#x27;INCRBY&#x27;, key, increment)</span></span><br><span class="line"><span class="string">    else</span></span><br><span class="line"><span class="string">        return redis.call(&#x27;GET&#x27;, key)</span></span><br><span class="line"><span class="string">    end</span></span><br><span class="line"><span class="string">`</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// IncreaseCounter 使用 Redis EVAL 命令执行 Lua 脚本，增加计数或获取当前值</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">IncreaseCounter</span><span class="params">(client *redis.Client, key <span class="type">string</span>, increment <span class="type">int64</span>)</span></span> (<span class="type">int64</span>, <span class="type">error</span>) &#123;</span><br><span class="line">	<span class="comment">// 调用 Redis EVAL 命令执行 Lua 脚本</span></span><br><span class="line">	result, err := client.Eval(context.Background(), counterLuaScript, []<span class="type">string</span>&#123;key&#125;, increment).Result()</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>, err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 转换结果为整数并返回</span></span><br><span class="line">	<span class="keyword">if</span> intValue, ok := result.(<span class="type">int64</span>); ok &#123;</span><br><span class="line">		<span class="keyword">return</span> intValue, <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>, fmt.Errorf(<span class="string">&quot;unexpected result type&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在这个示例中，我们编写了 <code>IncreaseCounter</code> 函数，它使用 Redis 客户端执行我们之前创建的 Lua 脚本，并返回结果。</p>
+<p>接下来，我们编写单元测试来测试 <code>IncreaseCounter</code> 函数。创建一个 <code>counter_test.go</code> 文件：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// counter_test.go</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;testing&quot;</span></span><br><span class="line"></span><br><span class="line">	<span class="string">&quot;github.com/go-redis/redismock/v8&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestIncreaseCounter_PositiveIncrement</span><span class="params">(t *testing.T)</span></span> &#123;</span><br><span class="line">	client, mock := redismock.NewClientMock()</span><br><span class="line"></span><br><span class="line">	key := <span class="string">&quot;mykey&quot;</span></span><br><span class="line">	increment := <span class="type">int64</span>(<span class="number">5</span>)</span><br><span class="line"></span><br><span class="line">	mock.ExpectEval(counterLuaScript, []<span class="type">string</span>&#123;key&#125;, increment).SetVal(increment)</span><br><span class="line"></span><br><span class="line">	result, err := IncreaseCounter(client, key, increment)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;IncreaseCounter failed: %s&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> result != increment &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;unexpected result, got: %d, want: %d&quot;</span>, result, increment)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err := mock.ExpectationsWereMet(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;unfulfilled expectations: %s&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestIncreaseCounter_NegativeIncrement</span><span class="params">(t *testing.T)</span></span> &#123;</span><br><span class="line">	client, mock := redismock.NewClientMock()</span><br><span class="line"></span><br><span class="line">	key := <span class="string">&quot;mykey&quot;</span></span><br><span class="line">	increment := <span class="type">int64</span>(<span class="number">-5</span>)</span><br><span class="line">	currentValue := <span class="type">int64</span>(<span class="number">10</span>)</span><br><span class="line"></span><br><span class="line">	mock.ExpectEval(counterLuaScript, []<span class="type">string</span>&#123;key&#125;, increment).SetVal(currentValue)</span><br><span class="line"></span><br><span class="line">	result, err := IncreaseCounter(client, key, increment)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;IncreaseCounter failed: %s&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> result != currentValue &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;unexpected result, got: %d, want: %d&quot;</span>, result, currentValue)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err := mock.ExpectationsWereMet(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		t.Errorf(<span class="string">&quot;unfulfilled expectations: %s&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="5-结论">5. 结论</h3>
+<p>在本文中，我们学习了如何使用 <code>go-redis/redismock</code> 在 Go 语言中测试 Redis 常用的五种数据类型以及执行 Lua 脚本。我们测试了 Redis 中的 String、List、Set、Hash 和 Sorted Set 类型，并实现了一个简单的计数器应用来测试执行 Lua 脚本的功能。通过单元测试，我们可以确保这些 Redis 操作的正确性和稳定性。使用 <code>go-redis/redismock</code>，我们可以在不连接到真实 Redis 数据库的情况下快速和可控地测试与 Redis 交互的代码。这为我们的应用程序开发和维护带来了便利和信心。</p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/3307624659.html">https://blog.mailjob.net/posts/3307624659.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E7%AE%80%E4%BB%8B"><span class="toc-text">1. 简介</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%AE%89%E8%A3%85%E5%92%8C%E8%AE%BE%E7%BD%AE"><span class="toc-text">2. 安装和设置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E7%A4%BA%E4%BE%8B%EF%BC%9A%E6%B5%8B%E8%AF%95-Redis-String%E3%80%81List%E3%80%81Set%E3%80%81Hash-%E5%92%8C-Sorted-Set"><span class="toc-text">3. 示例：测试 Redis String、List、Set、Hash 和 Sorted Set</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#String-%E7%B1%BB%E5%9E%8B"><span class="toc-text">String 类型</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#List-%E7%B1%BB%E5%9E%8B"><span class="toc-text">List 类型</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Set-%E7%B1%BB%E5%9E%8B"><span class="toc-text">Set 类型</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Hash-%E7%B1%BB%E5%9E%8B"><span class="toc-text">Hash 类型</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Sorted-Set-%E7%B1%BB%E5%9E%8B"><span class="toc-text">Sorted Set 类型</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E6%89%A7%E8%A1%8C-Lua-%E8%84%9A%E6%9C%AC"><span class="toc-text">4. 执行 Lua 脚本</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E7%BB%93%E8%AE%BA"><span class="toc-text">5. 结论</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js"></script>
+    <script>
+        (function () {
+            if (!window.mermaid) return;
+
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: 'default'
+            });
+
+            function renderMermaid() {
+                const blocks = document.querySelectorAll('pre.mermaid');
+                if (!blocks.length) return;
+                mermaid.run({
+                    querySelector: 'pre.mermaid'
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', renderMermaid, { once: true });
+            } else {
+                renderMermaid();
+            }
+        })();
+    </script>
+    
+</footer>
+
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

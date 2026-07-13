@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>解剖ClaudeCode的.claude文件夹 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="摘要 文章全面剖析了 Claude Code 的隐藏控制中枢——.claude&#x2F; 文件夹。该目录分为项目级和全局级，是定义 Claude 行为、权限和记忆的关键。核心文件 CLAUDE.md 充当指令手册，直接影响系统提示词；rules&#x2F; 目录支持模块化和路径感知的指令管理；commands&#x2F; 允许创建自定义斜杠命令并执行 shell 脚本；skills&#x2F; 和 agents&#x2F; 则分别用于自动化工作">
+<meta property="og:type" content="article">
+<meta property="og:title" content="解剖ClaudeCode的.claude文件夹">
+<meta property="og:url" content="https://blog.mailjob.net/posts/3694992414.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="摘要 文章全面剖析了 Claude Code 的隐藏控制中枢——.claude&#x2F; 文件夹。该目录分为项目级和全局级，是定义 Claude 行为、权限和记忆的关键。核心文件 CLAUDE.md 充当指令手册，直接影响系统提示词；rules&#x2F; 目录支持模块化和路径感知的指令管理；commands&#x2F; 允许创建自定义斜杠命令并执行 shell 脚本；skills&#x2F; 和 agents&#x2F; 则分别用于自动化工作">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.github.mailjob.net/202604020940532.jpeg">
+<meta property="og:image" content="https://img.github.mailjob.net/202604020941615.jpeg">
+<meta property="article:published_time" content="2026-04-02T01:31:28.000Z">
+<meta property="article:modified_time" content="2026-07-13T01:22:00.640Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="ai">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.github.mailjob.net/202604020940532.jpeg">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            解剖ClaudeCode的.claude文件夹
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3694992414.html" class="article-date">
+	  <time datetime="2026-04-02T01:31:28.000Z" itemprop="datePublished">2026-04-02</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/ai/">ai</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/ai/" rel="tag">ai</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/3694992414.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 4.9k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 18(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="摘要">摘要</h2>
+<p>文章全面剖析了 Claude Code 的隐藏控制中枢——.claude/ 文件夹。该目录分为项目级和全局级，是定义 Claude 行为、权限和记忆的关键。核心文件 <a target="_blank" rel="noopener" href="http://CLAUDE.md">CLAUDE.md</a> 充当指令手册，直接影响系统提示词；rules/ 目录支持模块化和路径感知的指令管理；commands/ 允许创建自定义斜杠命令并执行 shell 脚本；skills/ 和 agents/ 则分别用于自动化工作流和专门的专家角色。此外，文章还介绍了 settings.json 如何通过白名单和黑名单机制管理工具权限，并提供了一套从零开始配置 Claude Code 的渐进式实践路径。</p>
+<h2 id="核心要点">核心要点</h2>
+<ol>
+<li>.claude/ 文件夹是 Claude Code 的行为控制中枢，分为项目级和全局级。</li>
+</ol>
+<p>项目级配置随 Git 提交以实现团队同步，全局配置则存储个人偏好和跨项目的自动记忆。</p>
+<ol start="2">
+<li><a target="_blank" rel="noopener" href="http://CLAUDE.md">CLAUDE.md</a> 是最重要的指令文件，直接决定了 Claude 的工作风格和规范。</li>
+</ol>
+<p>它会被加载到系统提示词中，建议控制在 200 行以内，涵盖构建命令、架构决策和编码规范，避免冗余信息。</p>
+<ol start="3">
+<li>通过 rules/、commands/ 和 skills/ 实现高度定制化的 AI 协作。</li>
+</ol>
+<p>rules 支持按路径生效的模块化指令，commands 提供手动触发的斜杠命令，而 skills 则是 Claude 根据对话上下文自动调用的工作流。</p>
+<ol start="4">
+<li>settings.json 建立了安全边界，通过权限控制管理 AI 的工具调用。</li>
+</ol>
+<p>利用 allow 和 deny 列表明确 Claude 可以执行的 Bash 命令和可以读取的文件范围，防止误删或敏感信息泄露。</p>
+<h2 id="金句摘录">金句摘录</h2>
+<blockquote>
+<p>.claude 文件夹是 Claude 在你项目中行为表现的控制中枢。你的指令、自定义命令、权限规则，甚至跨会话的 Claude 记忆，全都保存在这里。</p>
+</blockquote>
+<blockquote>
+<p>你在 <a target="_blank" rel="noopener" href="http://CLAUDE.md">CLAUDE.md</a> 中写什么，Claude 就会遵循什么。</p>
+</blockquote>
+<blockquote>
+<p>命令：你输入它们。它们立即运行。技能：Claude 监视你的对话并在相关时触发它们。</p>
+</blockquote>
+<blockquote>
+<p>.claude 文件夹本质上是一套协议，用来告诉 Claude 你是谁、你的项目做什么、它应该遵循什么规则。</p>
+</blockquote>
+<hr>
+<h2 id="正文">正文</h2>
+<p>前言</p>
+<p>一份关于 <a target="_blank" rel="noopener" href="http://CLAUDE.md">CLAUDE.md</a>、自定义命令、技能、代理和权限配置的完整指南，手把手教你正确设置。</p>
+<p>大多数 Claude Code 用户将 <code>.claude</code> 文件夹当作黑盒子。他们知道它存在。也见过它出现在项目根目录下，但从来没有打开过，更别提弄明白里面每个文件的用途了。</p>
+<p>这实在是暴殄天物。</p>
+<p><code>.claude</code> 文件夹是 Claude 在你项目中行为表现的控制中枢。你的指令、自定义命令、权限规则，甚至跨会话的 Claude 记忆，全都保存在这里。一旦你搞清楚了什么文件放在哪里、为什么这样放，就能让 Claude Code 完全按照团队的需求来运作。</p>
+<p>本指南将带你逐一剖析这个文件夹的完整结构 —— 从你每天都会用到的文件，到那些设置一次便可高枕无忧的文件。</p>
+<h4 id="两个文件夹，而非一个">两个文件夹，而非一个</h4>
+<p><img src="https://img.github.mailjob.net/202604020940532.jpeg" alt="图像"></p>
+<p>深入讲解之前，有一点值得先说清楚：实际上存在两个 .claude 目录，而不是一个。</p>
+<p>一个位于你的项目内，另一个位于你的用户主目录：</p>
+<ul>
+<li>
+<p>项目级：<code>&lt;your-project&gt;/.claude/</code></p>
+</li>
+<li>
+<p>全局：<code>~/.claude/</code></p>
+</li>
+</ul>
+<p>项目级文件夹包含团队配置。你将其提交到 git。团队中的每个人都获得相同的规则、相同的自定义命令和相同的权限策略。</p>
+<p>全局 <code>~/.claude/</code> 文件夹包含你的个人偏好和本机状态，如会话历史和自动记忆。</p>
+<h4 id="CLAUDE-md：Claude-的指令手册"><a target="_blank" rel="noopener" href="http://CLAUDE.md">CLAUDE.md</a>：Claude 的指令手册</h4>
+<p>这是整个系统中最重要的文件。当你启动 Claude Code 会话时，它做的第一件事就是读取 <a target="_blank" rel="noopener" href="http://CLAUDE.md">CLAUDE.md</a>，将其直接加载到系统提示词中，并在整个对话过程中时刻参照。</p>
+<p>简单来说：你在 <a target="_blank" rel="noopener" href="http://CLAUDE.md">CLAUDE.md</a> 中写什么，Claude 就会遵循什么。</p>
+<p>如果你告诉 Claude 总是在实现之前编写测试，它就会这样做。如果你说 “永远不要使用 console.log 进行错误处理，总是使用自定义日志模块”，它每次都会尊重这一点。</p>
+<p>最常见的做法是在项目根目录放一个 <a target="_blank" rel="noopener" href="http://CLAUDE.md">CLAUDE.md</a>。但你也可以在 <code>~/.claude/CLAUDE.md</code> 中设置一个，用于适用于所有项目的全局偏好，甚至可以在子目录中设置一个用于特定文件夹的规则。Claude 会读取所有这些并将它们组合起来。</p>
+<h5 id="CLAUDE-md-中实际应该包含什么"><a target="_blank" rel="noopener" href="http://CLAUDE.md">CLAUDE.md</a> 中实际应该包含什么</h5>
+<p>大多数人要么写太多，要么写太少。以下是有效的方法。</p>
+<p><strong>该写的：</strong></p>
+<ul>
+<li>
+<p>构建、测试和 lint 命令（npm run test、make build 等）</p>
+</li>
+<li>
+<p>关键的架构决策（“我们使用 Turborepo 管理 monorepo”）</p>
+</li>
+<li>
+<p>不易察觉的注意事项（“TypeScript 严格模式已开启，未使用的变量是错误”）</p>
+</li>
+<li>
+<p>导入约定、命名模式、错误处理风格</p>
+</li>
+<li>
+<p>主要模块的文件和文件夹结构</p>
+</li>
+</ul>
+<p><strong>不该写的：</strong></p>
+<ul>
+<li>
+<p>任何已经由 linter 或 formatter 配置文件管控的内容</p>
+</li>
+<li>
+<p>可以通过链接查阅的完整文档</p>
+</li>
+<li>
+<p>大段大段解释理论的长篇文字</p>
+</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="http://CLAUDE.md">CLAUDE.md</a> 的篇幅建议控制在 200 行以内。超出这个长度会开始大量消耗上下文窗口，Claude 对指令的遵循度反而会下降。</p>
+<p>这是一个最小但有效的例子：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># 项目：Acme API</span></span><br><span class="line"> ## 命令</span><br><span class="line"> npm run dev          # 启动开发服务器</span><br><span class="line"> npm run test         # 运行测试（Jest）</span><br><span class="line"> npm run lint         # ESLint + Prettier 检查</span><br><span class="line"> npm run build        # 生产环境构建</span><br><span class="line"> ## 架构</span><br><span class="line"><span class="bullet"> -</span> Express REST API，Node 20</span><br><span class="line"><span class="bullet"> -</span> 通过 Prisma ORM 连接 PostgreSQL</span><br><span class="line"><span class="bullet"> -</span> 所有处理函数位于 src/handlers/</span><br><span class="line"><span class="bullet"> -</span> 共享类型定义位于 src/types/</span><br><span class="line"> ## 规范</span><br><span class="line"><span class="bullet"> -</span> 每个处理函数必须使用 zod 进行请求校验</span><br><span class="line"><span class="bullet"> -</span> 返回值格式统一为 &#123; data, error &#125;</span><br><span class="line"><span class="bullet"> -</span> 绝不向客户端暴露堆栈信息</span><br><span class="line"><span class="bullet"> -</span> 使用 logger 模块，禁止使用 console.log</span><br><span class="line"> ## 注意事项</span><br><span class="line"><span class="bullet"> -</span> 测试使用的是真实的本地数据库，而非 mock。请先运行 <span class="code">`npm run db:test:reset`</span></span><br><span class="line"><span class="bullet"> -</span> TypeScript 严格模式：绝不允许出现未使用的导入</span><br></pre></td></tr></table></figure>
+<p>这大约 20 行。它给了 Claude 在这个代码库中高效工作所需的一切，而无需不断澄清。</p>
+<h4 id="CLAUDE-local-md-用于个人覆盖"><a target="_blank" rel="noopener" href="http://CLAUDE.local.md">CLAUDE.local.md</a> 用于个人覆盖</h4>
+<p>有时候你有一些个人偏好，只属于你自己，而非整个团队。也许你更习惯用另一个测试运行器，或者你希望 Claude 始终按某种特定方式打开文件。</p>
+<p>在项目根目录中创建 <a target="_blank" rel="noopener" href="http://CLAUDE.local.md">CLAUDE.local.md</a>。Claude 会将其与主 <a target="_blank" rel="noopener" href="http://CLAUDE.md">CLAUDE.md</a> 一起读取，并且它会被自动 gitignore，所以你的个人调整永远不会进入仓库。</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># 我的个人偏好</span></span><br><span class="line"><span class="bullet">-</span> 总是使用 vitest 而不是 jest</span><br><span class="line"><span class="bullet">-</span> 打开文件时，从 <span class="code">`src/`</span> 目录开始</span><br></pre></td></tr></table></figure>
+<p><img src="https://img.github.mailjob.net/202604020941615.jpeg" alt="图像"></p>
+<h2 id="rules-文件夹：可扩展的模块化指令">rules/ 文件夹：可扩展的模块化指令</h2>
+<p>单个项目用 <a target="_blank" rel="noopener" href="http://CLAUDE.md">CLAUDE.md</a> 完全够用。但一旦团队规模扩大，你就会发现 <a target="_blank" rel="noopener" href="http://CLAUDE.md">CLAUDE.md</a> 膨胀到了 300 行 —— 没人维护，也没人在意。</p>
+<p><code>rules/</code> 文件夹正是为解决这个问题而生的。</p>
+<p><code>.claude/rules/</code> 目录下的每一个 Markdown 文件，都会随 <a target="_blank" rel="noopener" href="http://CLAUDE.md">CLAUDE.md</a> 一起自动加载。与其维护一个臃肿的大文件，不如按关注点拆分指令：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">.claude/rules/</span><br><span class="line"> ├── code-style.md</span><br><span class="line"> ├── testing.md</span><br><span class="line"> ├── api-conventions.md</span><br><span class="line"> └── security.md</span><br></pre></td></tr></table></figure>
+<p>每个文件各司其职，更新起来也轻松自如。负责 API 规范的同事编辑 <a target="_blank" rel="noopener" href="http://api-conventions.md">api-conventions.md</a>，负责测试标准的同事编辑 <a target="_blank" rel="noopener" href="http://testing.md">testing.md</a>，彼此互不干扰。</p>
+<h5 id="路径作用域规则">路径作用域规则</h5>
+<p>真正强大之处在于按路径生效的规则。在规则文件顶部添加 YAML frontmatter 块，该规则就只会在 Claude 处理匹配文件时才激活：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">paths:</span><br><span class="line"><span class="bullet">  -</span> &quot;src/api/<span class="strong">**/<span class="emphasis">*.ts&quot;</span></span></span><br><span class="line"><span class="emphasis"><span class="strong">  - &quot;src/handlers/*</span><span class="emphasis">*/*</span>.ts&quot;</span></span><br><span class="line"><span class="strong">---</span></span><br><span class="line"><span class="strong"># API 设计规范</span></span><br><span class="line"><span class="strong">- 所有处理函数返回 &#123; data, error &#125; 格式</span></span><br><span class="line"><span class="strong">- 使用 zod 校验请求体</span></span><br><span class="line"><span class="strong">- 绝不向客户端暴露内部错误详情</span></span><br></pre></td></tr></table></figure>
+<p>当 Claude 在编辑一个 React 组件时，这个文件根本不会被加载。只有当它在 src/api/ 或 src/handlers/ 目录下工作时才会生效。没有设置 paths 字段的规则则无条件加载，每次会话都会生效。</p>
+<p>一旦你的 <a target="_blank" rel="noopener" href="http://CLAUDE.md">CLAUDE.md</a> 开始变得臃肿，这就是正确的演进方向。</p>
+<h4 id="commands-文件夹：你的自定义斜杠命令">commands/ 文件夹：你的自定义斜杠命令</h4>
+<p>Claude Code 开箱即带 <code>/help</code>、<code>/compact</code> 等内置斜杠命令。而 <code>commands/</code> 文件夹让你可以添加自己的命令。</p>
+<p>你放进 <code>.claude/commands/</code> 的每一个 Markdown 文件，都会变成一个斜杠命令。</p>
+<p>名为 <a target="_blank" rel="noopener" href="http://review.md">review.md</a> 的文件会生成 <code>/project:review</code> 命令；名为 <a target="_blank" rel="noopener" href="http://fix-issue.md">fix-issue.md</a> 的文件会生成 <code>/project:fix-issue</code> 命令。文件名即命令名。</p>
+<p>来看一个简单的例子。创建 <code>.claude/commands/review.md</code>：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line"> description: 合并前审查当前分支的差异，排查问题</span><br><span class="line"> ---</span><br><span class="line"> ## 待审查的变更</span><br><span class="line"> !<span class="code">`git diff --name-only main...HEAD`</span></span><br><span class="line"> ## 详细差异</span><br><span class="line"> !<span class="code">`git diff main...HEAD`</span></span><br><span class="line"> 请审查以上变更，重点关注：</span><br><span class="line"><span class="bullet"> 1.</span> 代码质量问题</span><br><span class="line"><span class="bullet"> 2.</span> 安全漏洞</span><br><span class="line"><span class="bullet"> 3.</span> 测试覆盖缺失</span><br><span class="line"><span class="bullet"> 4.</span> 性能隐患</span><br><span class="line"> 请针对每个文件给出具体、可操作的反馈。</span><br></pre></td></tr></table></figure>
+<p>现在在 Claude Code 中执行 <code>/project:review</code>，它会自动将真实的 git diff 注入提示词，然后再交给 Claude 处理。<code>!</code> 反引号语法会执行 shell 命令并嵌入其输出。这正是让这些命令真正实用 —— 而不仅仅是一段保存好的文本 —— 的关键所在。</p>
+<h5 id="向命令传递参数">向命令传递参数</h5>
+<p>使用 <code>$ARGUMENTS</code> 传递命令名称后的文本：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">description: 调查并修复一个 GitHub issue</span><br><span class="line"><span class="section">argument-hint: [issue-number]</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line">查看本仓库中的 issue #$ARGUMENTS。</span><br><span class="line">!<span class="code">`gh issue view $ARGUMENTS`</span></span><br><span class="line">理解这个 bug，追溯到根本原因，修复它，</span><br><span class="line">并编写一个能捕获该问题的测试。</span><br></pre></td></tr></table></figure>
+<p>执行 <code>/project:fix-issue 234</code>，就会将第 234 号 issue 的内容直接注入提示词。</p>
+<h5 id="个人命令与项目命令">个人命令与项目命令</h5>
+<p><code>.claude/commands/</code> 中的项目命令会被提交到仓库，与团队共享。如果某些命令你希望在所有项目中通用，就把它们放到 <code>~/.claude/commands/</code> 下。这类命令会以 <code>/user:command-name</code> 的形式出现。</p>
+<p>实用的个人命令举例：每日站会助手、按照你的规范生成提交信息的命令，或者快速安全扫描。</p>
+<h4 id="skills-文件夹：按需调用的可复用工作流">skills/ 文件夹：按需调用的可复用工作流</h4>
+<p>前面已经介绍了命令的工作方式。技能（Skills）乍看之下与命令类似，但触发机制有本质区别。在继续深入之前，先把这个区别讲清楚：</p>
+<ul>
+<li>
+<p>命令：你输入它们。它们立即运行。</p>
+</li>
+<li>
+<p>技 *：Claude 监视你的对话并在相关时触发它们。</p>
+</li>
+</ul>
+<p>技能是 Claude 可以自己调用的工作流，无需你输入斜杠命令，只要当前任务与技能的描述相匹配，它就会自动启动。命令等着你来召唤，而技能则在对话中伺机而动，时机一到便主动出击。</p>
+<p>每个技能都有自己的子目录，包含 <a target="_blank" rel="noopener" href="http://SKILL.md">SKILL.md</a> 文件：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">.claude/skills/</span><br><span class="line">├── security-review/</span><br><span class="line">│   ├── SKILL.md</span><br><span class="line">│   └── DETAILED_GUIDE.md</span><br><span class="line">└── deploy/</span><br><span class="line">    ├── SKILL.md</span><br><span class="line">    └── templates/</span><br><span class="line">        └── release-notes.md</span><br></pre></td></tr></table></figure>
+<p><a target="_blank" rel="noopener" href="http://SKILL.md">SKILL.md</a> 使用 YAML frontmatter 描述何时使用它：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name: security-review</span><br><span class="line">description: 全面的安全审计。当审查代码中的安全漏洞、部署前检查，</span><br><span class="line">  或用户提及安全相关话题时使用。</span><br><span class="line"><span class="section">allowed-tools: Read, Grep, Glob</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line">分析代码库中的安全漏洞：</span><br><span class="line"><span class="bullet">1.</span> SQL 注入与 XSS 风险</span><br><span class="line"><span class="bullet">2.</span> 暴露的凭据或密钥</span><br><span class="line"><span class="bullet">3.</span> 不安全的配置项</span><br><span class="line"><span class="bullet">4.</span> 认证与授权方面的缺陷</span><br><span class="line">报告发现的问题，附上严重等级和具体的修复步骤。</span><br><span class="line">参考 @DETAILED<span class="emphasis">_GUIDE.md 了解我们的安全标准。</span></span><br></pre></td></tr></table></figure>
+<p>当你说 “帮我审查这个 PR 的安全问题” 时，Claude 会读取描述信息，识别出与之匹配，然后自动调用该技能。你也可以通过 <code>/security-review</code> 显式调用。</p>
+<p>与命令的关键区别在于：技能可以捆绑配套文件。上面的 <code>@DETAILED_GUIDE.md</code> 引用的是一份与 <a target="_blank" rel="noopener" href="http://SKILL.md">SKILL.md</a> 放在一起的详细文档。命令是单个文件，而技能是一个完整的包。</p>
+<p>个人技能放在 <code>~/.claude/skills/</code> 中，并在你所有项目中可用。</p>
+<h4 id="agents-文件夹：专门的子代理角色">agents/ 文件夹：专门的子代理角色</h4>
+<p>当一项任务复杂到需要一位专职专家来处理时，你可以在 .claude/agents/ 中定义子代理角色。每个代理都是一个 Markdown 文件，拥有自己的系统提示词、工具访问权限和模型偏好：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">.claude/agents/</span><br><span class="line">├── code-reviewer.md</span><br><span class="line">└── security-auditor.md</span><br></pre></td></tr></table></figure>
+<p>这是一个 <a target="_blank" rel="noopener" href="http://code-reviewer.md">code-reviewer.md</a> 的样子：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name: code-reviewer</span><br><span class="line">description: 资深代码审查专家。在审查 PR、排查 bug 或合并前</span><br><span class="line">  验证实现时主动使用。</span><br><span class="line">model: sonnet</span><br><span class="line"><span class="section">tools: Read, Grep, Glob</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line">你是一位专注于正确性和可维护性的资深代码审查者。</span><br><span class="line">审查代码时：</span><br><span class="line"><span class="bullet">-</span> 指出真正的 bug，而不仅仅是风格问题</span><br><span class="line"><span class="bullet">-</span> 给出具体的修复建议，而非模糊的改进方向</span><br><span class="line"><span class="bullet">-</span> 检查边界情况和错误处理的疏漏</span><br><span class="line"><span class="bullet">-</span> 只在对规模化运行有实际影响时才指出性能问题</span><br></pre></td></tr></table></figure>
+<p>当 Claude 需要进行代码审查时，它会在一个独立的上下文窗口中生成这个代理。代理完成工作后，会压缩整理结论并汇报回来。你的主会话不会被成千上万个中间探索过程的 token 所淹没。</p>
+<p>tools 字段限制了代理的能力范围。安全审计员只需要 Read、Grep 和 Glob，它没有理由去写文件。这种限制是刻意为之的，值得明确声明。</p>
+<p>model 字段则允许你为专项任务使用更经济、更快速的模型。Haiku 可以胜任大多数只读探索工作。把 Sonnet 和 Opus 留给真正需要它们的任务。</p>
+<p>个人代理放在 <code>~/.claude/agents/</code> 下，在你所有的项目中都可以使用。</p>
+<h5 id="自动生成代理">自动生成代理</h5>
+<p>添加 description 字段，Claude 会在任务匹配时自动调用代理：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name: Security Auditor</span><br><span class="line">description: 执行全面安全审计</span><br><span class="line">model: sonnet-4</span><br><span class="line"><span class="section">system: 你是一位安全专家。[...]</span></span><br><span class="line"><span class="section">---</span></span><br></pre></td></tr></table></figure>
+<h4 id="settings-json：权限和项目配置">settings.json：权限和项目配置</h4>
+<p><code>.claude/</code> 目录下的 settings.json 文件控制着 Claude 能做什么、不能做什么。你在这里定义 Claude 可以运行哪些工具、可以读取哪些文件，以及在执行某些命令前是否需要先征得你的同意。</p>
+<p>完整文件如下所示：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">   <span class="attr">&quot;$schema&quot;</span><span class="punctuation">:</span> <span class="string">&quot;https://raw.githubusercontent.com/anthropics/claude-code/main/settings-schema.json&quot;</span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;allow&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">     <span class="attr">&quot;Bash&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;npm run *&quot;</span><span class="punctuation">,</span> <span class="string">&quot;make *&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">     <span class="attr">&quot;Read&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">     <span class="attr">&quot;Write&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">     <span class="attr">&quot;Edit&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">     <span class="attr">&quot;Glob&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">     <span class="attr">&quot;Grep&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span></span><br><span class="line">   <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;deny&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">     <span class="attr">&quot;Bash&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;rm -rf *&quot;</span><span class="punctuation">,</span> <span class="string">&quot;curl *&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">     <span class="attr">&quot;Read&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;.env&quot;</span><span class="punctuation">,</span> <span class="string">&quot;secrets/**&quot;</span><span class="punctuation">]</span></span><br><span class="line">   <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;context&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">     <span class="attr">&quot;maxFiles&quot;</span><span class="punctuation">:</span> <span class="number">1000</span><span class="punctuation">,</span></span><br><span class="line">     <span class="attr">&quot;maxLinesPerFile&quot;</span><span class="punctuation">:</span> <span class="number">10000</span></span><br><span class="line">   <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">   <span class="attr">&quot;diff&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">     <span class="attr">&quot;autoStage&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">     <span class="attr">&quot;maxLines&quot;</span><span class="punctuation">:</span> <span class="number">500</span></span><br><span class="line">   <span class="punctuation">&#125;</span></span><br><span class="line"> <span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>以下是每个部分的作用。</p>
+<p><code>$schema</code> 这一行用于在 VS Code 或 Cursor 中启用自动补全和行内校验。务必加上。</p>
+<p>allow 列表包含 Claude 无需请求确认即可直接执行的命令。对于大多数项目，一个合理的白名单应覆盖：</p>
+<ul>
+<li>
+<p><code>Bash(npm run *)</code></p>
+<p>或 <code>Bash(make *)</code>，让 Claude 可以自由运行你的脚本</p>
+</li>
+<li>
+<p><code>Bash(git *)</code></p>
+<p>用于只读的 git 命令</p>
+</li>
+<li>
+<p>Read、Write、Edit、Glob、Grep 用于文件操作</p>
+</li>
+</ul>
+<p>deny 列表包含被彻底禁止的命令，无论如何都不允许执行。一个合理的黑名单应当屏蔽：</p>
+<ul>
+<li>
+<p>破坏性的 shell 命令，如 <code>rm -rf</code></p>
+</li>
+<li>
+<p>直接的网络请求命令，如 curl</p>
+</li>
+<li>
+<p>敏感文件，如 <code>.env</code> 以及 <code>secrets/</code> 目录下的所有内容</p>
+</li>
+<li>
+<p>如果某个命令不在任何一个列表中，Claude 会在执行前先征询你的意见。这种中间地带是刻意设计的 —— 它为你提供了一道安全网，而不必事先穷举所有可能的命令。</p>
+</li>
+</ul>
+<h5 id="settings-local-json-个人权限覆盖">settings.local.json 个人权限覆盖</h5>
+<p>与 <a target="_blank" rel="noopener" href="http://CLAUDE.local.md">CLAUDE.local.md</a> 的想法相同。创建 <code>.claude/settings.local.json</code> 用于你不希望提交的权限更改。它是自动 gitignore 的。</p>
+<h4 id="全局～-claude-文件夹">全局～/.claude/ 文件夹</h4>
+<p>你不经常与此文件夹交互，但知道里面有什么是很有用的。</p>
+<p><code>~/.claude/CLAUDE.md</code> 会加载到你所有项目的每一个 Claude Code 会话中。适合放你的个人编程原则、偏好的代码风格，或任何你希望 Claude 记住的内容 —— 无论你当前在哪个仓库中工作。</p>
+<p><code>~/.claude/projects/</code> 按项目存储会话记录和自动记忆。Claude Code 在工作过程中会自动给自己做笔记：它发现的命令、观察到的模式、对架构的洞察。这些内容跨会话持久保存。你可以通过 <code>/memory</code> 命令浏览和编辑它们。</p>
+<p><code>~/.claude/commands/</code> 和 <code>~/.claude/skills/</code> 存放可在所有项目中使用的个人命令和技能。</p>
+<p>通常你不需要手动管理这些文件。但知道它们的存在很有用 —— 比如当 Claude 似乎 “记住” 了你从未告诉过它的东西，或者当你想清除某个项目的自动记忆、从零开始时。</p>
+<h4 id="全景总览">全景总览</h4>
+<p>这就是所有东西如何组合在一起：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">项目根目录:</span><br><span class="line">├── .claude/</span><br><span class="line">│   ├── CLAUDE.md           # 团队指令（已提交）</span><br><span class="line">│   ├── CLAUDE.local.md     # 个人覆盖（已 gitignore）</span><br><span class="line">│   ├── rules/              # 模块化规则（已提交）</span><br><span class="line">│   │   ├── api-conventions.md</span><br><span class="line">│   │   └── testing.md</span><br><span class="line">│   ├── commands/           # 团队斜杠命令（已提交）</span><br><span class="line">│   │   └── review.md</span><br><span class="line">│   ├── skills/             # 团队技能（已提交）</span><br><span class="line">│   │   └── security-review/</span><br><span class="line">│   ├── agents/             # 团队代理（已提交）</span><br><span class="line">│   │   └── code-reviewer.md</span><br><span class="line">│   ├── settings.json       # 权限（已提交）</span><br><span class="line">│   └── settings.local.json # 个人设置（已 gitignore）</span><br><span class="line">└── ...你的项目文件...</span><br><span class="line">全局 (~/.claude/):</span><br><span class="line">├── CLAUDE.md              # 全局偏好</span><br><span class="line">├── commands/              # 个人命令</span><br><span class="line">├── skills/                # 个人技能</span><br><span class="line">├── agents/                # 个人代理</span><br><span class="line">└── projects/              # 自动记忆和会话历史</span><br></pre></td></tr></table></figure>
+<h4 id="从零开始的实践路径">从零开始的实践路径</h4>
+<p>如果你是从头开始配置，以下是一条行之有效的渐进路线。</p>
+<p><strong>步骤 1.</strong> 在 Claude Code 中运行 <code>/init</code>。它通过读取你的项目生成一个启动 <a target="_blank" rel="noopener" href="http://CLAUDE.md">CLAUDE.md</a>。将其编辑为基本要素。</p>
+<p><strong>步骤 2.</strong> 添加 <code>.claude/settings.json</code>，配置适合你技术栈的 allow/deny 规则。至少，允许你的运行命令，禁止读取 <code>.env</code> 文件。</p>
+<p><strong>步骤 3.</strong> 为你最常执行的工作流创建一两个命令。代码审查和 issue 修复是很好的起点。</p>
+<p><strong>步骤 4.</strong> 随着项目的成长，当 <a target="_blank" rel="noopener" href="http://CLAUDE.md">CLAUDE.md</a> 变得臃肿时，开始将指令拆分到 <code>.claude/rules/</code> 文件中。在合理的场景下，按路径限定其生效范围。</p>
+<p><strong>步骤 5.</strong> 添加 <code>~/.claude/CLAUDE.md</code>，写入你的个人偏好。比如 “永远先写类型定义再写实现” 或 “优先使用函数式风格而非基于类的写法”。</p>
+<p>以上就是 95% 的项目真正需要的全部配置。技能和代理则适用于那些值得打包封装的、反复出现的复杂工作流。</p>
+<h4 id="关键洞察">关键洞察</h4>
+<p><code>.claude</code> 文件夹本质上是一套协议，用来告诉 Claude 你是谁、你的项目做什么、它应该遵循什么规则。你定义得越清晰，花在纠正 Claude 上的时间就越少，它用来做实事的时间就越多。</p>
+<p><a target="_blank" rel="noopener" href="http://CLAUDE.md">CLAUDE.md</a> 是你投入产出比最高的文件。先把它写好，其他一切都是锦上添花。</p>
+<p>从小处着手，在实践中不断打磨，把它当作项目基础设施的一部分来对待 —— 就像其他基础设施一样，一旦配置到位，便能日复一日地为你带来回报。</p>
+<p>原文：<a target="_blank" rel="noopener" href="https://x.com/akshay_pachaar/status/2035341800739877091">https://x.com/akshay_pachaar/status/2035341800739877091</a></p>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/3694992414.html">https://blog.mailjob.net/posts/3694992414.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%91%98%E8%A6%81"><span class="toc-text">摘要</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E8%A6%81%E7%82%B9"><span class="toc-text">核心要点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%87%91%E5%8F%A5%E6%91%98%E5%BD%95"><span class="toc-text">金句摘录</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%AD%A3%E6%96%87"><span class="toc-text">正文</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%A4%E4%B8%AA%E6%96%87%E4%BB%B6%E5%A4%B9%EF%BC%8C%E8%80%8C%E9%9D%9E%E4%B8%80%E4%B8%AA"><span class="toc-text">两个文件夹，而非一个</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#CLAUDE-md%EF%BC%9AClaude-%E7%9A%84%E6%8C%87%E4%BB%A4%E6%89%8B%E5%86%8C"><span class="toc-text">CLAUDE.md：Claude 的指令手册</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#CLAUDE-md-%E4%B8%AD%E5%AE%9E%E9%99%85%E5%BA%94%E8%AF%A5%E5%8C%85%E5%90%AB%E4%BB%80%E4%B9%88"><span class="toc-text">CLAUDE.md 中实际应该包含什么</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#CLAUDE-local-md-%E7%94%A8%E4%BA%8E%E4%B8%AA%E4%BA%BA%E8%A6%86%E7%9B%96"><span class="toc-text">CLAUDE.local.md 用于个人覆盖</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rules-%E6%96%87%E4%BB%B6%E5%A4%B9%EF%BC%9A%E5%8F%AF%E6%89%A9%E5%B1%95%E7%9A%84%E6%A8%A1%E5%9D%97%E5%8C%96%E6%8C%87%E4%BB%A4"><span class="toc-text">rules&#x2F; 文件夹：可扩展的模块化指令</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%B7%AF%E5%BE%84%E4%BD%9C%E7%94%A8%E5%9F%9F%E8%A7%84%E5%88%99"><span class="toc-text">路径作用域规则</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#commands-%E6%96%87%E4%BB%B6%E5%A4%B9%EF%BC%9A%E4%BD%A0%E7%9A%84%E8%87%AA%E5%AE%9A%E4%B9%89%E6%96%9C%E6%9D%A0%E5%91%BD%E4%BB%A4"><span class="toc-text">commands&#x2F; 文件夹：你的自定义斜杠命令</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%90%91%E5%91%BD%E4%BB%A4%E4%BC%A0%E9%80%92%E5%8F%82%E6%95%B0"><span class="toc-text">向命令传递参数</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E4%B8%AA%E4%BA%BA%E5%91%BD%E4%BB%A4%E4%B8%8E%E9%A1%B9%E7%9B%AE%E5%91%BD%E4%BB%A4"><span class="toc-text">个人命令与项目命令</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#skills-%E6%96%87%E4%BB%B6%E5%A4%B9%EF%BC%9A%E6%8C%89%E9%9C%80%E8%B0%83%E7%94%A8%E7%9A%84%E5%8F%AF%E5%A4%8D%E7%94%A8%E5%B7%A5%E4%BD%9C%E6%B5%81"><span class="toc-text">skills&#x2F; 文件夹：按需调用的可复用工作流</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#agents-%E6%96%87%E4%BB%B6%E5%A4%B9%EF%BC%9A%E4%B8%93%E9%97%A8%E7%9A%84%E5%AD%90%E4%BB%A3%E7%90%86%E8%A7%92%E8%89%B2"><span class="toc-text">agents&#x2F; 文件夹：专门的子代理角色</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%87%AA%E5%8A%A8%E7%94%9F%E6%88%90%E4%BB%A3%E7%90%86"><span class="toc-text">自动生成代理</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#settings-json%EF%BC%9A%E6%9D%83%E9%99%90%E5%92%8C%E9%A1%B9%E7%9B%AE%E9%85%8D%E7%BD%AE"><span class="toc-text">settings.json：权限和项目配置</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#settings-local-json-%E4%B8%AA%E4%BA%BA%E6%9D%83%E9%99%90%E8%A6%86%E7%9B%96"><span class="toc-text">settings.local.json 个人权限覆盖</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%A8%E5%B1%80%EF%BD%9E-claude-%E6%96%87%E4%BB%B6%E5%A4%B9"><span class="toc-text">全局～&#x2F;.claude&#x2F; 文件夹</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%A8%E6%99%AF%E6%80%BB%E8%A7%88"><span class="toc-text">全景总览</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E7%9A%84%E5%AE%9E%E8%B7%B5%E8%B7%AF%E5%BE%84"><span class="toc-text">从零开始的实践路径</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E6%B4%9E%E5%AF%9F"><span class="toc-text">关键洞察</span></a></li></ol></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js"></script>
+    <script>
+        (function () {
+            if (!window.mermaid) return;
+
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: 'default'
+            });
+
+            function renderMermaid() {
+                const blocks = document.querySelectorAll('pre.mermaid');
+                if (!blocks.length) return;
+                mermaid.run({
+                    querySelector: 'pre.mermaid'
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', renderMermaid, { once: true });
+            } else {
+                renderMermaid();
+            }
+        })();
+    </script>
+    
+</footer>
+
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>

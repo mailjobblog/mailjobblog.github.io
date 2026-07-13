@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html  lang="zh-CN" >
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+    <title>PHP魔术方法 | 李斌的技术博客</title>
+    <meta name="keywords" content="李斌的技术博客,php,go,java,swoole,linux,mysql,编程,程序员,redis,mongodb,大数据分析,汀风说后端" />
+    <meta name="description" content="前言 __construct()， __destruct()， __call()， __callStatic()， __get()， __set()， __isset()， __unset()， __sleep()， __wakeup()， __serialize(), __unserialize(), __toString()， __invoke()， __set_state()， __clon">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PHP魔术方法">
+<meta property="og:url" content="https://blog.mailjob.net/posts/3227764495.html">
+<meta property="og:site_name" content="李斌的技术博客">
+<meta property="og:description" content="前言 __construct()， __destruct()， __call()， __callStatic()， __get()， __set()， __isset()， __unset()， __sleep()， __wakeup()， __serialize(), __unserialize(), __toString()， __invoke()， __set_state()， __clon">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-03-19T07:48:47.000Z">
+<meta property="article:modified_time" content="2026-07-13T01:22:00.649Z">
+<meta property="article:author" content="汀风">
+<meta property="article:tag" content="php">
+<meta name="twitter:card" content="summary">
+
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml">
+    <link rel="icon" href="https://img.github.mailjob.net/logo/tingfeng.ico" type="image/x-icon">
+
+    
+<link rel="stylesheet" href="/css/common.min.css">
+
+
+
+    
+    
+    
+    
+        <link href="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css" rel="stylesheet">
+    
+    
+    
+<link rel="stylesheet" href="/css/iconfont.min.css">
+
+    
+
+    
+<link rel="stylesheet" href="/css/prism.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+    <body>
+        <header class="header header-fixture">
+    <div class="profile-search-wrap flex sm:block">
+        
+        
+        <div class="profile sm:text-center md:px-1 lg:px-3 sm:pb-4 sm:pt-6">
+            <a id="avatar" role="link" href="https://github.com/jefferyjob" class="inline-block lg:w-16 lg:h-16 w-8 h-8 m-2" target="_blank" rel="noopener" rel="noreferrer" >
+                <img src="https://img.github.mailjob.net/logo/tingfeng.jpg" class="rounded-full" alt="avatar">
+            </a>
+            <h2 id="name" class="hidden lg:block">李斌</h2>
+            <h3 id="title" class="hidden xl:block">此平台用作学习交流日常分享</h3>
+            
+            <small id="location" class="hidden lg:block">
+                <i class="iconfont icon-map-icon"></i>
+                Beijin, China
+            </small>
+            
+        </div>
+        
+        
+<div class="search flex-1 flex lg:inline-block sm:hidden lg:px-4 lg:mt-2 lg:mb-4 lg:w-full">
+    <form id="search-form" class="my-auto flex-1 lg:border lg:border-solid lg:border-gray-200">
+        <div class="input-group table bg-gray-100 lg:bg-white w-full">
+            <input id="search-input" type="text" placeholder="搜索" class="inline-block w-full bg-gray-100 lg:bg-white">
+            <span class="table-cell">
+                <button name="search tigger button" disabled>
+                    <i class="iconfont icon-search m-2"></i>
+                </button>
+            </span>
+        </div>
+    </form>
+        
+<div id="content-json" data-placeholder="搜索" class="invisible hidden">/content.json</div>
+<script id="search-teamplate" type="text/html" data-path="/content.json">
+    <div>
+        <div class="search-header bg-gray-400">
+            <input id="actual-search-input" model="keyword" ref="input" class="inline-block w-full h-10 px-2 py-1" placeholder="搜索" type="text">
+        </div>
+        <div class="search-result bg-gray-200">
+            {{#each searchPosts}}
+            <a href="/{{ path }}" class="result-item block px-2 pb-3 mb-1 pt-1 hover:bg-indigo-100">
+                <i class="iconfont icon-file"></i>
+                <h1 class="result-title inline font-medium text-lg">{{ title }}</h1>
+                <p class="result-content text-gray-600 text-sm">{{{ text }}}</p>
+            </a>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+</div>
+
+
+        <button name="menu toogle button" id="menu-toggle-btn" class="block sm:hidden p-3" role="button" aria-expanded="false">
+            <i class="iconfont icon-hamburger"></i>
+        </button>
+    </div>
+    <nav id="menu-nav" class="hidden sm:flex flex-col">
+        
+        
+            <div class="menu-item menu-home" role="menuitem">
+                <a href="/.">
+                    <i class="iconfont icon-home" aria-hidden="true"></i>
+                    <span class="menu-title">首页</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-archives" role="menuitem">
+                <a href="/archives">
+                    <i class="iconfont icon-archive" aria-hidden="true"></i>
+                    <span class="menu-title">归档</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-categories" role="menuitem">
+                <a href="/categories">
+                    <i class="iconfont icon-folder" aria-hidden="true"></i>
+                    <span class="menu-title">分类</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-tags" role="menuitem">
+                <a href="/tags">
+                    <i class="iconfont icon-tag" aria-hidden="true"></i>
+                    <span class="menu-title">标签</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-links" role="menuitem">
+                <a href="/links">
+                    <i class="iconfont icon-friend" aria-hidden="true"></i>
+                    <span class="menu-title">友链</span>
+                </a>
+            </div>
+        
+        
+            <div class="menu-item menu-about" role="menuitem">
+                <a href="/about">
+                    <i class="iconfont icon-cup" aria-hidden="true"></i>
+                    <span class="menu-title">关于</span>
+                </a>
+            </div>
+        
+        
+<div class="social-links flex sm:flex-col lg:hidden mt-5">
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont social-icon icon-github"></i>
+                <span class="menu-title hidden lg:inline">menu.github</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont social-icon icon-csdn"></i>
+                <span class="menu-title hidden lg:inline">menu.csdn</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont social-icon icon-juejin"></i>
+                <span class="menu-title hidden lg:inline">menu.juejin</span>
+            </a>
+        </span>
+    
+        <span class="social-item text-center">
+            <a href="/atom.xml">
+                <i class="iconfont social-icon icon-rss"></i>
+                <span class="menu-title hidden lg:inline">menu.rss</span>
+            </a>
+        </span>
+    
+</div>
+
+
+    </nav>
+</header>
+
+        <section class="main-section">
+            
+    <main class="flex-1 px-4 py-14 md:px-5 lg:px-8 lg:py-4 relative min-h-screen">
+    
+
+    <article class="content article article-archives article-type-list" itemscope="">
+        <header class="article-header">
+            
+    
+        <h1 class="article-title text-lg" itemprop="name">
+            PHP魔术方法
+        </h1>
+    
+
+
+
+            <p class="article-meta mb-3 text-xs">
+                <span class="article-date">
+    <i class="iconfont icon-calendar-check"></i>
+	<a href="/posts/3227764495.html" class="article-date">
+	  <time datetime="2021-03-19T07:48:47.000Z" itemprop="datePublished">2021-03-19</time>
+	</a>
+</span>
+
+                
+    <span class="article-category">
+    <i class="iconfont icon-folder"></i>
+    <a class="article-category-link" href="/categories/php/">php</a>
+  </span>
+
+
+                
+    <span class="article-tags">
+    <i class="iconfont icon-tag"></i>
+    <a class="article-tag-none-link" href="/tags/php/" rel="tag">php</a>
+  </span>
+
+
+                <span class="_partial/post-comment"><i class="icon icon-comment"></i>
+                    <a href="/posts/3227764495.html#comments" class="article-comment-link">
+                        评论
+                    </a>
+                </span>
+                
+    
+        <span class="post-wordcount" itemprop="wordCount">字数统计: 1.6k(字)</span>
+    
+    
+        <span class="post-readcount" itemprop="timeRequired">阅读时长: 7(分)</span>
+    
+
+
+            </p>
+        </header>
+        <div class="marked-body article-body">
+            <h2 id="前言">前言</h2>
+<p><a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/language.oop5.decon.php#object.construct">__construct()</a>， <a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/language.oop5.decon.php#object.destruct">__destruct()</a>， <a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/language.oop5.overloading.php#object.call">__call()</a>， <a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/language.oop5.overloading.php#object.callstatic">__callStatic()</a>， <a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/language.oop5.overloading.php#object.get">__get()</a>， <a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/language.oop5.overloading.php#object.set">__set()</a>， <a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/language.oop5.overloading.php#object.isset">__isset()</a>， <a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/language.oop5.overloading.php#object.unset">__unset()</a>， <a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/language.oop5.magic.php#object.sleep">__sleep()</a>， <a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/language.oop5.magic.php#object.wakeup">__wakeup()</a>， <a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/language.oop5.magic.php#object.serialize">__serialize()</a>, <a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/language.oop5.magic.php#object.unserialize">__unserialize()</a>, <a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/language.oop5.magic.php#object.tostring">__toString()</a>， <a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/language.oop5.magic.php#object.invoke">__invoke()</a>， <a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/language.oop5.magic.php#object.set-state">__set_state()</a>， <a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/language.oop5.cloning.php#object.clone">__clone()</a> 和 <a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/language.oop5.magic.php#object.debuginfo">__debugInfo()</a> 等方法在 PHP 中被称为魔术方法（Magic methods）。在命名自己的类方法时不能使用这些方法名，除非是想使用其魔术功能。</p>
+<h2 id="参考文献">参考文献</h2>
+<p>魔术方法官方文档：<a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/language.oop5.magic.php">https://www.php.net/manual/zh/language.oop5.magic.php</a></p>
+<h2 id="演示">演示</h2>
+<p><strong>__construct：构造方法</strong></p>
+<p><strong>__destruct：析构函数</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Magic</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="comment">// 构造函数</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__construct</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">&#x27;对象被实例化 new 的时候调用此方法&#x27;</span> . PHP_EOL;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 析构函数</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__destruct</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">&#x27;对象删除或者销毁时被调用&#x27;</span> . PHP_EOL;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">new</span> <span class="title class_">Magic</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*输出:</span></span><br><span class="line"><span class="comment">对象被实例化 new 的时候调用此方法 对</span></span><br><span class="line"><span class="comment">象删除或者销毁时被调用</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+<p><strong>__call()，在对象中调用一个不可访问方法时调用</strong></p>
+<p><strong>__callStatic()，用静态方式中调用一个不可访问方法时调用</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Magic</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__call</span>(<span class="params"><span class="variable">$funName</span>, <span class="variable">$arguments</span></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">&quot;你所调用的函数：&quot;</span> . <span class="variable">$funName</span> . <span class="string">&quot;(参数：&quot;</span>;  <span class="comment">// 输出调用不存在的方法名</span></span><br><span class="line">        <span class="title function_ invoke__">print_r</span>(<span class="variable">$arguments</span>); <span class="comment">// 输出调用不存在的方法时的参数列表</span></span><br><span class="line">        <span class="keyword">echo</span> <span class="string">&quot;)不存在！\n&quot;</span> . PHP_EOL; <span class="comment">// 结束换行</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 声明此方法用来处理调用对象中不存在的方法</span></span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">static</span> <span class="function"><span class="keyword">function</span> <span class="title">__callStatic</span>(<span class="params"><span class="variable">$funName</span>, <span class="variable">$arguments</span></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">&quot;你所调用的静态方法：&quot;</span> . <span class="variable">$funName</span> . <span class="string">&quot;(参数：&quot;</span>;  <span class="comment">// 输出调用不存在的方法名</span></span><br><span class="line">        <span class="title function_ invoke__">print_r</span>(<span class="variable">$arguments</span>); <span class="comment">// 输出调用不存在的方法时的参数列表</span></span><br><span class="line">        <span class="keyword">echo</span> <span class="string">&quot;)不存在！\n&quot;</span> . PHP_EOL; <span class="comment">// 结束换行</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="variable">$magic</span> = <span class="keyword">new</span> <span class="title class_">Magic</span>;</span><br><span class="line"><span class="title function_ invoke__">var_dump</span>(<span class="variable">$magic</span>-&gt;<span class="title function_ invoke__">testCall</span>(<span class="string">&#x27;names&#x27;</span>));</span><br><span class="line"><span class="title function_ invoke__">var_dump</span>(<span class="title class_">Magic</span>::<span class="title function_ invoke__">testCall</span>(<span class="string">&#x27;names&#x27;</span>));</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">输出:</span></span><br><span class="line"><span class="comment">你所调用的函数：testCall(参数：Array ( [0] =&gt; names ) )不存在！ </span></span><br><span class="line"><span class="comment">NULL </span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">你所调用的静态方法：testCall(参数：Array ( [0] =&gt; names ) )不存在！ </span></span><br><span class="line"><span class="comment">NULL</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+<p><strong>__get()，获得一个类的成员私有的变量时调用</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Magic</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 私有变量</span></span><br><span class="line">    <span class="keyword">private</span> <span class="variable">$value</span> = <span class="number">100</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 读取不可访问属性的值时调用</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__get</span>(<span class="params"><span class="variable">$propertyName</span></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">$this</span>-&gt;<span class="variable">$propertyName</span> = <span class="number">200</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="variable">$magic</span> = <span class="keyword">new</span> <span class="title class_">Magic</span>;</span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$magic</span>-&gt;value;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*输出:</span></span><br><span class="line"><span class="comment">200</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+<p><strong>__set()，设置一个类的成员私有的变量时调用</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Magic</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 私有变量</span></span><br><span class="line">    <span class="keyword">private</span> <span class="variable">$value</span> = <span class="number">100</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 设置一个类的成员变量时调用</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__set</span>(<span class="params"><span class="variable">$property</span>, <span class="variable">$value</span></span>)</span>&#123;</span><br><span class="line">        <span class="variable language_">$this</span>-&gt;<span class="variable">$property</span> = <span class="variable">$value</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 输出私有方法</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">run</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">$this</span>-&gt;value;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="variable">$magic</span> = <span class="keyword">new</span> <span class="title class_">Magic</span>;</span><br><span class="line"><span class="variable">$magic</span>-&gt;value = <span class="number">666</span>;</span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$magic</span>-&gt;<span class="title function_ invoke__">run</span>();</span><br><span class="line"></span><br><span class="line"><span class="comment">/*输出:</span></span><br><span class="line"><span class="comment">666</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+<p><strong>__isset()，当对不可访问属性调用isset()或empty()时调用</strong></p>
+<p><strong>__unset()，当对不可访问属性调用unset()时被调用</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Magic</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="variable">$name</span> = <span class="string">&#x27;张三&#x27;</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="variable">$area</span> = <span class="string">&#x27;北京&#x27;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 当对不可访问属性调用isset()或empty()时调用</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span>  <span class="title">__isset</span>(<span class="params"><span class="variable">$content</span></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">&quot;当在类外部使用isset()函数测定私有成员<span class="subst">&#123;$content&#125;</span>时，自动调用&lt;br&gt;&quot;</span>;</span><br><span class="line">        <span class="keyword">echo</span>  <span class="keyword">isset</span>(<span class="variable language_">$this</span>-&gt;<span class="variable">$content</span>) . <span class="string">&quot;&lt;br&gt;&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 当对不可访问属性调用时被调用</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span>  <span class="title">__unset</span>(<span class="params"><span class="variable">$content</span></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">&quot;当在类外部使用unset()函数来删除私有成员时自动调用的&lt;br&gt;&quot;</span>;</span><br><span class="line">        <span class="keyword">echo</span>  <span class="keyword">isset</span>(<span class="variable language_">$this</span>-&gt;<span class="variable">$content</span>) . <span class="string">&quot;&lt;br&gt;&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="variable">$magic</span> = <span class="keyword">new</span> <span class="title class_">Magic</span>;</span><br><span class="line"><span class="keyword">echo</span> <span class="keyword">isset</span>(<span class="variable">$magic</span>-&gt;name), <span class="string">&quot;&lt;br&gt;&quot;</span>; <span class="comment">// 返回：1</span></span><br><span class="line"><span class="keyword">echo</span> <span class="keyword">isset</span>(<span class="variable">$magic</span>-&gt;area), <span class="string">&quot;&lt;br&gt;&quot;</span>;</span><br><span class="line"><span class="comment">/*输出:</span></span><br><span class="line"><span class="comment">1</span></span><br><span class="line"><span class="comment">当在类外部使用isset()函数测定私有成员sex时，自动调用</span></span><br><span class="line"><span class="comment">1</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">unset</span>(<span class="variable">$magic</span>-&gt;name); <span class="comment">// 返回：1</span></span><br><span class="line"><span class="keyword">unset</span>(<span class="variable">$magic</span>-&gt;area);</span><br><span class="line"><span class="comment">/*输出：</span></span><br><span class="line"><span class="comment">当在类外部使用unset()函数来删除私有成员时自动调用的</span></span><br><span class="line"><span class="comment">1</span></span><br><span class="line"><span class="comment"> */</span></span><br></pre></td></tr></table></figure>
+<p><strong>__sleep()，执行serialize()时，先会调用这个函数</strong></p>
+<p><strong>__wakeup()，执行unserialize()时，先会调用这个函数</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Magic</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="variable">$name</span> = <span class="string">&#x27;张三&#x27;</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="variable">$area</span> = <span class="string">&#x27;北京&#x27;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__sleep</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">&quot;当在类外部使用serialize()时会调用这里的__sleep()方法&lt;br&gt;&quot;</span>;</span><br><span class="line">        <span class="variable language_">$this</span>-&gt;name = <span class="title function_ invoke__">base64_encode</span>(<span class="variable">$this</span>-&gt;name);</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">array</span>(<span class="string">&#x27;name&#x27;</span>, <span class="string">&#x27;age&#x27;</span>); <span class="comment">// 这里必须返回一个数值，里边的元素表示返回的属性名称</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__wakeup</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">&quot;当在类外部使用unserialize()时会调用这里的__wakeup()方法&lt;br&gt;&quot;</span>;</span><br><span class="line">        <span class="variable language_">$this</span>-&gt;name = <span class="string">&#x27;李四&#x27;</span>;</span><br><span class="line">        <span class="variable language_">$this</span>-&gt;area = <span class="string">&#x27;上海&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="variable">$magic</span> = <span class="keyword">new</span> <span class="title class_">Magic</span>;</span><br><span class="line"><span class="title function_ invoke__">var_dump</span>(<span class="title function_ invoke__">serialize</span>(<span class="variable">$magic</span>));</span><br><span class="line"><span class="comment">/*输出:</span></span><br><span class="line"><span class="comment">当在类外部使用serialize()时会调用这里的__sleep()方法</span></span><br><span class="line"><span class="comment">O:5:&quot;Magic&quot;:2:&#123;s:4:&quot;name&quot;;s:8:&quot;5byg5LiJ&quot;;s:3:&quot;age&quot;;N;&#125;</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"></span><br><span class="line"><span class="title function_ invoke__">var_dump</span>(<span class="title function_ invoke__">unserialize</span>(<span class="title function_ invoke__">serialize</span>(<span class="variable">$magic</span>)));</span><br><span class="line"><span class="comment">/*输出：</span></span><br><span class="line"><span class="comment">当在类外部使用serialize()时会调用这里的__sleep()方法</span></span><br><span class="line"><span class="comment">当在类外部使用unserialize()时会调用这里的__wakeup()方法</span></span><br><span class="line"><span class="comment">object(Magic)#2 (3) &#123; [&quot;name&quot;]=&gt; string(6) &quot;李四&quot; [&quot;area&quot;:&quot;Magic&quot;:private]=&gt; string(6) &quot;上海&quot; [&quot;age&quot;]=&gt; NULL &#125;</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+<p><strong>__toString()，类被当成字符串时的回应方法</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Magic</span></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__toString</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="keyword">return</span>  <span class="string">&#x27;我是类呀，不是字符串&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="variable">$magic</span> = <span class="keyword">new</span> <span class="title class_">Magic</span>;</span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$magic</span>;</span><br><span class="line"><span class="comment">/*输出:</span></span><br><span class="line"><span class="comment">我是类呀，不是字符串</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+<p><strong>__invoke()，调用函数的方式调用一个对象时的回应方法</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Magic</span></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__invoke</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">&#x27;这可是一个对象哦&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="variable">$magic</span> = <span class="keyword">new</span> <span class="title class_">Magic</span>;</span><br><span class="line"><span class="variable">$magic</span>();</span><br><span class="line"><span class="comment">/*输出:</span></span><br><span class="line"><span class="comment">这可是一个对象哦</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+<p><strong>__set_state()，调用var_export()导出类时，此静态方法会被调用</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Magic</span></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="variable">$name</span>;</span><br><span class="line">    <span class="keyword">public</span> <span class="variable">$age</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__construct</span>(<span class="params"><span class="variable">$name</span> = <span class="string">&quot;&quot;</span>,  <span class="variable">$age</span> = <span class="number">25</span></span>)</span>&#123;</span><br><span class="line">        <span class="variable language_">$this</span>-&gt;name = <span class="variable">$name</span>;</span><br><span class="line">        <span class="variable language_">$this</span>-&gt;age  = <span class="variable">$age</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">static</span> <span class="function"><span class="keyword">function</span> <span class="title">__set_state</span>(<span class="params"><span class="variable">$an_array</span></span>)</span>&#123;</span><br><span class="line">        <span class="variable">$a</span> = <span class="keyword">new</span> <span class="title class_">Magic</span>();</span><br><span class="line">        <span class="variable">$a</span>-&gt;name = <span class="variable">$an_array</span>[<span class="string">&#x27;name&#x27;</span>];</span><br><span class="line">        <span class="keyword">return</span> <span class="variable">$a</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="variable">$person</span> = <span class="keyword">new</span> <span class="title function_ invoke__">magic</span>(<span class="string">&#x27;小明&#x27;</span>); <span class="comment">// 初始赋值</span></span><br><span class="line"><span class="variable">$person</span>-&gt;name = <span class="string">&#x27;小红&#x27;</span>;</span><br><span class="line"><span class="title function_ invoke__">var_export</span>(<span class="variable">$person</span>);</span><br><span class="line"><span class="comment">/*输出:</span></span><br><span class="line"><span class="comment">Magic::__set_state(array( &#x27;name&#x27; =&gt; &#x27;小红&#x27;, &#x27;age&#x27; =&gt; 25, ))</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><strong>__clone()，当对象复制完成时调用</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Magic</span></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="variable">$name</span> = <span class="string">&#x27;张三&#x27;</span>;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__clone</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="keyword">__METHOD__</span> . <span class="string">&quot;你正在克隆对象&lt;br&gt;&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="variable">$magic</span> = <span class="keyword">new</span> <span class="title function_ invoke__">magic</span>();</span><br><span class="line"><span class="variable">$magic2</span> = <span class="keyword">clone</span> <span class="variable">$magic</span>;</span><br><span class="line"></span><br><span class="line"><span class="variable">$magic</span>-&gt;name = <span class="string">&#x27;李四&#x27;</span>;</span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$magic</span>-&gt;name . <span class="string">&quot;&lt;br&gt;&quot;</span>; <span class="comment">// 李四</span></span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$magic2</span>-&gt;name . <span class="string">&quot;&lt;br&gt;&quot;</span>; <span class="comment">// 张三</span></span><br><span class="line"></span><br><span class="line"><span class="variable">$magic2</span>-&gt;name = <span class="string">&#x27;王五&#x27;</span>;</span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$magic</span>-&gt;name . <span class="string">&quot;&lt;br&gt;&quot;</span>; <span class="comment">// 李四</span></span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$magic2</span>-&gt;name . <span class="string">&quot;&lt;br&gt;&quot;</span>; <span class="comment">// 王五</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*输出:</span></span><br><span class="line"><span class="comment">Magic::__clone你正在克隆对象</span></span><br><span class="line"><span class="comment">李四</span></span><br><span class="line"><span class="comment">张三</span></span><br><span class="line"><span class="comment">李四</span></span><br><span class="line"><span class="comment">王五</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+<p><strong>__autoload()，尝试加载未定义的类</strong></p>
+<blockquote>
+<p><strong>警告</strong> 本函数已自 <code>PHP 7.2.0</code> 起被<em>废弃</em>，并自 <code>PHP 8.0.0</code> 起被<em>移除</em>。 强烈建议不要依赖本函数。<code>spl_autoload_register</code> — 注册给定的函数作为 <code>__autoload</code> 的实现</p>
+</blockquote>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="function"><span class="keyword">function</span>  <span class="title">__autoload</span>(<span class="params"><span class="variable">$className</span></span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="variable">$filePath</span> = <span class="string">&quot;project/class/<span class="subst">&#123;$className&#125;</span>.php&quot;</span>;</span><br><span class="line">    <span class="keyword">die</span>(<span class="variable">$filePath</span>);</span><br><span class="line">    <span class="keyword">if</span> (<span class="title function_ invoke__">is_readable</span>(<span class="variable">$filePath</span>)) &#123;</span><br><span class="line">        <span class="keyword">require</span>(<span class="variable">$filePath</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="variable">$a</span> = <span class="keyword">new</span> <span class="title class_">TestClass</span>();  </span><br><span class="line"></span><br><span class="line"><span class="comment">/*返回：</span></span><br><span class="line"><span class="comment">Deprecated: __autoload() is deprecated, use spl_autoload_register() instead in F:\www\aaa.php on line 2</span></span><br><span class="line"><span class="comment">project/class/TestClass.php</span></span><br><span class="line"><span class="comment"> */</span></span><br></pre></td></tr></table></figure>
+<p><strong>__debugInfo()，打印所需调试信息</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Magic</span></span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="variable">$prop</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__construct</span>(<span class="params"><span class="variable">$val</span></span>)</span>&#123;</span><br><span class="line">        <span class="variable language_">$this</span>-&gt;prop = <span class="variable">$val</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__debugInfo</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="keyword">return</span> [</span><br><span class="line">            <span class="string">&#x27;propSquared&#x27;</span> =&gt; <span class="variable language_">$this</span>-&gt;prop ** <span class="number">2</span>, <span class="comment">// 这里的 `**` 是乘方的意思</span></span><br><span class="line">        ];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="title function_ invoke__">var_dump</span>(<span class="keyword">new</span> <span class="title class_">Magic</span>(<span class="number">666</span>));</span><br><span class="line"></span><br><span class="line"><span class="comment">/*输出:</span></span><br><span class="line"><span class="comment">object(Magic)#1 (1) &#123; [&quot;propSquared&quot;]=&gt; int(443556) &#125;</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+
+        </div>
+        
+<blockquote class="copyright">
+    <p><strong>本文链接 : </strong><a class="permalink" href="https://blog.mailjob.net/posts/3227764495.html">https://blog.mailjob.net/posts/3227764495.html</a></p>
+    <p><strong>This article is available under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> License</strong></p>
+</blockquote>
+
+
+    </article>
+    
+    <section id="comments">
+        
+    </section>
+
+
+    
+
+</main>
+
+
+<aside style="" id="sidebar" class="aside aside-fixture">
+    <div class="toc-sidebar">
+        <nav id="toc" class="article-toc">
+            <h3 class="toc-title">文章目录</h3>
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BC%94%E7%A4%BA"><span class="toc-text">演示</span></a></li></ol>
+        </nav>
+    </div>
+</aside>
+
+
+
+
+
+        </section>
+        <footer class="hidden lg:block fixed bottom-0 left-0 sm:w-1/12 lg:w-1/6 bg-gray-100 z-40">
+    
+    <div class="footer-social-links">
+        
+            <a target="_blank" rel="noopener" href="https://github.com/jefferyjob">
+                <i class="iconfont icon-github"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/libinemail">
+                <i class="iconfont icon-csdn"></i>
+            </a>
+        
+            <a target="_blank" rel="noopener" href="https://juejin.cn/user/782508009723783">
+                <i class="iconfont icon-juejin"></i>
+            </a>
+        
+            <a href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+            </a>
+        
+    </div>
+    
+    
+        <p class="footer-custom">京ICP备17056825号</p>
+        <p class="theme-brand">Copyright by <a href="//blog.mailjob.net" rel="nofollow noopener noreferrer">mailjob.net</a></p>
+    
+
+    <script src="/js/prism.js" async></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js"></script>
+    <script>
+        (function () {
+            if (!window.mermaid) return;
+
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: 'default'
+            });
+
+            function renderMermaid() {
+                const blocks = document.querySelectorAll('pre.mermaid');
+                if (!blocks.length) return;
+                mermaid.run({
+                    querySelector: 'pre.mermaid'
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', renderMermaid, { once: true });
+            } else {
+                renderMermaid();
+            }
+        })();
+    </script>
+    
+</footer>
+
+        <div id="mask" class="hidden mask fixed inset-0 bg-gray-900 opacity-75 z-40"></div>
+        <div id="search-view-container" class="hidden shadow-xl"></div>
+        
+<script src="/js/dom-event.min.js"></script>
+
+
+
+<script src="/js/local-search.min.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script>
+    
+<script src="/js/light-gallery.min.js"></script>
+
+
+
+
+
+
+    </body>
+</html>
+<!-- 百度站长推送 -->
+<script>
+    (function(){
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https'){
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        }
+        else{
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+<!--友盟统计-->
+<span style="display: none;">
+    <script type="text/javascript" src="https://s9.cnzz.com/z_stat.php?id=1279692087&web_id=1279692087"></script>
+</span>
